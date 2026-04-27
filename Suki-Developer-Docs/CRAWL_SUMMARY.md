@@ -1,0 +1,131 @@
+# Suki Developer Docs Crawl Summary
+
+**Pages saved:** 113
+**Pages failed/skipped:** 7
+**Total visited:** 120
+
+## Saved Pages
+
+- [index.md](index.md) — https://developer.suki.ai/
+- [documentation.md](documentation.md) — https://developer.suki.ai/documentation
+- [web-sdk.md](web-sdk.md) — https://developer.suki.ai/web-sdk
+- [mobile-sdk.md](mobile-sdk.md) — https://developer.suki.ai/mobile-sdk
+- [documentation__faqs.md](documentation__faqs.md) — https://developer.suki.ai/documentation/faqs
+- [documentation__getting-started.md](documentation__getting-started.md) — https://developer.suki.ai/documentation/getting-started
+- [documentation__home.md](documentation__home.md) — https://developer.suki.ai/documentation/home
+- [documentation__overview.md](documentation__overview.md) — https://developer.suki.ai/documentation/overview
+- [api-reference__overview.md](api-reference__overview.md) — https://developer.suki.ai/api-reference/overview
+- [documentation__learning-path.md](documentation__learning-path.md) — https://developer.suki.ai/documentation/learning-path
+- [documentation__integration-decision-guide.md](documentation__integration-decision-guide.md) — https://developer.suki.ai/documentation/integration-decision-guide
+- [documentation__partner-onboarding.md](documentation__partner-onboarding.md) — https://developer.suki.ai/documentation/partner-onboarding
+- [documentation__partner-authentication.md](documentation__partner-authentication.md) — https://developer.suki.ai/documentation/partner-authentication
+- [documentation__ambient-documentation.md](documentation__ambient-documentation.md) — https://developer.suki.ai/documentation/ambient-documentation
+- [documentation__note-sections.md](documentation__note-sections.md) — https://developer.suki.ai/documentation/note-sections
+- [documentation__specialties.md](documentation__specialties.md) — https://developer.suki.ai/documentation/specialties
+- [api-reference__capabilities__problem-based-charting.md](api-reference__capabilities__problem-based-charting.md) — https://developer.suki.ai/api-reference/capabilities/problem-based-charting
+- [api-reference__capabilities__multilingual.md](api-reference__capabilities__multilingual.md) — https://developer.suki.ai/api-reference/capabilities/multilingual
+- [api-reference__capabilities__personalization.md](api-reference__capabilities__personalization.md) — https://developer.suki.ai/api-reference/capabilities/personalization
+- [documentation__dictation.md](documentation__dictation.md) — https://developer.suki.ai/documentation/dictation
+- [documentation__audio-streaming-download.md](documentation__audio-streaming-download.md) — https://developer.suki.ai/documentation/audio-streaming-download
+- [documentation__webhook.md](documentation__webhook.md) — https://developer.suki.ai/documentation/webhook
+- [documentation__mcp.md](documentation__mcp.md) — https://developer.suki.ai/documentation/mcp
+- [documentation__executive-summary.md](documentation__executive-summary.md) — https://developer.suki.ai/documentation/executive-summary
+- [documentation__technical-execution.md](documentation__technical-execution.md) — https://developer.suki.ai/documentation/technical-execution
+- [documentation__support.md](documentation__support.md) — https://developer.suki.ai/documentation/support
+- [mobile-sdk__overview.md](mobile-sdk__overview.md) — https://developer.suki.ai/mobile-sdk/overview
+- [web-sdk__overview.md](web-sdk__overview.md) — https://developer.suki.ai/web-sdk/overview
+- [web-sdk__quickstart.md](web-sdk__quickstart.md) — https://developer.suki.ai/web-sdk/quickstart
+- [web-sdk__guides__ambient-implementation.md](web-sdk__guides__ambient-implementation.md) — https://developer.suki.ai/web-sdk/guides/ambient-implementation
+- [mobile-sdk__installation.md](mobile-sdk__installation.md) — https://developer.suki.ai/mobile-sdk/installation
+- [mobile-sdk__ambient-guides__create-session.md](mobile-sdk__ambient-guides__create-session.md) — https://developer.suki.ai/mobile-sdk/ambient-guides/create-session
+- [web-sdk__prerequisites.md](web-sdk__prerequisites.md) — https://developer.suki.ai/web-sdk/prerequisites
+- [web-sdk__installation.md](web-sdk__installation.md) — https://developer.suki.ai/web-sdk/installation
+- [web-sdk__product-updates__migration-to-v2.md](web-sdk__product-updates__migration-to-v2.md) — https://developer.suki.ai/web-sdk/product-updates/migration-to-v2
+- [web-sdk__product-updates__changelog.md](web-sdk__product-updates__changelog.md) — https://developer.suki.ai/web-sdk/product-updates/changelog
+- [web-sdk__guides__note-management.md](web-sdk__guides__note-management.md) — https://developer.suki.ai/web-sdk/guides/note-management
+- [web-sdk__guides__error-handling.md](web-sdk__guides__error-handling.md) — https://developer.suki.ai/web-sdk/guides/error-handling
+- [web-sdk__guides__token-refresh.md](web-sdk__guides__token-refresh.md) — https://developer.suki.ai/web-sdk/guides/token-refresh
+- [web-sdk__guides__telehealth.md](web-sdk__guides__telehealth.md) — https://developer.suki.ai/web-sdk/guides/telehealth
+- [web-sdk__guides__branding.md](web-sdk__guides__branding.md) — https://developer.suki.ai/web-sdk/guides/branding
+- [web-sdk__api-reference__classes.md](web-sdk__api-reference__classes.md) — https://developer.suki.ai/web-sdk/api-reference/classes
+- [web-sdk__api-reference__functions.md](web-sdk__api-reference__functions.md) — https://developer.suki.ai/web-sdk/api-reference/functions
+- [web-sdk__api-reference__hooks.md](web-sdk__api-reference__hooks.md) — https://developer.suki.ai/web-sdk/api-reference/hooks
+- [web-sdk__api-reference__providers.md](web-sdk__api-reference__providers.md) — https://developer.suki.ai/web-sdk/api-reference/providers
+- [web-sdk__api-reference__components.md](web-sdk__api-reference__components.md) — https://developer.suki.ai/web-sdk/api-reference/components
+- [web-sdk__examples__basic-usage.md](web-sdk__examples__basic-usage.md) — https://developer.suki.ai/web-sdk/examples/basic-usage
+- [web-sdk__examples__control-visibility.md](web-sdk__examples__control-visibility.md) — https://developer.suki.ai/web-sdk/examples/control-visibility
+- [web-sdk__examples__dynamic-encounter.md](web-sdk__examples__dynamic-encounter.md) — https://developer.suki.ai/web-sdk/examples/dynamic-encounter
+- [web-sdk__examples__ambient-events.md](web-sdk__examples__ambient-events.md) — https://developer.suki.ai/web-sdk/examples/ambient-events
+- [web-sdk__examples__test-mode.md](web-sdk__examples__test-mode.md) — https://developer.suki.ai/web-sdk/examples/test-mode
+- [web-sdk__examples__using-inside-iframe.md](web-sdk__examples__using-inside-iframe.md) — https://developer.suki.ai/web-sdk/examples/using-inside-iframe
+- [web-sdk__examples__advanced-configuration.md](web-sdk__examples__advanced-configuration.md) — https://developer.suki.ai/web-sdk/examples/advanced-configuration
+- [web-sdk__examples__theming-and-customization.md](web-sdk__examples__theming-and-customization.md) — https://developer.suki.ai/web-sdk/examples/theming-and-customization
+- [web-sdk__faqs__auto-onboarding.md](web-sdk__faqs__auto-onboarding.md) — https://developer.suki.ai/web-sdk/faqs/auto-onboarding
+- [web-sdk__faqs__general.md](web-sdk__faqs__general.md) — https://developer.suki.ai/web-sdk/faqs/general
+- [web-sdk__faqs__technical.md](web-sdk__faqs__technical.md) — https://developer.suki.ai/web-sdk/faqs/technical
+- [web-sdk__faqs__implementation.md](web-sdk__faqs__implementation.md) — https://developer.suki.ai/web-sdk/faqs/implementation
+- [mobile-sdk__features.md](mobile-sdk__features.md) — https://developer.suki.ai/mobile-sdk/features
+- [mobile-sdk__configuration.md](mobile-sdk__configuration.md) — https://developer.suki.ai/mobile-sdk/configuration
+- [mobile-sdk__product-updates__changelog.md](mobile-sdk__product-updates__changelog.md) — https://developer.suki.ai/mobile-sdk/product-updates/changelog
+- [mobile-sdk__ambient-guides__recording.md](mobile-sdk__ambient-guides__recording.md) — https://developer.suki.ai/mobile-sdk/ambient-guides/recording
+- [mobile-sdk__ambient-guides__session-status-and-content-retrieval.md](mobile-sdk__ambient-guides__session-status-and-content-retrieval.md) — https://developer.suki.ai/mobile-sdk/ambient-guides/session-status-and-content-retrieval
+- [mobile-sdk__ambient-guides__clearing-sessions.md](mobile-sdk__ambient-guides__clearing-sessions.md) — https://developer.suki.ai/mobile-sdk/ambient-guides/clearing-sessions
+- [mobile-sdk__ambient-guides__events-and-delegates.md](mobile-sdk__ambient-guides__events-and-delegates.md) — https://developer.suki.ai/mobile-sdk/ambient-guides/events-and-delegates
+- [mobile-sdk__ambient-guides__offline-mode.md](mobile-sdk__ambient-guides__offline-mode.md) — https://developer.suki.ai/mobile-sdk/ambient-guides/offline-mode
+- [mobile-sdk__faqs__general.md](mobile-sdk__faqs__general.md) — https://developer.suki.ai/mobile-sdk/faqs/general
+- [mobile-sdk__faqs__installation-setup.md](mobile-sdk__faqs__installation-setup.md) — https://developer.suki.ai/mobile-sdk/faqs/installation-setup
+- [mobile-sdk__faqs__session-management.md](mobile-sdk__faqs__session-management.md) — https://developer.suki.ai/mobile-sdk/faqs/session-management
+- [mobile-sdk__faqs__content-retrieval.md](mobile-sdk__faqs__content-retrieval.md) — https://developer.suki.ai/mobile-sdk/faqs/content-retrieval
+- [mobile-sdk__faqs__offline-networking.md](mobile-sdk__faqs__offline-networking.md) — https://developer.suki.ai/mobile-sdk/faqs/offline-networking
+- [mobile-sdk__faqs__troubleshooting.md](mobile-sdk__faqs__troubleshooting.md) — https://developer.suki.ai/mobile-sdk/faqs/troubleshooting
+- [documentation__faqs__general.md](documentation__faqs__general.md) — https://developer.suki.ai/documentation/faqs/general
+- [documentation__faqs__authentication.md](documentation__faqs__authentication.md) — https://developer.suki.ai/documentation/faqs/authentication
+- [documentation__faqs__security.md](documentation__faqs__security.md) — https://developer.suki.ai/documentation/faqs/security
+- [api-reference__authentication__register.md](api-reference__authentication__register.md) — https://developer.suki.ai/api-reference/authentication/register
+- [api-reference__quickstart.md](api-reference__quickstart.md) — https://developer.suki.ai/api-reference/quickstart
+- [api-reference__provider-authentication.md](api-reference__provider-authentication.md) — https://developer.suki.ai/api-reference/provider-authentication
+- [api-reference__security-best-practices.md](api-reference__security-best-practices.md) — https://developer.suki.ai/api-reference/security-best-practices
+- [api-reference__https-guidelines.md](api-reference__https-guidelines.md) — https://developer.suki.ai/api-reference/https-guidelines
+- [api-reference__api-guidelines.md](api-reference__api-guidelines.md) — https://developer.suki.ai/api-reference/api-guidelines
+- [api-reference__product-updates__changelog.md](api-reference__product-updates__changelog.md) — https://developer.suki.ai/api-reference/product-updates/changelog
+- [api-reference__ambient-content__content.md](api-reference__ambient-content__content.md) — https://developer.suki.ai/api-reference/ambient-content/content
+- [api-reference__ambient-content__transcript.md](api-reference__ambient-content__transcript.md) — https://developer.suki.ai/api-reference/ambient-content/transcript
+- [api-reference__ambient-sessions__create.md](api-reference__ambient-sessions__create.md) — https://developer.suki.ai/api-reference/ambient-sessions/create
+- [api-reference__ambient-content__recording.md](api-reference__ambient-content__recording.md) — https://developer.suki.ai/api-reference/ambient-content/recording
+- [api-reference__audio-transcription__create-session.md](api-reference__audio-transcription__create-session.md) — https://developer.suki.ai/api-reference/audio-transcription/create-session
+- [api-reference__audio-transcription__stream-transcription.md](api-reference__audio-transcription__stream-transcription.md) — https://developer.suki.ai/api-reference/audio-transcription/stream-transcription
+- [api-reference__audio-transcription__end-session.md](api-reference__audio-transcription__end-session.md) — https://developer.suki.ai/api-reference/audio-transcription/end-session
+- [web-sdk__api-reference__types__ambient-options.md](web-sdk__api-reference__types__ambient-options.md) — https://developer.suki.ai/web-sdk/api-reference/types/ambient-options
+- [web-sdk__guides__ambient-problem-based-charting.md](web-sdk__guides__ambient-problem-based-charting.md) — https://developer.suki.ai/web-sdk/guides/ambient-problem-based-charting
+- [api-reference__ambient-sessions__context.md](api-reference__ambient-sessions__context.md) — https://developer.suki.ai/api-reference/ambient-sessions/context
+- [api-reference__ambient-content__structured-data.md](api-reference__ambient-content__structured-data.md) — https://developer.suki.ai/api-reference/ambient-content/structured-data
+- [api-reference__ambient-content__encounter-structured-data.md](api-reference__ambient-content__encounter-structured-data.md) — https://developer.suki.ai/api-reference/ambient-content/encounter-structured-data
+- [web-sdk__api-reference__types__note-content.md](web-sdk__api-reference__types__note-content.md) — https://developer.suki.ai/web-sdk/api-reference/types/note-content
+- [web-sdk__api-reference__types__diagnosis.md](web-sdk__api-reference__types__diagnosis.md) — https://developer.suki.ai/web-sdk/api-reference/types/diagnosis
+- [api-reference__ambient-content__status.md](api-reference__ambient-content__status.md) — https://developer.suki.ai/api-reference/ambient-content/status
+- [api-reference__asynchronous__webhook.md](api-reference__asynchronous__webhook.md) — https://developer.suki.ai/api-reference/asynchronous/webhook
+- [api-reference__ambient-session-management.md](api-reference__ambient-session-management.md) — https://developer.suki.ai/api-reference/ambient-session-management
+- [api-reference__ambient-content-retrieval.md](api-reference__ambient-content-retrieval.md) — https://developer.suki.ai/api-reference/ambient-content-retrieval
+- [api-reference__faqs__authentication.md](api-reference__faqs__authentication.md) — https://developer.suki.ai/api-reference/faqs/authentication
+- [web-sdk__api-reference__types__encounter.md](web-sdk__api-reference__types__encounter.md) — https://developer.suki.ai/web-sdk/api-reference/types/encounter
+- [web-sdk__guides__ambient.md](web-sdk__guides__ambient.md) — https://developer.suki.ai/web-sdk/guides/ambient
+- [web-sdk__guides__ambient-session-status.md](web-sdk__guides__ambient-session-status.md) — https://developer.suki.ai/web-sdk/guides/ambient-session-status
+- [web-sdk__guides__ambient-multilingual.md](web-sdk__guides__ambient-multilingual.md) — https://developer.suki.ai/web-sdk/guides/ambient-multilingual
+- [web-sdk__guides__ambient-offline-mode.md](web-sdk__guides__ambient-offline-mode.md) — https://developer.suki.ai/web-sdk/guides/ambient-offline-mode
+- [web-sdk__guides__ambient-session-recovery.md](web-sdk__guides__ambient-session-recovery.md) — https://developer.suki.ai/web-sdk/guides/ambient-session-recovery
+- [web-sdk__api-reference__types__suki-error.md](web-sdk__api-reference__types__suki-error.md) — https://developer.suki.ai/web-sdk/api-reference/types/suki-error
+- [web-sdk__api-reference__types.md](web-sdk__api-reference__types.md) — https://developer.suki.ai/web-sdk/api-reference/types
+- [web-sdk__api-reference__types__ui-options.md](web-sdk__api-reference__types__ui-options.md) — https://developer.suki.ai/web-sdk/api-reference/types/ui-options
+- [web-sdk__api-reference__types__emitter-events.md](web-sdk__api-reference__types__emitter-events.md) — https://developer.suki.ai/web-sdk/api-reference/types/emitter-events
+- [api-reference__authentication__login.md](api-reference__authentication__login.md) — https://developer.suki.ai/api-reference/authentication/login
+- [api-reference__authentication__jwks.md](api-reference__authentication__jwks.md) — https://developer.suki.ai/api-reference/authentication/jwks
+
+## Failed / Skipped
+
+- https://developer.suki.ai/headless-sdk (404)
+- https://developer.suki.ai/documentation/glossary (404)
+- https://developer.suki.ai/documentation/release-notes (404)
+- https://developer.suki.ai/documentation/capabilities/multilingual (404)
+- https://developer.suki.ai/documentation/capabilities/personalization (404)
+- https://developer.suki.ai/documentation/capabilities/problem-based-charting (404)
+- https://developer.suki.ai/documentation/api-reference (404)
