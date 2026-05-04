@@ -1,0 +1,81 @@
+Metrics of Interest to Suki,,,
+Suki (Native Platform — Primary Mappings Only),,,
+Hook ID,What it measures,CM ID,Canonical Measure
+H1 Ambient Documentation,Reduction in documentation burden and time per encounter,CM-01,Burnout
+H8 Ambient Orders Staging,Reduction in order-entry burden per shift,CM-01,Burnout
+H16 Suki for Nurses,Reduction in nursing documentation burden,CM-01,Burnout
+H1 Ambient Documentation,Cognitive burden reduction during encounter,CM-02,Cognitive Load
+H6 Audio Dictation,Cognitive effort reduction via speech-to-text input,CM-02,Cognitive Load
+H8 Ambient Orders Staging,Reduction of in-encounter multitasking demand,CM-02,Cognitive Load
+H10 Pre-Visit Patient Summaries,Pre-encounter cognitive load reduction via chart review automation,CM-02,Cognitive Load
+H11 Clinical Q&A / Chart Querying,In-encounter cognitive load reduction via voice-based EHR lookup,CM-02,Cognitive Load
+H16 Suki for Nurses,Nursing documentation cognitive burden reduction,CM-02,Cognitive Load
+H1 Ambient Documentation,Time spent on note creation per encounter,CM-04,Documentation Time
+H6 Audio Dictation,Time spent on dictation and transcription per encounter,CM-04,Documentation Time
+H8 Ambient Orders Staging,Time to complete orders entry per encounter,CM-04,Documentation Time
+H16 Suki for Nurses,Time spent on nursing documentation per encounter,CM-04,Documentation Time
+H1 Ambient Documentation,Rate of notes signed same calendar day as encounter,CM-06,Chart Closure Timeliness
+H9 Coding Suggestions (ICD-10 / E&M / HCC),Coding readiness enabling faster billing and chart closure,CM-06,Chart Closure Timeliness
+H1 Ambient Documentation,Total provider EHR time per day,CM-07,Total EHR Time
+H6 Audio Dictation,EHR time consumed by manual text entry,CM-07,Total EHR Time
+H8 Ambient Orders Staging,Time spent on order management per encounter,CM-07,Total EHR Time
+H10 Pre-Visit Patient Summaries,Pre-encounter chart navigation time,CM-07,Total EHR Time
+H11 Clinical Q&A / Chart Querying,In-encounter chart look-up time,CM-07,Total EHR Time
+H16 Suki for Nurses,Total nursing EHR time per shift,CM-07,Total EHR Time
+H1 Ambient Documentation,Presence and completeness of required note elements,CM-08,Note Completeness
+H2 Specialty-Specific Note Generation,Completeness of specialty-relevant note sections,CM-08,Note Completeness
+H3 Problem-Based Charting (PBC),Completeness of problem-level documentation,CM-08,Note Completeness
+H4 Multilingual Support,Completeness of documentation for non-English encounters,CM-08,Note Completeness
+H9 Coding Suggestions (ICD-10 / E&M / HCC),Completeness of diagnosis code documentation in note,CM-08,Note Completeness
+H14 Patient Instructions Generation,Completeness of patient-facing discharge and follow-up instructions,CM-08,Note Completeness
+H16 Suki for Nurses,Completeness of nursing flowsheet and assessment documentation,CM-08,Note Completeness
+H1 Ambient Documentation,Rate of hallucinated or unsupported clinical content in notes,CM-09,Note Accuracy / Hallucination Rate
+H15 Evidence Linking,Traceability of every generated note line to transcript timestamp,CM-09,Note Accuracy / Hallucination Rate
+H1 Ambient Documentation,Overall clinician-rated note quality,CM-10,Overall Note Quality (PDQI)
+H2 Specialty-Specific Note Generation,Specialty-appropriate note quality rating,CM-10,Overall Note Quality (PDQI)
+H3 Problem-Based Charting (PBC),Problem-level note quality and organization rating,CM-10,Overall Note Quality (PDQI)
+H1 Ambient Documentation,Note character count and verbosity level,CM-11,Note Length / Verbosity
+H5 Note Personalization,Note length controlled by provider verbosity setting (concise / balanced / detailed),CM-11,Note Length / Verbosity
+H6 Audio Dictation,Automated character-level transcription metrics (ROUGE / BERTScore),CM-12,NLP / Transcription Metrics
+H7 Audio Streaming & Download,Raw audio and transcript access enabling institutional NLP benchmarking,CM-12,NLP / Transcription Metrics
+H1 Ambient Documentation,Rate of encounters using ambient documentation (utilization),CM-13,Adoption / Utilization
+H2 Specialty-Specific Note Generation,Specialty-cohort ambient adoption rate,CM-13,Adoption / Utilization
+H5 Note Personalization,Sustained adoption driven by provider-level note customization,CM-13,Adoption / Utilization
+H16 Suki for Nurses,Nursing staff ambient adoption rate,CM-13,Adoption / Utilization
+H1 Ambient Documentation,Provider-reported satisfaction with documentation workflow,CM-15,Provider Satisfaction
+H2 Specialty-Specific Note Generation,Provider satisfaction with specialty note fit,CM-15,Provider Satisfaction
+H3 Problem-Based Charting (PBC),Provider satisfaction with problem-organized charting,CM-15,Provider Satisfaction
+H5 Note Personalization,Provider satisfaction driven by personalized output format,CM-15,Provider Satisfaction
+H6 Audio Dictation,Provider satisfaction with dictation-based input,CM-15,Provider Satisfaction
+H15 Evidence Linking,Provider satisfaction with note transparency and verifiability,CM-15,Provider Satisfaction
+H16 Suki for Nurses,Nursing staff satisfaction with documentation tool,CM-15,Provider Satisfaction
+H5 Note Personalization,Provider trust in AI output accuracy given personalized settings,CM-16,Provider Trust
+H15 Evidence Linking,Provider trust enabled by transcript-linked note verification,CM-16,Provider Trust
+H4 Multilingual Support,Patient-reported experience in non-English-speaking encounters,CM-17,Patient Experience
+H12 Real-Time Nudges / In-Encounter CDS,Patient experience influenced by in-encounter clinical decision support,CM-17,Patient Experience
+H14 Patient Instructions Generation,Patient experience with discharge and follow-up instruction quality,CM-17,Patient Experience
+H16 Suki for Nurses,Patient experience with nursing communication and documentation,CM-17,Patient Experience
+H17 Telehealth / Virtual Care Integration,Patient experience during virtual ambient-documented visits,CM-17,Patient Experience
+H1 Ambient Documentation,Eye contact and face-to-face interaction time during encounter,CM-18,Physician-Patient Interaction
+H4 Multilingual Support,Quality of physician-patient interaction in non-English encounters,CM-18,Physician-Patient Interaction
+H11 Clinical Q&A / Chart Querying,Interaction quality during voice-based EHR lookup,CM-18,Physician-Patient Interaction
+H16 Suki for Nurses,Nurse-patient interaction time enabled by reduced charting burden,CM-18,Physician-Patient Interaction
+H17 Telehealth / Virtual Care Integration,Physician-patient interaction quality during virtual visits,CM-18,Physician-Patient Interaction
+H8 Ambient Orders Staging,Order error rate from AI-staged vs. manually entered orders,CM-19,Patient Safety
+H11 Clinical Q&A / Chart Querying,Clinical safety of voice-based EHR answers and downstream actions,CM-19,Patient Safety
+H12 Real-Time Nudges / In-Encounter CDS,Rate of acted-upon safety-relevant in-encounter CDS alerts,CM-19,Patient Safety
+H13 UpToDate Integration,Evidence-based care adherence at point of care,CM-19,Patient Safety
+H3 Problem-Based Charting (PBC),Work RVU capture from structured problem-level ICD-10 output,CM-20,Financial Productivity
+H8 Ambient Orders Staging,Revenue cycle efficiency from faster order completion,CM-20,Financial Productivity
+H9 Coding Suggestions (ICD-10 / E&M / HCC),Work RVU and revenue capture from AI-suggested billing codes,CM-20,Financial Productivity
+H3 Problem-Based Charting (PBC),ICD-10 and IMO code accuracy from structured problem-level output,CM-21,Coding Accuracy
+H9 Coding Suggestions (ICD-10 / E&M / HCC),E/M level and ICD-10 code accuracy from AI coding suggestions,CM-21,Coding Accuracy
+H12 Real-Time Nudges / In-Encounter CDS,E/M level coding accuracy from in-encounter nudge compliance,CM-21,Coding Accuracy
+H1 Ambient Documentation,Workflow and EHR integration friction at deployment,CM-23,Implementation Barriers
+H4 Multilingual Support,Language-specific ASR and workflow integration challenges,CM-23,Implementation Barriers
+H12 Real-Time Nudges / In-Encounter CDS,Behavioral change burden for in-encounter alert adoption,CM-23,Implementation Barriers
+H16 Suki for Nurses,Nursing workflow integration friction at deployment,CM-23,Implementation Barriers
+H1 Ambient Documentation,ASR word error rate on clinical speech,CM-24,Transcription Accuracy
+H4 Multilingual Support,Language-specific ASR word error rate,CM-24,Transcription Accuracy
+H6 Audio Dictation,Dictation transcription word error rate,CM-24,Transcription Accuracy
+H7 Audio Streaming & Download,Institutional WER audit enabled by raw audio and transcript access,CM-25,Evaluation Methodology
