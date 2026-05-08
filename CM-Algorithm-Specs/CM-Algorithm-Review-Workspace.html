@@ -371,6 +371,138 @@
       display: block;
     }
 
+    .canvas-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .canvas-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+      min-height: 132px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .canvas-card h3 {
+      margin: 0;
+      font-size: 0.86rem;
+      color: #37414d;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .canvas-card p {
+      margin: 0;
+      color: #3f4650;
+      line-height: 1.42;
+      font-size: 0.92rem;
+    }
+
+    .canvas-card ul {
+      padding-left: 18px;
+      font-size: 0.86rem;
+    }
+
+    .canvas-purpose {
+      grid-column: span 4;
+      border-top: 5px solid var(--blue);
+    }
+
+    .canvas-unit {
+      grid-column: span 2;
+      border-top: 5px solid var(--teal);
+    }
+
+    .canvas-method {
+      grid-column: span 3;
+      border-top: 5px solid var(--green);
+    }
+
+    .canvas-data {
+      grid-column: span 3;
+      border-top: 5px solid var(--violet);
+    }
+
+    .canvas-joins {
+      grid-column: span 2;
+      border-top: 5px solid #5c6f82;
+    }
+
+    .canvas-caveats {
+      grid-column: span 2;
+      border-top: 5px solid var(--amber);
+    }
+
+    .canvas-questions {
+      grid-column: span 2;
+      border-top: 5px solid var(--red);
+    }
+
+    .canvas-flow {
+      grid-column: 1 / -1;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr) 38px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .flow-node {
+      min-height: 74px;
+      border: 1px solid #dfe5ed;
+      border-radius: var(--radius);
+      background: #fbfcfd;
+      padding: 10px;
+      display: grid;
+      gap: 5px;
+      align-content: center;
+    }
+
+    .flow-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 850;
+    }
+
+    .flow-value {
+      font-weight: 800;
+      line-height: 1.25;
+      font-size: 0.9rem;
+    }
+
+    .flow-arrow {
+      height: 2px;
+      background: #9aa7b6;
+      position: relative;
+    }
+
+    .flow-arrow::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      top: -5px;
+      width: 0;
+      height: 0;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      border-left: 8px solid #9aa7b6;
+    }
+
     .tier-grid {
       display: grid;
       gap: 14px;
@@ -785,8 +917,37 @@
       .measure-hero,
       .two-column,
       .facts,
+      .canvas-grid,
+      .flow-row,
       .idea-form-row {
         grid-template-columns: 1fr;
+      }
+
+      .canvas-purpose,
+      .canvas-unit,
+      .canvas-method,
+      .canvas-data,
+      .canvas-joins,
+      .canvas-caveats,
+      .canvas-questions,
+      .canvas-flow {
+        grid-column: auto;
+      }
+
+      .flow-arrow {
+        height: 26px;
+        width: 2px;
+        justify-self: center;
+      }
+
+      .flow-arrow::after {
+        right: -5px;
+        top: auto;
+        bottom: -1px;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #9aa7b6;
+        border-bottom: 0;
       }
 
       .layout {
@@ -854,12 +1015,14 @@
       <main class="workspace">
         <section class="measure-hero" id="measureHero"></section>
         <div class="tabs" role="tablist">
-          <button class="tab active" type="button" data-tab="algorithm">Algorithm</button>
+          <button class="tab active" type="button" data-tab="details">Details</button>
+          <button class="tab" type="button" data-tab="algorithm">Algorithm</button>
           <button class="tab" type="button" data-tab="data">Data Elements</button>
           <button class="tab" type="button" data-tab="questions">Questions</button>
           <button class="tab" type="button" data-tab="notes">Decision Notes</button>
         </div>
-        <section class="tab-panel active" id="algorithmPanel"></section>
+        <section class="tab-panel active" id="detailsPanel"></section>
+        <section class="tab-panel" id="algorithmPanel"></section>
         <section class="tab-panel" id="dataPanel"></section>
         <section class="tab-panel" id="questionsPanel"></section>
         <section class="tab-panel" id="notesPanel"></section>
@@ -1175,7 +1338,7 @@ Report:
 
     const defaultState = {
       selectedMeasure: "cm20",
-      selectedTab: "algorithm",
+      selectedTab: "details",
       decisions: {},
       notes: {},
       checks: {},
@@ -1189,7 +1352,11 @@ Report:
 
     function loadState() {
       try {
-        return { ...defaultState, ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") };
+        return {
+          ...defaultState,
+          ...JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"),
+          selectedTab: "details"
+        };
       } catch (error) {
         return { ...defaultState };
       }
@@ -1259,6 +1426,7 @@ Report:
       `;
 
       renderTabs();
+      renderDetailsPanel(measure);
       renderAlgorithmPanel(measure);
       renderDataPanel(measure);
       renderQuestionsPanel(measure);
@@ -1278,6 +1446,97 @@ Report:
       document.querySelectorAll(".tab-panel").forEach((panel) => {
         panel.classList.toggle("active", panel.id === `${state.selectedTab}Panel`);
       });
+    }
+
+    function renderDetailsPanel(measure) {
+      const tierOne = measure.tiers[0];
+      const dataElements = measure.data.slice(0, 5).map((row) => row[0]);
+      const joinElements = measure.data
+        .filter((row) => /join|link|provider id|encounter/i.test(row.join(" ")))
+        .slice(0, 3)
+        .map((row) => `${row[0]}: ${row[2]}`);
+      const flow = canvasFlow(measure);
+
+      byId("detailsPanel").innerHTML = `
+        <div class="canvas-grid">
+          <section class="canvas-card canvas-purpose">
+            <h3>What It Measures</h3>
+            <p>${measure.summary}</p>
+            <p><strong>Relationship:</strong> ${measure.relationship}</p>
+          </section>
+
+          <section class="canvas-card canvas-unit">
+            <h3>Dashboard Number</h3>
+            <p>${measure.primaryUnit}</p>
+            <p><strong>Grain:</strong> ${measure.reporting}</p>
+          </section>
+
+          <section class="canvas-card canvas-method">
+            <h3>Recommended Method</h3>
+            <p><strong>${tierOne.subtitle}</strong></p>
+            <p>${tierOne.evidence}</p>
+            <p><strong>Output:</strong> ${tierOne.unit}</p>
+          </section>
+
+          <section class="canvas-card canvas-data">
+            <h3>Required Data</h3>
+            <ul>${dataElements.map((item) => `<li>${item}</li>`).join("")}</ul>
+          </section>
+
+          <section class="canvas-card canvas-joins">
+            <h3>Critical Joins</h3>
+            ${joinElements.length ? `<ul>${joinElements.map((item) => `<li>${item}</li>`).join("")}</ul>` : `<p>No explicit join element listed yet.</p>`}
+          </section>
+
+          <section class="canvas-card canvas-caveats">
+            <h3>Caveats</h3>
+            <p>${tierOne.caveat}</p>
+            <p><strong>Direction:</strong> ${measure.direction}</p>
+          </section>
+
+          <section class="canvas-card canvas-questions">
+            <h3>Open Questions</h3>
+            <ul>${measure.questions.slice(0, 3).map((question) => `<li>${question}</li>`).join("")}</ul>
+          </section>
+
+          <section class="canvas-flow">
+            <p class="section-label">Mental Model</p>
+            <div class="flow-row">
+              ${flow.map((node, index) => `
+                ${index > 0 ? `<span class="flow-arrow" aria-hidden="true"></span>` : ""}
+                <div class="flow-node">
+                  <div class="flow-label">${node.label}</div>
+                  <div class="flow-value">${node.value}</div>
+                </div>
+              `).join("")}
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function canvasFlow(measure) {
+      if (measure.id === "cm20") {
+        return [
+          { label: "Suki Use", value: "Completed sessions define adoption and active weeks" },
+          { label: "EHR / Claims", value: "Billed CPT codes convert to weekly wRVUs" },
+          { label: "Dashboard", value: "Delta wRVUs/week and annual revenue estimate" }
+        ];
+      }
+
+      if (measure.id === "cm21") {
+        return [
+          { label: "Suki Output", value: "Structured ICD-10 or mapped IMO diagnosis codes" },
+          { label: "Claim Truth", value: "Final billed ICD-10 codes after physician sign-off" },
+          { label: "Dashboard", value: "Average billed-code capture / match rate" }
+        ];
+      }
+
+      return [
+        { label: "Suki Use", value: "Completed sessions identify active adopters" },
+        { label: "EHR Volume", value: "Completed encounters by provider and week" },
+        { label: "Dashboard", value: "Delta encounters/provider/week" }
+      ];
     }
 
     function renderAlgorithmPanel(measure) {
@@ -1567,7 +1826,7 @@ Report:
 
     byId("clearViewButton").addEventListener("click", () => {
       state.selectedMeasure = "cm20";
-      state.selectedTab = "algorithm";
+      state.selectedTab = "details";
       saveState();
       render();
     });
