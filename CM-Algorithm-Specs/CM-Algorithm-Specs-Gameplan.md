@@ -1,12 +1,12 @@
-# Gameplan: CM-21 & CM-22 Algorithm Specs
+# Gameplan: CM-20, CM-21 & CM-22 Algorithm Specs
 **Created:** 2026-05-06 | **Owner:** Joe Amlung  
-**Purpose:** Deliver two canonical measure pseudo-specifications for Suki's internal data pipeline and admin console
+**Purpose:** Deliver canonical measure pseudo-specifications for Suki's internal data pipeline and admin console
 
 ---
 
 ## What We Are Building
 
-Two measure algorithm specs — one financial (CM-21), one operational (CM-22) — each delivering:
+Three measure algorithm specs — two financial (CM-20 and CM-21), one operational (CM-22) — each delivering:
 
 1. **Measure name and concrete unit** — a dashboardable number (e.g., "% encounters where AI-suggested ICD-10 code matched final billed code")
 2. **Data elements** — the discrete Suki and EHR inputs required, each defined
@@ -34,13 +34,64 @@ The point is not to present all methods as equal — it's to show Suki the full 
 
 - **Assume EHR integration is available.** Don't design around Suki-only data; the pipeline assumes EHR data is accessible.
 - **No CM-09 (Note Inaccuracy).** Suki's note quality processes are in flux. Deferred.
-- **Goal is a dozen good measures, not 25.** These two specs are the proof of concept that unlocks the rest.
+- **Goal is a dozen good measures, not 25.** These specs are the proof of concept that unlocks the rest.
+- **CM-20 and CM-21 are complementary, not redundant.** CM-20 is the financial bottom line; CM-21 explains the coding accuracy/completeness mechanism that may drive CM-20.
 - **Depth is proportional to importance.** Operational/financial measures get the full algorithm treatment first.
 - **Structure over perfect content.** A draft with clear structure that Suki can correct is more valuable than a polished document that misses the mark.
 
 ---
 
 ## Measures
+
+### CM-20 — Financial Productivity and Revenue Impact (Financial)
+**What it is:** Change in physician financial productivity associated with ambient AI use, measured as wRVU output and translated into revenue per clinician per year  
+**Why it's financial:** Captures the revenue bottom line: better documentation and coding should support higher billable work value without increasing denial risk  
+**Relationship to CM-21:** CM-20 measures *what revenue/productivity changed*; CM-21 measures *whether the underlying codes are accurate and complete*  
+**Known data sources:**
+- Suki: completed session records by provider/week; adoption date or first completed session
+- EHR/claims: billed CPT codes, completed encounters, provider ID, provider specialty, scheduled clinical hours
+- External reference: CMS Physician Fee Schedule wRVU weights and Medicare conversion factor
+- Benchmark: Holmgren 2026 (+1.81 wRVUs/week, approximately +$3,044/provider/year); Boyter/KLAS (+$13,049/provider/year broader revenue estimate)
+
+**Tiered ascertainment methods:**
+
+**Tier 1 — Realistic & Solid ✓ (wRVU pre/post, data-driven)**
+Primary unit: *Change in work Relative Value Units (wRVUs) per provider per week, pre vs. post Suki adoption*
+```
+For each provider p:
+  adoption_date = date of first completed Suki session
+  ramp_end      = adoption_date + onboarding ramp period
+
+  For each post-ramp week w where provider p actively used Suki:
+    wrvus_post_week = SUM(CMS wRVU weight for billed CPT codes on completed encounters)
+
+  For equivalent pre-adoption weeks:
+    wrvus_pre_week = SUM(CMS wRVU weight for billed CPT codes on completed encounters)
+
+  wrvu_delta_p = AVG(wrvus_post_week) - AVG(wrvus_pre_week)
+
+Revenue_per_clinician_per_year = AVG(wrvu_delta_p) × 52 × Medicare_conversion_factor
+
+Report as: AVG(wrvu_delta_p) across providers [Δ wRVUs/week]
+           and translated annual revenue per clinician [$]
+           [filter: completed Suki sessions only; exclude onboarding ramp;
+            require adequate pre/post encounter volume; normalize for case mix if available]
+```
+*Requires EHR/claims CPT data plus Suki provider-level adoption linkage. Strongest financial dashboard candidate if CPT/wRVU data are available.*
+
+**Tier 2 — Aspirational / Ideal (full ROI calculation)**
+Unit: *ROI or net benefit per provider per year*
+- Adds Suki contract cost, onboarding cost, implementation cost, and optional human-scribe replacement cost
+- Can add a matched non-adopter comparison group to control for secular wRVU trends
+- Best suited for quarterly business review / leadership reporting, not real-time admin console display
+
+**Tier 3 — Minimal / Fallback (provider self-report)**
+Unit: *% of providers reporting that Suki improves documentation complexity capture or practice revenue*
+- Survey-based when claims or CPT data are unavailable
+- Low precision because providers may not know their own revenue or RVU trends
+- Useful only as a directional signal or early customer fallback
+
+---
 
 ### CM-21 — Coding Accuracy (Financial)
 **What it is:** Accuracy and completeness of AI-supported ICD-10, HCC, and E/M codes  
@@ -127,7 +178,7 @@ Unit: *% of providers reporting they can see more patients since adopting Suki*
 
 ## Pieces We're Working With (Katie Session Reference)
 
-This is the full inventory of data elements available for CM-21 and CM-22. The goal is to have these laid out so we can conceptually rearrange them if the first draft algorithm isn't quite right — rather than trying to remember what's possible mid-conversation.
+This is the full inventory of data elements available for CM-20, CM-21, and CM-22. The goal is to have these laid out so we can conceptually rearrange them if the first draft algorithm isn't quite right — rather than trying to remember what's possible mid-conversation.
 
 ### Suki API — What Suki Exposes Natively
 
@@ -149,6 +200,20 @@ These are confirmed fields from Suki's published developer documentation.
 ### EHR-Side Data — What Must Come from the Health System
 
 These require EHR data sharing as part of Amita's pipeline. Availability varies by customer and EHR vendor.
+
+**For CM-20 (Financial Productivity and Revenue Impact):**
+
+| Piece | What It Is | Why It Matters |
+|---|---|---|
+| Billed CPT code per encounter | CPT code assigned to each completed encounter, post-physician review | Core input for converting encounters into wRVU value |
+| CMS wRVU weight table | Published Physician Fee Schedule mapping CPT codes to wRVU weights | Converts billed services into standardized work value |
+| Medicare conversion factor | Annual dollar conversion factor | Translates wRVU delta into estimated revenue per clinician per year |
+| Completed encounter count | Number of completed encounters per provider per week | Supports weekly aggregation and volume filters |
+| Provider ID | Unique provider identifier, consistent across Suki and EHR | Join key for linking Suki adoption/use to EHR/claims output |
+| Provider specialty | Clinical specialty | Enables specialty-level comparison and case-mix adjustment |
+| Scheduled clinical hours | Provider clinical time in the measurement window | Normalizes productivity for part-time providers |
+| Provider adoption date / first completed Suki session | Date provider began active Suki use | Defines pre/post boundary and onboarding ramp exclusion |
+| Suki contract and onboarding costs | Cost data from Suki or health system finance | Required for Tier 2 ROI / net benefit calculation |
 
 **For CM-21 (Coding Accuracy):**
 
@@ -179,6 +244,14 @@ These require EHR data sharing as part of Amita's pipeline. Availability varies 
 
 Things computed from the pieces above — the "connective tissue" of the algorithm.
 
+**For CM-20:**
+- `wrvus_week` = SUM(CMS wRVU weight for billed CPT codes) — per provider per week
+- `wrvus_per_week_post` = average weekly wRVUs after Suki adoption and onboarding ramp
+- `wrvus_per_week_pre` = average weekly wRVUs in matched pre-adoption period
+- `wrvu_delta` = wrvus_per_week_post − wrvus_per_week_pre
+- `revenue_per_clinician_per_year` = wrvu_delta × 52 × Medicare conversion factor
+- `roi` = (revenue gain − Suki cost) / Suki cost — Tier 2 only
+
 **For CM-21:**
 - `icd_match_rate` = (Suki-suggested codes ∩ final billed codes) / final billed codes — per encounter
 - `hcc_per_encounter` = count of unique HCCs mapped from final ICD-10 codes — per encounter
@@ -201,6 +274,9 @@ Useful for checking whether a calculated value "makes sense" and for framing Suk
 
 | Benchmark | Source | Value |
 |---|---|---|
+| wRVU increase | Holmgren 2026 | +1.81 wRVUs/week, approximately +$3,044/provider/year |
+| wRVUs per encounter increase | Holmgren 2026 | +0.04 wRVUs/encounter |
+| Broader revenue estimate | Boyter/KLAS 2025 | +$13,049/provider/year, driven heavily by HCC and E/M gains |
 | ICD-10 coding improvement | Afshar 2025b (RCT) | Statistically significant (p<0.001); exact magnitude not published |
 | HCC capture increase | Boyter/KLAS 2025 | +$9,685/provider/year |
 | E/M level increase | Boyter/KLAS 2025 | +$1,907/provider/year |
@@ -215,10 +291,10 @@ Useful for checking whether a calculated value "makes sense" and for framing Suk
 
 | Step | Owner | When | Output |
 |---|---|---|---|
-| Joe preps draft data elements + algorithm sketches for both CMs | Joe | By end of week (May 8) | Working draft — rough pseudocode, candidate units, known gaps |
+| Joe preps draft data elements + algorithm sketches for CM-20, CM-21, and CM-22 | Joe | By end of week (May 8) | Working draft — rough pseudocode, candidate units, known gaps |
 | Joe + Katie working session | Joe + Katie | Monday May 11, 1pm | Stress-tested algorithms; Katie flags method issues; decide on primary flavor for each |
 | Full team review | All | Wednesday May 14 | Alignment on final structure; decide what to send to Suki |
-| Send CM-21 + CM-22 specs to Amita and Sudha | Joe or Jamie | Wed May 14 EOD or Thu May 15 | Suki feedback round begins |
+| Send CM-20 + CM-21 + CM-22 specs to Amita and Sudha | Joe or Jamie | Wed May 14 EOD or Thu May 15 | Suki feedback round begins |
 | Suki feedback received | Amita / Sudha | By Fri May 15–May 22 | Corrections to data availability, internal process changes |
 | Revise and finalize | Joe | Following week | First finalized algorithm specs ready to replicate across other CMs |
 
@@ -228,21 +304,25 @@ Useful for checking whether a calculated value "makes sense" and for framing Suk
 
 ## What to Prepare Before the Katie Session
 
+- **For CM-20:** Confirm whether Amita's pipeline receives billed CPT codes and whether wRVU weighting should use CMS Physician Fee Schedule values. Identify what cost data would be available only for Tier 2 ROI.
 - **For CM-21:** Pull the `structured-data` endpoint schema from Suki dev docs. List the exact fields returned (code type, code value, confidence, source). Identify what's missing to compute match rate against billed codes.
 - **For CM-22:** Confirm what Suki session timestamps are available (session start, session end, encounter linkage). Identify the EHR-side encounter count field Amita's team uses in their pipeline.
-- **Both:** Bring the draft tier structure above and ask Katie to (a) confirm the Tier 1 method is sound, (b) refine or replace the pseudocode, and (c) flag whether the Tier 2 aspirational method is realistic enough to include or too far out of reach to be useful.
-- **Both:** Have a back-of-envelope example number ready for Tier 1 so the algorithm feels concrete, not abstract (e.g., "if a provider has 100 encounters and 82 ICD-10 codes match, that's an 82% accuracy rate — does that formula make sense?").
-- **Both:** Confirm the Tier 3 fallback — what survey question wording is methodologically defensible if a customer can't share EHR data at all?
+- **All three:** Bring the draft tier structure above and ask Katie to (a) confirm the Tier 1 method is sound, (b) refine or replace the pseudocode, and (c) flag whether the Tier 2 aspirational method is realistic enough to include or too far out of reach to be useful.
+- **All three:** Have a back-of-envelope example number ready for Tier 1 so the algorithm feels concrete, not abstract (e.g., "if a provider has 100 encounters and 82 ICD-10 codes match, that's an 82% accuracy rate — does that formula make sense?").
+- **All three:** Confirm the Tier 3 fallback — what survey question wording is methodologically defensible if a customer can't share EHR data at all?
 
 ---
 
 ## Open Questions (to resolve during working session or with Suki)
 
-1. For CM-21: Should ICD-10 accuracy be measured as exact-match or as a hierarchical match (parent code counts as match for child)?
-2. For CM-21: Do we lead with ICD-10 accuracy, HCC capture, or E/M level as the primary indicator? Or offer all three as a suite?
-3. For CM-22: Is encounters/week the right unit for ambulatory, or should it be encounters/scheduled-hour to normalize for part-time providers?
-4. For both: What is the standard "pre-Suki baseline" window Amita's team uses? (e.g., same period prior year, or N weeks before go-live?)
-5. For both: Suki's pipeline is still being stood up — which customers are already feeding EHR data? Should the spec flag a "Suki-only" fallback?
+1. For CM-20: Does Amita's pipeline currently receive billed CPT codes, or only encounter counts? CPT is required to apply wRVU weights.
+2. For CM-20: Should the primary financial dashboard number be Δ wRVUs/week, revenue per clinician/year, or ROI?
+3. For CM-20: Does Suki have customer-level license/onboarding cost data available for ROI, or should ROI remain a Tier 2 business-review measure?
+4. For CM-21: Should ICD-10 accuracy be measured as exact-match or as a hierarchical match (parent code counts as match for child)?
+5. For CM-21: Do we lead with ICD-10 accuracy, HCC capture, or E/M level as the primary indicator? Or offer all three as a suite?
+6. For CM-22: Is encounters/week the right unit for ambulatory, or should it be encounters/scheduled-hour to normalize for part-time providers?
+7. For all three: What is the standard "pre-Suki baseline" window Amita's team uses? (e.g., same period prior year, or N weeks before go-live?)
+8. For all three: Suki's pipeline is still being stood up — which customers are already feeding EHR data? Should the spec flag a "Suki-only" fallback?
 
 ---
 
