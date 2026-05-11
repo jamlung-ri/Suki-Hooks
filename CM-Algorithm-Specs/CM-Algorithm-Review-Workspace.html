@@ -186,10 +186,6 @@
       background: var(--teal);
     }
 
-    .measure-button[data-id="cm21"] .accent {
-      background: var(--violet);
-    }
-
     .measure-button[data-id="cm22"] .accent {
       background: var(--amber);
     }
@@ -1147,96 +1143,6 @@ Restrict revenue item to providers with awareness of billing productivity.`
         ]
       },
       {
-        id: "cm21",
-        code: "CM-21",
-        title: "Coding Accuracy",
-        category: "Financial",
-        short: "ICD-10, HCC, and E/M accuracy",
-        summary: "Whether Suki-generated diagnosis and billing codes match what the physician ultimately bills, and whether documentation supports complete coding.",
-        primaryUnit: "Percent of final billed ICD-10 codes that were also suggested by Suki, averaged per encounter.",
-        reporting: "Provider per month or quarter, rolled up to health system.",
-        direction: "Higher match rate is better; denial rate should not increase.",
-        relationship: "Upstream driver for CM-20 revenue effects.",
-        sources: [
-          "GET /session/{id}/structured-data",
-          "Suki encounter_id linkage",
-          "EHR final billed ICD-10 codes",
-          "E/M CPT codes",
-          "Claim denial flags",
-          "HCC mapping table"
-        ],
-        tiers: [
-          {
-            id: "t1",
-            title: "Tier 1 - Realistic & Solid",
-            subtitle: "Data-driven ICD-10 match rate",
-            unit: "Percent of billed ICD-10 codes captured by Suki",
-            evidence: "Straightforward once Suki structured data is linked to EHR claims.",
-            caveat: "This is closer to recall than precision; wording should match the denominator.",
-            pseudocode: `For each completed Suki session s linked to encounter e:
-  suki_codes = set of ICD-10 codes from structured-data for session s
-  billed_codes = set of final billed ICD-10 codes from EHR claim for encounter e
-
-  IF billed_codes is empty:
-    skip encounter
-
-  match_rate_e = COUNT(suki_codes intersect billed_codes) / COUNT(billed_codes)
-
-ICD_Accuracy_Rate = AVG(match_rate_e) across all encounters in period`
-          },
-          {
-            id: "t2",
-            title: "Tier 2 - Aspirational / Ideal",
-            subtitle: "Expert coder audit",
-            unit: "Percent of sampled encounters rated fully accurate",
-            evidence: "Gold-standard validation for periodic audit or calibration.",
-            caveat: "Manual labor makes it unsuitable for continuous dashboarding.",
-            pseudocode: `Sample N encounters.
-
-For each encounter:
-  certified coder assesses:
-    whether Suki-suggested codes are supported
-    whether additional billable codes were missed
-    whether E/M level is supported
-
-Report coding compliance, undercoding, and E/M support rates.`
-          },
-          {
-            id: "t3",
-            title: "Tier 3 - Minimal / Fallback",
-            subtitle: "Provider self-report",
-            unit: "Percent reporting codes usually or almost always match",
-            evidence: "Works without EHR sharing.",
-            caveat: "Subjective and cannot support real-time dashboarding.",
-            pseudocode: `Survey providers:
-  How often do Suki's suggested diagnosis codes match the codes you ultimately bill?
-
-Report:
-  percent Usually or Almost Always
-  mean Likert score`
-          }
-        ],
-        data: [
-          ["Suki-suggested ICD-10 codes", "GET /session/{id}/structured-data", "AI-generated diagnoses; may require IMO to ICD-10 mapping."],
-          ["Encounter linkage", "Suki session -> EHR", "Uses encounter_id passed at session creation."],
-          ["Final billed ICD-10 codes", "EHR claim record", "Ground truth for Tier 1 overlap."],
-          ["Session completion status", "GET /session/{id}/status", "Filters out skipped, failed, and aborted sessions."],
-          ["E/M CPT level", "EHR / claims", "Supports companion E/M level indicator."],
-          ["HCC mapping", "CMS crosswalk", "Enables HCC capture calculations."],
-          ["Claim denial flag", "Claims", "Guards against upcoding or coding quality concerns."]
-        ],
-        questions: [
-          "Does structured-data return ICD-10 directly, or only IMO codes requiring a crosswalk?",
-          "Should the measure be exact match, hierarchical match, recall, precision, or a paired suite?",
-          "Is encounter_id reliably populated at session creation?",
-          "Should HCC capture or E/M delta be primary for financial reporting instead of ICD match?"
-        ],
-        links: [
-          ["Markdown spec", "CM-21-Coding-Accuracy-Algorithm-Spec.md"],
-          ["Gameplan", "CM-Algorithm-Specs-Gameplan.md"]
-        ]
-      },
-      {
         id: "cm22",
         code: "CM-22",
         title: "Patient Volume and Throughput",
@@ -1521,14 +1427,6 @@ Report:
           { label: "Suki Use", value: "Completed sessions define adoption and active weeks" },
           { label: "EHR / Claims", value: "Billed CPT codes convert to weekly wRVUs" },
           { label: "Dashboard", value: "Delta wRVUs/week and annual revenue estimate" }
-        ];
-      }
-
-      if (measure.id === "cm21") {
-        return [
-          { label: "Suki Output", value: "Structured ICD-10 or mapped IMO diagnosis codes" },
-          { label: "Claim Truth", value: "Final billed ICD-10 codes after physician sign-off" },
-          { label: "Dashboard", value: "Average billed-code capture / match rate" }
         ];
       }
 
