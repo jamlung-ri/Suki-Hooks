@@ -1,0 +1,204 @@
+=== MEETING ATTENDEES ===
+Total Attendees: 4
+Meeting Start: 5/11/2026, 1:02:19 PM
+
+Attendee List:
+- Amlung, Joseph Michael
+- Unknown user
+- Allen, Katie
+- Thomas, Jamie
+
+=== TRANSCRIPT ===
+[1:02:22 PM] Amlung, Joseph Michael: Couldn't start something. OK, there we go.
+[1:02:28 PM] Amlung, Joseph Michael: OK.
+[1:02:35 PM] Amlung, Joseph Michael: So, Katie, do you have? I obviously showed that thing earlier today that kind of website space, I I don't.
+[1:02:54 PM] Amlung, Joseph Michael: the best way to work or anything like that, but what's your kind of preference here? What do you think about it? Do you think that we want to walk through that or do you think that we just need to, you know, brain dump and then see where it goes? What do you kind of feel about that?
+[1:02:55 PM] Unknown user: No, I think it's a good starting point, so we should go with that.
+[1:03:07 PM] Amlung, Joseph Michael: Okay, cool. There is nothing that is set in stone with this and I've only done like surface level verifications of this. Is it showing okay?
+[1:03:10 PM] Allen, Katie: Yep, just let me put on my old lady glasses.
+[1:03:12 PM] Amlung, Joseph Michael: Oh, yeah.
+[1:03:16 PM] Amlung, Joseph Michael: Yeah, and this is built so that.
+[1:03:40 PM] Amlung, Joseph Michael: Oh yes, that's true. And feel free to work through this. The only issue, quote unquote issue, is that if you make notes, which is totally fine, you just have to, when you hit export notes, you just have to send it to me and I can make sure all of our notes are in there. This isn't like a perfect website where it saves it off for everybody. It's just a, it just makes a file of like, hey,
+[1:03:41 PM] Allen, Katie: Nice.
+[1:03:41 PM] Amlung, Joseph Michael: Joe said this, basically.
+[1:04:01 PM] Amlung, Joseph Michael: So, okay, any preference on what to start with? Obviously, financial is like, you know, that's kind of the big one that I know they want. And operational, this one is like, in my mind, more tangible, something that's like easier for me to think about, but I'm good either way.
+[1:04:01 PM] Allen, Katie: Well, and we have...
+[1:04:06 PM] Allen, Katie: Two weeks to get through both of these, right? Basically, a week and a half.
+[1:04:25 PM] Amlung, Joseph Michael: Jamie, what do you think about that? Because I was, I had in my mind something for Wednesday. Like, and maybe that's just showing a basic something or other. I don't remember what exactly the deliverables are for specific dates.
+[1:04:25 PM] Allen, Katie: I.
+[1:04:42 PM] Thomas, Jamie: Yeah, well, I think we had thought coming out of the conversation with Amita that, like, if we could put something together, we don't necessarily need to wait until next time we're together with them, that we could share something and say, here, look at this. What do you think?
+[1:04:48 PM] Thomas, Jamie: and get some feedback kind of offline. So I think that so we can progress a little quicker.
+[1:04:58 PM] Allen, Katie: Yeah, my thought would be to try to get through one of these by Wednesday, at least one of them by Wednesday, so that we can look at it with Josh and Paul.
+[1:05:04 PM] Allen, Katie: If we can get through both, good. But the other piece I was thinking about today is...
+[1:05:10 PM] Allen, Katie: Like they want us to start putting it with.
+[1:05:14 PM] Allen, Katie: how we're measuring these things and that might require.
+[1:05:17 PM] Allen, Katie: a little bit of spelunking into...
+[1:05:28 PM] Allen, Katie: the literature on like how people typically measure this kind of stuff, like to verify, right? So, okay.
+[1:05:49 PM] Amlung, Joseph Michael: Yeah, I agree. And I think we can make some to-dos and stuff like that too, just to make sure about it. This is supposed to have at least some information from that. I'm definitely noticing this does not show any kind of links or anything like that. I like, I don't see anything that says like, hey, one source.
+[1:06:08 PM] Amlung, Joseph Michael: did this once another source did that. So that is probably something that would be helpful to add in here. And you know, it's something that might make our cross verification easier and our citations essentially. But this is supposed to have Paul's ACI repo reflected in here.
+[1:06:22 PM] Allen, Katie: What I mean is, like particularly for the RVU one, there isn't actually much in the repo. So we might need to go look at how did they do this with some other health tech, right? Like you.
+[1:06:25 PM] Allen, Katie: Yes, so.
+[1:06:44 PM] Allen, Katie: Which is totally fine and totally expected. I think Josh would say the same thing. So, but we just need to ask, like, ask those questions. And in some cases, I think Paul's thing actually made some recommendations and we just need to check to make sure that those are the accurate thing to be doing. Right.
+[1:06:45 PM] Allen, Katie: Um...
+[1:06:48 PM] Allen, Katie: Okay, so I would suggest...
+[1:06:57 PM] Allen, Katie: Because you're right, one of them is easier to wrap your brain around and the other one is probably the more suki important one.
+[1:07:19 PM] Amlung, Joseph Michael: Yeah, I think I prefer this 22 only because it like one thing that we can somewhat quickly get out of this is a like a template for it. Because again, this isn't in my mind presentation ready. It's more like us talking through it ready and make notes ready. And I think there's a better way to present this that would
+[1:07:39 PM] Amlung, Joseph Michael: feel better for, you know, an implement, not an implementer, a Suki kind of person or whatever. So in my mind, like if we feel like we can go through this and like the details or, you know, pick apart the details, this is pretty much a straw man, then we can come up with the actual presentation and feel
+[1:07:55 PM] Amlung, Joseph Michael: decent about what's in it, so that it looks good and feels pretty good too. But for now, it was just like, all right, let's just get what we can and then throw stuff into the idea of order, into the, you know, what questions do we have, what notes do we have, things like that.
+[1:08:17 PM] Amlung, Joseph Michael: Okay. Well, in that case, so, okay, CM22 here, we've got whether providers using Suki are able to see more patients per unit of clinical time. Now, I want to say this was one of our kind of, this was the interpretation kind of thing.
+[1:08:37 PM] Amlung, Joseph Michael: Because just because you have better patient volume doesn't mean you're getting better, you know, better results, better RVUs, whatever it might be. But in general, if you were to measure something like patient volume, then this is kind of how we're going with it. Like, that's kind of how I'm seeing it. It's like, we're not going to pick apart whether this is the right measure to do, but instead,
+[1:08:39 PM] Amlung, Joseph Michael: Say like, all right, we're going to say higher, but with caveats almost.
+[1:08:39 PM] Allen, Katie: Mhm.
+[1:09:03 PM] Amlung, Joseph Michael: And then the unit here is a change in completed encounters per provider per week, and that's after Suki adoption. And so I think we've got something down here that'll be like time aspects to it. But I mean, it's number of encounters. I think that's it. Completed encounters, whatever that might mean.
+[1:09:07 PM] Allen, Katie: Right. I would actually soften the language because I think per week.
+[1:09:11 PM] Allen, Katie: Like that's going to vary based on.
+[1:09:24 PM] Allen, Katie: specialty and yada, yada, yada, right? Like in primary care, you have doctors who are part-time versus those who are not, right? So we've got to...
+[1:09:28 PM] Allen, Katie: My guess is it's probably a lot more granular than per week.
+[1:09:33 PM] Amlung, Joseph Michael: Yeah, I think that's right. And yeah.
+[1:09:35 PM] Allen, Katie: Like more to like a per hour or something like that.
+[1:09:36 PM] Amlung, Joseph Michael: Yeah, I like that. Okay.
+[1:09:37 PM] Allen, Katie: I don't know what the right one to do is, but...
+[1:09:46 PM] Amlung, Joseph Michael: I can edit this, actually. Well, that's silly, but anyway, whatever.
+[1:09:59 PM] Amlung, Joseph Michael: So okay, well, hour per hour, not per week. I think that's good. Just having that granularity, essentially, and they can.
+[1:10:04 PM] Allen, Katie: Yes, 'cause then, 'cause then when you when you have that, you can roll it into whatever you what makes sense for what you're doing, right? Yep.
+[1:10:04 PM] Amlung, Joseph Michael: Yeah, yep. I like that. Cool.
+[1:10:26 PM] Amlung, Joseph Michael: Okay, and then we've got a grain just like, all right, it can be, you have these different ways you can look at it per different time periods, per site specialty health system. I think that all makes sense and might be consistent for all CMs. There might be some that are, you know, all of them would be
+[1:10:30 PM] Amlung, Joseph Michael: at whatever levels they want. So I'm not as concerned about that one, I would think.
+[1:10:40 PM] Amlung, Joseph Michael: Let's see. Are they able to see more of a clinical unit as documentation burden falls? I like that.
+[1:10:41 PM] Allen, Katie: M.
+[1:10:52 PM] Amlung, Joseph Michael: counterpart to financial productivity. Kind of, it wouldn't be the only one, but I feel like it is a counterpart, essentially.
+[1:11:06 PM] Allen, Katie: Yeah, it potentially, I was actually thinking it could be a counterpart to other stuff too, like this patient flow.
+[1:11:10 PM] Allen, Katie: I suppose it all boils down to being financial for them, but...
+[1:11:11 PM] Amlung, Joseph Michael: Yeah.
+[1:11:24 PM] Allen, Katie: But you could also just like, are we getting more patients in? Are we getting more patient referrals through? Are we like all that stuff starts to matter, but it's probably all revenue at the bottom line.
+[1:11:41 PM] Amlung, Joseph Michael: Yep, agreed. I think, I agree. There will be lots of operational, multiple counterparts, financial productivity. I think it's nice to say this, but especially for this small example, but totally agree. There will be more relationships than just this one.
+[1:12:04 PM] Amlung, Joseph Michael: Okay, so the recommended method here, and I should say one thing that I fed into this that I kind of liked, I put these tiers in here, which tier one is what we are kind of looking at the most, I think, will be the realistic and solid one. Like what is realistically what data is going to be there.
+[1:12:24 PM] Amlung, Joseph Michael: and still gets good information. And then these other two tiers are like, all right, if we had everything, then here is what we would want to do. And I think we would give this less time. I think it's like, this is almost like an idea space, essentially, to say like, all right, great. If we could do it, then here's what we would do.
+[1:12:38 PM] Amlung, Joseph Michael: with these algorithms, where and then tier 3 is kind of the like, all right, you have nothing, then you're probably doing a survey or something like that, you know? So just a heads up that there is a little bit of that framing in here, but that's more in the algorithm section here.
+[1:12:57 PM] Amlung, Joseph Michael: Either way, we're doing a pre-post encounter count, and I do, this is probably getting too specific to say primary admin console. Like, I think that's, I mean, ambulatory settings is like, I feel like that's specific, and it's like, okay, we're probably doing more than that.
+[1:12:59 PM] Amlung, Joseph Michael: It should be for any setting, I would imagine. Does that seem right?
+[1:13:01 PM] Allen, Katie: Yeah, so, yeah.
+[1:13:07 PM] Amlung, Joseph Michael: Okay.
+[1:13:09 PM] Amlung, Joseph Michael: Kaur.
+[1:13:34 PM] Amlung, Joseph Michael: Let's see, so the data that is required in that case, so there has to be obviously a Suki session and the session has to have a completion, there has to be a completion status and we're saying session here. I mean, I guess that's encounter. That might be something to make sure that is clear is like there's.
+[1:13:54 PM] Amlung, Joseph Michael: completed encounters, I would think, and there's the Suki session that was done in concordance with that encounter. I guess I just see this session completion status. It's like, okay, I assume that means that it is the encounter itself. We have an encounter and then we have the.
+[1:13:56 PM] Amlung, Joseph Michael: Was it completed and essentially that?
+[1:14:16 PM] Allen, Katie: Yeah, so this one almost doesn't care about the Suki data other than it was used, right? So it doesn't matter how long the recording was, it doesn't really matter. What really matters is the EHR.
+[1:14:41 PM] Allen, Katie: patient like encounter time and I don't know like what Epic's hooks are for that, but it certainly exists because they know that. You know that the average doctor spends 15. So this one is a patient volume thing, right? So it's really how many people are they talking to in a week.
+[1:14:46 PM] Allen, Katie: And that is the doctor spends 15 minutes per patient or whatever it is.
+[1:14:56 PM] Allen, Katie: I don't think when they do, well, and this is a whole rabbit hole I could go down. I don't know if when they're calculating patient volume.
+[1:15:00 PM] Allen, Katie: If they're counting documentation time in that.
+[1:15:13 PM] Allen, Katie: My guess is they're not. My guess is it's just how fast are they moving from one person to the other and are they now getting five people in instead of four in an hour or whatever.
+[1:15:14 PM] Allen, Katie: Um...
+[1:15:33 PM] Amlung, Joseph Michael: I think that's right. And I think that's something that, you know, I think that there were measures that are specific to documentation time. Trying to remember, yeah, documentation time. And in my mind, this is like, this is a dependent measure of that potentially. Like Suki causes documentation time to go down, which causes
+[1:15:53 PM] Amlung, Joseph Michael: volume, patient volume and throughput to go up and which causes RVUs to go up. Like kind of that relationship is kind of what I have in mind here. And I think I agree. It's like this has nothing to do with the documentation time itself. It's like we're almost doing the like raw measure of it.
+[1:16:14 PM] Amlung, Joseph Michael: And then if someone wanted to attribute documentation time to patient volume and throughput, that almost seems like a separate analysis. That is 2 measures that you are essentially putting together. And I don't know if you correlate, if it's correlation or whatever it would be, but that's kind of what I'm thinking about. It's like, we want this to be as simple and granular as possible.
+[1:16:24 PM] Amlung, Joseph Michael: and not dependent on, you know, these other kinds of measures like documentation time, if we can avoid it, if it's still meaningful.
+[1:16:26 PM] Amlung, Joseph Michael: Does that seem right?
+[1:16:29 PM] Allen, Katie: I think so.
+[1:16:35 PM] Allen, Katie: I'm starting to go down the rabbit hole. Sorry.
+[1:16:40 PM] Amlung, Joseph Michael: Yeah, yeah. Totally get it. And that's the thing.
+[1:17:01 PM] Amlung, Joseph Michael: Oh, nice, nice, good. Well, I'm going to ask, I'm going to see if there's any hooks too that are related to this because, I mean, like we said, this is kind of all EHR data. I want to see like what is Suki doing specific to this. Let me see if I even got that.
+[1:17:21 PM] Allen, Katie: Well, so, and I think that's what I was pinging off of. I don't know that we care that the Suki session existed, because we're not, when you're calculating this, this Suki is at the provider level, right? So when you're doing required data for these calculations, you need to know.
+[1:17:23 PM] Allen, Katie: It's almost like a binary. The provider is or is not a Suki user.
+[1:17:32 PM] Allen, Katie: and then it's patient volume per hour per day, whatever it is, and I don't know how they...
+[1:17:37 PM] Allen, Katie: I don't know how they calculate that. Like my guess is that just is an EHR.
+[1:17:48 PM] Allen, Katie: variable, that like Epic has something that just says this provider sees this many patients today and etc, etc.
+[1:18:10 PM] Amlung, Joseph Michael: Yeah, and I guess one thing that I'm wondering about in this case, is it, do we need to know that they actually used Suki? Because just saying that they adopted Suki as of this date, I guess I just wonder, does that mean they actually used it for the activity? Because if, just as an example, the provider, what provider A only
+[1:18:19 PM] Amlung, Joseph Michael: uses it 25% of the time and provider B uses it 100% of the time. That seems like that would be of interest here. Basically, it's a...
+[1:18:36 PM] Allen, Katie: Not to this metric, because that's an adoption metric. This is where things get really convoluted, because you're not wrong, but that's not what you're measuring here. And so what I would say, like the response to that is, if I see that on my aggregate,
+[1:18:49 PM] Allen, Katie: my patient volume only increased by, I should say, 1.5 patients a day across my Suki users. Now my sub-analysis might say, okay, let's look at adoption rates.
+[1:19:04 PM] Allen, Katie: Because maybe my guy who's only using it 25% of the time is driving this number to come down. Does that make sense? Like you, okay.
+[1:19:17 PM] Amlung, Joseph Michael: Yeah, that makes a lot more sense. It's going to be hard to mentally piece those out, but I think that's totally it. I think like this isn't even here. This doesn't need to be here at this moment.
+[1:19:19 PM] Allen, Katie: Well, it, it, I think you need to know.
+[1:19:29 PM] Allen, Katie: You need to know at a provider level whether they are Suki users or not, and every hospital appears to be different.
+[1:19:49 PM] Allen, Katie: Like I was talking to my friend Brian about all this on Friday and like they use NABLA and it's not rolled out to everybody, right? It's rolled out to a specific group. So you would only want to capture patient volume for those groups and then you would compare them to the other group, right?
+[1:19:49 PM] Allen, Katie: Um...
+[1:19:55 PM] Allen, Katie: So you need to know, you need to know that the provider is or is not an ambient user.
+[1:20:08 PM] Amlung, Joseph Michael: Yeah, okay, and that's so that's as granular as we need to get. It sounds like just is the provider that, and then we don't go more granular. Did they use it in all these sessions? Okay.
+[1:20:29 PM] Amlung, Joseph Michael: Okay. Do you think that that's in this solid but realistic tier or do you even in the like ideal aspirational tier of this, we still wouldn't want that. Just to like help me understand our model here. I'm kind of thinking the tiers don't matter. Like it doesn't matter.
+[1:20:30 PM] Amlung, Joseph Michael: This is just what the CM is.
+[1:20:35 PM] Allen, Katie: Yes, for this question, the tears do not matter.
+[1:20:44 PM] Allen, Katie: I think tiers do matter in a different, but I don't think that the tier changes.
+[1:20:48 PM] Allen, Katie: But we're measuring, right?
+[1:20:48 PM] Amlung, Joseph Michael: Okay, cool.
+[1:21:13 PM] Amlung, Joseph Michael: Okay, awesome. And I also just noticed that we're saying Suki specifically here, which I think is fine, but you know, if we were ever to present it to someone else, obviously it's ambient tool or something rather than Suki specifically, but I'm not too worried about it right now, I don't think.
+[1:21:19 PM] Allen, Katie: I don't think so either, because I think it's their deliverable, right? Like we're making it for them. So that's fine. Told otherwise.
+[1:21:41 PM] Amlung, Joseph Michael: Cool. And then our critical joins, as we're calling it here, is completed encounters per week and provider ID, which that's a definite one. You have to know the provider and then you have your encounters that, as I'm understanding, they're linked to the provider, essentially. Linking sessions to encounter counts. So to me, that makes sense.
+[1:21:47 PM] Allen, Katie: Right, your provider ID needs to be like nothing in your critical joins should be missing from your required data.
+[1:21:49 PM] Amlung, Joseph Michael: Perfect. Love that.
+[1:21:52 PM] Allen, Katie: I guess you have it there. Never mind. I saw provider ID at the bottom. I hadn't seen that yet.
+[1:22:01 PM] Amlung, Joseph Michael: And then caveats is that you just need to know your baseline window. I don't know what post ramp uses actually.
+[1:22:14 PM] Allen, Katie: Sometimes though, I don't know that this is how Claude is using this, but you would sort of do a washout period of letting them.
+[1:22:19 PM] Allen, Katie: Well, essentially ramp up use, right? Like...
+[1:22:19 PM] Amlung, Joseph Michael: Mhm.
+[1:22:29 PM] Allen, Katie: the sort of week after you start might not be the best time to start measuring stuff, right? And you need to decide what that kind of...
+[1:22:33 PM] Allen, Katie: Or if you want the washout period, right?
+[1:22:34 PM] Amlung, Joseph Michael: Mhm.
+[1:22:36 PM] Amlung, Joseph Michael: OK.
+[1:22:46 PM] Amlung, Joseph Michael: And then for these open questions, I actually think this one's kind of a null, like we don't need it because it is almost entirely EHR data.
+[1:22:48 PM] Allen, Katie: Well, and.
+[1:22:51 PM] Amlung, Joseph Michael: Is provider ID consistent? Yeah, go ahead.
+[1:23:11 PM] Allen, Katie: My guess is there is a Suki ID. I mean, I think it actually is a valid question, right? Because to know whether the person's A Suki user, you got to match up their Suki ID to their EHR-based provider ID. My guess is they're probably all using the same one, but...
+[1:23:11 PM] Allen, Katie: I don't know that to be true.
+[1:23:11 PM] Amlung, Joseph Michael: Mhm.
+[1:23:18 PM] Amlung, Joseph Michael: Okay, well I can keep it in here then, if that's good. Let's see.
+[1:23:33 PM] Amlung, Joseph Michael: Any started session count as Suki assisted or only completed. I don't know this. I don't get this one because I don't know the care process well enough between like completed sessions or not.
+[1:23:41 PM] Allen, Katie: Yeah, so like this, they may ask to use Suki or start using Suki and then be told to turn it off.
+[1:23:42 PM] Amlung, Joseph Michael: Mhm.
+[1:23:52 PM] Allen, Katie: But this goes to the other thing of it's not relevant to this measure. It's relevant to adoption. It's relevant to
+[1:23:59 PM] Allen, Katie: documentation and things like that, but it's not relevant to the change in the throughput per se.
+[1:24:06 PM] Amlung, Joseph Michael: Okay, do any of these seem important enough that we should be counting them as open questions?
+[1:24:20 PM] Amlung, Joseph Michael: You mentioned this one is still valid, but I don't know if it's like important. Does it take away from the ability? I envision an open question as like, we can't put this forth without answering the question.
+[1:24:24 PM] Allen, Katie: No, I don't see any of those as critical.
+[1:24:44 PM] Amlung, Joseph Michael: Cool, love that. I don't know if we have anything to go with the mental model, but I feel like the algorithm would be the next thing to go since we have 6 minutes. I just, I have a hard stop at 1.30, so maybe we could look at that a little bit if that's okay.
+[1:24:49 PM] Allen, Katie: Yeah, let's do that. And then I'm going to spend some time with this because this actually gave me an idea of how to think about this too.
+[1:25:05 PM] Amlung, Joseph Michael: Yeah, and like I said, this is feel free to use this. Do any capture discussions, take notes, record yourself talking through it. Don't even care. We can work with so much stuff, and you know, we can make changes and things.
+[1:25:28 PM] Amlung, Joseph Michael: Okay, so realistic and solid, which again, this is to me what we're going for and I don't even know if I care about tier 2 and stuff. We've got our unit, which is our delta completed encounters per provider per week, which we said week needs to be a different thing. I also noticed that this putting delta in the unit feels a little weird.
+[1:25:28 PM] Amlung, Joseph Michael: to me.
+[1:25:36 PM] Amlung, Joseph Michael: Only because in my mind, the unit is the completed encounters and the delta is just almost a byproduct of this. I don't know if that weirds you out.
+[1:25:40 PM] Allen, Katie: Yeah, I was gonna say, delta is the statistic. It's not the unit, it's the statistic.
+[1:25:46 PM] Allen, Katie: So you calculate a delta, which is the change from time A to time B, right?
+[1:26:08 PM] Amlung, Joseph Michael: Yeah, yeah. Okay, good. That's what I was thinking too. And then they're talking about the admin console that just kind of brought that in from our transcript. Let's see. And we talked about baseline and post ramp use. Okay, so for each provider, this is basically listing out variables and giving a
+[1:26:12 PM] Amlung, Joseph Michael: like a calculation method. So it's very codey.
+[1:26:15 PM] Allen, Katie: Yeah, this is actually where I had the light bulb. I think I'm going to try to do this.
+[1:26:22 PM] Allen, Katie: I'm going to try and set one of these up the way that I would ideally want to set it up with this measurement in mind.
+[1:26:47 PM] Amlung, Joseph Michael: Nice, okay, I love that. And then we can probably do some comparison and also probably find those variables, quote unquote, find them in an epic, so to speak, because I think that is a nice thing to have. It's not like a must have, but I think it's a nice thing to have. I also, I again mentioned the sources, the attribution to like the literature that we have, because
+[1:27:06 PM] Amlung, Joseph Michael: That's what this is supposed to be. It's like attributed either to Suki Hook data that we have, and I say data, it's just their documentation, or it's attributed to one of our CMs which has sources underlying it. So I'd be interested in seeing what sources corroborate this.
+[1:27:27 PM] Amlung, Joseph Michael: essentially. And I'd especially want to see like, is there a difference in how you're thinking of it versus, you know, what this is doing? So, because at first glance, it looks great, it looks fine, but I also don't know the EHR side of things anywhere near close enough to really put a fine-tooth comb to it. So that's what I just kind of worry about.
+[1:27:35 PM] Allen, Katie: Yeah, that's why I was thinking, I'll put on my, like if I was going to specify to the data core what I wanted them to extract for me to do this measure.
+[1:27:37 PM] Allen, Katie: I would, that's what I'm gonna.
+[1:27:45 PM] Allen, Katie: try and type out and then what I think I'll do is like what you just said I'll compare it to this and see how we end up.
+[1:27:48 PM] Allen, Katie: Because actually, you're right, at first glance, it actually looks pretty good.
+[1:28:13 PM] Amlung, Joseph Michael: Yeah, but then I like, I know, like we said, delta is the statistic and yet here it is putting report average throughput delta. And I'm like, I don't know if I like that as much as, when I'm imagining a dashboard, I don't want to see the delta. I feel like I want to see a line chart that shows a increase in number of encounters that have gone through.
+[1:28:31 PM] Amlung, Joseph Michael: not a, I think, again, the delta is the kind of the statistics that we infer from it. Whereas this is kind of, you know, you're calculating the delta and I'm like, report average throughput delta, I want average encounters per week, and then break it down pre and post.
+[1:28:31 PM] Allen, Katie: Mm.
+[1:28:32 PM] Amlung, Joseph Michael: Implementation.
+[1:28:34 PM] Amlung, Joseph Michael: If that makes sense, of course.
+[1:28:46 PM] Allen, Katie: Well, and my guess is the guess is it's trying to get to a delta because you can then take a delta times something to get a dollar amount or whatever. So like if I get...
+[1:28:55 PM] Allen, Katie: I don't know what makes sense, but if I know that on average I get $1000 in billing from every patient.
+[1:29:09 PM] Allen, Katie: If I'm getting in two more, that's two grand a day, right? Something like that. That's right. That's how you might use the delta. But you're right, because if you're going with a dashboard, I would want to see some sort of trending.
+[1:29:30 PM] Amlung, Joseph Michael: Well, and I guess maybe that is something that we need to have in here. I wonder if there's an application of this, and one of them is the deltas just like you described, and another is, again, it's a visualization in a dashboard. I don't know if many measures would have, I think it's good to specify it. It might not be a white
+[1:29:49 PM] Amlung, Joseph Michael: a wide variety of what kind of applications there are like that. But I feel like, you know, within the context of a dashboard, here's what your output might look like. In the context of a delta, a change metric, this is what it might look like. And I'm getting the feeling that the AI here took, it kind of conflated that.
+[1:29:58 PM] Amlung, Joseph Michael: delta, that application, to the measure itself, which I'm kind of thinking pure measure and then the application aspect of it comes after.
+[1:30:01 PM] Allen, Katie: Yep.
+[1:30:21 PM] Amlung, Joseph Michael: Cool. Okay. Okay, it is 1.30. I just wanted to check real quick. There are other things in here, you know, from Suki and from other things. I totally would welcome additional review of this. I feel like this is, I feel like this has been super helpful. Do we need
+[1:30:34 PM] Amlung, Joseph Michael: another one of these, like another 30 minutes or something to just continue or try out a couple things. I feel like we've gotten a lot done. Just do we feel complete-ish to move forward? I don't know.
+[1:30:36 PM] Allen, Katie: Yeah, I think I will spend, I've got time tomorrow morning.
+[1:30:48 PM] Allen, Katie: Since my afternoon is taken up by an interview. Just kidding. I'd like to spend some more time with it and I'll do that tomorrow morning.
+[1:30:49 PM] Allen, Katie: And then I'll have.
+[1:31:05 PM] Amlung, Joseph Michael: Okay, yeah, could you give maybe a go or no go as far as like, hey, you know what, here's my notes. Let's just turn this into, you know, an output that we like for Wednesday or, you know, hey, Jamie, let's find another 30 minutes or something ASAP, whatever it might be. Okay.
+[1:31:28 PM] Amlung, Joseph Michael: Perfect, and I will take what we've done here and do some light updates, but I don't intend to like push it to the website. You know, you shouldn't see updates yet. Maybe after the go or no go or whatever, but I don't want to like, I don't want it to get confusing because I'm afraid that if I make too many changes too quick, then we can't figure out what's going on.
+[1:31:37 PM] Thomas, Jamie: And then and then the goal would be to just bring this forth to the to the group on on Wednesday and talk through it some more, right? OK.
+[1:31:40 PM] Allen, Katie: Yes, I really think this is where Josh will shine a little because he's a measures guy.
+[1:31:43 PM] Thomas, Jamie: With those shine, I like that.
+[1:32:05 PM] Amlung, Joseph Michael: Yeah, yeah. Do they need a summary view? Like right now, this is way detailed and stuff. Do we need like a, I know this is details and it kind of summarizes it, but I'm almost wondering, like, do we need a very bird's eye view presentation of this? Like, do you think that group on Wednesday benefits from that? Or is that more of a, oh, Suki would want that?
+[1:32:08 PM] Allen, Katie: That's a good question.
+[1:32:27 PM] Allen, Katie: And my answer is, yes. So we might be fine for, we might be fine for Wednesday, but I think ultimately you're right, we're going to need a little summary page, like summary box.
+[1:32:29 PM] Amlung, Joseph Michael: OK, perfect.
+[1:32:44 PM] Amlung, Joseph Michael: Cool, this is a great start. I really enjoyed this. You just kind of got to get in there and just like poke around with it and poke holes and refine it. We just need it this time.
+[1:32:50 PM] Allen, Katie: Change and so.
+[1:32:50 PM] Amlung, Joseph Michael: delta, that application, to the measure itself, which I'm kind of thinking pure measure and then the application aspect of it comes after.
+[1:32:52 PM] Allen, Katie: Yep, yep.
+[1:32:56 PM] Amlung, Joseph Michael: Cool. Okay. Well, thank you. Thank you both. Talk later.
+[1:32:56 PM] Allen, Katie: Bye.
