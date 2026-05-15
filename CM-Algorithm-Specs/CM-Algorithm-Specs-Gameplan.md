@@ -1,32 +1,32 @@
 # Gameplan: CM-20, CM-21 & CM-22 Algorithm Specs
-**Created:** 2026-05-06 | **Owner:** Joe Amlung  
-**Purpose:** Deliver canonical measure pseudo-specifications for Suki's internal data pipeline and admin console
+**Created:** 2026-05-06 | **Updated:** 2026-05-13 | **Owner:** Joe Amlung  
+**Purpose:** Deliver a data crosswalk and canonical measure specifications for Suki's internal data pipeline and admin console
 
 ---
 
 ## What We Are Building
 
-Three measure algorithm specs — two financial (CM-20 and CM-21), one operational (CM-22) — each delivering:
+The primary deliverable is **[CM-Data-Crosswalk.md](CM-Data-Crosswalk.md)** — a table showing, for each of the three priority measures (CM-20, CM-21, CM-22), what data Suki already has vs. what must come from the EHR partner. That document is what goes to Amita and Sudha.
 
-1. **Measure name and concrete unit** — a dashboardable number (e.g., "% encounters where AI-suggested ICD-10 code matched final billed code")
-2. **Data elements** — the discrete Suki and EHR inputs required, each defined
-3. **Tiered ascertainment methods** — ranked options for how the measure can be computed, from best to fallback (see below)
-4. **Pseudocode algorithm** — one per method tier; logic that combines data elements into the indicator
-5. **Suki-specific tailoring note** — what is realistic given Suki's current hooks vs. aspirational
+The individual spec files (CM-20, CM-21, CM-22) remain as internal reference for deeper algorithm detail, open questions, and literature anchors. They are working documents, not the deliverable.
 
-These are Suki's private IP. The specs tell Suki *what to aim for*; Amita's team figures out how to implement the query in the pipeline. We are not naming fields or writing SQL.
+**What the crosswalk communicates:**
+1. The canonical measure name and unit
+2. What Suki already has (primarily: provider Suki user flag + adoption date; plus diagnosis codes for CM-21a)
+3. What must come from the EHR partner (the data-sharing ask list)
+4. One-sentence measurement approach — no formulas, no pseudocode
 
-### Tiered Ascertainment Framework
+These are Suki's private IP. The crosswalk tells Amita's team *what to ask for*; they figure out how to implement the pipeline query. We are not specifying SQL or field-level schemas.
 
-Each spec should rank available methods by quality of evidence, using three tiers:
+### Note on the Tiered Framework
 
-| Tier | Label | Description |
-|---|---|---|
-| 1 | **Realistic & Solid** ✓ | Our primary recommendation — rigorous enough to stand behind, achievable with Suki + EHR data that is reasonably obtainable. This is the tier Amita builds first. |
-| 2 | **Aspirational / Ideal** | Best possible method if all data and conditions were available — e.g., validated instrument, prospective design, complete EHR linkage. Sets the ceiling we are working toward. |
-| 3 | **Minimal / Fallback** | Lower-quality but still useful — e.g., physician survey, self-report, partial data. Documents that something is measurable even without ideal data; useful for customers with limited EHR sharing. |
+The original plan had three ascertainment tiers (Realistic, Aspirational, Fallback/Survey). **As of May 13, the team agreed to drop tiers 2 and 3 from the deliverable.** Reasons:
 
-The point is not to present all methods as equal — it's to show Suki the full landscape so they know what's possible, while being clear about which method is the target.
+- Tier 2 (ideal/aspirational) is more than Suki needs and gives them more to object to
+- Tier 3 (survey fallback) is not appropriate for financial and operational measures
+- The math is straightforward once the data inputs are identified — over-specifying the algorithm is not helpful
+
+The Tier 1 logic and data elements in the individual spec files remain valid as internal reference.
 
 ---
 
@@ -38,6 +38,14 @@ The point is not to present all methods as equal — it's to show Suki the full 
 - **CM-20 and CM-21 are complementary, not redundant.** CM-20 is the financial bottom line; CM-21 explains the coding accuracy/completeness mechanism that may drive CM-20.
 - **Depth is proportional to importance.** Operational/financial measures get the full algorithm treatment first.
 - **Structure over perfect content.** A draft with clear structure that Suki can correct is more valuable than a polished document that misses the mark.
+
+### Additional decisions from May 13 working session
+
+- **The deliverable is a crosswalk table, not algorithm specs.** The individual spec files are internal reference; the crosswalk is what goes to Suki. See [CM-Data-Crosswalk.md](CM-Data-Crosswalk.md).
+- **List inputs, not formulas.** "The math is easy; getting the right data is hard." One-sentence approach is sufficient — no pseudocode in the deliverable.
+- **Drop tiers 2 and 3.** Only the primary (Tier 1) method is included in the deliverable. Survey fallbacks are excluded from financial and operational measures.
+- **The primary Suki variable is the provider user flag.** For most measures, Suki's contribution is simply identifying which provider IDs are Suki users and when adoption occurred. Everything else comes from the EHR.
+- **Sudha's stated priority is financial productivity.** CM-20 measures lead; CM-21 and CM-22 follow.
 
 ---
 
@@ -289,16 +297,16 @@ Useful for checking whether a calculated value "makes sense" and for framing Suk
 
 ## Steps and Timeline
 
-| Step | Owner | When | Output |
-|---|---|---|---|
-| Joe preps draft data elements + algorithm sketches for CM-20, CM-21, and CM-22 | Joe | By end of week (May 8) | Working draft — rough pseudocode, candidate units, known gaps |
-| Joe + Katie working session | Joe + Katie | Monday May 11, 1pm | Stress-tested algorithms; Katie flags method issues; decide on primary flavor for each |
-| Full team review | All | Wednesday May 14 | Alignment on final structure; decide what to send to Suki |
-| Send CM-20 + CM-21 + CM-22 specs to Amita and Sudha | Joe or Jamie | Wed May 14 EOD or Thu May 15 | Suki feedback round begins |
-| Suki feedback received | Amita / Sudha | By Fri May 15–May 22 | Corrections to data availability, internal process changes |
-| Revise and finalize | Joe | Following week | First finalized algorithm specs ready to replicate across other CMs |
-
-*Note: Paul may be at IUB Labs on Wednesday May 14 — Joe to lead team review if needed.*
+| Step | Owner | When | Status | Output |
+|---|---|---|---|---|
+| Joe preps draft data elements + algorithm sketches for CM-20, CM-21, and CM-22 | Joe | May 8 | ✓ Done | Individual spec files (CM-20, CM-21, CM-22) |
+| Joe + Katie working session | Joe + Katie | May 11, 1pm | ✓ Done | Specs stress-tested; format simplified |
+| May 13 full team review — format change decided | All | May 13 | ✓ Done | Deliverable changed to crosswalk table; tiers 2/3 dropped |
+| Katie + Josh review Paul's CSV mapping against crosswalk | Katie + Josh | May 14, 8am | → Next | Validated crosswalk; gaps flagged |
+| Full team review | All | May 14 | → Next | Alignment; decide what to send to Suki |
+| Send crosswalk to Amita and Sudha | Joe or Jamie | May 14 EOD or May 15 | → Next | Suki feedback round begins |
+| Suki feedback received | Amita / Sudha | May 15–22 | Pending | Corrections to data availability |
+| Revise and finalize; replicate format across other CMs | Joe | Week of May 18 | Pending | Finalized crosswalk; template for remaining measures |
 
 ---
 
