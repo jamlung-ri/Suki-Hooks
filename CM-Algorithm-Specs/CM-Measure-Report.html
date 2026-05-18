@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canonical Measure Data Requirements — Suki Ambient AI</title>
+  <style>
+    :root {
+      --ink: #202124;
+      --muted: #646a73;
+      --line: #d9dee6;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --soft: #f1f4f8;
+      --teal: #00796b;
+      --teal-light: #e0f2f1;
+      --amber: #b26a00;
+      --amber-light: #fff3df;
+      --blue: #315d8c;
+      --blue-light: #eaf1f8;
+      --slate: #455a64;
+      --radius: 6px;
+      --shadow: 0 2px 8px rgba(32,33,36,0.07);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.5;
+    }
+
+    a { color: var(--teal); }
+
+    /* ── Page shell ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 48px 32px 72px;
+    }
+
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .no-print { display: none !important; }
+    }
+
+    /* ── Cover ── */
+    .cover {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 28px;
+      margin-bottom: 36px;
+    }
+
+    .cover-eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      color: var(--teal);
+      margin: 0 0 10px;
+    }
+
+    .cover h1 {
+      margin: 0 0 10px;
+      font-size: 26px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+
+    .cover-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cover-meta span { white-space: nowrap; }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 40px 0 14px;
+    }
+
+    .section-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+
+    .pill-financial { background: var(--teal-light); color: var(--teal); }
+    .pill-operational { background: var(--amber-light); color: var(--amber); }
+    .pill-deferred { background: var(--soft); color: var(--muted); }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    /* ── Framing box ── */
+    .framing {
+      background: var(--blue-light);
+      border: 1px solid #c5d9ed;
+      border-left: 4px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 32px;
+    }
+
+    .framing p { margin: 0 0 6px; line-height: 1.55; }
+    .framing p:last-child { margin: 0; }
+    .framing strong { color: var(--ink); }
+
+    /* ── Measure table ── */
+    .measure-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+
+    .measure-table thead tr {
+      background: #eef3f7;
+    }
+
+    .measure-table th {
+      padding: 9px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .measure-table td {
+      padding: 12px 12px;
+      border-bottom: 1px solid #edf0f4;
+      vertical-align: top;
+    }
+
+    .measure-table tr:last-child td { border-bottom: 0; }
+
+    .measure-table tr:hover td { background: #fafcfe; }
+
+    /* ── Measure ID cell ── */
+    .measure-id {
+      white-space: nowrap;
+      width: 180px;
+    }
+
+    .cm-code {
+      font-weight: 800;
+      font-size: 13px;
+      display: block;
+    }
+
+    .cm-name {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+      margin-top: 2px;
+      display: block;
+    }
+
+    .cm-formula {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 7px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+      color: var(--slate);
+      line-height: 1.4;
+    }
+
+    /* ── Input lists ── */
+    .input-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .input-list li {
+      font-size: 13px;
+      line-height: 1.4;
+      padding-left: 14px;
+      position: relative;
+    }
+
+    .input-list li::before {
+      content: "·";
+      position: absolute;
+      left: 3px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field-code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 11px;
+      background: #f1f4f8;
+      border: 1px solid #dde3ea;
+      border-radius: 3px;
+      padding: 1px 4px;
+      color: var(--slate);
+      white-space: nowrap;
+    }
+
+    /* ── Notes cell ── */
+    .note-text {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 18ch;
+    }
+
+    .note-tag {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .tag-decrease { background: #e8f5e9; color: #2e7d32; }
+    .tag-increase { background: var(--teal-light); color: var(--teal); }
+    .tag-pipeline { background: var(--amber-light); color: var(--amber); }
+    .tag-proxy { background: var(--soft); color: var(--muted); }
+
+    /* ── Suki cell ── */
+    .suki-universal {
+      font-size: 12.5px;
+      color: #3d4652;
+    }
+
+    .suki-note {
+      margin-top: 5px;
+      font-size: 11.5px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Universal Suki box ── */
+    .universal-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--teal-light);
+      border: 1px solid #b2dfdb;
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .universal-icon {
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .universal-box p { margin: 0 0 4px; }
+    .universal-box p:last-child { margin: 0; color: var(--muted); font-size: 12px; }
+
+    /* ── Benchmarks ── */
+    .bench-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .bench-table th {
+      background: #eef3f7;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .bench-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #edf0f4;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    .bench-table tr:last-child td { border-bottom: 0; }
+
+    .bench-value {
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+    }
+
+    /* ── Deferred callout ── */
+    .deferred-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #3d4652;
+      margin-bottom: 12px;
+    }
+
+    .deferred-box strong { color: var(--ink); }
+
+    /* ── Footer ── */
+    .report-footer {
+      margin-top: 52px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+
+    /* ── Print button ── */
+    .print-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .print-btn:hover { background: var(--soft); }
+
+    @media (max-width: 700px) {
+      .page { padding: 24px 16px 48px; }
+      .measure-table, .bench-table { display: block; overflow-x: auto; }
+      .measure-id { width: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Cover -->
+  <header class="cover">
+    <p class="cover-eyebrow">Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</p>
+    <h1>Canonical Measure Data Requirements</h1>
+    <div class="cover-meta">
+      <span><strong>Prepared by:</strong> Regenstrief Suki Research Team</span>
+      <span><strong>Date:</strong> May 2026</span>
+      <span><strong>For:</strong> Suki Data &amp; Analytics Team (Amita, Sudha)</span>
+      <span><strong>Status:</strong> For review and feedback</span>
+    </div>
+  </header>
+
+  <!-- Framing -->
+  <div class="framing">
+    <p><strong>Purpose.</strong> This document identifies the data inputs required to compute each priority canonical measure for Suki's ambient AI platform. For each measure, it specifies what must come from the EHR partner and what Suki already provides. It is intended to inform Suki's data pipeline and admin console development.</p>
+    <p><strong>Scope.</strong> Measures are organized into Financial and Operational categories. Each row lists the raw inputs needed — not a complete algorithm. The implied comparison for all measures is pre-Suki vs. post-Suki, per provider, using each provider's adoption date (first completed session) as the pre/post boundary.</p>
+  </div>
+
+  <!-- Universal Suki input note -->
+  <div class="universal-box">
+    <span class="universal-icon">&#x2139;</span>
+    <div>
+      <p><strong>Universal Suki input for all measures:</strong> Provider-level usage logs linking each provider ID to their Suki adoption date and session activity. For most measures, this is Suki's primary contribution — a flag identifying which providers are Suki users and when adoption occurred.</p>
+      <p>The exception is the ICD-10 Suggestion Match Rate (CM-21b), which additionally requires Suki-generated diagnosis codes from the structured-data API endpoint.</p>
+    </div>
+  </div>
+
+  <!-- ── FINANCIAL MEASURES ── -->
+  <div class="section-header">
+    <span class="section-pill pill-financial">Financial</span>
+    <h2>Financial Measures &mdash; CM-20 &amp; CM-21</h2>
+  </div>
+
+  <table class="measure-table">
+    <thead>
+      <tr>
+        <th style="width:180px">Measure</th>
+        <th>EHR Data Required</th>
+        <th style="width:160px">Suki Data</th>
+        <th style="width:130px">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- CM-20a -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-20a</span>
+          <span class="cm-name">wRVU Output</span>
+          <span class="cm-formula">Δ wRVUs/week</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Total work RVUs by provider by service month <span class="field-code">wrvu_total</span></li>
+            <li>Provider IDs (consistent with Suki)</li>
+            <li>Provider encounters by month</li>
+            <li>Provider average E/M levels by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date (first completed session)
+        </td>
+        <td>
+          <span class="note-text">Change in wRVU output per provider per month, pre vs. post adoption.</span>
+          <br><span class="note-tag tag-increase">Higher = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-20b -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-20b</span>
+          <span class="cm-name">Billing Revenue</span>
+          <span class="cm-formula">Δ revenue/provider/yr</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Total paid revenue by provider by service month <span class="field-code">revenue_paid</span></li>
+            <li>Provider IDs</li>
+            <li>Provider encounters by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">Adjusted net revenue preferred over gross.</span>
+          <br><span class="note-tag tag-increase">Higher = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-20c -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-20c</span>
+          <span class="cm-name">E/M Level Improvement</span>
+          <span class="cm-formula">% L4–5 / total E/M</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>E/M counts by level, new &amp; established patients<br>
+              <span class="field-code">em_new_level1_count</span> &ndash; <span class="field-code">em_new_level5_count</span><br>
+              <span class="field-code">em_est_level1_count</span> &ndash; <span class="field-code">em_est_level5_count</span>
+            </li>
+            <li>Total E/M visits <span class="field-code">em_total_count</span></li>
+            <li>Avg ICD-10 diagnosis codes per encounter <span class="field-code">icd10_codes_per_enc</span></li>
+            <li>Provider IDs; provider encounters by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">Change in share of visits coded at Level 4 or 5. ICD code count is a secondary proxy for documentation completeness.</span>
+          <br><span class="note-tag tag-increase">Higher L4–5 % = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-21a -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-21a</span>
+          <span class="cm-name">ICD-10 Coding Depth</span>
+          <span class="cm-formula">Δ avg ICD codes/enc</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Avg ICD-10 diagnosis codes per encounter <span class="field-code">icd10_codes_per_enc</span></li>
+            <li>Provider IDs; provider encounters by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">Proxy for coding completeness. Available from current EHR data pull.</span>
+          <br><span class="note-tag tag-proxy">Proxy measure</span>
+          <br><span class="note-tag tag-increase">Higher = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-21b -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-21b</span>
+          <span class="cm-name">ICD-10 Suggestion Match Rate</span>
+          <span class="cm-formula">Suki codes ∩ billed / billed</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Final billed ICD-10 codes per encounter</li>
+            <li>Encounter-to-claim linkage (join key)</li>
+          </ul>
+        </td>
+        <td>
+          <span class="suki-universal">AI-generated ICD-10 codes<br><span class="field-code">GET /session/{id}/structured-data</span></span>
+          <span class="suki-note">Session completion status; encounter ID as join key. Note: Suki may return IMO codes — confirm ICD-10 availability or map from IMO.</span>
+        </td>
+        <td>
+          <span class="note-text">Direct accuracy measure. Requires dedicated pipeline linkage beyond current EHR data pull.</span>
+          <br><span class="note-tag tag-pipeline">Needs pipeline work</span>
+          <br><span class="note-tag tag-increase">Higher = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-21c -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-21c</span>
+          <span class="cm-name">Claim Denial Rate</span>
+          <span class="cm-formula">denied L4–5 / total L4–5</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Denied Level 4–5 claim count <span class="field-code">denial_l45_count</span></li>
+            <li>Total Level 4–5 claims submitted <span class="field-code">total_l45_submitted</span></li>
+            <li>Full E/M level counts (for denominators)</li>
+            <li>Provider IDs; provider encounters by month</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">Focused on L4–5 claims where documentation quality most affects denial risk. Also relevant to CM-20 (financial impact).</span>
+          <br><span class="note-tag tag-decrease">Lower = better</span>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- ── OPERATIONAL MEASURES ── -->
+  <div class="section-header">
+    <span class="section-pill pill-operational">Operational</span>
+    <h2>Operational Measures &mdash; CM-04, CM-05, CM-07, CM-22</h2>
+  </div>
+
+  <table class="measure-table">
+    <thead>
+      <tr>
+        <th style="width:180px">Measure</th>
+        <th>EHR Data Required</th>
+        <th style="width:160px">Suki Data</th>
+        <th style="width:130px">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- CM-22 -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-22</span>
+          <span class="cm-name">Patient Volume &amp; Throughput</span>
+          <span class="cm-formula">Δ encounters/provider/day</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Total closed encounters <span class="field-code">total_encounters</span></li>
+            <li>Avg completed encounters per working day <span class="field-code">encounters_per_day</span></li>
+            <li>Provider IDs; provider specialty</li>
+            <li>Scheduled clinical hours (for part-time normalization)</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td>
+          <span class="suki-universal">Provider ID &rarr; Suki user flag<br>Adoption date</span>
+          <span class="suki-note">Session count per week to filter for active-use periods.</span>
+        </td>
+        <td>
+          <span class="note-text">Direct test of whether freed documentation time converts to more patient visits.</span>
+          <br><span class="note-tag tag-increase">Higher = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-04 -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-04</span>
+          <span class="cm-name">Documentation Time</span>
+          <span class="cm-formula">Δ avg doc time/encounter</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Avg documentation time per encounter (min) <span class="field-code">avg_doc_time_min</span></li>
+            <li>Provider IDs; provider encounters by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">Core test of Suki's primary value proposition. Available from all four EHR platforms.</span>
+          <br><span class="note-tag tag-decrease">Lower = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-05 -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-05</span>
+          <span class="cm-name">After-Hours Documentation</span>
+          <span class="cm-formula">Δ after-hours EHR time/mo</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>After-hours EHR time per provider per month (min) <span class="field-code">after_hours_min</span></li>
+            <li>Total login time</li>
+            <li>Provider IDs; provider encounters by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">"Pajama time." Standardize to per-provider per-month. Athena provides granular sub-components (encounter time vs. inbox time after hours).</span>
+          <br><span class="note-tag tag-decrease">Lower = better</span>
+        </td>
+      </tr>
+
+      <!-- CM-07 -->
+      <tr>
+        <td class="measure-id">
+          <span class="cm-code">CM-07</span>
+          <span class="cm-name">Total EHR Time</span>
+          <span class="cm-formula">Δ total EHR time/mo</span>
+        </td>
+        <td>
+          <ul class="input-list">
+            <li>Avg total provider time per encounter (min) <span class="field-code">avg_total_time_min</span></li>
+            <li>Business-hours EHR time per provider per month (min) <span class="field-code">business_hours_min</span></li>
+            <li>Total inbox time per provider per month (hrs) <span class="field-code">inbox_time_hrs</span></li>
+            <li>Provider IDs; provider encounters by month</li>
+            <li>Limited to eligible providers &amp; settings</li>
+          </ul>
+        </td>
+        <td class="suki-universal">
+          Provider ID &rarr; Suki user flag<br>
+          Adoption date
+        </td>
+        <td>
+          <span class="note-text">Inclusive of inbox, orders, and messaging. Inbox component may be less sensitive to ambient documentation than CM-04.</span>
+          <br><span class="note-tag tag-decrease">Lower = better</span>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- ── DEFERRED ── -->
+  <div class="section-header">
+    <span class="section-pill pill-deferred">Deferred</span>
+    <h2>Measures Not in Current Scope</h2>
+  </div>
+
+  <div class="deferred-box">
+    <strong>HCC Capture Rate</strong> — HCC capture (risk-adjustment diagnosis completeness) requires applying the CMS HCC v28 crosswalk to final billed ICD-10 codes. This step is not in Suki's current EHR data pull. <span class="field-code">ma_patient_count</span> (Medicare Advantage patient count) is available from Epic and Athena as relevant population context, but HCC capture computation itself is deferred pending pipeline readiness. Estimated impact from published literature: <strong>+$9,685/provider/year</strong> (Boyter/KLAS 2025).
+  </div>
+
+  <div class="deferred-box">
+    <strong>Note Quality (CM-09, CM-10, CM-11)</strong> — Note accuracy, overall quality (PDQI), and verbosity measures are deferred. Suki's note quality processes are currently in flux; these measures will be re-evaluated once internal processes stabilize.
+  </div>
+
+  <!-- ── BENCHMARKS ── -->
+  <div class="section-header">
+    <h2>Published Benchmarks</h2>
+  </div>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 12px">Reference points for interpreting computed values. All findings are from peer-reviewed or peer-sponsored sources.</p>
+
+  <table class="bench-table">
+    <thead>
+      <tr>
+        <th style="width:100px">Measure</th>
+        <th style="width:200px">Finding</th>
+        <th>Source</th>
+        <th style="width:100px">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>CM-20a</td>
+        <td class="bench-value">+1.81 wRVUs/week<br>≈ +$3,044/provider/yr</td>
+        <td>Holmgren 2026 (UCSF; Epic)</td>
+        <td>Pre/post; no denial rate increase</td>
+      </tr>
+      <tr>
+        <td>CM-20b</td>
+        <td class="bench-value">+$13,049/provider/yr</td>
+        <td>Boyter/KLAS 2025 (Ambience)</td>
+        <td>Includes HCC and E/M gains; upper-bound estimate</td>
+      </tr>
+      <tr>
+        <td>CM-20c</td>
+        <td class="bench-value">+$1,907/provider/yr</td>
+        <td>Boyter/KLAS 2025</td>
+        <td>E/M level improvement component only</td>
+      </tr>
+      <tr>
+        <td>CM-21c</td>
+        <td class="bench-value">No increase in denial rate</td>
+        <td>Holmgren 2026</td>
+        <td>Null finding — reassuring for safety; same UCSF cohort as CM-20a</td>
+      </tr>
+      <tr>
+        <td>CM-22</td>
+        <td class="bench-value">+0.80 encounters/week</td>
+        <td>Holmgren 2026</td>
+        <td>Statistically significant; ambulatory setting</td>
+      </tr>
+      <tr>
+        <td>CM-04</td>
+        <td class="bench-value">Significant reductions reported</td>
+        <td>Tierney 2024; Ma 2025; multiple studies</td>
+        <td>Magnitude varies by setting and EHR; 15–30% reduction typical range</td>
+      </tr>
+      <tr>
+        <td>CM-05</td>
+        <td class="bench-value">Significant reduction in after-hours time</td>
+        <td>Olson 2025; Duggan 2025</td>
+        <td>Commonly cited by providers as the primary quality-of-life benefit</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── FOOTER ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / IU &mdash; Suki Partnership &mdash; Internal document &mdash; May 2026</span>
+    <button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+  </footer>
+
+</div>
+</body>
+</html>
