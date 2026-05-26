@@ -24,6 +24,8 @@
   --brand-deep:  #1a8eb8;
   --brand-soft:  #d4ecf2;
   --brand-ink:   #343c44;
+  --green:       #2a6e3a;
+  --green-soft:  #d4eadb;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -356,6 +358,211 @@ body {
   color: var(--ink-2);
 }
 
+/* ── Algorithm summary (always visible above EHR grid) ─────────────────── */
+.algo-summary {
+  margin-bottom: 20px;
+  padding-bottom: 4px;
+}
+.algo-summary .panel-label {
+  margin-bottom: 10px;
+}
+
+/* ── Sub-details (collapsed by default) ─────────────────────────────────── */
+.sub-details {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  margin-top: 16px;
+  overflow: hidden;
+}
+.sub-details-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--paper-2);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.sub-details-head:hover { background: var(--paper-3); }
+.sub-details-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.sub-details-caret {
+  font-size: 12px;
+  color: var(--ink-4);
+  transition: transform 0.2s;
+}
+.sub-details.open .sub-details-caret { transform: rotate(180deg); }
+.sub-details-body {
+  display: none;
+  padding: 20px 20px 16px;
+}
+.sub-details.open .sub-details-body { display: block; }
+.watch-section { margin-bottom: 16px; }
+.watch-section .panel-label { margin-bottom: 6px; }
+
+/* ── Formula display ─────────────────────────────────────────────────────── */
+.algo-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+.algo-row:last-child { margin-bottom: 0; }
+.algo-row-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  min-width: 80px;
+  flex-shrink: 0;
+  padding-top: 5px;
+}
+.algo-row-content {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.compare-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.formula-expr {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border: 1px solid var(--rule-2);
+  border-radius: 3px;
+  padding: 7px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.formula-expr .unit-name {
+  color: var(--ink);
+  font-weight: 500;
+}
+.formula-expr .eq {
+  color: var(--ink-4);
+  font-weight: 400;
+}
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  line-height: 1.25;
+}
+.frac-num {
+  border-bottom: 1.5px solid var(--ink-3);
+  padding: 0 2px 3px;
+  text-align: center;
+  font-size: 11px;
+}
+.frac-den {
+  padding: 3px 2px 0;
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.compare-expr {
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.unit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.unit-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 3px 10px;
+  letter-spacing: 0.02em;
+}
+.delta-tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.delta-tag.higher {
+  background: var(--green-soft);
+  color: var(--green);
+  border: 1px solid #b0d4ba;
+}
+.delta-tag.lower {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid #d4b4a8;
+}
+.how-it-works {
+  font-family: 'Newsreader', serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  margin-bottom: 10px;
+}
+.delta-interp {
+  font-family: 'Newsreader', serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+  padding-left: 14px;
+  border-left: 2px solid var(--rule);
+}
+.watch-list {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.5;
+  padding-left: 18px;
+  margin-bottom: 14px;
+}
+.watch-list li {
+  margin-bottom: 4px;
+}
+.sketch-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-3);
+  background: var(--paper-2);
+  border: 1px solid var(--rule-2);
+  border-radius: 4px;
+  padding: 12px 14px;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+}
+
 /* Benchmarks */
 .bench-section {
   background: var(--paper-2);
@@ -412,7 +619,7 @@ body {
   </div>
   <div class="masthead-sub">
     <span>Canonical Measures working document</span>
-    <span>CM-04 &bull; CM-05 &bull; CM-07 &bull; CM-20 &bull; CM-21</span>
+    <span>CM-04 &bull; CM-05 &bull; CM-07 &bull; CM-20 &bull; CM-21 &bull; CM-22</span>
     <span>May 2026</span>
   </div>
 </header>
@@ -421,6 +628,7 @@ body {
   <span class="jump-nav-label">Jump to</span>
   <button class="jump-btn" data-target="cm-20">CM-20 <span class="cm-name">Financial Productivity</span></button>
   <button class="jump-btn" data-target="cm-21">CM-21 <span class="cm-name">Coding Accuracy</span></button>
+  <button class="jump-btn" data-target="cm-22">CM-22 <span class="cm-name">Patient Volume</span></button>
   <button class="jump-btn" data-target="cm-04">CM-04 <span class="cm-name">Documentation Time</span></button>
   <button class="jump-btn" data-target="cm-07">CM-07 <span class="cm-name">Total EHR Time</span></button>
   <button class="jump-btn" data-target="cm-05">CM-05 <span class="cm-name">After-Hours</span></button>
@@ -446,6 +654,18 @@ const MEASURES = [
         suki_opp: "Suki session timestamps could serve as a proxy for in-encounter documentation efficiency. No direct RVU data is producible from Suki without EHR integration.",
         benchmarks: "<strong>Holmgren 2026:</strong> +0.04 RVU/encounter, +$3,044/year (UCSF). <strong>Boyter/KLAS 2025:</strong> +$13,049/year average across sites.",
         notes: "",
+        unit: "wRVUs per provider per week",
+        direction: "higher",
+        formula: `<span class="unit-name">wRVUs / provider / week</span><span class="eq">=</span><span class="frac"><span class="frac-num">&#x03A3;(CPT &times; wRVU weight)</span><span class="frac-den">provider &middot; week</span></span>`,
+        what_to_compare: "pre-adoption weekly avg → post-adoption weekly avg",
+        how_it_works: "For each provider, multiply each billed CPT code by its CMS wRVU weight and sum across all encounters in the week. Compare each provider's average weekly wRVU total before Suki adoption to after adoption, excluding the onboarding ramp. Average across the provider cohort.",
+        delta_interpretation: "Higher wRVUs per provider per week after adoption indicates Suki is supporting more complete coding of encounter complexity.",
+        watch_outs: [
+          "Exclude the onboarding ramp (~4 weeks) after go-live.",
+          "Use same-period prior year as the pre window to control for seasonal variation.",
+          "Normalize for scheduled clinical hours when part-time providers are included."
+        ],
+        visual_sketch: "wRVUs per provider per week\n\n45 |                    . . . .\n43 |            . . . .\n41 |  . . . .\n   |\n   +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "Total work RVUs by provider/month", vendor: "Epic: wrvu_total | Cerner: wrvu_total" },
           { field: "Provider IDs", vendor: "All vendors" },
@@ -461,6 +681,18 @@ const MEASURES = [
         suki_opp: "Suki session timestamps could serve as a proxy for in-encounter documentation efficiency. No direct revenue data is producible from Suki without EHR integration.",
         benchmarks: "<strong>Boyter/KLAS 2025:</strong> +$13,049/year average across sites (majority from HCC capture). Can be reported per-encounter or per time period.",
         notes: "Use adjusted net revenue where possible.",
+        unit: "Paid revenue per provider per month ($)",
+        direction: "higher",
+        formula: `<span class="unit-name">revenue / provider / month</span><span class="eq">=</span><span class="frac"><span class="frac-num">adjusted net revenue ($)</span><span class="frac-den">provider &middot; month</span></span>`,
+        what_to_compare: "pre-adoption monthly avg → post-adoption monthly avg",
+        how_it_works: "Sum total adjusted net revenue per provider per month from EHR or claims data. Compare the pre-adoption monthly average to the post-adoption monthly average per provider, then average across the cohort.",
+        delta_interpretation: "Higher revenue per provider per month after adoption indicates more complete documentation is translating into collected revenue.",
+        watch_outs: [
+          "Use adjusted net revenue (collected), not gross charges.",
+          "Pair with wRVU output (above) to show the coding mechanism behind any revenue shift.",
+          "Dollar figures vary substantially by specialty and payer mix — report within specialty when possible."
+        ],
+        visual_sketch: "Paid revenue per provider per month ($)\n\n$22k |                    . . . .\n$20k |            . . . .\n$18k |  . . . .\n     |\n     +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "Total paid revenue by provider/month ($)", vendor: "Epic: revenue_paid | Cerner: revenue_paid" },
           { field: "Provider IDs", vendor: "All vendors" },
@@ -476,6 +708,18 @@ const MEASURES = [
         suki_opp: "Suki-generated E&M codes (H3/PBC structured output) could be compared to final billed codes as a pre-submission coding signal. Requires EHR writeback to validate. ICD-10 codes per encounter may serve as a proxy.",
         benchmarks: "<strong>Boyter 2025:</strong> +$1,907/year from E/M level uplift. <strong>Afshar 2025b:</strong> p &lt; 0.001 ICD-10 coding improvement (RCT).",
         notes: "ICD-10 codes per encounter may be a useful proxy when E/M-level data is unavailable.",
+        unit: "Percentage of encounters billed at Level 4 or 5",
+        direction: "higher",
+        formula: `<span class="unit-name">% encounters at L4&ndash;5</span><span class="eq">=</span><span class="frac"><span class="frac-num">Level 4&ndash;5 encounters</span><span class="frac-den">total E/M encounters</span></span>`,
+        what_to_compare: "pre-adoption L4–5 share → post-adoption L4–5 share",
+        how_it_works: "Divide the count of Level 4 and Level 5 E/M encounters by total E/M visits. Compare this share before and after Suki adoption. Full per-level counts (Levels 1–5, new and established) are needed even though the summary statistic is just the high-complexity share.",
+        delta_interpretation: "A higher share of Level 4–5 encounters after adoption indicates documentation is capturing visit complexity more completely and supporting higher billing levels.",
+        watch_outs: [
+          "Read alongside denial rate (CM-21c) — rising E/M levels with rising denials suggests overcoding, not legitimate complexity capture.",
+          "Case mix must be stable or normalized — a shift toward more complex patients raises E/M levels independently of Suki.",
+          "Track new vs. established patient mix separately; their E/M distributions differ."
+        ],
+        visual_sketch: "% encounters billed at Level 4-5\n\n65% |                    . . . .\n60% |            . . . .\n55% |  . . . .\n    |\n    +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "E/M New Patient Levels (CPT 99201&ndash;99205)", vendor: "Epic: em_new_level1_count &ndash; em_new_level5_count | Cerner: em_level1_count &ndash; em_level5_count" },
           { field: "E/M Established Patient Levels (CPT 99211&ndash;99215)", vendor: "Epic: em_est_level1_count &ndash; em_est_level5_count | Cerner: em_level1_count &ndash; em_level5_count" },
@@ -492,6 +736,56 @@ const MEASURES = [
     name: "Coding Accuracy",
     aliases: [
       {
+        alias: "ICD-10 Coding Depth",
+        suki_badge: "flag-only",
+        suki_badge_label: "Usage flag only",
+        suki_data: "Usage flag only — Suki contributes user vs. non-user identification. Average ICD-10 codes per encounter come entirely from EHR data.",
+        suki_opp: "Suki-generated diagnosis codes from the structured-data API could be compared against final billed codes in future pipeline work, providing a direct coding completeness signal beyond just count.",
+        benchmarks: "No published benchmark for ICD-10 coding depth as a standalone metric. Higher average codes per encounter generally tracks with more complete documentation of comorbidities and chronic conditions. Read alongside denial rate (CM-21c) to confirm additional codes are accepted by payers.",
+        notes: "This is a proxy measure — it captures completeness (how many codes) not accuracy (whether codes are correct). Pair with CM-21b for a direct accuracy check.",
+        unit: "ICD-10 diagnosis codes per encounter",
+        direction: "higher",
+        formula: `<span class="unit-name">ICD-10 codes / encounter</span><span class="eq">=</span><span class="frac"><span class="frac-num">ICD-10 codes</span><span class="frac-den">encounter</span></span>`,
+        what_to_compare: "pre-adoption codes/enc avg → post-adoption codes/enc avg",
+        how_it_works: "Count the number of distinct ICD-10 codes assigned per completed encounter. Average across all encounters in the period. Compare the pre-adoption average to the post-adoption average across the provider cohort. icd10_codes_per_enc from Suki's EHR data pull is the preferred field.",
+        delta_interpretation: "More ICD-10 codes per encounter after adoption indicates documentation is capturing more diagnoses per visit — a proxy for completeness, not direct accuracy.",
+        watch_outs: [
+          "More codes is not always better — very high counts may signal overcoding; pair with denial rate (CM-21c) to confirm additional codes are accepted.",
+          "Case mix shifts can independently raise diagnosis counts — use within-provider comparisons when possible."
+        ],
+        visual_sketch: "ICD-10 codes per encounter\n\n4.5 |                    . . . .\n4.0 |            . . . .\n3.5 |  . . . .\n    |\n    +---Pre adoption---+---Post adoption--->",
+        ehr_fields: [
+          { field: "Avg ICD-10 diagnosis codes per encounter", vendor: "Epic: icd10_codes_per_enc | Cerner: icd10_codes_per_enc" },
+          { field: "Provider IDs; encounters by month", vendor: "All vendors" },
+          { field: "Limited to eligible providers and settings", vendor: "&mdash;" }
+        ]
+      },
+      {
+        alias: "ICD-10 Suggestion Match Rate",
+        suki_badge: "native-data",
+        suki_badge_label: "Native Suki data",
+        suki_data: "AI-generated ICD-10 codes from the structured-data endpoint (GET /session/{id}/structured-data) are natively available from the Suki API. These are the codes Suki recommends based on the encounter transcript.",
+        suki_opp: "This is the only CM-21 sub-measure where Suki contributes the primary data — comparing Suki's suggested codes to what was ultimately billed is a direct measure of coding accuracy impact. Requires dedicated pipeline linkage between the Suki API and EHR claim records.",
+        benchmarks: "<strong>Afshar 2025b (RCT, n=66):</strong> Statistically significant coding improvement (p &lt; 0.001). No published match-rate benchmarks specific to Suki. A mature implementation should approach 85–90% match rate.",
+        notes: "Requires encounter-to-claim linkage beyond the current standard EHR data pull. Confirm with Amita whether this linkage is in the pipeline. Suki may return IMO codes — an IMO &rarr; ICD-10 mapping step may be needed before comparison.",
+        unit: "Percentage of Suki-suggested ICD-10 codes that appear in final billed codes",
+        direction: "higher",
+        formula: `<span class="unit-name">suggestion match rate</span><span class="eq">=</span><span class="frac"><span class="frac-num">Suki codes in final billed</span><span class="frac-den">total billed codes</span></span>`,
+        what_to_compare: "early-use match rate → mature-use match rate",
+        how_it_works: "For each completed encounter, retrieve Suki's AI-generated ICD-10 codes from the structured-data endpoint and compare them to the final billed ICD-10 codes from the EHR claim record. Divide the count of codes appearing in both lists by the total billed codes. Average across all encounters in the period.",
+        delta_interpretation: "A higher match rate indicates Suki's code suggestions are accurate and align with what clinicians ultimately bill.",
+        watch_outs: [
+          "Requires encounter-to-claim linkage not in the standard Suki EHR data pull — confirm pipeline availability with Amita.",
+          "Suki may return IMO codes; an IMO to ICD-10 mapping step is needed before comparison.",
+          "Some code discrepancies are intentional — physicians or billing staff may legitimately add or remove codes during final review."
+        ],
+        visual_sketch: "Suki ICD-10 suggestion match rate (%)\n\n90% |                    . . . .\n80% |            . . . .\n70% |  . . . .\n    |\n    +---Early use------+---Mature use------->",
+        ehr_fields: [
+          { field: "Final billed ICD-10 codes per encounter", vendor: "EHR claim record (all vendors)" },
+          { field: "Encounter-to-claim linkage (join key)", vendor: "EHR claim system (varies by site)" }
+        ]
+      },
+      {
         alias: "Denial Rate",
         suki_badge: "flag-only",
         suki_badge_label: "Usage flag only",
@@ -499,11 +793,57 @@ const MEASURES = [
         suki_opp: "Suki ICD-10/E&M code suggestions (H3/PBC) could be retrospectively compared to billed codes to identify pre-submission discrepancies. Requires claims data linkage outside of Suki's current scope.",
         benchmarks: "<strong>Holmgren 2026:</strong> No increase in denials despite coding improvement (null finding is meaningful — it suggests coding uplift reflects legitimate complexity capture, not upcoding). Typical L4&ndash;5 denial baseline is under 3%.",
         notes: "Can also be classified under CM-20 Financial Productivity depending on framing.",
+        unit: "Percentage of Level 4–5 claims denied",
+        direction: "lower",
+        formula: `<span class="unit-name">L4&ndash;5 denial rate</span><span class="eq">=</span><span class="frac"><span class="frac-num">denied L4&ndash;5 claims</span><span class="frac-den">total L4&ndash;5 submitted</span></span>`,
+        what_to_compare: "pre-adoption denial rate → post-adoption denial rate (alongside E/M level)",
+        how_it_works: "Divide the number of denied Level 4–5 claims by total Level 4–5 claims submitted in the period. Track this rate before and after Suki adoption. Focus on Level 4–5 because these are the high-complexity encounters where documentation quality most influences coding accuracy and denial risk.",
+        delta_interpretation: "A stable or declining denial rate alongside rising E/M levels (CM-20c) confirms that higher coding is legitimate — better documentation is supporting the billing, not inflating it.",
+        watch_outs: [
+          "Distinguish coding-related denials from authorization or eligibility denials — denial reason codes are required.",
+          "Read alongside E/M level improvement (CM-20c); denial rate should not rise as coding levels improve.",
+          "Small sample sizes produce unstable rates — use quarterly aggregation or a rolling window."
+        ],
+        visual_sketch: "Denial rate (% of Level 4-5 claims)\n\n 8% |  . .\n 6% |        . . .\n 5% |                . . . .\n    |\n    +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "Denied Level 4&ndash;5 claim count", vendor: "Epic: denial_l45_count | Cerner/Athena: claims system (varies)" },
           { field: "Total Level 4&ndash;5 claims submitted", vendor: "Epic: total_l45_submitted | Cerner/Athena: claims system (varies)" },
           { field: "E/M level counts (for denominator construction)", vendor: "Epic: em_new/est level counts | Cerner: em_level counts" },
           { field: "Provider IDs; encounters by month", vendor: "All vendors" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "CM-22",
+    name: "Patient Volume & Throughput",
+    aliases: [
+      {
+        alias: "Encounters per Provider per Week",
+        suki_badge: "flag-only",
+        suki_badge_label: "Usage flag only",
+        suki_data: "Usage flag only — Suki contributes user vs. non-user identification and session counts to define active-use periods. Encounter counts come entirely from EHR scheduling data.",
+        suki_opp: "Suki session count per week can define whether a given week is an active Suki use period, enabling cleaner pre/post comparisons than adoption date alone.",
+        benchmarks: "<strong>Holmgren 2026:</strong> +0.80 encounters/week (statistically significant; ambulatory setting). <strong>Shuaib 2021:</strong> +39% patients/hour (human scribe, ED &mdash; upper-bound comparator, not ambient AI).",
+        notes: "Increased patient volume is not always desirable — interpret with workload and care quality context.",
+        unit: "Completed encounters per provider per week",
+        direction: "higher",
+        formula: `<span class="unit-name">encounters / provider / week</span><span class="eq">=</span><span class="frac"><span class="frac-num">completed encounters</span><span class="frac-den">provider &middot; week</span></span>`,
+        what_to_compare: "pre-adoption weekly avg → post-adoption weekly avg",
+        how_it_works: "Count the number of completed patient encounters per provider per week. Compare each provider's average weekly encounter count before Suki adoption to after adoption, excluding the onboarding ramp. Average across the provider cohort. total_encounters (monthly) or encounters_per_day (daily average) from the EHR data pull, converted to a weekly figure, are the preferred fields.",
+        delta_interpretation: "More completed encounters per provider per week after adoption indicates providers have capacity to see additional patients as documentation burden falls.",
+        watch_outs: [
+          "Normalize for scheduled clinical hours — providers working more hours will naturally see more patients.",
+          "Exclude providers who changed specialty, site, or panel size during the measurement window.",
+          "Verify encounter counts include only completed, signed encounters."
+        ],
+        visual_sketch: "Completed encounters per provider per week\n\n22 |                    . . . .\n21 |            . . . .\n20 |  . . . .\n   |\n   +---Pre adoption---+---Post adoption--->",
+        ehr_fields: [
+          { field: "Total completed encounters per provider/month", vendor: "Epic: total_encounters | Cerner: total_encounters" },
+          { field: "Avg completed encounters per working day", vendor: "Epic: encounters_per_day | Cerner: encounters_per_day" },
+          { field: "Provider IDs; provider specialty", vendor: "All vendors" },
+          { field: "Scheduled clinical hours (for part-time normalization)", vendor: "EHR/HR system (varies)" },
+          { field: "Limited to eligible providers and settings", vendor: "&mdash;" }
         ]
       }
     ]
@@ -520,6 +860,18 @@ const MEASURES = [
         suki_opp: "Suki session duration is a direct proxy for in-app documentation time and is reportable without EHR integration. Prefer EHR audit-log telemetry for the full note-to-sign lifecycle, but Suki timestamps can serve as a leading indicator.",
         benchmarks: "<strong>EHR telemetry (objective):</strong> &minus;12% to &minus;29% reduction (Ma 2025; Guo 2026). <strong>Self-report:</strong> &minus;25% to &minus;72% (AAFP 2021). Objective EHR telemetry is strongly preferred. A large self-report/objective divergence is one of the most consistent findings in the corpus.",
         notes: "",
+        unit: "Minutes per encounter",
+        direction: "lower",
+        formula: `<span class="unit-name">min / encounter</span><span class="eq">=</span><span class="frac"><span class="frac-num">doc time (min)</span><span class="frac-den">encounter</span></span>`,
+        what_to_compare: "pre-adoption avg → post-adoption avg (EHR audit-log)",
+        how_it_works: "For each provider, calculate average documentation time per encounter before Suki adoption and after adoption, excluding the onboarding ramp. Average the per-provider values across the cohort. EHR audit-log telemetry (avg_doc_time_min from Epic Signal/UAL) is the preferred data source.",
+        delta_interpretation: "Lower minutes per encounter after adoption indicates Suki is reducing documentation time at the visit level.",
+        watch_outs: [
+          "Self-report overestimates improvement by 3–6× vs. EHR telemetry — use objective audit-log data.",
+          "Per-note and per-day units are not directly comparable; standardize before comparing providers or sites.",
+          "Exclude the onboarding ramp (first 4–6 weeks) from the post-adoption window."
+        ],
+        visual_sketch: "Documentation time (min/encounter)\n\n30 |  . . . .\n25 |            . . .\n20 |                    . . . .\n   |\n   +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "Avg documentation time per encounter (min)", vendor: "Epic: avg_doc_time_min (Epic Signal/UAL) | Cerner: avg_doc_time_min" },
           { field: "Provider IDs; encounters by month", vendor: "All vendors" },
@@ -540,6 +892,18 @@ const MEASURES = [
         suki_opp: "Suki session time is a measurable documentation-specific subset of total EHR time. Surfacing it separately from total EHR time would clarify exactly what Suki is and is not contributing to overall EHR burden reduction.",
         benchmarks: "<strong>Ma 2025:</strong> &minus;19.95 min/day total EHR time &mdash; notably larger than the documentation-time-alone effect (&minus;6.89 min/day in the same study), suggesting ambient scribes reduce EHR burden beyond just note-writing.",
         notes: "",
+        unit: "Minutes per encounter (total EHR time)",
+        direction: "lower",
+        formula: `<span class="unit-name">total EHR min / encounter</span><span class="eq">=</span><span class="frac"><span class="frac-num">total EHR time (min)</span><span class="frac-den">encounter</span></span>`,
+        what_to_compare: "pre-adoption avg → post-adoption avg (all EHR tasks)",
+        how_it_works: "Sum all time each provider spends in the EHR per encounter — notes, inbox, orders, and results review — using audit-log telemetry. Compare the pre-adoption average to the post-adoption average per provider, then average across the cohort.",
+        delta_interpretation: "Lower total EHR minutes per encounter after adoption indicates Suki is reducing EHR burden beyond just note-writing — providers are returning to the EHR less to revise or complete notes.",
+        watch_outs: [
+          "Inbox and order entry are less directly affected by ambient documentation and may dilute the signal.",
+          "Normalize consistently throughout — per encounter or per workday — switching methods mid-analysis misleads.",
+          "Ma 2025 found a larger effect for total EHR time (−19.95 min/day) than documentation time alone (−6.89 min/day), suggesting the broader measure may be more sensitive."
+        ],
+        visual_sketch: "Total EHR time (min/encounter)\n\n40 |  . . . .\n35 |            . .\n30 |                . . .\n25 |                        . .\n   |\n   +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "Avg total time per encounter / total login time", vendor: "Epic: avg_total_time_min | Cerner: (telemetry varies by site)" },
           { field: "Business-hours EHR time per provider/month (min)", vendor: "Epic: business_hours_min | Athena: business_hours_numerator" },
@@ -562,6 +926,18 @@ const MEASURES = [
         suki_opp: "Suki after-hours session count and duration are reportable without EHR integration and can serve as a leading indicator of pajama-time reduction. This allows Suki to surface this metric for customers before EHR telemetry data is available.",
         benchmarks: "<strong>Objective data often null:</strong> Pearlman 2025 and Stults 2025 show no statistically significant change in after-hours EHR time. <strong>Exceptions:</strong> Duggan 2025: &minus;16.9%; Boyter/KLAS 2025: &minus;39% (UAL); Afshar 2025b: &minus;0.50 hrs/day (fragile &mdash; effect disappears when top 3% of outliers are removed). Self-report consistently shows improvement; objective telemetry does not.",
         notes: "Self-report/objective divergence on this measure is one of the most reproducible findings in the corpus. Strongly recommend objective telemetry over self-report.",
+        unit: "Minutes per provider per month (after-hours EHR time)",
+        direction: "lower",
+        formula: `<span class="unit-name">after-hours min / provider / month</span><span class="eq">=</span><span class="frac"><span class="frac-num">after-hours EHR time (min)</span><span class="frac-den">provider &middot; month</span></span>`,
+        what_to_compare: "pre-adoption monthly avg → post-adoption monthly avg",
+        how_it_works: "Sum all EHR activity for each provider that falls outside scheduled working hours each month. Compare each provider's average monthly after-hours total before Suki adoption to after adoption. Average across the provider cohort.",
+        delta_interpretation: "Lower after-hours minutes per month indicates providers are completing notes during clinic hours rather than at home or after the workday.",
+        watch_outs: [
+          "Objective EHR telemetry rarely shows significant improvement; self-report consistently overstates — do not conflate the two.",
+          "The effect is highly sensitive to outliers: removing the top 3% of high-time users can eliminate statistical significance (Afshar 2025b).",
+          "Ensure equal numbers of working days in pre and post windows when using monthly totals."
+        ],
+        visual_sketch: "After-hours EHR time (min/month)\n\n200 |  . . .\n150 |        . .\n100 |            . .\n 50 |                . .\n    |\n    +---Pre adoption---+---Post adoption--->",
         ehr_fields: [
           { field: "After-hours EHR time per provider/month (min)", vendor: "Epic: after_hours_min | Cerner: after_hours_min | Athena: after_hours_numerator, after_hours_encounter_time" },
           { field: "Total login time (for denominator/context)", vendor: "Epic: avg_total_time_min | Cerner: (varies)" },
@@ -580,6 +956,7 @@ function splitVendorField(vendor) {
 function renderAlias(m, a, idx) {
   const isMulti = m.aliases.length > 1;
   const rowId = `${m.id.toLowerCase()}-${idx}`;
+  const detailsId = `${rowId}-details`;
   const showSoloHeader = !isMulti;
 
   const soloHeaderHtml = showSoloHeader ? `
@@ -587,6 +964,15 @@ function renderAlias(m, a, idx) {
       <div class="solo-id">${m.id}</div>
       <div class="solo-name">${m.name}</div>
     </div>` : `<div></div>`;
+
+  const watchOutsHtml = a.watch_outs && a.watch_outs.length
+    ? `<div class="watch-section">
+        <div class="panel-label">Things to watch out for</div>
+        <ul class="watch-list">${a.watch_outs.map(w => `<li>${w}</li>`).join('')}</ul>
+      </div>`
+    : '';
+
+  const directionLabel = a.direction === 'higher' ? 'Higher &#9650; is better' : 'Lower &#9660; is better';
 
   return `
   <div class="acc-row" id="${rowId}">
@@ -597,6 +983,24 @@ function renderAlias(m, a, idx) {
       <span class="acc-caret">&#9660;</span>
     </div>
     <div class="acc-body">
+      <div class="algo-summary">
+        <div class="algo-row">
+          <span class="algo-row-label">Algorithm</span>
+          <div class="algo-row-content">
+            <span class="formula-expr">${a.formula}</span>
+          </div>
+        </div>
+        <div class="algo-row">
+          <span class="algo-row-label">Compare</span>
+          <div class="algo-row-content">
+            <div class="compare-top">
+              <span class="delta-tag ${a.direction}">${directionLabel}</span>
+              <span class="compare-expr">${a.what_to_compare}</span>
+            </div>
+            <p class="delta-interp">${a.delta_interpretation}</p>
+          </div>
+        </div>
+      </div>
       <div class="detail-grid">
         <div class="ehr-panel">
           <div class="panel-label">EHR Data Required</div>
@@ -624,11 +1028,22 @@ function renderAlias(m, a, idx) {
           </div>
         </div>
       </div>
-      <div class="bench-section">
-        <div class="panel-label">Benchmarks</div>
-        <p class="bench-text">${a.benchmarks}</p>
+      <div class="sub-details" id="${detailsId}">
+        <div class="sub-details-head" onclick="toggleDetails('${detailsId}')">
+          <span class="sub-details-label">Full details</span>
+          <span class="sub-details-caret">&#9660;</span>
+        </div>
+        <div class="sub-details-body">
+          <p class="how-it-works" style="margin-bottom:14px;">${a.how_it_works}</p>
+          ${watchOutsHtml}
+          <pre class="sketch-block">${a.visual_sketch}</pre>
+          <div class="bench-section" style="margin-top:16px;">
+            <div class="panel-label">Benchmarks</div>
+            <p class="bench-text">${a.benchmarks}</p>
+          </div>
+          ${a.notes ? `<div class="notes-section"><p>${a.notes}</p></div>` : ''}
+        </div>
       </div>
-      ${a.notes ? `<div class="notes-section"><p>${a.notes}</p></div>` : ''}
     </div>
   </div>`;
 }
@@ -661,6 +1076,12 @@ function toggle(rowId) {
   const row = document.getElementById(rowId);
   if (!row) return;
   row.classList.toggle('open');
+}
+
+function toggleDetails(detailsId) {
+  const el = document.getElementById(detailsId);
+  if (!el) return;
+  el.classList.toggle('open');
 }
 
 function scrollToSection(cmId) {
