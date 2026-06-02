@@ -1,0 +1,795 @@
+[Joe Amlung (Regenstrief, OCL)] 13:06:28
+way… just a… if we just need a way to re-look at it, then I think that's one thing. I think if we need to do, you know, fact checking and, you know, deep diving into information, that's a whole other thing. But I try to do, you know, I think that we can, uh, take a lot of this and, uh.
+
+[Joe Amlung (Regenstrief, OCL)] 13:06:29
+even just from the transcript, give feedback and make changes easily.
+
+[Paul Biondich] 13:06:33
+So I'm wondering, given what I know of these.
+
+[Paul Biondich] 13:06:41
+I'm thinking the after hours pajama time is probably the one that's going to be least controversial. Do you agree with that?
+
+[Joe Amlung (Regenstrief, OCL)] 13:06:47
+Mm-hmm. I think so. I… and I… Katie might say something differently, just because I know that there's all kinds of ways that you can slice and dice this, but I think as far as a simplistic thing that we can get behind, I think that's right. Like, whether or not it's the perfect.
+
+[Joe Amlung (Regenstrief, OCL)] 13:07:05
+canonical measure itself is not our focus. I think just showing this is a good idea.
+
+[Paul Biondich] 13:07:10
+Yeah, okay, so let me just take a, like, a minute or two and just look at everything that's in this box. Let me just get my brain wrapped around it, just 2 minutes, okay?
+
+[Joe Amlung (Regenstrief, OCL)] 13:07:20
+Yeah, yeah, sure.
+
+[Paul Biondich] 13:08:18
+Joe, while I'm finishing reading this, can you pull up that spreadsheet we were working from last week?
+
+[Joe Amlung (Regenstrief, OCL)] 13:08:24
+Yeah, can do.
+
+[Paul Biondich] 13:08:25
+Thanks.
+
+[Paul Biondich] 13:08:53
+Yeah. Okay.
+
+[Paul Biondich] 13:08:55
+So, Joe, do you remember… you know what spreadsheet I'm talking about, right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:09:01
+I believe so, and I'm gonna pull up what I can right now. So, I… I don't think this is it, but I'm gonna pull this up on the screen just in case it happens to be it and I'm forgetting it. I thought there was a more recent one. Oh, this is.
+
+[Paul Biondich] 13:09:12
+That's the first one.
+
+[Paul Biondich] 13:09:13
+Yeah, that's the first one, not the most recent one.
+
+[Joe Amlung (Regenstrief, OCL)] 13:09:16
+Okay, nice.
+
+[Joe Amlung (Regenstrief, OCL)] 13:09:17
+Okay, perfect. Yeah, I'm gonna pull up the other one, too, because I… I'm pretty sure we saved it off, but if not, I know that Suda had sent something out.
+
+[Paul Biondich] 13:09:26
+Yes.
+
+[Joe Amlung (Regenstrief, OCL)] 13:09:35
+Yeah, I'm just gonna go straight to her email.
+
+[Joe Amlung (Regenstrief, OCL)] 13:09:49
+Now, hold on. Admin Center, that's their query list. I don't think that's what we're going for.
+
+[Paul Biondich] 13:09:55
+No.
+
+[Paul Biondich] 13:09:57
+There was kind of like a multicolored spreadsheet.
+
+[Joe Amlung (Regenstrief, OCL)] 13:10:00
+Here we go, okay, that's it.
+
+[Joe Amlung (Regenstrief, OCL)] 13:10:02
+I believe this is it. This is from — well, no, this is from April 27. That's not — hold on. There's something more recent.
+
+[Paul Biondich] 13:10:05
+No.
+
+[Paul Biondich] 13:10:08
+Yep.
+
+[Paul Biondich] 13:10:11
+Yes.
+
+[Joe Amlung (Regenstrief, OCL)] 13:10:18
+Okay, well, let me find it. I could have sworn I would have it in here, and I just gotta find that.
+
+[Joe Amlung (Regenstrief, OCL)] 13:10:34
+How about — here we go. What about this one? I think this is it.
+
+[Paul Biondich] 13:10:37
+Yeah, the one that has the yeah, the tiers. Yep.
+
+[Joe Amlung (Regenstrief, OCL)] 13:10:40
+There we go. OK, perfect. Yeah. And I know we were talking through this as a group where I think we kind of had to — we certainly made our questions about this. And I haven't seen a response or anything. But I know we had our questions about this in general.
+
+[Paul Biondich] 13:10:43
+Alright.
+
+[Joe Amlung (Regenstrief, OCL)] 13:10:57
+I think there was both a — I think the main activity we did that one day, the other day, was to get more into these hooks, these ideas that they have in here, and go into them with a fine-tooth comb.
+
+[Joe Amlung (Regenstrief, OCL)] 13:11:13
+So I think that we can still do something like that if we need to, but we also might have a chance to go a little higher level today, just since we don't have others on the call.
+
+[Paul Biondich] 13:11:14
+Yeah.
+
+[Paul Biondich] 13:11:23
+Yeah, so, um, the after-hours, uh, pajama time would be rows 12…
+
+[Paul Biondich] 13:11:31
+14, 15, and 16. Yep. Yep. So…
+
+[Joe Amlung (Regenstrief, OCL)] 13:11:34
+Oh, 14, 16. Yeah.
+
+[Paul Biondich] 13:11:42
+OK, so let me go back to this now.
+
+[Paul Biondich] 13:11:49
+So, the first thing that you slash Claude did is you…
+
+[Joe Amlung (Regenstrief, OCL)] 13:11:49
+Once.
+
+[Paul Biondich] 13:11:56
+basically did it across a cohort.
+
+[Paul Biondich] 13:12:02
+Uh, so it's, um, minutes per provider per month.
+
+[Paul Biondich] 13:12:07
+And so, I think over… if you had a cohort of 200 users, it would be the average of those, right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:12:16
+Mm-hmm, yeah.
+
+[Paul Biondich] 13:12:16
+So, each provider is spending X number of minutes per month.
+
+[Paul Biondich] 13:12:23
+doing things after hours, and we need to define that, obviously, but we'll get to that in a second. But the unit is minutes per provider per month.
+
+[Joe Amlung (Regenstrief, OCL)] 13:12:29
+Mmhm.
+
+[Joe Amlung (Regenstrief, OCL)] 13:12:35
+Yeah, that's right.
+
+[Paul Biondich] 13:12:37
+Okay. So, Joe, to me, one of the first fields should be units.
+
+[Joe Amlung (Regenstrief, OCL)] 13:12:44
+Yeah. And you know, you're totally right. I'm not actually sure why — because at one point, I thought that was one of the main things to be in here. And it might have been that this algorithm was trying to do it. And it's like, it's not exactly what I thought it was going to be. I think you're right.
+
+[Paul Biondich] 13:13:01
+Yeah, so just so just add, add that.
+
+[Joe Amlung (Regenstrief, OCL)] 13:13:09
+And this one, we said that the unit is going to… in the end, it is a number of minutes that happens. It is not a, uh… it's not a, uh…
+
+[Joe Amlung (Regenstrief, OCL)] 13:13:19
+like a summary like this, it is actually the unit is number of minutes outside of working hours in this example.
+
+[Paul Biondich] 13:13:26
+Yeah.
+
+[Paul Biondich] 13:13:31
+So
+
+[Paul Biondich] 13:13:33
+Okay, so the 1st thing would be units.
+
+[Joe Amlung (Regenstrief, OCL)] 13:13:36
+Yep.
+
+[Paul Biondich] 13:13:36
+The second, I think, could be an algorithm, and I think it would be…
+
+[Paul Biondich] 13:13:43
+Oh, I don't know if I like that.
+
+[Joe Amlung (Regenstrief, OCL)] 13:13:45
+This one is redundant. I think it's not telling us anything. Like, you know, saying that minutes per provider per month equals this, that doesn't help us. And that's what I think that that's really getting away from what the algorithm is meant to be.
+
+[Joe Amlung (Regenstrief, OCL)] 13:14:02
+Because that's doing the same thing in these other ones, too. It's like, you're just representing the same side of the equation. So, that is… I wish I had caught that sooner, actually, because I don't like that.
+
+[Paul Biondich] 13:14:14
+Right, so I think what it would be…
+
+[Paul Biondich] 13:14:20
+If you were to do minutes per provider per month, or no, no, no, it…
+
+[Paul Biondich] 13:14:25
+Yeah, it would be… it would be the average for a cohort, right? Or…
+
+[Joe Amlung (Regenstrief, OCL)] 13:14:30
+Yeah. I think so.
+
+[Paul Biondich] 13:14:31
+Yeah, I think so. In their dashboard, it would have to be, um, total number of users.
+
+[Paul Biondich] 13:14:37
+That would be abstracted, and each of them would have, you know, minutes per month.
+
+[Paul Biondich] 13:14:45
+So, you would expect that number to go down, so you would want to see a, um…
+
+[Paul Biondich] 13:14:51
+Uh, let me see if I can… you would… let me show you, let me show you.
+
+[Joe Amlung (Regenstrief, OCL)] 13:14:55
+Sure.
+
+[Paul Biondich] 13:14:55
+You'd want to see.
+
+[Paul Biondich] 13:14:59
+I'm putting this in our…
+
+[Paul Biondich] 13:15:02
+Why is it? You'd want to see that kind of a graph, right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:15:03
+Oh, okay, gotcha.
+
+[Joe Amlung (Regenstrief, OCL)] 13:15:06
+Oh, yeah, yeah. And for what it's worth, that was something that I think needs to be probably highlighted more. That did actually make it into here. This is what you're going for. It's like it's pre-adoption, post-adoption. Like this is kind of…
+
+[Joe Amlung (Regenstrief, OCL)] 13:15:23
+in a sense, our cohorts. This is kind of the direction we want to go in. So I almost want to put this further up. And I made it — yeah.
+
+[Paul Biondich] 13:15:25
+Yes.
+
+[Paul Biondich] 13:15:28
+Yes.
+
+[Paul Biondich] 13:15:31
+Bring that up, yeah. Bring that up.
+
+[Joe Amlung (Regenstrief, OCL)] 13:15:33
+Yep.
+
+[Paul Biondich] 13:15:33
+Yep. So let's think through the algorithm again really carefully here, Joe. Let's just brainstorm. So if you're getting a number back.
+
+[Paul Biondich] 13:15:43
+and that number lowers over time, the algorithm's going to generate a number. And so let's just think carefully about this. So let's say, hypothetically, we have, uh, 10 providers.
+
+[Joe Amlung (Regenstrief, OCL)] 13:15:54
+Mm-hmm.
+
+[Paul Biondich] 13:15:55
+Right. And there's a total of…
+
+[Paul Biondich] 13:16:03
+I guess you would just do minutes per month, right? And then…
+
+[Paul Biondich] 13:16:08
+So…
+
+[Paul Biondich] 13:16:08
+So if you had a total of… it would be number of minutes over number of providers.
+
+[Joe Amlung (Regenstrief, OCL)] 13:16:16
+Yeah, I think that's right. And I also think this is an interesting thing. This is a pre-adoption, post-adoption. This is a timeline, as I'm seeing it, because there are these dots like this. If we were doing it a line graph like this, then it…
+
+[Paul Biondich] 13:16:16
+Right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:16:31
+You know, in a sense, that is saying, you know, within the, let's just say, 6 months, or what, maybe 6 months, however many months before you adopted this thing, because not everybody's going to adopt it on the same day. I think that's an interesting part of this. I think people can.
+
+[Joe Amlung (Regenstrief, OCL)] 13:16:46
+But it's certainly possible people won't. Or you might have two cohorts, one who is the experimental, the ones who do get Suki, and then the control, who do not do Suki. And so anyway, just to say that that might be a way that we want to represent this better.
+
+[Joe Amlung (Regenstrief, OCL)] 13:17:04
+But either way, it should be showing that decrease in minutes per month for your post, whether that is by grouping or by a timeline, whatever it might be.
+
+[Paul Biondich] 13:17:16
+Right, right. So…
+
+[Paul Biondich] 13:17:18
+So then the question becomes, if we abstract it down to number of after-hour minutes over number of providers, that gives you that number for the graph.
+
+[Paul Biondich] 13:17:28
+Then the question becomes, how do you compute the number of minutes? And if you look in the original table, Joe, the spreadsheet, they distinguish business hours and after hours. And so.
+
+[Joe Amlung (Regenstrief, OCL)] 13:17:28
+Yeah.
+
+[Paul Biondich] 13:17:44
+to me. The key point I would want to make is and this is where I would want to put some input as a as a as an informatics person. To me it would be outside of.
+
+[Paul Biondich] 13:18:00
+any time outside of the encounter. So, to me, after hours would be, like, above and beyond the time spent working with that encounter.
+
+[Paul Biondich] 13:18:11
+But some might say it's only business hours or outside of business hours, and I think that also is okay. But like you notice that there's a difference between 11, 12, and 13. Well, 14 and 15 are 9 to 5, or however, the clinic defines it right.
+
+[Paul Biondich] 13:18:33
+Um, and so one way to build it would be that each care setting could specify.
+
+[Paul Biondich] 13:18:40
+you know, for a given clinician, this is their business hours, um, because surgery is going to be different than pediatrics, right? Like…
+
+[Joe Amlung (Regenstrief, OCL)] 13:18:49
+Mm-hmm, yeah.
+
+[Paul Biondich] 13:18:50
+Um, but I think it's not just, you know.
+
+[Paul Biondich] 13:18:54
+after, it's before and after, because, uh, Burke, uh, does documentation before he even sees the patient, right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:19:02
+Right, right.
+
+[Joe Amlung (Regenstrief, OCL)] 13:19:03
+Yeah. And I think after hours is — if I had to imagine, I think that does mean to intend that it is before or after your working hours, even if that is — you get in during the day. I think Burke is doing good prep within his working hours. I don't think that necessarily means it's after hours documentation.
+
+[Joe Amlung (Regenstrief, OCL)] 13:19:25
+That might just mean prep. Some people might define after hours documentation as it's homework. It is that pajama time because it is outside of your scheduled time at the clinic. Now, that being said, is that what we're trying to differentiate here?
+
+[Joe Amlung (Regenstrief, OCL)] 13:19:42
+I'm not entirely sure, but I like the idea of giving the potential different definitions of after hours. And I think that's something that's helpful for all of these. And I think that should be shown from our literature.
+
+[Paul Biondich] 13:19:51
+Exactly. Exactly.
+
+[Joe Amlung (Regenstrief, OCL)] 13:20:00
+saying example definitions of after hours, because I don't think we need. I don't know how prescriptive we need to be with this like, do we need to say this is the correct definition of after hours, or at this time, are we just giving examples.
+
+[Joe Amlung (Regenstrief, OCL)] 13:20:16
+And saying, here is the relatively standard way to do it. But you, Suki, might be the one to pick what after working hours means. So I think — I don't know. What do you think about that? How prescriptive?
+
+[Joe Amlung (Regenstrief, OCL)] 13:20:32
+Should we try to be at this stage, or do we just give examples?
+
+[Paul Biondich] 13:20:37
+I… my gut is that we should… we should lay down the gauntlet and let people throw rocks at it, because it's not an algorithm unless we try to define it, and I think we should be opinionated around that, but also, you know.
+
+[Paul Biondich] 13:20:51
+point out that here are places where there might be disagreement. And the literature, here's what Regan Street thinks it should be. Here is where literature suggests that there's some ambiguity. And to me, the key is around how one defines after hours.
+
+[Joe Amlung (Regenstrief, OCL)] 13:20:54
+Mm-hmm.
+
+[Joe Amlung (Regenstrief, OCL)] 13:21:01
+Okay, cool.
+
+[Paul Biondich] 13:21:07
+Some would just say, like, after 5 PM. And, like, literally, there are studies that just define it as that because they had no other way of controlling it, right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:21:15
+Yes, totally.
+
+[Paul Biondich] 13:21:17
+And that would miss all of the weekend time. So if if I worked on it on Saturday at 9 is that I would consider that pajama time.
+
+[Joe Amlung (Regenstrief, OCL)] 13:21:25
+Mm-hmm.
+
+[Paul Biondich] 13:21:27
+But if it's only 9 to 5, that would… that would count as working days, or working…
+
+[Joe Amlung (Regenstrief, OCL)] 13:21:33
+Right, right, right. And so I guess maybe what do you see our approach to getting to that is? Do you think that's something we should try to represent here? Or is that something we need to bring to the team for debate?
+
+[Joe Amlung (Regenstrief, OCL)] 13:21:47
+As in, here are the different ways that it is getting used in our literature sources or whatever. Here's our points of contention, maybe, and we should try to be opinionated.
+
+[Paul Biondich] 13:21:57
+So, Joe…
+
+[Paul Biondich] 13:21:59
+Joe, what I would do for this example is to say that there are two algorithms.
+
+[Paul Biondich] 13:22:06
+One is for the dashboard, and it's the total minutes over the number of clinicians.
+
+[Paul Biondich] 13:22:12
+Right? And then you would have a second algorithm, um, our running definition of how you arrive at, uh, after-hours minute.
+
+[Paul Biondich] 13:22:25
+Do you see what I'm saying, or should I say it again?
+
+[Joe Amlung (Regenstrief, OCL)] 13:22:28
+The second one, hold on, our running definition of how you arrive at after hours minutes. Say more about that one.
+
+[Paul Biondich] 13:22:33
+Yes, because…
+
+[Paul Biondich] 13:22:35
+Well, because the 1st the 1st algorithm uses a total after hours, minutes over number of clinicians. But but the the complexity is in the after hours minute. What is an after hours minute? And and so I would do a second one.
+
+[Joe Amlung (Regenstrief, OCL)] 13:22:47
+Mm-hmm.
+
+[Paul Biondich] 13:22:52
+that after an after hours minute is defined as the following, and and for the sake of dialogue, I think what we can say is before 9 Am. And after 5 Pm. A gold standard would be that each provider.
+
+[Paul Biondich] 13:23:08
+is able to define that like you would want that, because.
+
+[Paul Biondich] 13:23:13
+Because a surgeon's not 9 to 5. A surgeon works from 9 to 9, right?
+
+[Joe Amlung (Regenstrief, OCL)] 13:23:16
+Yeah, yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:23:20
+Okay, I like this, and it's making me think that there's, uh, like, there's gonna be pieces within each of these, and so a piece of After Hours Pajama Time is the overall high-level algorithm and things like that, but then there is the piece of it that defines After Hours Minutes.
+
+[Paul Biondich] 13:23:38
+Yes.
+
+[Joe Amlung (Regenstrief, OCL)] 13:23:38
+That, to me, makes a lot of sense. And I feel like we're breaking apart the complexity by putting it into maybe just some clearer groupings there. So maybe not just one canonical algorithm.
+
+[Paul Biondich] 13:23:41
+Yes.
+
+[Paul Biondich] 13:23:49
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:23:53
+yes, there is one that we're feeding into, but I think it is the defining of that unit, which is our after-hours minutes, which is the most important. So…
+
+[Paul Biondich] 13:24:02
+Right. What… what… that first… that first one, Joe, is for the administrative dashboard for Suki.
+
+[Joe Amlung (Regenstrief, OCL)] 13:24:03
+And some of these might have multiple units.
+
+[Joe Amlung (Regenstrief, OCL)] 13:24:09
+Yes, yeah.
+
+[Paul Biondich] 13:24:12
+This is… this is the thing that you asked for, but where the art is, is in discerning what the after-hours minute is. And we are defining the after-hours minute as… a gold standard version would be, uh, for each provider.
+
+[Paul Biondich] 13:24:30
+There is a time window that is their working time.
+
+[Paul Biondich] 13:24:35
+And the time that's outside… the opposite of that is the after-hours time.
+
+[Paul Biondich] 13:24:43
+Care settings might not be able to discern that, so then there needs to be some kind of an average start and stop time.
+
+[Paul Biondich] 13:24:50
+And there should be a little bit of color commentary, Joe, that says, uh, different care providers work… have different normal working hours.
+
+[Joe Amlung (Regenstrief, OCL)] 13:24:59
+Yeah, exactly. And I think that's going to be especially helpful here. So, okay, cool. I think that's good. That's really going to help us.
+
+[Paul Biondich] 13:25:08
+And… and… and one… and one defines those inner… I would think that you would also count every minute up to, uh, the signature on the note.
+
+[Joe Amlung (Regenstrief, OCL)] 13:25:09
+What, oh yeah, go ahead.
+
+[Paul Biondich] 13:25:19
+So to me it would be all minutes prior to a signature.
+
+[Paul Biondich] 13:25:25
+And probably, actually, you know what? No, I…
+
+[Paul Biondich] 13:25:30
+Yeah, there should also… when I say signing the note, do you know what I'm getting at, Joe?
+
+[Joe Amlung (Regenstrief, OCL)] 13:25:35
+Yeah, yeah, yeah.
+
+[Paul Biondich] 13:25:36
+I think… I think minutes after, like, if you go in and edit it after it's signed, that probably also still counts.
+
+[Joe Amlung (Regenstrief, OCL)] 13:25:43
+Yeah, agreed.
+
+[Paul Biondich] 13:25:45
+Uh, but, um, you should point out that there's ambiguity around that as well. Like, uh, some only do it until it's closed, but we would think that it should be all minutes, regardless of whether it's been closed or not.
+
+[Joe Amlung (Regenstrief, OCL)] 13:26:00
+Okay, and I like that. I think you're calling it color commentary, and it's almost like areas of ambiguity that are known and that muddle the definition. Like, I don't want to call it confounders, because I think that has a different meaning, but it almost has that kind of spirit.
+
+[Paul Biondich] 13:26:18
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:26:18
+Uh, it's like, what are these different aspects that differ in how you might, uh, interpret or see this, and we need to call those out.
+
+[Paul Biondich] 13:26:27
+Exactly, exactly. Those are kind of like ambiguities to be refined and resolved or something like this.
+
+[Joe Amlung (Regenstrief, OCL)] 13:26:35
+Mm-hmm.
+
+[Paul Biondich] 13:26:39
+So why don't you list out the ambiguities for this example? Just walk through them with me, and then you'll find a way to represent them inside this example.
+
+[Joe Amlung (Regenstrief, OCL)] 13:26:47
+Oh, yeah, totally. And that's the thing. Pardon me. I need to look at the — do we have this in the ACI documentation at all? I know the literature has it, but do we have this pointed out in here?
+
+[Paul Biondich] 13:26:56
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:02
+Let's see. No pattern.
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:06
+Distinct from total documentation time.
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:10
+OK. And this is — I know this is meant to be a higher level, which is great. Nothing wrong with that, absolutely. I was just trying to see if there was anything in here that would help us get to this because I think we are going into the next level of scrutiny here.
+
+[Paul Biondich] 13:27:24
+Well, you can click all of the papers. So down there at the source papers, you can click all of those. Those all work.
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:28
+Mm-hmm, sure, yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:33
+Let's see…
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:35
+So yes, in-clinic versus after-hours documentation time. I wonder if… I'm trying to remember if they…
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:43
+put if they do any definition here, and I don't think so.
+
+[Joe Amlung (Regenstrief, OCL)] 13:27:48
+But okay.
+
+[Paul Biondich] 13:27:50
+I can just tell you that some of them choose an arbitrary time window. Yeah, you're wondering, like, do we define each of them from an algorithmic perspective in there? No.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:04
+Okay, that's what I just wanted to make sure. I don't want to overlap things that have already been done. But this is, yeah.
+
+[Paul Biondich] 13:28:10
+What you could do is you could point Claude towards the vault and you could say, go and look at these source studies and see how they're defining an after hours minute.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:14
+Sure, sure.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:22
+Yeah, exactly. I think that makes complete sense. So, okay, that's going to be good.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:27
+Because I know that the markdown version… these are not the markdown versions, these are, like, the summarized versions of the studies, if I'm not mistaken. There is an actual markdown version of the full PDF, isn't there?
+
+[Paul Biondich] 13:28:38
+Correct. Correct.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:39
+Cool. Perfect. That's what I'll need for sure.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:45
+Okay.
+
+[Joe Amlung (Regenstrief, OCL)] 13:28:46
+Awesome. Yeah, that's good. And for this one, I think it's pretty simple. I don't think there's too — I can't think of too many ways that are going to be those confounders here. It really is just that one. I don't know if that'll be the same for the rest of these. I'm sure quite a few of these will have other confounders. But I think this is the right start.
+
+[Paul Biondich] 13:28:58
+Yet.
+
+[Joe Amlung (Regenstrief, OCL)] 13:29:07
+to it.
+
+[Paul Biondich] 13:29:07
+Yeah, my advice would be to prune all the other ones for now, and just focus on the one for tomorrow.
+
+[Joe Amlung (Regenstrief, OCL)] 13:29:13
+Nice. Okay. Sounds good.
+
+[Paul Biondich] 13:29:16
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:29:16
+That should be good. if you're good. The only question that I had was about. I think the Suki data and Suki opportunity still has something of interest here. But there's there's 2 things we're doing here. I think that's what's kind of interesting. One is the Suki evaluation side of things, and then one is the.
+
+[Paul Biondich] 13:29:29
+Yes.
+
+[Joe Amlung (Regenstrief, OCL)] 13:29:38
+trying to be somewhat prescriptive about what these are meaning and how you should be putting them together, which is totally separate from Suki. So I think that's one thing I want to confirm with you is, you know, showing this to them, should it be?
+
+[Paul Biondich] 13:29:45
+Exactly.
+
+[Paul Biondich] 13:29:51
+But, but…
+
+[Paul Biondich] 13:29:53
+But Suki gets first dibs. Suki gets first dibs. That's why… that's the benefit they get. We independently publish these things, but they get a head start on building it into their system.
+
+[Joe Amlung (Regenstrief, OCL)] 13:30:04
+Right, exactly. And so I guess I just try to figure out, like, the things that we show them tomorrow, do they need to see the connection to their own data at this point? Do they need to see these?
+
+[Paul Biondich] 13:30:13
+They do, they do, they do, because that 1st algorithm is what they would build into their administrative dashboard.
+
+[Joe Amlung (Regenstrief, OCL)] 13:30:15
+Okay.
+
+[Joe Amlung (Regenstrief, OCL)] 13:30:20
+Okay, cool. Sounds good. It does, yeah. I just wanted to make sure, is this adding, you know, Suki data and Suki opportunity, do these ideas add to, uh, what…
+
+[Paul Biondich] 13:30:21
+Does that make sense?
+
+[Joe Amlung (Regenstrief, OCL)] 13:30:31
+are they adding to what the, um, what we are needing to show them? Because I think, eventually, if we're going to publish this more publicly, I would imagine putting Suki information in there is not what you want to do. But that can always be scrubbed out if that's the case. Okay, so that's what I wanted to make sure. Is it appropriate to have them in here?
+
+[Paul Biondich] 13:30:48
+I don't know… I don't know if that Suki opportunity paragraph makes sense to me, but you read it and tell me whether… what you think. That Suki op… that blue one?
+
+[Joe Amlung (Regenstrief, OCL)] 13:30:58
+Yeah, I don't think I agree with it. Yeah, I remember seeing this one and not entirely getting it. Because right now, this is having a — you can have a count.
+
+[Paul Biondich] 13:31:00
+Just read it.
+
+[Joe Amlung (Regenstrief, OCL)] 13:31:13
+of sessions that happen outside of someone's hours, but without EHR integration, I'm not sure how you know anything about the users. I don't know how you know about their work schedule. I don't know how you know what documentation happened. This is.
+
+[Joe Amlung (Regenstrief, OCL)] 13:31:30
+Uh, like, there… this is basically trying to say, uh, sessions can be identifiable, but I think they lose so much power because, uh, if Suki is literally just generating text and the user has not.
+
+[Joe Amlung (Regenstrief, OCL)] 13:31:47
+Suki isn't where the user edits the note and then pastes it into the EHR, and then boom, it's done. There is an in-between between signing off the note. So I think that's what — I think AI just took a liberty here trying to be a yes man.
+
+[Paul Biondich] 13:32:03
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:32:04
+And it's like, well, OK, this isn't really helping at all. Sure, there might be an opportunity here, but I think it really requires that Suki has a much better control over how much note editing happens.
+
+[Joe Amlung (Regenstrief, OCL)] 13:32:18
+Within a Suki session. Now, again, doing a session within I don't even know. Based on how Suki works out, Suki is real time. Like, you know, I don't know how many times a clinician would use Suki in the moment, but then not use the transcript until after hours.
+
+[Paul Biondich] 13:32:38
+Yes.
+
+[Joe Amlung (Regenstrief, OCL)] 13:32:38
+Uh, so I… I think there is a little bit of a misunderstanding of, like, how the workflow is going in here.
+
+[Paul Biondich] 13:32:45
+Yeah, Joe, the way… think of Suki's app as, like, a portal, a convenience portal into the EHR, but the EHR is the authoritative source, and so nothing is done until it's signed off in the EHR, and I don't think.
+
+[Paul Biondich] 13:33:00
+that there's a way to sign off in something with Suki. I mean, is there a potential that they could build that in over time? Yes, but I doubt that they're going to be able to get away with that, so…
+
+[Joe Amlung (Regenstrief, OCL)] 13:33:11
+Right, right. And that's the thing. It's like, I get, yes, that you can know when a session happened, and that can be valuable, I suppose. Like, are a lot of sessions being initiated after hours? That's, I guess, fine and dandy, but I, you know, without the EHR integration, you do lose a lot here. So, I do think that.
+
+[Joe Amlung (Regenstrief, OCL)] 13:33:32
+If there is value here, it needs to be pretty well reined in. So I'll think about that one.
+
+[Paul Biondich] 13:33:40
+One of the other metrics, Joe, just something for you to think about is the total amount of time spent in Suki versus the total amount of time that is a part of the encounter.
+
+[Paul Biondich] 13:33:53
+what percentage of the total time is Suki, and what percentage of it is outside of Suki. So like, if close to a hundred percent of the time is spent in Suki, that means that they have comprehensively provided everything that is needed.
+
+[Joe Amlung (Regenstrief, OCL)] 13:33:59
+Mm-hmm.
+
+[Paul Biondich] 13:34:09
+And you minimize the scut, right? Like, it does the vast… so…
+
+[Paul Biondich] 13:34:15
+The only benefit that Suki has is, well, the only thing that they can measure inside Suki is the extent to which the clinician's experience moves towards almost a full embrace of Suki.
+
+[Paul Biondich] 13:34:31
+Versus it just being kind of something that people dip into, and there's a bunch of additional time that's spent in the EHR prior to closing it off. Is what I'm saying make sense?
+
+[Joe Amlung (Regenstrief, OCL)] 13:34:41
+Right. Yeah. Yeah, totally.
+
+[Paul Biondich] 13:34:44
+So the minutes inside Suki are an interesting comparison within total documentation time.
+
+[Paul Biondich] 13:34:52
+but but they're not meaningful in and of themselves. The only way to measure total documentation time is based upon who signs off the node. And so prior to an ambient technology, a clinician will log in.
+
+[Joe Amlung (Regenstrief, OCL)] 13:35:01
+Mm-hmm.
+
+[Paul Biondich] 13:35:08
+will start their encounter inside the Ehr. They'll dip in and dip out of that encounter until it's closed, and then they'll sign off on it. Basically, what Suki is doing is like a shortcut there, you know, you can start the encounter from within Suki.
+
+[Paul Biondich] 13:35:24
+imported in. And then maybe there's just a very quick sign off inside the Ehr. It might be worth asking when we do the conversation with Suda tomorrow. Are there examples of where people can sign the note from within Suki?
+
+[Paul Biondich] 13:35:39
+Um, that's just another question related to this, but…
+
+[Paul Biondich] 13:35:42
+I think you have more than enough information to redo this one. And if you come with a good version of this one, I think we'll be off and running.
+
+[Joe Amlung (Regenstrief, OCL)] 13:35:47
+Yep.
+
+[Joe Amlung (Regenstrief, OCL)] 13:35:51
+Yeah, I agree. And I will say, I don't think you were there for this conversation with Josh and Katie. I think it was just the three of us and Jamie. And we talked about how it very much seems like one of the only real — there is.
+
+[Joe Amlung (Regenstrief, OCL)] 13:36:05
+Suki data. Yes, but it's pretty rare that it's going to be anywhere near useful just because of exactly what you talked about, and I forget if we have established that with Suda and the team like, are they expecting.
+
+[Joe Amlung (Regenstrief, OCL)] 13:36:22
+that, you know, divorced from the EHR, you're really going to be getting much data from Suki independently to be able to drive these dashboards. My understanding, from what I've heard from Sudha, is that really, we are defining success.
+
+[Joe Amlung (Regenstrief, OCL)] 13:36:39
+as basically almost always using data from the EHR, and almost always it's going to be a pre-Suki and post-Suki kind of grouping, essentially. And a lot of times what we're doing is defining something that is.
+
+[Paul Biondich] 13:36:50
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:36:54
+still technically relevant, whether Suki is involved or not. It's still… you want to have lower after-hours time, probably. And, uh, so I… I guess I just wanted your perspective on that. Do… have we established with SUDA anything like that to say.
+
+[Paul Biondich] 13:37:02
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:37:11
+You know, Suki is something that is a, you know, the control and experimental kind of thing here. We can have a pre and post Suki, but it's not like most of the time Suki's data is going to be used in these dashboards. It's almost always going to be EHR.
+
+[Joe Amlung (Regenstrief, OCL)] 13:37:26
+Do you think she's in agreement with that?
+
+[Paul Biondich] 13:37:30
+I think so.
+
+[Joe Amlung (Regenstrief, OCL)] 13:37:31
+Okay. I think so too. I just, I don't remember if I heard her say it explicitly, but like the documents that she shared with us, almost always, they've always indicated to me that they do know. They are expecting that this is all, almost always coming from EHR data. Maybe there's…
+
+[Paul Biondich] 13:37:32
+Yeah.
+
+[Paul Biondich] 13:37:48
+Yeah.
+
+[Joe Amlung (Regenstrief, OCL)] 13:37:50
+The occasional thing like utilization that could be independent. But okay, that's what I wanted to make sure. And I think that just helps me a lot. We don't have to dig into Suki's API documentation unless we're seeing a clear opportunity for Suki. And I think that's really helpful for me. I think this is a little too geared towards.
+
+[Paul Biondich] 13:37:58
+Okay.
+
+[Joe Amlung (Regenstrief, OCL)] 13:38:11
+Suki's data when it's really like, what do we need to find in the EHR to prove Suki's worth? Not what do we need? Yeah.
+
+[Paul Biondich] 13:38:17
+Yeah, how can Suki show that their technology is of value to their customers?
+
+[Joe Amlung (Regenstrief, OCL)] 13:38:22
+Exactly. And I think that's good. I think she'll agree with that, too, because it's better for adoption among non-Suki people if we are just defining what comes out of the EHR. So I figured that she was spiritually aligned, but I just wanted to make sure that was the same for your perspective.
+
+[Joe Amlung (Regenstrief, OCL)] 13:38:38
+So that's good.
+
+[Paul Biondich] 13:38:39
+Yep, yep. Yep, and it seems like the marketing team maybe got a little bit ahead of themselves, and so Suda's coming next week, but not a big cavalry, so it'll take a little bit of the pressure off next week, which I'm happy about.
+
+[Joe Amlung (Regenstrief, OCL)] 13:38:47
+Sure.
+
+[Joe Amlung (Regenstrief, OCL)] 13:38:52
+Yeah, for sure. But still, it'll be fun. It'll be great to meet her. Great to hang out in person and do whatever. So yeah.
+
+[Paul Biondich] 13:38:55
+Yeah.
+
+[Paul Biondich] 13:38:57
+Likewise, I totally agree. So do you have what you need to work on between now and tomorrow?
+
+[Joe Amlung (Regenstrief, OCL)] 13:39:02
+Yeah, totally. I'll go make some changes after this call.
+
+[Paul Biondich] 13:39:04
+Thanks, man. Talk to you soon.
+
+[Joe Amlung (Regenstrief, OCL)] 13:39:07
+All right. Thanks, Paul. Have a good time at graduation.
+
+[Paul Biondich] 13:39:09
+Thank you so much. Take care. Bye.
+
+[Joe Amlung (Regenstrief, OCL)] 13:39:11
+You too. Bye.
+
