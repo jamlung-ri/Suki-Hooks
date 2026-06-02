@@ -298,6 +298,69 @@
       white-space: pre;
     }
 
+    /* ── ALGO UNITS SUBSECTION ── */
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .algo-units-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--blue);
+      background: #f0f4f9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #dce4ec;
+    }
+    .unit-ref-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .unit-ref-def {
+      font-size: 12.5px;
+      color: #3a434e;
+      line-height: 1.45;
+    }
+    .unit-ref-ambig {
+      font-size: 12px;
+      color: #4a3200;
+      margin-top: 6px;
+      padding: 5px 8px;
+      background: #fef9ed;
+      border-left: 3px solid #e8c87a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.4;
+    }
+
     /* Collapsible pseudocode */
     details {
       margin-top: 8px;
@@ -561,6 +624,28 @@
         after-hours documentation minutes per provider in the cohort for a given month.
         This number is expected to decrease after Suki adoption.
       </p>
+
+      <!-- Units in this algorithm -->
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">After-hours documentation minutes</div>
+            <div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. Summed per provider per reporting month to form the numerator.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; "Active" is a threshold choice. A provider who used Suki once in a month counts the same as one who used it daily. Care settings may wish to set a minimum usage threshold; any choice should be applied consistently across reporting periods.</div>
+          </div>
+        </div>
+      </div>
 
       <div class="formula-wrap">
 <span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (after-hours documentation minutes per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>

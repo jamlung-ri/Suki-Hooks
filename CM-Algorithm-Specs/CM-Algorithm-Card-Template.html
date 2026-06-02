@@ -301,6 +301,69 @@
       white-space: pre;
     }
 
+    /* ── ALGO UNITS SUBSECTION ── */
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .algo-units-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--blue);
+      background: #f0f4f9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #dce4ec;
+    }
+    .unit-ref-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .unit-ref-def {
+      font-size: 12.5px;
+      color: #3a434e;
+      line-height: 1.45;
+    }
+    .unit-ref-ambig {
+      font-size: 12px;
+      color: #4a3200;
+      margin-top: 6px;
+      padding: 5px 8px;
+      background: #fef9ed;
+      border-left: 3px solid #e8c87a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.4;
+    }
+
     /* Collapsible pseudocode */
     details { margin-top: 8px; }
     details summary {
@@ -529,6 +592,41 @@
         [One or two sentences describing what this algorithm produces and what direction
         indicates improvement.]
       </p>
+
+      <!-- ════════════════════════════════════════════════════
+           UNITS IN THIS ALGORITHM
+           List every unit the formula depends on.
+           - Exactly one PRIMARY unit (the canonical measure's unit, defined in the Unit card).
+           - One or more SECONDARY units for other inputs that have their own definition
+             or ambiguity (denominators, rates, normalization factors, etc.).
+           - Omit a secondary unit only if it is completely unambiguous (e.g., a raw count
+             with no definitional choices).
+           - Add a unit-ref-ambig note inside any unit whose definition involves a
+             meaningful choice that could vary across implementations.
+           ════════════════════════════════════════════════════ -->
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">[Primary unit name — matches the Unit card above]</div>
+            <div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. [One sentence on its role in the formula, e.g. summed/averaged/compared.]</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">[Secondary unit name — e.g. "Active providers in the cohort"]</div>
+            <div class="unit-ref-def">[Definition of this secondary unit and its role in the formula.]</div>
+            <!-- Include unit-ref-ambig only if this secondary unit has a meaningful definitional choice -->
+            <div class="unit-ref-ambig">&#x26A0; [Ambiguity note: describe the choice and its effect on the result.]</div>
+          </div>
+        </div>
+
+        <!-- Add more .unit-ref-item blocks as needed; remove this comment when done -->
+      </div>
 
       <!-- Formula: adjust numerator/denominator or replace with a non-fraction formula as needed -->
       <div class="formula-wrap">
