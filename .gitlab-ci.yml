@@ -4,10 +4,7 @@ pages:
   script:
     - mkdir -p public/CM-Algorithm-Specs
     - cp index.html public/index.html
-    - cp CM-Algorithm-Specs/index.html public/CM-Algorithm-Specs/index.html
-    - cp CM-Algorithm-Specs/CM-Algorithm-Review-Workspace.html public/CM-Algorithm-Specs/CM-Algorithm-Review-Workspace.html
-    - cp CM-Algorithm-Specs/CM-Measure-Report.html public/CM-Algorithm-Specs/CM-Measure-Report.html
-    - cp CM-Algorithm-Specs/Measures_suki_ehr_crosswalk.html public/CM-Algorithm-Specs/Measures_suki_ehr_crosswalk.html
+    - cp CM-Algorithm-Specs/*.html public/CM-Algorithm-Specs/
     - cp CM-Algorithm-Specs/*.md public/CM-Algorithm-Specs/
   artifacts:
     paths:
