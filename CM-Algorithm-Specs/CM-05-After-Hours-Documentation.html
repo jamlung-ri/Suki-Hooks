@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-05 · After-Hours Documentation — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+
+    /* ── Page shell ── */
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .page-break { page-break-before: always; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    /* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5d6cd;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #a5d6cd;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #1a3330;
+      line-height: 1.55;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-def p { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #1a3330;
+      line-height: 1.5;
+    }
+    .unit-method:first-child {
+      border-right: 1px solid #b2d8d2;
+    }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 5px;
+    }
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef9ed;
+      border-top: 1px solid #e8c87a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .unit-ambig li {
+      font-size: 13px;
+      color: #4a3200;
+      margin-bottom: 5px;
+      line-height: 1.45;
+    }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+
+    /* ── ALGORITHM BLOCK ── */
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title {
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+    .algo-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .algo-body {
+      padding: 16px 18px;
+    }
+    .algo-purpose {
+      font-size: 13px;
+      color: #3a434e;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    /* Formula display */
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs {
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .formula-eq {
+      color: var(--muted);
+      padding: 0 6px;
+    }
+    .formula-fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .formula-num {
+      display: block;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 4px 3px;
+      white-space: nowrap;
+    }
+    .formula-den {
+      display: block;
+      padding: 3px 4px 0;
+      white-space: nowrap;
+    }
+    .formula-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: inherit;
+      margin-top: 8px;
+      white-space: pre;
+    }
+
+    /* Collapsible pseudocode */
+    details {
+      margin-top: 8px;
+    }
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      padding: 4px 0;
+      user-select: none;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+      content: "▶ ";
+      font-size: 9px;
+      vertical-align: middle;
+    }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #2d3640;
+      overflow-x: auto;
+    }
+
+    /* ── TREND CHART ── */
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+    .chart-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      margin-bottom: 4px;
+    }
+    .chart-caption {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .chart-svg-wrap { overflow-x: auto; }
+
+    /* ── DATA TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th {
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #edf0f4;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+
+    /* ── SUKI SCOPE BOX ── */
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fa9c2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a434e;
+      line-height: 1.5;
+    }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+
+    /* ── KEY FINDING ── */
+    .key-finding {
+      background: var(--red-light);
+      border: 1px solid #f2b8b5;
+      border-left: 4px solid var(--red);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #5a1916;
+      line-height: 1.5;
+    }
+    .key-finding strong { color: #3c100e; }
+
+    /* ── SOURCES ── */
+    .sources-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--ink);
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 28px 0;
+    }
+
+    /* ── Footer ── */
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Masthead ── -->
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-05 &mdash; After-Hours Documentation</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Documentation Efficiency</span></span>
+      <span><strong>Also known as:</strong> Pajama Time &nbsp;·&nbsp; Work Outside Work &nbsp;·&nbsp; After-Hours EHR Time</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <!-- Name + direction -->
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">After-hours documentation minutes</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <!-- Definition sentence -->
+    <div class="unit-def">
+      <p>
+        A documentation minute is <strong>after-hours</strong> if it falls outside the provider's
+        working hours on that calendar day. Minutes are counted from encounter open through
+        final note signature, including any post-signature addenda and edits.
+      </p>
+    </div>
+
+    <!-- Gold Standard vs. Default -->
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Per-provider or per-specialty working hours, as configured by the care setting.
+        Preferred — avoids systematic misclassification across specialties with non-standard hours.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Before 09:00 or after 17:00 on weekdays; any time on Saturday or Sunday.
+        Use when per-provider scheduling data are unavailable.
+      </div>
+    </div>
+
+    <!-- Ambiguities -->
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Working hours vary by specialty.</strong>
+          Surgeons may work 09:00&ndash;21:00; a 9&ndash;5 default over-counts after-hours time for them
+          and cannot be compared across specialties without adjustment.
+        </li>
+        <li>
+          <strong>When does documentation end?</strong>
+          We recommend counting through final signature and all addenda; stopping at initial note
+          closure understates after-hours activity and is not directly comparable across implementations.
+        </li>
+        <li>
+          <strong>Pre-encounter prep vs. after-hours.</strong>
+          Early chart review (e.g., 06:00 before rounds) may be classified as after-hours under a
+          fixed window even within a provider's normal practice. Provider-level scheduling resolves this;
+          the 9&ndash;5 default does not.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM: DASHBOARD METRIC ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
+      <span class="algo-subtitle">For the Suki admin console</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces the single number shown on the administrative dashboard: the average
+        after-hours documentation minutes per provider in the cohort for a given month.
+        This number is expected to decrease after Suki adoption.
+      </p>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (after-hours documentation minutes per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    after_hours_min[p] = SUM of after-hours documentation minutes for provider p in month M
+                         (classified per the Unit definition above)
+
+  dashboard_value[M] = MEAN( after_hours_min[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; After-Hours Min / Provider / Month</div>
+    <p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The pre-adoption window establishes
+      the baseline; post-adoption trend is monitored monthly. Not all providers will show
+      immediate change &mdash; the effect is expected to compound as Suki utilization matures.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: after-hours minutes per provider per month over time, declining after Suki adoption">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <!-- Y labels -->
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <!-- X-axis labels -->
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Adoption line -->
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <!-- Pre-adoption dots -->
+        <circle cx="120" cy="78"  r="4" fill="#b26a00"/>
+        <circle cx="190" cy="72"  r="4" fill="#b26a00"/>
+        <circle cx="260" cy="80"  r="4" fill="#b26a00"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption dots (declining) -->
+        <circle cx="335" cy="82"  r="4" fill="#00796b"/>
+        <circle cx="410" cy="110" r="4" fill="#00796b"/>
+        <circle cx="495" cy="138" r="4" fill="#00796b"/>
+        <circle cx="580" cy="155" r="4" fill="#00796b"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Connect pre → post -->
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
+        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:200px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>EHR audit log (timestamped)</td>
+        <td>Per-user, per-event activity log showing when each provider interacted with the EHR and for how long. The primary data source for computing documentation minutes.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Signal / UAL; equivalent in Cerner, Athena. Must include provider ID, timestamp, event type, and duration.</td>
+      </tr>
+      <tr>
+        <td>Provider scheduled working hours</td>
+        <td>Each provider's expected working window per day of the week, by specialty or individual preference.</td>
+        <td><span class="source-tag tag-ehr">EHR / HR</span></td>
+        <td>Required for gold-standard implementation. If unavailable, fall back to 09:00&ndash;17:00 Mon&ndash;Fri default.</td>
+      </tr>
+      <tr>
+        <td>Note signature timestamp</td>
+        <td>Date and time of initial note closure/signature and any subsequent addenda, per encounter per provider.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Needed to bound documentation scope (encounter open → final signature).</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR audit records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between EHR and Suki before analysis.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary for the cohort comparison.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Suki's primary contribution to this measure. Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator in the Algorithm.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's contribution to this measure is the adoption boundary, not the documentation signal.</strong>
+      Suki session data indicates when a dictation or ambient capture session was initiated, but it
+      does not measure total EHR documentation time. Work within the EHR before or after a Suki
+      session is invisible to Suki; note signing happens in the EHR, not in Suki.
+    </p>
+    <p>
+      The authoritative data source is the <strong>EHR audit log</strong>. Using Suki session
+      timing as a proxy for after-hours documentation time would systematically undercount
+      documentation minutes and miss chart review, note editing, and order entry that occurs
+      outside any Suki session.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (17)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">AAFP 2021</span>
+    <span class="source-pill">Afshar 2025</span>
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">Billings 2025a</span>
+    <span class="source-pill">Boyter / KLAS 2025</span>
+    <span class="source-pill">Cao 2024</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Evans 2025</span>
+    <span class="source-pill">Haberle 2024</span>
+    <span class="source-pill">Karavassilis 2025</span>
+    <span class="source-pill">Liu 2024</span>
+    <span class="source-pill">Ma 2025</span>
+    <span class="source-pill">Pearlman 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+    <span class="source-pill">Stults 2025</span>
+    <span class="source-pill">Suhail 2026</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-05 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

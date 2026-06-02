@@ -1,0 +1,701 @@
+<!doctype html>
+<!--
+  CM Algorithm Card — Template
+  ════════════════════════════
+  Copy this file to CM-XX-[Short-Name].html and replace every [PLACEHOLDER] with
+  measure-specific content. Do not change the CSS or structural elements.
+
+  Required sections (all must be present in every card):
+    1. Masthead         — CM code, title, D&M dimension badges, aliases
+    2. Unit card        — unit name, definition, gold-standard vs. default, ambiguities
+    3. Algorithm block  — dashboard formula + collapsible pseudocode
+    4. Expected trend   — inline SVG schematic chart
+    5. Data requirements table
+    6. Suki data scope  — scoped role only; no interpretive claims
+    7. Sources          — pill list of papers
+
+  Sections to OMIT from algorithm cards:
+    - Interpretive findings or literature conclusions (those belong in ACI)
+    - Suki product claims or marketing language
+    - Open research questions (capture those in the ACI repo)
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>[CM-XX] · [Short Title] — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    /* D&M dimension badge colors — use the one that matches */
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }   /* Net Benefits */
+    .badge-iq  { background: var(--blue-light); color: var(--blue); }   /* Information Quality */
+    .badge-sq  { background: var(--violet-light); color: var(--violet); } /* System Quality */
+    .badge-u   { background: #fff3df; color: var(--amber); }             /* Use */
+    .badge-us  { background: #f0f4f9; color: #49525d; }                  /* User Satisfaction */
+    /* Category badge */
+    .badge-cat { background: var(--blue-light); color: var(--blue); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    /* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5d6cd;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #a5d6cd;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #1a3330;
+      line-height: 1.55;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-def p { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #1a3330;
+      line-height: 1.5;
+    }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 5px;
+    }
+    /* Omit .unit-methods + .unit-ambig entirely if the unit has no operationalization variants
+       and no ambiguities. Keep .unit-def and .unit-top only. */
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef9ed;
+      border-top: 1px solid #e8c87a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .unit-ambig li {
+      font-size: 13px;
+      color: #4a3200;
+      margin-bottom: 5px;
+      line-height: 1.45;
+    }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+
+    /* ── ALGORITHM BLOCK ── */
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose {
+      font-size: 13px;
+      color: #3a434e;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    /* Formula display */
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq  { color: var(--muted); padding: 0 6px; }
+    .formula-fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .formula-num {
+      display: block;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 4px 3px;
+      white-space: nowrap;
+    }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: inherit;
+      margin-top: 8px;
+      white-space: pre;
+    }
+
+    /* Collapsible pseudocode */
+    details { margin-top: 8px; }
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      padding: 4px 0;
+      user-select: none;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #2d3640;
+      overflow-x: auto;
+    }
+
+    /* ── TREND CHART ── */
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+
+    /* ── DATA TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th {
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #edf0f4;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-cms    { background: var(--soft);        color: #49525d; }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+
+    /* ── SUKI SCOPE BOX ── */
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fa9c2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a434e;
+      line-height: 1.5;
+    }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+
+    /* ── SOURCES ── */
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--ink);
+    }
+
+    /* ── Divider / Footer ── */
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ════════════════════════════════════════════════════════════
+       1. MASTHEAD
+       Replace: CM code, full title, D&M badge (pick one), category badge, aliases.
+       D&M badge classes: badge-nb (Net Benefits), badge-iq (Info Quality),
+         badge-sq (System Quality), badge-u (Use), badge-us (User Satisfaction)
+       ════════════════════════════════════════════════════════════ -->
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>[CM-XX] &mdash; [Full Measure Title]</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">[D&amp;M Dimension]</span></span>
+      <span><span class="badge badge-cat">[Category, e.g. Documentation Efficiency]</span></span>
+      <span><strong>Also known as:</strong> [Alias 1] &nbsp;·&nbsp; [Alias 2] &nbsp;·&nbsp; [Alias 3]</span>
+    </div>
+  </header>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       2. UNIT CARD
+       - unit-value: the raw unit name (not the dashboard average formula)
+       - unit-def: one sentence defining what the unit is
+       - unit-methods: two-column Gold Standard vs. Default (omit if no variants)
+       - unit-ambig: bullet list of known ambiguities (omit if none)
+       ════════════════════════════════════════════════════════════ -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">[Unit name — e.g. "After-hours documentation minutes"]</div>
+      </div>
+      <!-- direction-pill: use "↓ Lower is better" or "↑ Higher is better" -->
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        [One sentence defining what the unit measures and how it is bounded.
+        Example: "A documentation minute is after-hours if it falls outside the provider's
+        working hours on that calendar day, counted from encounter open through final note
+        signature including post-signature edits."]
+      </p>
+    </div>
+
+    <!-- OPTIONAL: include only if the unit has meaningful operationalization variants -->
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        [Preferred / ideal operationalization and why it is preferred.]
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        [Fallback operationalization when gold-standard data are unavailable.]
+      </div>
+    </div>
+
+    <!-- OPTIONAL: include only if there are meaningful ambiguities in how the unit is defined -->
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>[Ambiguity title.]</strong> [1–2 sentences describing the ambiguity and its practical impact on measurement consistency.]</li>
+        <li><strong>[Ambiguity title.]</strong> [1–2 sentences.]</li>
+        <!-- Add or remove items as needed -->
+      </ul>
+    </div>
+
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       3. ALGORITHM BLOCK
+       One block per algorithm. Most measures have one (the dashboard/cohort formula).
+       Add a second .algo-block only if there is a genuinely distinct second algorithm
+       (e.g., a unit-level sub-algorithm that feeds the dashboard formula).
+       ════════════════════════════════════════════════════════════ -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">[Algorithm title — e.g. "Dashboard Metric — Cohort Average"]</span>
+      <span class="algo-subtitle">[Brief context — e.g. "For the Suki admin console"]</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        [One or two sentences describing what this algorithm produces and what direction
+        indicates improvement.]
+      </p>
+
+      <!-- Formula: adjust numerator/denominator or replace with a non-fraction formula as needed -->
+      <div class="formula-wrap">
+<span class="formula-lhs">[Output variable name]</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">[Numerator — e.g. "∑ (unit value per provider, in the period)"]</span><span class="formula-den">[Denominator — e.g. "Number of active providers in the cohort"]</span></span>
+<div class="formula-note">[Reporting grain — e.g. "one value per cohort per calendar month"]
+[Pre / post boundary note — e.g. "each provider's Suki adoption date (first completed session)"]
+[Any exclusion rules — e.g. "Exclude: providers in onboarding ramp period (default 30 days)"]</div>
+      </div>
+
+      <!-- Pseudocode is collapsible — always hidden by default -->
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">[Step-by-step pseudocode matching the formula above.
+Include any filtering, aggregation, and edge-case handling.]</div>
+      </details>
+
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       4. EXPECTED TREND CHART
+       Replace the SVG line positions to reflect whether the metric is
+       expected to go DOWN (most efficiency measures) or UP after adoption.
+       Y-axis labels can be "High/Med/Low" or actual unit labels if known.
+       X-axis labels use relative months; "Adoption" label stays centered.
+       ════════════════════════════════════════════════════════════ -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; [Unit] / Provider / Month</div>
+    <p class="chart-caption">
+      [One or two sentences describing the expected direction and pace of change
+      after Suki adoption. Note any caveats about ramp time or adoption maturity.]
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="[Accessible description of the chart]">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <!-- Y labels — adjust as needed -->
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <!-- X-axis labels -->
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Adoption marker line -->
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <!-- Pre-adoption dots — adjust cy to reflect where baseline sits (high, mid, low) -->
+        <circle cx="120" cy="78"  r="4" fill="#b26a00"/>
+        <circle cx="190" cy="72"  r="4" fill="#b26a00"/>
+        <circle cx="260" cy="80"  r="4" fill="#b26a00"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption dots — for "lower is better", cy increases (moves down).
+             For "higher is better", cy decreases (moves up). Adjust accordingly. -->
+        <circle cx="335" cy="82"  r="4" fill="#00796b"/>
+        <circle cx="410" cy="110" r="4" fill="#00796b"/>
+        <circle cx="495" cy="138" r="4" fill="#00796b"/>
+        <circle cx="580" cy="155" r="4" fill="#00796b"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Connector at adoption boundary -->
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
+        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       5. DATA REQUIREMENTS TABLE
+       One row per required data element.
+       Source tags: tag-ehr, tag-suki, tag-cms, tag-survey
+       ════════════════════════════════════════════════════════════ -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:200px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>[Element name]</td>
+        <td>[What this element is and why it is needed for the algorithm.]</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>[Implementation detail, field name, or caveat.]</td>
+      </tr>
+      <tr>
+        <td>[Element name]</td>
+        <td>[Description.]</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>[Notes.]</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between EHR and Suki before analysis.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Suki's universal contribution to all measures. Without this, there is no pre/post split.</td>
+      </tr>
+      <!-- Add or remove rows as needed -->
+    </tbody>
+  </table>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       6. SUKI DATA SCOPE
+       Describe precisely what Suki can and cannot contribute to this measure.
+       Do not make product claims. Focus on data availability and limitations.
+       ════════════════════════════════════════════════════════════ -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>[One sentence stating what Suki provides for this measure.]</strong>
+      [1–2 sentences explaining the scope — what Suki can observe and what it cannot.]
+    </p>
+    <p>
+      [If applicable: explain what data source takes precedence and why Suki data
+      alone is insufficient or should not be used as a proxy.]
+    </p>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════════════
+       7. SOURCES
+       List all papers that measure this construct. Use short citation form.
+       Update the count in the section-label.
+       ════════════════════════════════════════════════════════════ -->
+  <hr class="divider">
+  <p class="section-label">Source Papers ([N])</p>
+  <div class="sources-wrap">
+    <span class="source-pill">[Author Year]</span>
+    <span class="source-pill">[Author Year]</span>
+    <!-- Add as many as needed -->
+  </div>
+
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>[CM-XX] Algorithm Card &nbsp;·&nbsp; [Month Year]</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -359,6 +359,12 @@ body {
 }
 
 /* ── Algorithm summary (always visible above EHR grid) ─────────────────── */
+.unit-display {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--teal);
+}
+
 .algo-summary {
   margin-bottom: 20px;
   padding-bottom: 4px;
@@ -923,14 +929,14 @@ const MEASURES = [
         suki_badge: "native-data",
         suki_badge_label: "Native Suki data",
         suki_data: "Session timestamps with time-of-day are natively available from the Suki API and are timezone-aware. After-hours Suki sessions are directly identifiable without EHR data.",
-        suki_opp: "Suki after-hours session count and duration are reportable without EHR integration and can serve as a leading indicator of pajama-time reduction. This allows Suki to surface this metric for customers before EHR telemetry data is available.",
+        suki_opp: "Suki session timestamps can identify when a provider used Suki outside clinic hours — but Suki sessions capture only active dictation and note-review time within Suki, not total after-hours documentation burden. Providers also spend after-hours time on inbox messages, prior authorizations, results review, and other EHR tasks that occur entirely outside Suki sessions. Treat Suki after-hours session data as a partial leading indicator only, not a complete proxy for pajama-time reduction.",
         benchmarks: "<strong>Objective data often null:</strong> Pearlman 2025 and Stults 2025 show no statistically significant change in after-hours EHR time. <strong>Exceptions:</strong> Duggan 2025: &minus;16.9%; Boyter/KLAS 2025: &minus;39% (UAL); Afshar 2025b: &minus;0.50 hrs/day (fragile &mdash; effect disappears when top 3% of outliers are removed). Self-report consistently shows improvement; objective telemetry does not.",
         notes: "Self-report/objective divergence on this measure is one of the most reproducible findings in the corpus. Strongly recommend objective telemetry over self-report.",
-        unit: "Minutes per provider per month (after-hours EHR time)",
+        unit: "Minutes outside of working hours (per provider per month)",
         direction: "lower",
-        formula: `<span class="unit-name">after-hours min / provider / month</span><span class="eq">=</span><span class="frac"><span class="frac-num">after-hours EHR time (min)</span><span class="frac-den">provider &middot; month</span></span>`,
+        formula: `<span class="unit-name">Cohort avg &Delta; after-hours min / provider / month</span><span class="eq">=</span><span class="frac"><span class="frac-num">&Sigma;(after_hours_min<sub>post</sub> &minus; after_hours_min<sub>pre</sub>)</span><span class="frac-den">clinician count</span></span>`,
         what_to_compare: "pre-adoption monthly avg → post-adoption monthly avg",
-        how_it_works: "Sum all EHR activity for each provider that falls outside scheduled working hours each month. Compare each provider's average monthly after-hours total before Suki adoption to after adoption. Average across the provider cohort.",
+        how_it_works: "<strong>Algorithm 1 — Dashboard metric:</strong> Sum each provider's total after-hours EHR time per month (after_hours_min). Subtract their pre-adoption monthly average from their post-adoption monthly average to get a per-provider delta. Average those deltas across the provider cohort. This is the number displayed on the dashboard.<br><br><strong>Algorithm 2 — Unit definition:</strong> An &ldquo;after-hours minute&rdquo; is any minute of EHR audit-log activity recorded outside clinic business hours. We define &ldquo;outside business hours&rdquo; as Monday&ndash;Friday before 7:00 AM or after 6:00 PM, plus all weekend time. We use standard clinic business hours rather than individual clinician schedules because clinician schedules vary widely and are not consistently captured in the EHR. <em>Color commentary:</em> Different clinicians do have different working hours, and some genuinely work evenings by choice. This definition will include those cases — the tradeoff is consistency and implementability over precision. A site that wants to account for individual schedules would need a separate scheduled-hours data feed, which is generally not available.",
         delta_interpretation: "Lower after-hours minutes per month indicates providers are completing notes during clinic hours rather than at home or after the workday.",
         watch_outs: [
           "Objective EHR telemetry rarely shows significant improvement; self-report consistently overstates — do not conflate the two.",
@@ -984,6 +990,12 @@ function renderAlias(m, a, idx) {
     </div>
     <div class="acc-body">
       <div class="algo-summary">
+        ${a.unit ? `<div class="algo-row">
+          <span class="algo-row-label">Unit</span>
+          <div class="algo-row-content">
+            <span class="unit-display">${a.unit}</span>
+          </div>
+        </div>` : ''}
         <div class="algo-row">
           <span class="algo-row-label">Algorithm</span>
           <div class="algo-row-content">
@@ -1028,6 +1040,7 @@ function renderAlias(m, a, idx) {
           </div>
         </div>
       </div>
+      ${a.visual_sketch ? `<pre class="sketch-block" style="margin:0 0 16px 0;">${a.visual_sketch}</pre>` : ''}
       <div class="sub-details" id="${detailsId}">
         <div class="sub-details-head" onclick="toggleDetails('${detailsId}')">
           <span class="sub-details-label">Full details</span>
@@ -1036,7 +1049,6 @@ function renderAlias(m, a, idx) {
         <div class="sub-details-body">
           <p class="how-it-works" style="margin-bottom:14px;">${a.how_it_works}</p>
           ${watchOutsHtml}
-          <pre class="sketch-block">${a.visual_sketch}</pre>
           <div class="bench-section" style="margin-top:16px;">
             <div class="panel-label">Benchmarks</div>
             <p class="bench-text">${a.benchmarks}</p>
