@@ -5,7 +5,7 @@ pages:
     - mkdir -p public/CM-Algorithm-Specs
     - cp index.html public/index.html
     - cp CM-Algorithm-Specs/*.html public/CM-Algorithm-Specs/
-    - cp CM-Algorithm-Specs/*.md public/CM-Algorithm-Specs/
+    - cp CM-Algorithm-Specs/build.py public/CM-Algorithm-Specs/
   artifacts:
     paths:
       - public
