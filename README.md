@@ -8,12 +8,23 @@ Each Canonical Measure (CM) algorithm card defines the unit(s), dashboard formul
 
 ## GitLab Pages
 
+### Algorithm Cards
+
 | Page | Description |
 |---|---|
-| [CM Algorithm Review Workspace](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-Algorithm-Review-Workspace.html) | Interactive workspace for reviewing and validating CM algorithm specs (CM-20, CM-21, CM-22) |
-| [CM-05 · After-Hours Documentation](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-05-After-Hours-Documentation.html) | Algorithm card — unit definition, dashboard formula, expected trend, and data requirements for after-hours documentation time |
-| [CM Measure Report](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-Measure-Report.html) | Printable data requirements report for CM-20 and CM-21 (for Suki data/analytics team) |
-| [EHR / Suki Data Crosswalk](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/Measures_suki_ehr_crosswalk.html) | Maps each canonical measure to EHR vendor fields (Epic, Cerner, Athena) and available Suki data |
+| [CM Algorithm Cards — Combined](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-Algorithm-Cards-Combined.html) | All six CM cards in one scrollable document with sticky navigation — start here |
+| [CM-04 · Documentation Time](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-04-Documentation-Time.html) | Minutes per encounter; EHR audit-log gold standard, Suki session timestamps as native fallback |
+| [CM-05 · After-Hours Documentation](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-05-After-Hours-Documentation.html) | After-hours minutes per provider per month (Pajama Time) |
+| [CM-07 · Total EHR Time](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-07-Total-EHR-Time.html) | Total EHR minutes per encounter across all task types |
+| [CM-20 · Financial Productivity](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-20-Financial-Productivity.html) | Three operationalizations: wRVUs, paid revenue, E/M Level 4–5 share |
+| [CM-21 · Coding Accuracy](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-21-Coding-Accuracy.html) | Three operationalizations: ICD-10 coding depth, Suki suggestion match rate, denial rate |
+| [CM-22 · Patient Volume & Throughput](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-22-Patient-Volume.html) | Completed encounters per provider per week |
+
+### Reference & Tooling
+
+| Page | Description |
+|---|---|
+| [EHR / Suki Data Crosswalk](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/Measures_suki_ehr_crosswalk.html) | Maps each CM to EHR vendor fields (Epic, Cerner, Athena) and Suki data availability |
 | [Algorithm Card Template](https://jamlung.gitlab.io/Suki-Hooks/CM-Algorithm-Specs/CM-Algorithm-Card-Template.html) | Blank template for authoring new CM algorithm cards |
 
 ---
@@ -22,19 +33,28 @@ Each Canonical Measure (CM) algorithm card defines the unit(s), dashboard formul
 
 ```
 CM-Algorithm-Specs/
-  CM-05-After-Hours-Documentation.html   # Algorithm card — CM-05
-  CM-Algorithm-Card-Template.html        # Template for new algorithm cards
-  CM-Algorithm-Review-Workspace.html     # Interactive review workspace (CM-20, 21, 22)
-  CM-Measure-Report.html                 # Printable data requirements report
-  Measures_suki_ehr_crosswalk.html       # EHR / Suki data crosswalk
-  CM-20-Financial-Productivity-Revenue-Algorithm-Spec.md
-  CM-21-Coding-Accuracy-Algorithm-Spec.md
-  CM-22-Patient-Volume-Throughput-Algorithm-Spec.md
-  CM-Algorithm-Specs-Gameplan.md
-  CM-Data-Crosswalk.md
-Review-notes/                            # Working session notes and transcripts
+  CM-Algorithm-Cards-Combined.html     # All six CM cards combined — primary reference
+  CM-04-Documentation-Time.html        # Algorithm card — CM-04
+  CM-05-After-Hours-Documentation.html # Algorithm card — CM-05
+  CM-07-Total-EHR-Time.html            # Algorithm card — CM-07
+  CM-20-Financial-Productivity.html    # Algorithm card — CM-20 (3 operationalizations)
+  CM-21-Coding-Accuracy.html           # Algorithm card — CM-21 (3 operationalizations)
+  CM-22-Patient-Volume.html            # Algorithm card — CM-22
+  CM-Algorithm-Card-Template.html      # Blank template for new cards
+  Measures_suki_ehr_crosswalk.html     # EHR / Suki data crosswalk (interactive)
+  build.py                             # Combines individual CM files into the Combined HTML
+  index.html                           # Landing page (GitLab Pages)
+  _archive/                            # Earlier working documents and specs
+Review-notes/                          # Working session notes and transcripts
 ```
 
 ## Authoring a New Algorithm Card
 
-Copy `CM-Algorithm-Specs/CM-Algorithm-Card-Template.html` to `CM-Algorithm-Specs/CM-XX-[Short-Name].html` and replace every `[PLACEHOLDER]` with measure-specific content. Required sections are documented in the template's HTML comments.
+1. Copy `CM-Algorithm-Specs/CM-Algorithm-Card-Template.html` to `CM-Algorithm-Specs/CM-XX-[Short-Name].html`
+2. Replace every `[PLACEHOLDER]` with measure-specific content (sections documented in HTML comments)
+3. Add the new filename to the `CM_FILES` list in `build.py`
+4. Run `build.py` to regenerate `CM-Algorithm-Cards-Combined.html`
+
+```
+python build.py
+```

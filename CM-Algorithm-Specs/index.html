@@ -3,13 +3,330 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="0; url=CM-Algorithm-Review-Workspace.html">
-  <title>CM Algorithm Specs</title>
+  <title>CM Algorithm Cards — Suki AI Partnership</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    /* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 36px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead p {
+      margin: 0;
+      font-size: 13.5px;
+      color: var(--muted);
+      max-width: 600px;
+      line-height: 1.55;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
+    /* ── Card grid ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--ink);
+      display: block;
+      transition: box-shadow 0.12s, border-left-color 0.12s;
+    }
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(32,33,36,0.13);
+      border-left-color: var(--blue);
+      text-decoration: none;
+    }
+    .card-code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .card-meta {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 18px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .tag-nb  { background: var(--teal-light); color: var(--teal); }
+    .tag-eff { background: var(--blue-light); color: var(--blue); }
+    .tag-tool { background: var(--soft); color: var(--muted); }
+
+    /* ── Primary / featured card ── */
+    .card-primary {
+      border-left-color: var(--blue);
+      background: var(--blue-light);
+    }
+    .card-primary:hover { border-left-color: var(--teal); }
+    .card-primary .card-code { color: var(--teal); }
+
+    /* ── Tool cards (smaller section) ── */
+    .tool-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 36px;
+    }
+    .tool-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: var(--ink);
+      transition: box-shadow 0.12s;
+    }
+    .tool-card:hover {
+      box-shadow: var(--shadow);
+      text-decoration: none;
+    }
+    .tool-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+    }
+    .tool-body { min-width: 0; }
+    .tool-title { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+    .tool-desc  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    /* ── Footer ── */
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 24px 16px 56px; }
+      .card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <p>
-    Redirecting to the
-    <a href="CM-Algorithm-Review-Workspace.html">CM Algorithm Review Workspace</a>.
-  </p>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</p>
+    <h1>CM Algorithm Cards</h1>
+    <p>
+      Algorithm specification cards for each Canonical Measure (CM) in the Suki AI ambient
+      documentation evaluation. Each card defines the unit, dashboard formula, expected trend,
+      and data requirements for one measure.
+    </p>
+  </header>
+
+  <!-- ── Combined view ── -->
+  <p class="section-label">Combined View</p>
+  <div style="margin-bottom:28px">
+    <a href="CM-Algorithm-Cards-Combined.html" class="card card-primary">
+      <div class="card-code">All CMs</div>
+      <div class="card-title">CM Algorithm Cards &mdash; Combined</div>
+      <div class="card-desc">
+        All six algorithm cards in one scrollable document with a sticky navigation bar.
+        Use this for review, sharing, or printing the full set.
+      </div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB &mdash; Net Benefits</span>
+        <span class="tag tag-eff">CM-04 &middot; CM-05 &middot; CM-07 &middot; CM-20 &middot; CM-21 &middot; CM-22</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- ── Individual cards ── -->
+  <p class="section-label">Individual Algorithm Cards</p>
+  <div class="card-grid">
+
+    <a href="CM-04-Documentation-Time.html" class="card">
+      <div class="card-code">CM-04</div>
+      <div class="card-title">Documentation Time</div>
+      <div class="card-desc">Minutes per encounter. EHR audit-log gold standard; Suki session timestamps as native fallback.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">Documentation Efficiency</span>
+      </div>
+    </a>
+
+    <a href="CM-05-After-Hours-Documentation.html" class="card">
+      <div class="card-code">CM-05</div>
+      <div class="card-title">After-Hours Documentation</div>
+      <div class="card-desc">After-hours minutes per provider per month (Pajama Time). EHR audit-log; per-provider scheduled hours.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">Documentation Efficiency</span>
+      </div>
+    </a>
+
+    <a href="CM-07-Total-EHR-Time.html" class="card">
+      <div class="card-code">CM-07</div>
+      <div class="card-title">Total EHR Time</div>
+      <div class="card-desc">Total EHR minutes per encounter across all task types — documentation, inbox, orders, results review.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">EHR Efficiency</span>
+      </div>
+    </a>
+
+    <a href="CM-20-Financial-Productivity.html" class="card">
+      <div class="card-code">CM-20</div>
+      <div class="card-title">Financial Productivity</div>
+      <div class="card-desc">Three operationalizations: wRVUs per week, paid revenue per month, and E/M Level 4&ndash;5 share.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">Financial Productivity</span>
+      </div>
+    </a>
+
+    <a href="CM-21-Coding-Accuracy.html" class="card">
+      <div class="card-code">CM-21</div>
+      <div class="card-title">Coding Accuracy</div>
+      <div class="card-desc">Three operationalizations: ICD-10 coding depth, Suki suggestion match rate (native data), and denial rate.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">Coding Accuracy</span>
+      </div>
+    </a>
+
+    <a href="CM-22-Patient-Volume.html" class="card">
+      <div class="card-code">CM-22</div>
+      <div class="card-title">Patient Volume &amp; Throughput</div>
+      <div class="card-desc">Completed encounters per provider per week. Higher is better — volume freed by documentation efficiency.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">Patient Volume</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Reference tools ── -->
+  <p class="section-label">Reference &amp; Tooling</p>
+  <div class="tool-list">
+
+    <a href="Measures_suki_ehr_crosswalk.html" class="tool-card">
+      <div class="tool-icon">&#x21C4;</div>
+      <div class="tool-body">
+        <div class="tool-title">EHR / Suki Data Crosswalk</div>
+        <div class="tool-desc">Maps each canonical measure to EHR vendor fields (Epic, Cerner, Athena) and available Suki data. Interactive accordion view.</div>
+      </div>
+    </a>
+
+    <a href="CM-Algorithm-Card-Template.html" class="tool-card">
+      <div class="tool-icon">&#x25A1;</div>
+      <div class="tool-body">
+        <div class="tool-title">Algorithm Card Template</div>
+        <div class="tool-desc">Blank template for authoring new CM algorithm cards. Replace every [PLACEHOLDER] with measure-specific content.</div>
+      </div>
+    </a>
+
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>June 2026</span>
+  </footer>
+
+</div>
 </body>
 </html>
