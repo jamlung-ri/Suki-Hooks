@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-21 · Coding Accuracy — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+    }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pills { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; }
+    .direction-pill.lower-pill { color: var(--blue); border-color: #b0c8e2; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .unit-def p { margin: 0 0 8px; }
+    .unit-def p:last-child { margin: 0; }
+    .unit-reprs { padding: 12px 18px; border-bottom: 1px solid #b2d8d2; }
+    .unit-reprs-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--teal); margin-bottom: 8px; }
+    .unit-repr-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; font-size: 13px; color: #1a3330; }
+    .unit-repr-num { font-weight: 800; color: var(--blue); min-width: 16px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    /* Algo blocks */
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .direction-mini { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+    .dir-higher { background: var(--teal-light); color: var(--teal); }
+    .dir-lower  { background: var(--blue-light); color: var(--blue); }
+    /* Native Suki data badge (on algo header for Alg 2) */
+    .suki-native-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--teal-light); border: 1px solid #a5d6cd; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--teal); white-space: nowrap; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def  { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12px; color: #5a1916; margin-top: 6px; padding: 6px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    /* Dual chart */
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table .group-row td { background: #f7f9fb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 6px 12px; border-bottom: 1px solid var(--line); }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-rcm    { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .scope-native { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #1a3330; }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-21 &mdash; Coding Accuracy</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Coding Accuracy</span></span>
+      <span><strong>Operationalizations:</strong> ICD-10 Coding Depth &nbsp;·&nbsp; ICD-10 Suggestion Match Rate &nbsp;·&nbsp; Denial Rate</span>
+    </div>
+  </header>
+
+  <!-- ── MEASURE OVERVIEW ── -->
+  <p class="section-label">Measure Overview</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Construct</div>
+        <div class="unit-value">Documentation-driven coding quality &mdash; three operationalizations</div>
+      </div>
+      <div class="direction-pills">
+        <span class="direction-pill">&#x2191; Higher is better (1, 2)</span>
+        <span class="direction-pill lower-pill">&#x2193; Lower is better (3)</span>
+      </div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Coding accuracy captures whether clinical documentation supports correct, complete coding
+        of the patient encounter. Suki adoption may improve coding by generating more complete
+        transcripts that surface diagnoses and complexity levels a provider might otherwise omit
+        when documenting under time pressure.
+      </p>
+      <p>
+        The three operationalizations measure different facets of coding quality:
+        depth (how many codes per encounter), accuracy (how well Suki&rsquo;s suggestions match
+        what was billed), and payer validation (whether higher coding produces more denials).
+        Algorithm 2 is the only one where Suki contributes primary data.
+      </p>
+    </div>
+
+    <div class="unit-reprs">
+      <div class="unit-reprs-label">Three Operationalizations &mdash; See Algorithms Below</div>
+      <div class="unit-repr-row"><span class="unit-repr-num">1</span><span>ICD-10 diagnosis codes per encounter &nbsp;&mdash;&nbsp; proxy for documentation completeness &nbsp;&uarr; Higher is better</span></div>
+      <div class="unit-repr-row"><span class="unit-repr-num">2</span><span>ICD-10 suggestion match rate (%) &nbsp;&mdash;&nbsp; Suki-native accuracy signal &nbsp;&uarr; Higher is better</span></div>
+      <div class="unit-repr-row"><span class="unit-repr-num">3</span><span>Level 4&ndash;5 denial rate (%) &nbsp;&mdash;&nbsp; payer validation of coding uplift &nbsp;&darr; Lower is better</span></div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Cross-Cutting Ambiguities</div>
+      <ul>
+        <li>
+          <strong>More codes &ne; better coding.</strong>
+          ICD-10 coding depth (Algorithm 1) is a completeness proxy, not a direct accuracy measure.
+          Very high code counts can signal overcoding. Always read alongside denial rate (Algorithm 3)
+          to confirm additional codes are accepted by payers.
+        </li>
+        <li>
+          <strong>Case mix confounding.</strong>
+          A shift toward more complex patients will raise both ICD-10 code counts and E/M levels
+          independently of Suki. Use within-provider pre/post comparisons and flag known panel
+          changes during the analysis window.
+        </li>
+        <li>
+          <strong>Algorithm 2 requires a pipeline not in the standard data pull.</strong>
+          Comparing Suki&rsquo;s suggested codes to final billed codes requires encounter-to-claim
+          linkage. Suki may also return IMO codes that need mapping to ICD-10 before comparison.
+          Confirm pipeline availability before planning work that depends on Algorithm 2.
+        </li>
+        <li>
+          <strong>Denial reason codes are required for Algorithm 3.</strong>
+          Not all denials are coding-related. Distinguish coding denials from authorization
+          and eligibility denials using denial reason codes. A rising overall denial rate
+          driven by authorization changes is not a Suki signal.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM 1: ICD-10 Coding Depth ── -->
+  <p class="section-label">Algorithms</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">ICD-10 Coding Depth</span>
+      <span class="direction-mini dir-higher">&#x2191; Higher is better</span>
+      <span class="algo-subtitle">Diagnoses per encounter</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Counts the average number of distinct ICD-10 diagnosis codes assigned per completed
+        encounter. More codes per encounter indicates documentation is capturing more diagnoses
+        per visit &mdash; a proxy for completeness, not direct accuracy. Pair with Algorithm 3
+        (Denial Rate) to confirm that additional codes are accepted by payers.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">ICD-10 diagnosis codes per encounter</div>
+            <div class="unit-ref-def">Count of distinct ICD-10 codes assigned per completed encounter. Averaged per provider per reporting month, then averaged across the cohort. icd10_codes_per_enc from the Suki EHR data pull is the preferred field.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">Providers with ≥1 completed Suki session in the month and past the onboarding ramp (default: 30 days).</div>
+            <div class="unit-ref-ambig">&#x26A0; This is a completeness measure only. Do not use it as a standalone accuracy measure. A provider with 6 codes/encounter and a 0% denial rate is a stronger signal than one with 8 codes and a rising denial rate.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg ICD-10 codes / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: onboarding ramp (default 30 days)
+Data source: EHR — icd10_codes_per_enc (Epic / Cerner)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    icd10_per_enc[p] = avg ICD-10 codes per encounter for provider p in month M
+                       (from EHR: icd10_codes_per_enc)
+
+  dashboard_value[M] = MEAN( icd10_per_enc[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── ALGORITHM 2: Match Rate ── -->
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">2</span>
+      <span class="algo-title">ICD-10 Suggestion Match Rate</span>
+      <span class="direction-mini dir-higher">&#x2191; Higher is better</span>
+      <span class="suki-native-badge">Suki Native Data</span>
+      <span class="algo-subtitle">Suki-to-billed code agreement</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        The only CM-21 algorithm where Suki contributes the primary signal. Compares AI-generated
+        ICD-10 codes from the Suki structured-data endpoint to final billed codes from the EHR
+        claim record. A higher match rate indicates Suki&rsquo;s coding suggestions are accurate
+        and align with what clinicians ultimately bill. Afshar 2025b (RCT, n=66) found
+        statistically significant coding improvement (p &lt; 0.001). A mature implementation
+        should approach 85&ndash;90% match rate.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">ICD-10 suggestion match rate (%)</div>
+            <div class="unit-ref-def">For each completed encounter, count the Suki-suggested ICD-10 codes that also appear in the final billed codes. Divide by total billed codes.</div>
+            <div class="pipeline-note">&#x26A0; <strong>Pipeline dependency:</strong> Requires encounter-to-claim linkage between the Suki API and EHR claims records &mdash; not part of the standard Suki EHR data pull. Suki may return IMO codes; an IMO &rarr; ICD-10 mapping step is needed before comparison. Confirm pipeline availability before planning work that relies on this algorithm.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Early-use vs. mature-use trajectory</div>
+            <div class="unit-ref-def">Match rate is expected to increase over time as providers become more familiar with reviewing and accepting Suki&rsquo;s suggestions. The comparison is early-use period vs. mature-use period rather than a fixed pre/post adoption split.</div>
+            <div class="unit-ref-ambig">&#x26A0; Some code discrepancies are intentional — physicians or billing staff may legitimately add or remove codes during final review. A match rate of 100% would indicate codes are accepted without clinical review, which is not the goal.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Match Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Suki-suggested ICD-10 codes that appear in final billed codes</span><span class="formula-den">Total billed ICD-10 codes for the encounter</span></span>
+<div class="formula-note">Computed per encounter; averaged across all encounters in the reporting period
+Data source A: Suki API — GET /session/{id}/structured-data (AI-generated ICD-10 codes)
+Data source B: EHR claim record — final billed ICD-10 codes per encounter
+Join key: encounter ID (must be passed to Suki at session creation for linkage)
+IMO → ICD-10 mapping step required if Suki returns IMO codes</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each reporting period P (e.g., first 90 days of use vs. days 90–180):
+  For each completed encounter E in period P:
+    suki_codes[E]  = ICD-10 codes from Suki structured-data endpoint
+                     (after IMO → ICD-10 mapping if needed)
+    billed_codes[E] = ICD-10 codes from EHR claim record for encounter E
+
+    match_count[E]  = | suki_codes[E] ∩ billed_codes[E] |
+    match_rate[E]   = match_count[E] / | billed_codes[E] |
+
+  period_match_rate[P] = MEAN( match_rate[E] for E in period P )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── ALGORITHM 3: Denial Rate ── -->
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">3</span>
+      <span class="algo-title">Denial Rate &mdash; Level 4&ndash;5 Claims</span>
+      <span class="direction-mini dir-lower">&#x2193; Lower is better</span>
+      <span class="algo-subtitle">Payer validation of coding uplift</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        The denial rate for Level 4&ndash;5 claims serves as a payer-side validity check on
+        coding improvement. When E/M levels and ICD-10 code counts rise after Suki adoption,
+        a stable or declining denial rate confirms that the uplift reflects legitimate
+        documentation-supported complexity &mdash; not overcoding. Holmgren 2026 found no
+        increase in denials despite coding improvement, a meaningful null result. A typical
+        Level 4&ndash;5 denial baseline is under 3%.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">% of Level 4&ndash;5 claims denied</div>
+            <div class="unit-ref-def">Denied Level 4–5 claims divided by total Level 4–5 claims submitted in the period. Focus on high-complexity claims because documentation quality most influences coding accuracy and denial risk at these levels.</div>
+            <div class="unit-ref-ambig">&#x26A0; Distinguish coding-related denials from authorization and eligibility denials using denial reason codes. Only coding-related denials are relevant to this measure.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Interpretation alongside CM-20c (E/M Level Share)</div>
+            <div class="unit-ref-def">This metric is a guard rail, not a standalone outcome. Read it in parallel with Algorithm 3 of CM-20 (E/M Level Improvement). A rising L4–5 share + stable denial rate = legitimate coding uplift. A rising L4–5 share + rising denial rate = possible overcoding.</div>
+            <div class="unit-ref-ambig">&#x26A0; Small sample sizes produce unstable denial rates. Use quarterly aggregation or a rolling 90-day window when monthly counts are below 50 Level 4–5 claims per provider.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">L4&ndash;5 Denial Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Denied Level 4&ndash;5 claims (coding-related)</span><span class="formula-den">Total Level 4&ndash;5 claims submitted</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per quarter (or rolling 90-day window)
+Level 4–5 new patient CPTs: 99204, 99205  |  Established: 99214, 99215
+Denial filter: restrict to denial codes indicating coding/documentation issues
+Pre / post boundary: each provider's Suki adoption date
+Exclude: onboarding ramp (default 30 days)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each reporting quarter Q:
+  active_providers = providers past ramp period with Suki adoption date before Q
+
+  For each provider p in active_providers:
+    l45_denied[p]    = count of coding-denied Level 4–5 claims in quarter Q
+    l45_submitted[p] = count of total Level 4–5 claims submitted in quarter Q
+    denial_rate[p]   = l45_denied[p] / l45_submitted[p]
+
+  cohort_denial_rate[Q] = MEAN( denial_rate[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── TREND CHARTS ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trends &mdash; Algorithms 1 &amp; 3 Compared</div>
+    <p class="chart-caption">
+      ICD-10 coding depth (Algorithm 1) rises post-adoption. Denial rate (Algorithm 3) should
+      hold flat or decline. Together they confirm coding improvement is documentation-supported.
+      Algorithm 2 (Match Rate) follows an early-to-mature trajectory, not a pre/post split.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 250" width="100%" aria-label="Two schematic charts: ICD-10 codes per encounter rising (left panel), denial rate stable or declining (right panel)">
+        <!-- ── Left panel: ICD-10 Depth (rising) ── -->
+        <!-- Panel background -->
+        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
+        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Alg. 1 — ICD-10 Codes / Encounter</text>
+        <!-- Grid -->
+        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="300" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
+        <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+        <!-- Adoption line -->
+        <line x1="180" y1="22" x2="180" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="184" y="36" font-size="9" fill="#315d8c">Adopted</text>
+        <!-- Pre dots -->
+        <circle cx="90"  cy="140" r="3.5" fill="#b26a00"/>
+        <circle cx="130" cy="144" r="3.5" fill="#b26a00"/>
+        <circle cx="160" cy="138" r="3.5" fill="#b26a00"/>
+        <polyline points="90,140 130,144 160,138" fill="none" stroke="#b26a00" stroke-width="1.8" stroke-linejoin="round"/>
+        <!-- Post dots (rising) -->
+        <circle cx="180" cy="134" r="3.5" fill="#00796b"/>
+        <circle cx="220" cy="110" r="3.5" fill="#00796b"/>
+        <circle cx="260" cy="82"  r="3.5" fill="#00796b"/>
+        <circle cx="290" cy="65"  r="3.5" fill="#00796b"/>
+        <polyline points="180,134 220,110 260,82 290,65" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="160" y1="138" x2="180" y2="134" stroke="#aab3bf" stroke-width="1.2" stroke-dasharray="2,2"/>
+
+        <!-- ── Right panel: Denial Rate (stable/declining) ── -->
+        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
+        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Alg. 3 — L4&ndash;5 Denial Rate</text>
+        <!-- Grid -->
+        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="198" x2="620" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
+        <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+        <!-- Adoption line -->
+        <line x1="500" y1="22" x2="500" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="504" y="36" font-size="9" fill="#315d8c">Adopted</text>
+        <!-- Pre dots (mid-high range = some denials) -->
+        <circle cx="410" cy="90"  r="3.5" fill="#b26a00"/>
+        <circle cx="450" cy="86"  r="3.5" fill="#b26a00"/>
+        <circle cx="478" cy="92"  r="3.5" fill="#b26a00"/>
+        <polyline points="410,90 450,86 478,92" fill="none" stroke="#b26a00" stroke-width="1.8" stroke-linejoin="round"/>
+        <!-- Post dots (stable or declining = good) -->
+        <circle cx="500" cy="90"  r="3.5" fill="#00796b"/>
+        <circle cx="540" cy="94"  r="3.5" fill="#00796b"/>
+        <circle cx="580" cy="88"  r="3.5" fill="#00796b"/>
+        <circle cx="610" cy="92"  r="3.5" fill="#00796b"/>
+        <polyline points="500,90 540,94 580,88 610,92" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="478" y1="92" x2="500" y2="90" stroke="#aab3bf" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <!-- Right panel label: flat = good -->
+        <text x="504" y="78" font-size="9" fill="#00796b">Flat or declining = legitimate coding</text>
+
+        <!-- Shared legend -->
+        <circle cx="44"  cy="242" r="4" fill="#b26a00"/>
+        <text   x="52"  y="246" font-size="10" fill="#4a3200">Pre-adoption</text>
+        <circle cx="130" cy="242" r="4" fill="#00796b"/>
+        <text   x="138" y="246" font-size="10" fill="#01574f">Post-adoption</text>
+        <line   x1="210" y1="242" x2="226" y2="242" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="230" y="246" font-size="10" fill="#315d8c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:80px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="group-row"><td colspan="4">Algorithm 1 — ICD-10 Coding Depth</td></tr>
+      <tr>
+        <td>Avg ICD-10 diagnosis codes per encounter</td>
+        <td>Average distinct ICD-10 codes assigned per completed encounter, per provider per month.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: icd10_codes_per_enc &nbsp;|&nbsp; Cerner: icd10_codes_per_enc.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Algorithm 2 — ICD-10 Suggestion Match Rate</td></tr>
+      <tr>
+        <td>Suki AI-generated ICD-10 codes per session</td>
+        <td>AI-suggested diagnosis codes from the Suki structured-data endpoint.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/structured-data. Suki may return IMO codes — apply IMO &rarr; ICD-10 mapping before comparison.</td>
+      </tr>
+      <tr>
+        <td>Final billed ICD-10 codes per encounter</td>
+        <td>The ICD-10 codes that appear on the submitted claim for each encounter.</td>
+        <td><span class="source-tag tag-rcm">RCM</span></td>
+        <td>EHR claim record (all vendors). Requires encounter-to-claim linkage &mdash; not part of the standard Suki EHR data pull.</td>
+      </tr>
+      <tr>
+        <td>Encounter-to-claim linkage (join key)</td>
+        <td>A shared identifier allowing Suki session records to be joined to the corresponding EHR claim record.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Encounter ID must be passed to Suki at session creation. Confirm pipeline availability before relying on Algorithm 2.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Algorithm 3 — Denial Rate</td></tr>
+      <tr>
+        <td>Denied Level 4&ndash;5 claim count</td>
+        <td>Count of Level 4–5 claims denied for coding-related reasons per provider per period.</td>
+        <td><span class="source-tag tag-rcm">RCM</span></td>
+        <td>Epic: denial_l45_count &nbsp;|&nbsp; Cerner / Athena: claims system (varies). Must be filtered to coding-related denial reason codes.</td>
+      </tr>
+      <tr>
+        <td>Total Level 4&ndash;5 claims submitted</td>
+        <td>Denominator for the denial rate calculation.</td>
+        <td><span class="source-tag tag-rcm">RCM</span></td>
+        <td>Epic: total_l45_submitted &nbsp;|&nbsp; Cerner / Athena: claims system (varies).</td>
+      </tr>
+      <tr>
+        <td>E/M level counts (new and established)</td>
+        <td>Per-level counts needed to construct the Level 4–5 denominator when the claim system does not provide a pre-filtered total.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: em_new/est level counts &nbsp;|&nbsp; Cerner: em_level counts.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Shared — All Three Algorithms</td></tr>
+      <tr>
+        <td>Provider IDs</td>
+        <td>Consistent provider IDs linking EHR and claims records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between systems.</td>
+      </tr>
+      <tr>
+        <td>Provider encounters by month</td>
+        <td>Completed encounters per provider per month. Used for per-encounter normalizations.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>All vendors.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of first completed Suki session. Defines the pre/post boundary for Algorithms 1 and 3.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation of at least one completed Suki session in the reporting month.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Defines the active-provider denominator across all three algorithms.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <div class="scope-native">
+      <strong>Algorithm 2 is the only CM-21 algorithm where Suki provides the primary data.</strong>
+      AI-generated ICD-10 codes from the Suki structured-data endpoint (GET /session/{id}/structured-data)
+      are natively available and represent Suki&rsquo;s direct coding recommendation for each
+      encounter. Comparing these suggestions to final billed codes is a direct measure of Suki&rsquo;s
+      coding accuracy impact &mdash; but requires encounter-to-claim linkage beyond the standard
+      data pull.
+    </div>
+    <p style="margin-top:10px">
+      For Algorithms 1 and 3, Suki&rsquo;s role is limited to the
+      <strong>adoption boundary</strong> (pre/post split) and the
+      <strong>active usage flag</strong> (cohort denominator).
+      ICD-10 coding depth and claim denial data reside entirely in the EHR and RCM system.
+    </p>
+  </div>
+
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Boyter 2025</span>
+    <span class="source-pill">Holmgren 2026</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-21 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

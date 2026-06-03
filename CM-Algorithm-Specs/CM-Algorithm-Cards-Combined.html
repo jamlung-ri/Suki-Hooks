@@ -1,0 +1,2516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suki AI — CM Algorithm Cards</title>
+  <style>
+
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+
+    /* ── Page shell ── */
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .page-break { page-break-before: always; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    /* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5d6cd;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #a5d6cd;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #1a3330;
+      line-height: 1.55;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-def p { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #1a3330;
+      line-height: 1.5;
+    }
+    .unit-method:first-child {
+      border-right: 1px solid #b2d8d2;
+    }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 5px;
+    }
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef9ed;
+      border-top: 1px solid #e8c87a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .unit-ambig li {
+      font-size: 13px;
+      color: #4a3200;
+      margin-bottom: 5px;
+      line-height: 1.45;
+    }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+
+    /* ── ALGORITHM BLOCK ── */
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title {
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+    .algo-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .algo-body {
+      padding: 16px 18px;
+    }
+    .algo-purpose {
+      font-size: 13px;
+      color: #3a434e;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    /* Formula display */
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs {
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .formula-eq {
+      color: var(--muted);
+      padding: 0 6px;
+    }
+    .formula-fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .formula-num {
+      display: block;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 4px 3px;
+      white-space: nowrap;
+    }
+    .formula-den {
+      display: block;
+      padding: 3px 4px 0;
+      white-space: nowrap;
+    }
+    .formula-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: inherit;
+      margin-top: 8px;
+      white-space: pre;
+    }
+
+    /* ── ALGO UNITS SUBSECTION ── */
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .algo-units-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--blue);
+      background: #f0f4f9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #dce4ec;
+    }
+    .unit-ref-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .unit-ref-def {
+      font-size: 12.5px;
+      color: #3a434e;
+      line-height: 1.45;
+    }
+    .unit-ref-ambig {
+      font-size: 12px;
+      color: #4a3200;
+      margin-top: 6px;
+      padding: 5px 8px;
+      background: #fef9ed;
+      border-left: 3px solid #e8c87a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.4;
+    }
+
+    /* Collapsible pseudocode */
+    details {
+      margin-top: 8px;
+    }
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      padding: 4px 0;
+      user-select: none;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+      content: "▶ ";
+      font-size: 9px;
+      vertical-align: middle;
+    }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #2d3640;
+      overflow-x: auto;
+    }
+
+    /* ── TREND CHART ── */
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+    .chart-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      margin-bottom: 4px;
+    }
+    .chart-caption {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .chart-svg-wrap { overflow-x: auto; }
+
+    /* ── DATA TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th {
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #edf0f4;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+
+    /* ── SUKI SCOPE BOX ── */
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fa9c2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a434e;
+      line-height: 1.5;
+    }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+
+    /* ── SOURCES ── */
+    .sources-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--ink);
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 28px 0;
+    }
+
+    /* ── Footer ── */
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+  
+
+    /* ── Combined-document nav ── */
+    body { margin: 0; }
+    .cm-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1e2d3d;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      padding: 0 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+    }
+    .cm-nav-logo {
+      display: flex;
+      align-items: center;
+      padding: 0 16px 0 8px;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      margin-right: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.35);
+      white-space: nowrap;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 7px 12px;
+      text-decoration: none;
+      border-bottom: 3px solid transparent;
+      transition: border-color 0.12s;
+      min-width: 80px;
+    }
+    .nav-item:hover { border-bottom-color: rgba(0,121,107,0.6); }
+    .nav-item.active { border-bottom-color: #00796b; }
+    .nav-code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #7fb8d0;
+      letter-spacing: 0.04em;
+    }
+    .nav-name {
+      font-size: 9.5px;
+      color: rgba(255,255,255,0.45);
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+    .cm-section {
+      border-bottom: 3px solid #d9dee6;
+      scroll-margin-top: 56px;
+    }
+    .cm-section:last-child { border-bottom: 0; }
+    @media (max-width: 620px) {
+      .nav-name { display: none; }
+      .nav-item { padding: 8px 8px; min-width: 52px; }
+    }
+    @media print {
+      .cm-nav { display: none; }
+      .cm-section { border: 0; page-break-before: always; }
+      .cm-section:first-child { page-break-before: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="cm-nav" aria-label="Canonical Measures">
+  <span class="cm-nav-logo">Algorithm Cards</span>
+  <a class="nav-item" href="#cm-04"><span class="nav-code">CM-04</span><span class="nav-name">Documentation Time</span></a>
+  <a class="nav-item" href="#cm-05"><span class="nav-code">CM-05</span><span class="nav-name">After-Hours Documentation</span></a>
+  <a class="nav-item" href="#cm-07"><span class="nav-code">CM-07</span><span class="nav-name">Total EHR Time</span></a>
+  <a class="nav-item" href="#cm-20"><span class="nav-code">CM-20</span><span class="nav-name">Financial Productivity</span></a>
+  <a class="nav-item" href="#cm-21"><span class="nav-code">CM-21</span><span class="nav-name">Coding Accuracy</span></a>
+  <a class="nav-item" href="#cm-22"><span class="nav-code">CM-22</span><span class="nav-name">Patient Volume</span></a>
+</nav>
+
+<section class="cm-section" id="cm-04">
+<div class="page">
+<!-- ── Masthead ── -->
+<header class="masthead">
+<p class="eyebrow">Canonical Measure Algorithm Card</p>
+<h1>CM-04 — Documentation Time</h1>
+<div class="masthead-meta">
+<span><span class="badge badge-nb">NB — Net Benefits</span></span>
+<span><span class="badge badge-eff">Documentation Efficiency</span></span>
+<span><strong>Also known as:</strong> Time in Notes  ·  Note Completion Time  ·  Documentation Duration</span>
+</div>
+</header>
+<!-- ── UNIT ── -->
+<p class="section-label">Unit</p>
+<div class="unit-card">
+<div class="unit-top">
+<div>
+<div class="unit-label">Unit</div>
+<div class="unit-value">Documentation minutes per encounter</div>
+</div>
+<div class="direction-pill">↓ Lower is better</div>
+</div>
+<div class="unit-def">
+<p>
+        A documentation minute is any minute of activity attributable to note creation or editing
+        for a given encounter — counted from encounter open through final note signature,
+        including post-signature addenda. Measured via EHR audit-log telemetry (preferred) or
+        Suki session duration (fallback). Each minute is attributed to the encounter in which the
+        documentation occurred.
+      </p>
+</div>
+<div class="unit-methods">
+<div class="unit-method">
+<div class="unit-method-label">Gold Standard</div>
+        EHR audit-log telemetry (e.g., Epic Signal / UAL) capturing time-stamped,
+        per-user documentation activity bounded to note creation and editing.
+        Preferred — objective and captures the full note-to-sign lifecycle
+        inside the EHR.
+      </div>
+<div class="unit-method">
+<div class="unit-method-label">Default / Practical</div>
+        Suki session duration: start-to-end timestamp per dictation or ambient capture session.
+        Use when EHR audit-log data are unavailable. Captures in-app documentation time only;
+        misses editing and signing that occurs inside the EHR after the Suki session ends.
+      </div>
+</div>
+<div class="unit-ambig">
+<div class="unit-ambig-label">⚠ Ambiguities to Resolve</div>
+<ul>
+<li>
+<strong>Per-encounter vs. per-note vs. per-day.</strong>
+          Documentation time is reported per encounter, per note, or per provider per day
+          across the literature. These units are not interchangeable. Choose one and apply it
+          consistently across the pre- and post-adoption windows.
+        </li>
+<li>
+<strong>Self-report vs. objective telemetry.</strong>
+          Self-reported documentation time overestimates improvement by 3–6× relative
+          to EHR audit-log data (Ma 2025; PHTI 2025). Do not mix self-report and objective
+          sources in the same analysis.
+        </li>
+<li>
+<strong>What counts as documentation time.</strong>
+          Some EHR telemetry fields include inbox, chart review, or order entry in their
+          “documentation time” metric. Confirm whether your EHR field is scoped to
+          note creation and editing only, or to broader EHR activity. The latter overlaps with
+          CM-07 (Total EHR Time).
+        </li>
+</ul>
+</div>
+</div>
+<!-- ── ALGORITHM ── -->
+<p class="section-label">Algorithm</p>
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">1</span>
+<span class="algo-title">Dashboard Metric — Cohort Average</span>
+<span class="algo-subtitle">For the Suki admin console</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Produces the average documentation minutes per encounter per provider in the cohort for a
+        given month. This number is expected to decrease after Suki adoption as note creation
+        becomes faster and requires less time per visit.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">Documentation minutes per encounter</div>
+<div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. Averaged per provider per reporting month to form the individual provider value.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+<div class="unit-ref-ambig">⚠ Providers still in the onboarding ramp should be excluded. Documentation time typically increases during the initial Suki learning period and would distort the cohort average if included.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg doc min / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)
+Data source: EHR audit-log telemetry preferred; Suki session duration as fallback</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    doc_min_per_enc[p] = avg_doc_time_min[p] across encounters in month M
+                         (from EHR audit-log or Suki session timestamps)
+
+  dashboard_value[M] = MEAN( doc_min_per_enc[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── EXPECTED TREND ── -->
+<div class="chart-wrap">
+<div class="chart-title">Expected Trend — Documentation Min / Encounter / Month</div>
+<p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The pre-adoption window establishes the
+      baseline; improvement is expected to compound as Suki utilization matures beyond the
+      onboarding ramp. Literature benchmarks: −12% to −29% (EHR telemetry, Ma 2025;
+      Guo 2026); −25% to −72% (self-report, AAFP 2021 — objective preferred).
+    </p>
+<div class="chart-svg-wrap">
+<svg aria-label="Schematic chart: documentation minutes per encounter per month, declining after Suki adoption" viewbox="0 0 680 220" width="100%">
+<!-- Grid lines -->
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="70" x2="650" y1="198" y2="198"></line>
+<!-- Y-axis -->
+<line stroke="#c5ccd6" stroke-width="1.5" x1="70" x2="70" y1="20" y2="198"></line>
+<!-- Y labels -->
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="34">High</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="118">Med</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="200">Low</text>
+<!-- X-axis labels -->
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="120" y="215">−6 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="190" y="215">−4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="260" y="215">−2 mo</text>
+<text fill="#315d8c" font-size="10.5" font-weight="700" text-anchor="middle" x="335" y="215">Adoption</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="410" y="215">+2 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="495" y="215">+4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="580" y="215">+6 mo</text>
+<!-- Adoption line -->
+<line stroke="#315d8c" stroke-dasharray="5,3" stroke-width="1.5" x1="335" x2="335" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="10" x="339" y="38">Suki adopted</text>
+<!-- Pre-adoption dots -->
+<circle cx="120" cy="78" fill="#b26a00" r="4"></circle>
+<circle cx="190" cy="72" fill="#b26a00" r="4"></circle>
+<circle cx="260" cy="80" fill="#b26a00" r="4"></circle>
+<polyline fill="none" points="120,78 190,72 260,80" stroke="#b26a00" stroke-linejoin="round" stroke-width="2"></polyline>
+<!-- Post-adoption dots (declining) -->
+<circle cx="335" cy="82" fill="#00796b" r="4"></circle>
+<circle cx="410" cy="110" fill="#00796b" r="4"></circle>
+<circle cx="495" cy="138" fill="#00796b" r="4"></circle>
+<circle cx="580" cy="155" fill="#00796b" r="4"></circle>
+<polyline fill="none" points="335,82 410,110 495,138 580,155" stroke="#00796b" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<!-- Connect pre → post -->
+<line stroke="#aab3bf" stroke-dasharray="3,2" stroke-width="1.5" x1="260" x2="335" y1="80" y2="82"></line>
+<!-- Legend -->
+<circle cx="84" cy="170" fill="#b26a00" r="4"></circle>
+<text fill="#4a3200" font-size="11" x="92" y="174">Pre-adoption baseline</text>
+<circle cx="84" cy="186" fill="#00796b" r="4"></circle>
+<text fill="#01574f" font-size="11" x="92" y="190">Post-adoption trend</text>
+<line stroke="#315d8c" stroke-dasharray="4,2" stroke-width="1.5" x1="376" x2="392" y1="170" y2="170"></line>
+<text fill="#315d8c" font-size="11" x="396" y="174">Adoption date</text>
+</svg>
+</div>
+</div>
+<!-- ── DATA REQUIREMENTS ── -->
+<p class="section-label">Data Requirements</p>
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:210px">Data Element</th>
+<th>Description</th>
+<th style="width:90px">Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Avg documentation time per encounter (min)</td>
+<td>Per-provider, per-encounter documentation time from EHR audit-log telemetry. The primary data source for this measure.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: avg_doc_time_min (Epic Signal / UAL)  |  Cerner: avg_doc_time_min. Confirm field scope — some EHR telemetry fields include inbox or order entry alongside note editing.</td>
+</tr>
+<tr>
+<td>Suki session timestamps (fallback)</td>
+<td>Start and end timestamps for each Suki dictation or ambient capture session. Used as a proxy for documentation time when EHR audit-log data are unavailable.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Natively available from the Suki API. Captures in-app time only — does not include note editing inside the EHR after the Suki session closes.</td>
+</tr>
+<tr>
+<td>Provider identifiers</td>
+<td>Consistent provider IDs linking EHR audit records to Suki session records and encounter data.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Critical join key. Must be reconciled between EHR and Suki systems before analysis begins.</td>
+</tr>
+<tr>
+<td>Encounters by month</td>
+<td>Count of completed encounters per provider per calendar month. Used to compute the per-encounter denominator.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Limit to eligible encounter types and settings. Exclude encounters from the onboarding ramp period.</td>
+</tr>
+<tr>
+<td>Suki adoption date</td>
+<td>Date of each provider's first completed Suki session. Defines the pre/post boundary for the cohort comparison.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Suki's primary contribution to this measure. Without this, there is no pre/post split.</td>
+</tr>
+<tr>
+<td>Active usage flag (monthly)</td>
+<td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+</tr>
+</tbody>
+</table>
+<!-- ── SUKI DATA SCOPE ── -->
+<div class="scope-box" style="margin-top:16px">
+<p class="section-label">Suki Data — Scoped Role</p>
+<p>
+<strong>Suki session timestamps are the strongest Suki-native signal for this measure</strong>
+      — session start and end times are recorded for every dictation and ambient capture session
+      and are available directly from the Suki API. For organizations without EHR audit-log access,
+      Suki session duration is a usable fallback proxy for in-app documentation time.
+    </p>
+<p>
+      However, Suki session time does not capture the full documentation lifecycle. Note editing,
+      formatting, and signing that occur inside the EHR after a Suki session closes are invisible to
+      Suki. For the most accurate measure of total documentation time per encounter, use
+      <strong>EHR audit-log telemetry</strong>; reserve Suki session duration as a fallback only.
+    </p>
+</div>
+<!-- ── SOURCES ── -->
+<hr class="divider"/>
+<p class="section-label">Source Papers (5)</p>
+<div class="sources-wrap">
+<span class="source-pill">AAFP 2021</span>
+<span class="source-pill">Guo 2026</span>
+<span class="source-pill">Holmgren 2026</span>
+<span class="source-pill">Ma 2025</span>
+<span class="source-pill">PHTI 2025</span>
+</div>
+<!-- ── Footer ── -->
+<footer class="report-footer">
+<span>Regenstrief Institute / Indiana University — Suki AI Partnership</span>
+<span>CM-04 Algorithm Card  ·  June 2026</span>
+</footer>
+</div>
+</section>
+
+<section class="cm-section" id="cm-05">
+<div class="page">
+<!-- ── Masthead ── -->
+<header class="masthead">
+<p class="eyebrow">Canonical Measure Algorithm Card</p>
+<h1>CM-05 — After-Hours Documentation</h1>
+<div class="masthead-meta">
+<span><span class="badge badge-nb">NB — Net Benefits</span></span>
+<span><span class="badge badge-eff">Documentation Efficiency</span></span>
+<span><strong>Also known as:</strong> Pajama Time  ·  Work Outside Work  ·  After-Hours EHR Time</span>
+</div>
+</header>
+<!-- ── UNIT ── -->
+<p class="section-label">Unit</p>
+<div class="unit-card">
+<!-- Name + direction -->
+<div class="unit-top">
+<div>
+<div class="unit-label">Unit</div>
+<div class="unit-value">After-hours documentation minutes</div>
+</div>
+<div class="direction-pill">↓ Lower is better</div>
+</div>
+<!-- Definition sentence -->
+<div class="unit-def">
+<p>
+        A documentation minute is <strong>after-hours</strong> if it falls outside the provider's
+        working hours on that calendar day. Minutes are counted from encounter open through
+        final note signature, including any post-signature addenda and edits.
+      </p>
+</div>
+<!-- Gold Standard vs. Default -->
+<div class="unit-methods">
+<div class="unit-method">
+<div class="unit-method-label">Gold Standard</div>
+        Per-provider or per-specialty working hours, as configured by the care setting.
+        Preferred — avoids systematic misclassification across specialties with non-standard hours.
+      </div>
+<div class="unit-method">
+<div class="unit-method-label">Default / Practical</div>
+        Before 09:00 or after 17:00 on weekdays; any time on Saturday or Sunday.
+        Use when per-provider scheduling data are unavailable.
+      </div>
+</div>
+<!-- Ambiguities -->
+<div class="unit-ambig">
+<div class="unit-ambig-label">⚠ Ambiguities to Resolve</div>
+<ul>
+<li>
+<strong>Working hours vary by specialty.</strong>
+          Surgeons may work 09:00–21:00; a 9–5 default over-counts after-hours time for them
+          and cannot be compared across specialties without adjustment.
+        </li>
+<li>
+<strong>When does documentation end?</strong>
+          We recommend counting through final signature and all addenda; stopping at initial note
+          closure understates after-hours activity and is not directly comparable across implementations.
+        </li>
+<li>
+<strong>Pre-encounter prep vs. after-hours.</strong>
+          Early chart review (e.g., 06:00 before rounds) may be classified as after-hours under a
+          fixed window even within a provider's normal practice. Provider-level scheduling resolves this;
+          the 9–5 default does not.
+        </li>
+</ul>
+</div>
+</div>
+<!-- ── ALGORITHM: DASHBOARD METRIC ── -->
+<p class="section-label">Algorithm</p>
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">1</span>
+<span class="algo-title">Dashboard Metric — Cohort Average</span>
+<span class="algo-subtitle">For the Suki admin console</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Produces the single number shown on the administrative dashboard: the average
+        after-hours documentation minutes per provider in the cohort for a given month.
+        This number is expected to decrease after Suki adoption.
+      </p>
+<!-- Units in this algorithm -->
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">After-hours documentation minutes</div>
+<div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. Summed per provider per reporting month to form the numerator.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+<div class="unit-ref-ambig">⚠ "Active" is a threshold choice. A provider who used Suki once in a month counts the same as one who used it daily. Care settings may wish to set a minimum usage threshold; any choice should be applied consistently across reporting periods.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (after-hours documentation minutes per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    after_hours_min[p] = SUM of after-hours documentation minutes for provider p in month M
+                         (classified per the Unit definition above)
+
+  dashboard_value[M] = MEAN( after_hours_min[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── EXPECTED TREND ── -->
+<div class="chart-wrap">
+<div class="chart-title">Expected Trend — After-Hours Min / Provider / Month</div>
+<p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The pre-adoption window establishes
+      the baseline; post-adoption trend is monitored monthly. Not all providers will show
+      immediate change — the effect is expected to compound as Suki utilization matures.
+    </p>
+<div class="chart-svg-wrap">
+<svg aria-label="Schematic chart: after-hours minutes per provider per month over time, declining after Suki adoption" viewbox="0 0 680 220" width="100%">
+<!-- Grid lines -->
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="70" x2="650" y1="198" y2="198"></line>
+<!-- Y-axis -->
+<line stroke="#c5ccd6" stroke-width="1.5" x1="70" x2="70" y1="20" y2="198"></line>
+<!-- Y labels -->
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="34">High</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="118">Med</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="200">Low</text>
+<!-- X-axis labels -->
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="120" y="215">−6 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="190" y="215">−4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="260" y="215">−2 mo</text>
+<text fill="#315d8c" font-size="10.5" font-weight="700" text-anchor="middle" x="335" y="215">Adoption</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="410" y="215">+2 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="495" y="215">+4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="580" y="215">+6 mo</text>
+<!-- Adoption line -->
+<line stroke="#315d8c" stroke-dasharray="5,3" stroke-width="1.5" x1="335" x2="335" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="10" x="339" y="38">Suki adopted</text>
+<!-- Pre-adoption dots -->
+<circle cx="120" cy="78" fill="#b26a00" r="4"></circle>
+<circle cx="190" cy="72" fill="#b26a00" r="4"></circle>
+<circle cx="260" cy="80" fill="#b26a00" r="4"></circle>
+<polyline fill="none" points="120,78 190,72 260,80" stroke="#b26a00" stroke-linejoin="round" stroke-width="2"></polyline>
+<!-- Post-adoption dots (declining) -->
+<circle cx="335" cy="82" fill="#00796b" r="4"></circle>
+<circle cx="410" cy="110" fill="#00796b" r="4"></circle>
+<circle cx="495" cy="138" fill="#00796b" r="4"></circle>
+<circle cx="580" cy="155" fill="#00796b" r="4"></circle>
+<polyline fill="none" points="335,82 410,110 495,138 580,155" stroke="#00796b" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<!-- Connect pre → post -->
+<line stroke="#aab3bf" stroke-dasharray="3,2" stroke-width="1.5" x1="260" x2="335" y1="80" y2="82"></line>
+<!-- Legend -->
+<circle cx="84" cy="170" fill="#b26a00" r="4"></circle>
+<text fill="#4a3200" font-size="11" x="92" y="174">Pre-adoption baseline</text>
+<circle cx="84" cy="186" fill="#00796b" r="4"></circle>
+<text fill="#01574f" font-size="11" x="92" y="190">Post-adoption trend</text>
+<line stroke="#315d8c" stroke-dasharray="4,2" stroke-width="1.5" x1="376" x2="392" y1="170" y2="170"></line>
+<text fill="#315d8c" font-size="11" x="396" y="174">Adoption date</text>
+</svg>
+</div>
+</div>
+<!-- ── DATA REQUIREMENTS ── -->
+<p class="section-label">Data Requirements</p>
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:200px">Data Element</th>
+<th>Description</th>
+<th style="width:90px">Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>EHR audit log (timestamped)</td>
+<td>Per-user, per-event activity log showing when each provider interacted with the EHR and for how long. The primary data source for computing documentation minutes.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic Signal / UAL; equivalent in Cerner, Athena. Must include provider ID, timestamp, event type, and duration.</td>
+</tr>
+<tr>
+<td>Provider scheduled working hours</td>
+<td>Each provider's expected working window per day of the week, by specialty or individual preference.</td>
+<td><span class="source-tag tag-ehr">EHR / HR</span></td>
+<td>Required for gold-standard implementation. If unavailable, fall back to 09:00–17:00 Mon–Fri default.</td>
+</tr>
+<tr>
+<td>Note signature timestamp</td>
+<td>Date and time of initial note closure/signature and any subsequent addenda, per encounter per provider.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Needed to bound documentation scope (encounter open → final signature).</td>
+</tr>
+<tr>
+<td>Provider identifiers</td>
+<td>Consistent provider IDs linking EHR audit records to Suki session records.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Critical join key. Must be reconciled between EHR and Suki before analysis.</td>
+</tr>
+<tr>
+<td>Suki adoption date</td>
+<td>Date of each provider's first completed Suki session. Defines the pre/post boundary for the cohort comparison.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Suki's primary contribution to this measure. Without this, there is no pre/post split.</td>
+</tr>
+<tr>
+<td>Active usage flag (monthly)</td>
+<td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator in the Algorithm.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+</tr>
+</tbody>
+</table>
+<!-- ── SUKI DATA SCOPE ── -->
+<div class="scope-box" style="margin-top:16px">
+<p class="section-label">Suki Data — Scoped Role</p>
+<p>
+<strong>Suki's contribution to this measure is the adoption boundary, not the documentation signal.</strong>
+      Suki session data indicates when a dictation or ambient capture session was initiated, but it
+      does not measure total EHR documentation time. Work within the EHR before or after a Suki
+      session is invisible to Suki; note signing happens in the EHR, not in Suki.
+    </p>
+<p>
+      The authoritative data source is the <strong>EHR audit log</strong>. Using Suki session
+      timing as a proxy for after-hours documentation time would systematically undercount
+      documentation minutes and miss chart review, note editing, and order entry that occurs
+      outside any Suki session.
+    </p>
+</div>
+<!-- ── SOURCES ── -->
+<hr class="divider"/>
+<p class="section-label">Source Papers (17)</p>
+<div class="sources-wrap">
+<span class="source-pill">AAFP 2021</span>
+<span class="source-pill">Afshar 2025</span>
+<span class="source-pill">Afshar 2025b</span>
+<span class="source-pill">Albrecht 2025</span>
+<span class="source-pill">Billings 2025a</span>
+<span class="source-pill">Boyter / KLAS 2025</span>
+<span class="source-pill">Cao 2024</span>
+<span class="source-pill">Duggan 2025</span>
+<span class="source-pill">Evans 2025</span>
+<span class="source-pill">Haberle 2024</span>
+<span class="source-pill">Karavassilis 2025</span>
+<span class="source-pill">Liu 2024</span>
+<span class="source-pill">Ma 2025</span>
+<span class="source-pill">Pearlman 2025</span>
+<span class="source-pill">PHTI 2025</span>
+<span class="source-pill">Stults 2025</span>
+<span class="source-pill">Suhail 2026</span>
+</div>
+<!-- ── Footer ── -->
+<footer class="report-footer">
+<span>Regenstrief Institute / Indiana University — Suki AI Partnership</span>
+<span>CM-05 Algorithm Card  ·  June 2026</span>
+</footer>
+</div>
+</section>
+
+<section class="cm-section" id="cm-07">
+<div class="page">
+<header class="masthead">
+<p class="eyebrow">Canonical Measure Algorithm Card</p>
+<h1>CM-07 — Total EHR Time</h1>
+<div class="masthead-meta">
+<span><span class="badge badge-nb">NB — Net Benefits</span></span>
+<span><span class="badge badge-eff">EHR Efficiency</span></span>
+<span><strong>Also known as:</strong> Total EHR Time  ·  Login Time  ·  Active EHR Time  ·  EHR Burden</span>
+</div>
+</header>
+<p class="section-label">Unit</p>
+<div class="unit-card">
+<div class="unit-top">
+<div>
+<div class="unit-label">Unit</div>
+<div class="unit-value">Total EHR minutes per encounter</div>
+</div>
+<div class="direction-pill">↓ Lower is better</div>
+</div>
+<div class="unit-def">
+<p>
+        A total EHR minute is any minute of logged activity in the EHR system by a given provider,
+        across all task types — note creation, inbox management, order entry, results review,
+        and any other EHR interaction. Minutes are summed per provider per encounter-equivalent
+        period and normalized to completed encounters.
+      </p>
+</div>
+<div class="unit-methods">
+<div class="unit-method">
+<div class="unit-method-label">Gold Standard</div>
+        Full EHR audit-log telemetry capturing all activity types across all EHR modules
+        (documentation, inbox, orders, results, admin). Preferred — gives the broadest
+        and most complete view of EHR burden.
+      </div>
+<div class="unit-method">
+<div class="unit-method-label">Default / Practical</div>
+        Documentation time + inbox time only, when full audit-log is unavailable.
+        These two components are the most reliably extracted from most EHR telemetry
+        systems and account for the largest share of total EHR time.
+      </div>
+</div>
+<div class="unit-ambig">
+<div class="unit-ambig-label">⚠ Ambiguities to Resolve</div>
+<ul>
+<li>
+<strong>Scope of "EHR time."</strong>
+          Different EHR telemetry fields vary in which activities they include. Before using any
+          field, confirm whether it captures documentation only, documentation + inbox, or all EHR
+          activity. Mixing narrow and broad definitions across pre/post windows invalidates the
+          comparison. This measure is explicitly broader than CM-04 (Documentation Time).
+        </li>
+<li>
+<strong>Per-encounter vs. per-workday normalization.</strong>
+          Some studies report total EHR time per day (Ma 2025: −19.95 min/day); others
+          normalize to encounters. Per-encounter normalization is preferred when encounter volume
+          itself may change after Suki adoption (see CM-22). Per-day is acceptable when encounter
+          volume is stable.
+        </li>
+<li>
+<strong>Inbox and orders may dilute the Suki signal.</strong>
+          Suki directly impacts documentation time; its effect on inbox and order entry is indirect
+          and smaller. A large inbox component in the denominator will attenuate the observed effect
+          size relative to a documentation-only measure. Report the component breakdown when possible.
+        </li>
+</ul>
+</div>
+</div>
+<p class="section-label">Algorithm</p>
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">1</span>
+<span class="algo-title">Dashboard Metric — Cohort Average</span>
+<span class="algo-subtitle">For the Suki admin console</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Produces the average total EHR minutes per encounter per provider in the cohort for a given
+        month. This is the broadest efficiency indicator in the CM suite: it captures all EHR time,
+        not just documentation. Ma 2025 found a larger total-EHR-time reduction (−19.95
+        min/day) than documentation-time-alone reduction (−6.89 min/day) in the same cohort.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">Total EHR minutes per encounter</div>
+<div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. Averaged per provider per reporting month.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+<div class="unit-ref-ambig">⚠ Providers still in the onboarding ramp should be excluded. EHR time may temporarily increase during initial Suki learning as providers adapt their workflow.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg total EHR min / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)
+Scope: all EHR activity types (documentation + inbox + orders + results review)</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    total_ehr_min[p]  = SUM of all EHR activity minutes for provider p in month M
+                        (documentation + inbox + orders + results review)
+    encounters[p]     = completed encounters for provider p in month M
+    ehr_per_enc[p]    = total_ehr_min[p] / encounters[p]
+
+  dashboard_value[M] = MEAN( ehr_per_enc[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<div class="chart-wrap">
+<div class="chart-title">Expected Trend — Total EHR Min / Encounter / Month</div>
+<p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The effect compounds as providers become
+      proficient with ambient documentation. Ma 2025 reports −19.95 min/day total EHR time
+      reduction — larger than the documentation-time-alone effect in the same study.
+    </p>
+<div class="chart-svg-wrap">
+<svg aria-label="Schematic chart: total EHR minutes per encounter per month, declining after Suki adoption" viewbox="0 0 680 220" width="100%">
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="70" x2="650" y1="198" y2="198"></line>
+<line stroke="#c5ccd6" stroke-width="1.5" x1="70" x2="70" y1="20" y2="198"></line>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="34">High</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="118">Med</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="200">Low</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="120" y="215">−6 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="190" y="215">−4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="260" y="215">−2 mo</text>
+<text fill="#315d8c" font-size="10.5" font-weight="700" text-anchor="middle" x="335" y="215">Adoption</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="410" y="215">+2 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="495" y="215">+4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="580" y="215">+6 mo</text>
+<line stroke="#315d8c" stroke-dasharray="5,3" stroke-width="1.5" x1="335" x2="335" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="10" x="339" y="38">Suki adopted</text>
+<circle cx="120" cy="75" fill="#b26a00" r="4"></circle>
+<circle cx="190" cy="68" fill="#b26a00" r="4"></circle>
+<circle cx="260" cy="77" fill="#b26a00" r="4"></circle>
+<polyline fill="none" points="120,75 190,68 260,77" stroke="#b26a00" stroke-linejoin="round" stroke-width="2"></polyline>
+<circle cx="335" cy="79" fill="#00796b" r="4"></circle>
+<circle cx="410" cy="105" fill="#00796b" r="4"></circle>
+<circle cx="495" cy="132" fill="#00796b" r="4"></circle>
+<circle cx="580" cy="150" fill="#00796b" r="4"></circle>
+<polyline fill="none" points="335,79 410,105 495,132 580,150" stroke="#00796b" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<line stroke="#aab3bf" stroke-dasharray="3,2" stroke-width="1.5" x1="260" x2="335" y1="77" y2="79"></line>
+<circle cx="84" cy="170" fill="#b26a00" r="4"></circle>
+<text fill="#4a3200" font-size="11" x="92" y="174">Pre-adoption baseline</text>
+<circle cx="84" cy="186" fill="#00796b" r="4"></circle>
+<text fill="#01574f" font-size="11" x="92" y="190">Post-adoption trend</text>
+<line stroke="#315d8c" stroke-dasharray="4,2" stroke-width="1.5" x1="376" x2="392" y1="170" y2="170"></line>
+<text fill="#315d8c" font-size="11" x="396" y="174">Adoption date</text>
+</svg>
+</div>
+</div>
+<p class="section-label">Data Requirements</p>
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:220px">Data Element</th>
+<th>Description</th>
+<th style="width:90px">Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Avg total EHR time per encounter (min)</td>
+<td>Per-provider total EHR activity time from audit-log, covering all activity types. The primary data element for this measure.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: avg_total_time_min  |  Cerner: telemetry varies by version. Confirm whether field includes inbox and orders or documentation only.</td>
+</tr>
+<tr>
+<td>Business-hours EHR time per provider/month (min)</td>
+<td>Total EHR activity during scheduled working hours, per provider per month.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: business_hours_min  |  Athena: business_hours_numerator. Used to split in-hours vs. after-hours components.</td>
+</tr>
+<tr>
+<td>After-hours EHR time per provider/month (min)</td>
+<td>Total EHR activity outside scheduled working hours, per provider per month. Overlaps with CM-05 (After-Hours Documentation) if scoped to documentation tasks.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: after_hours_min  |  Cerner: after_hours_min.</td>
+</tr>
+<tr>
+<td>Total inbox time per provider/month (hrs)</td>
+<td>Time spent managing the EHR inbox (messages, results, referrals). May be a significant share of total EHR time independent of Suki adoption.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: inbox_time_hrs  |  Athena: total_inbox_time_hours. Report separately to isolate Suki's documentation-specific effect.</td>
+</tr>
+<tr>
+<td>Provider identifiers</td>
+<td>Consistent provider IDs linking EHR audit records to Suki session records.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Critical join key. Must be reconciled between EHR and Suki systems before analysis.</td>
+</tr>
+<tr>
+<td>Encounters by month</td>
+<td>Completed encounters per provider per calendar month. Used to normalize total EHR time to a per-encounter rate.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Limit to eligible encounter types. Exclude encounters during the onboarding ramp period.</td>
+</tr>
+<tr>
+<td>Suki adoption date</td>
+<td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Without this, there is no pre/post split.</td>
+</tr>
+<tr>
+<td>Active usage flag (monthly)</td>
+<td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+</tr>
+</tbody>
+</table>
+<div class="scope-box" style="margin-top:16px">
+<p class="section-label">Suki Data — Scoped Role</p>
+<p>
+<strong>Suki provides a partial proxy for the documentation component of total EHR time,
+      but cannot observe inbox activity, order entry, or results review.</strong>
+      Session duration from the Suki API reflects in-app documentation time only. The majority of
+      total EHR time — inbox management, chart review, and orders — occurs entirely
+      within the EHR and is invisible to Suki.
+    </p>
+<p>
+      Suki's primary contributions to this measure are the <strong>adoption date</strong> (pre/post
+      boundary) and the <strong>active usage flag</strong> (denominator definition). For the
+      outcome signal itself, the EHR full audit-log is the authoritative source. Organizations
+      that report only Suki session duration for this measure will systematically understate total
+      EHR time and the true magnitude of any change.
+    </p>
+</div>
+<hr class="divider"/>
+<p class="section-label">Source Papers (3)</p>
+<div class="sources-wrap">
+<span class="source-pill">Holmgren 2026</span>
+<span class="source-pill">Ma 2025</span>
+<span class="source-pill">PHTI 2025</span>
+</div>
+<footer class="report-footer">
+<span>Regenstrief Institute / Indiana University — Suki AI Partnership</span>
+<span>CM-07 Algorithm Card  ·  June 2026</span>
+</footer>
+</div>
+</section>
+
+<section class="cm-section" id="cm-20">
+<div class="page">
+<header class="masthead">
+<p class="eyebrow">Canonical Measure Algorithm Card</p>
+<h1>CM-20 — Financial Productivity</h1>
+<div class="masthead-meta">
+<span><span class="badge badge-nb">NB — Net Benefits</span></span>
+<span><span class="badge badge-eff">Financial Productivity</span></span>
+<span><strong>Operationalizations:</strong> RVUs per Encounter  ·  Billing Amount  ·  E/M Level Improvement</span>
+</div>
+</header>
+<!-- ── MEASURE OVERVIEW ── -->
+<p class="section-label">Measure Overview</p>
+<div class="unit-card">
+<div class="unit-top">
+<div>
+<div class="unit-label">Construct</div>
+<div class="unit-value">Financial output per provider — three operationalizations</div>
+</div>
+<div class="direction-pill">↑ Higher is better (all three)</div>
+</div>
+<div class="unit-def">
+<p>
+        Financial productivity captures whether Suki adoption translates into measurable revenue
+        impact. The underlying mechanism is documentation completeness: faster, more thorough
+        notes may enable providers to capture the full complexity of an encounter, support
+        higher E/M billing levels, and reduce coding omissions that leave revenue on the table.
+      </p>
+<p>
+        All three operationalizations measure financial output and are expected to increase after
+        Suki adoption. They are complementary, not interchangeable — RVU output captures
+        work intensity, billing revenue captures collected dollars, and E/M level distribution
+        captures coding behavior. Use all three together when possible.
+      </p>
+</div>
+<div class="unit-reprs">
+<div class="unit-reprs-label">Three Operationalizations — See Algorithms Below</div>
+<div class="unit-repr-row"><span class="unit-repr-num">1</span><span>wRVUs per provider per week — work intensity per encounter</span></div>
+<div class="unit-repr-row"><span class="unit-repr-num">2</span><span>Paid revenue per provider per month ($) — collected dollars after adjustments</span></div>
+<div class="unit-repr-row"><span class="unit-repr-num">3</span><span>% encounters billed at Level 4–5 — high-complexity coding capture rate</span></div>
+</div>
+<div class="unit-ambig">
+<div class="unit-ambig-label">⚠ Ambiguities to Resolve (All Three)</div>
+<ul>
+<li>
+<strong>Case mix must be stable.</strong>
+          Suki adoption does not change which patients a provider sees. A shift in patient
+          complexity — independently of Suki — will change RVU output, revenue, and
+          E/M levels. Use within-provider pre/post comparisons, and flag any known panel changes
+          during the analysis window.
+        </li>
+<li>
+<strong>Use adjusted revenue, not gross charges.</strong>
+          Gross charges vary by contract and payer mix. Adjusted net revenue (collected) is the
+          meaningful signal. Pair with wRVU output to show the coding mechanism behind any revenue
+          change.
+        </li>
+<li>
+<strong>Rising E/M levels must be read alongside denial rate (CM-21c).</strong>
+          Increased billing at Level 4–5 should not be accompanied by increased denials.
+          A denial rate that rises in step with coding levels is a signal of overcoding, not
+          legitimate complexity capture. Read CM-20 and CM-21c together.
+        </li>
+<li>
+<strong>Report within specialty.</strong>
+          wRVU weights, revenue, and E/M distributions vary substantially by specialty. Mixing
+          specialties in one cohort without normalization produces uninterpretable averages.
+        </li>
+</ul>
+</div>
+</div>
+<!-- ── ALGORITHM 1: wRVUs ── -->
+<p class="section-label">Algorithms</p>
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">1</span>
+<span class="algo-title">wRVUs per Provider per Week</span>
+<span class="algo-subtitle">Work intensity measure</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Work relative value units (wRVUs) are the CMS-assigned measure of physician work per
+        procedure. Summing wRVUs per provider per week provides a payer-neutral measure of
+        productive output that controls for payer mix and contract variation. Holmgren 2026
+        found +0.04 wRVU/encounter (+$3,044/year) at UCSF; Boyter/KLAS 2025 found
+        +$13,049/year average across sites (primarily from HCC capture).
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">wRVUs per provider per week</div>
+<div class="unit-ref-def">For each provider: multiply each billed CPT code by its CMS wRVU weight, sum across all encounters in the week. Average the per-provider weekly total across the cohort.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">Providers with ≥1 completed Suki session in the month and past the onboarding ramp (default: 30 days). Normalize for scheduled clinical hours when part-time providers are included.</div>
+<div class="unit-ref-ambig">⚠ Use the same prior-year period as the pre-adoption window to control for seasonal variation in encounter mix and wRVU output.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg wRVUs / provider / week, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Per-provider weekly wRVU = Σ(CPT code × CMS wRVU weight) across all encounters in week W
+Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: onboarding ramp (default 30 days); use same-period prior year as pre window</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    For each week W in month M:
+      wrvu_week[p,W] = SUM( cpt_wrvu_weight[cpt] * cpt_count[p, cpt, W] for all CPT codes )
+    avg_wrvu_per_week[p] = MEAN( wrvu_week[p,W] for W in month M )
+
+  dashboard_value[M] = MEAN( avg_wrvu_per_week[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── ALGORITHM 2: Revenue ── -->
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">2</span>
+<span class="algo-title">Paid Revenue per Provider per Month</span>
+<span class="algo-subtitle">Adjusted net revenue</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Measures total adjusted net revenue (collected dollars after payer adjustments and
+        write-offs) per provider per month. Revenue per provider is the most financially direct
+        signal in this measure. Use adjusted net revenue rather than gross charges. Pair with
+        wRVU output (Algorithm 1) to distinguish a revenue change driven by coding improvement
+        from one driven by payer mix or contract changes.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">Paid revenue per provider per month ($)</div>
+<div class="unit-ref-def">Adjusted net revenue collected from payers, attributed to the provider and period in which the encounter occurred. Excludes gross charges and pending amounts.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">Same definition as Algorithm 1 — providers past the onboarding ramp with active Suki use in the reporting month.</div>
+<div class="unit-ref-ambig">⚠ Dollar figures vary substantially by specialty and payer mix. Report within specialty when the cohort includes multiple specialties, and note any payer mix changes during the analysis window.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (adjusted net revenue / provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Data source: EHR claims / RCM system — revenue_paid field
+Pre / post boundary: each provider's Suki adoption date
+Exclude: onboarding ramp (default 30 days)</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    revenue[p] = adjusted net revenue attributed to provider p in month M
+                 (from RCM system: revenue_paid field)
+
+  dashboard_value[M] = MEAN( revenue[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── ALGORITHM 3: E/M Level ── -->
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">3</span>
+<span class="algo-title">E/M Level Improvement — Level 4–5 Share</span>
+<span class="algo-subtitle">Coding complexity capture</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        The Level 4–5 share captures whether documentation is supporting high-complexity
+        billing. Suki may enable more complete visit documentation that supports legitimate
+        coding at higher E/M levels. Boyter 2025 found +$1,907/year from E/M level uplift;
+        Afshar 2025b (RCT, n=66) found statistically significant ICD-10 coding improvement
+        (p &lt; 0.001). Read alongside Denial Rate (CM-21c) to confirm uplift is supported
+        by documentation, not overcoding.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">% encounters billed at Level 4–5</div>
+<div class="unit-ref-def">Level 4–5 encounter count (CPT 99204–99205 new; 99214–99215 established) divided by total E/M encounters. Both new and established patient series must be tracked separately.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">New vs. established patient split</div>
+<div class="unit-ref-def">E/M level distributions differ between new and established patient visit types. Track both series and report separately to avoid confounding from panel composition changes.</div>
+<div class="unit-ref-ambig">⚠ A shift toward more complex patients raises E/M levels independently of Suki. A stable new/established split with rising Level 4–5 share is a cleaner signal.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">L4–5 Share</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Level 4 + Level 5 encounters (new + established)</span><span class="formula-den">Total E/M encounters</span></span>
+<div class="formula-note">Track per provider per month; average across active cohort
+New patient CPTs: 99204 (L4), 99205 (L5)
+Established CPTs: 99214 (L4), 99215 (L5)
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: onboarding ramp (default 30 days); track new/established separately</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    l45_enc[p]   = count of Level 4 + Level 5 encounters (new and established) in month M
+    total_em[p]  = count of total E/M encounters in month M
+    l45_share[p] = l45_enc[p] / total_em[p]
+
+  dashboard_value[M] = MEAN( l45_share[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── TREND CHART ── -->
+<div class="chart-wrap">
+<div class="chart-title">Expected Trend — All Three Metrics Rise After Adoption</div>
+<p class="chart-caption">
+      wRVUs per week, paid revenue per month, and Level 4–5 share are all expected to
+      increase post-adoption. The schematic below represents any of the three metrics.
+      Holmgren 2026: +0.04 wRVU/encounter (+$3,044/year). Boyter/KLAS 2025: +$13,049/year.
+      Boyter 2025: +$1,907/year from E/M uplift alone.
+    </p>
+<div class="chart-svg-wrap">
+<svg aria-label="Schematic chart: financial productivity metrics rising after Suki adoption" viewbox="0 0 680 220" width="100%">
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="70" x2="650" y1="198" y2="198"></line>
+<line stroke="#c5ccd6" stroke-width="1.5" x1="70" x2="70" y1="20" y2="198"></line>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="34">High</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="118">Med</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="200">Low</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="120" y="215">−6 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="190" y="215">−4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="260" y="215">−2 mo</text>
+<text fill="#315d8c" font-size="10.5" font-weight="700" text-anchor="middle" x="335" y="215">Adoption</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="410" y="215">+2 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="495" y="215">+4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="580" y="215">+6 mo</text>
+<line stroke="#315d8c" stroke-dasharray="5,3" stroke-width="1.5" x1="335" x2="335" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="10" x="339" y="38">Suki adopted</text>
+<circle cx="120" cy="132" fill="#b26a00" r="4"></circle>
+<circle cx="190" cy="136" fill="#b26a00" r="4"></circle>
+<circle cx="260" cy="130" fill="#b26a00" r="4"></circle>
+<polyline fill="none" points="120,132 190,136 260,130" stroke="#b26a00" stroke-linejoin="round" stroke-width="2"></polyline>
+<circle cx="335" cy="128" fill="#00796b" r="4"></circle>
+<circle cx="410" cy="104" fill="#00796b" r="4"></circle>
+<circle cx="495" cy="78" fill="#00796b" r="4"></circle>
+<circle cx="580" cy="62" fill="#00796b" r="4"></circle>
+<polyline fill="none" points="335,128 410,104 495,78 580,62" stroke="#00796b" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<line stroke="#aab3bf" stroke-dasharray="3,2" stroke-width="1.5" x1="260" x2="335" y1="130" y2="128"></line>
+<circle cx="84" cy="170" fill="#b26a00" r="4"></circle>
+<text fill="#4a3200" font-size="11" x="92" y="174">Pre-adoption baseline</text>
+<circle cx="84" cy="186" fill="#00796b" r="4"></circle>
+<text fill="#01574f" font-size="11" x="92" y="190">Post-adoption trend</text>
+<line stroke="#315d8c" stroke-dasharray="4,2" stroke-width="1.5" x1="376" x2="392" y1="170" y2="170"></line>
+<text fill="#315d8c" font-size="11" x="396" y="174">Adoption date</text>
+</svg>
+</div>
+</div>
+<!-- ── DATA REQUIREMENTS ── -->
+<p class="section-label">Data Requirements</p>
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:220px">Data Element</th>
+<th>Description</th>
+<th style="width:80px">Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="group-row"><td colspan="4">Algorithm 1 — wRVUs per Provider per Week</td></tr>
+<tr>
+<td>Total work RVUs by provider/month</td>
+<td>Sum of wRVU weights for all billed CPT codes per provider per month.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: wrvu_total  |  Cerner: wrvu_total. Requires CMS wRVU fee schedule for the applicable year.</td>
+</tr>
+<tr class="group-row"><td colspan="4">Algorithm 2 — Paid Revenue per Provider per Month</td></tr>
+<tr>
+<td>Total paid revenue by provider/month ($)</td>
+<td>Adjusted net revenue collected from payers, attributed to provider and encounter month.</td>
+<td><span class="source-tag tag-rcm">RCM</span></td>
+<td>Epic: revenue_paid  |  Cerner: revenue_paid. Use net (collected) not gross (charged) figures.</td>
+</tr>
+<tr class="group-row"><td colspan="4">Algorithm 3 — E/M Level Improvement</td></tr>
+<tr>
+<td>E/M new patient level counts (CPT 99201–99205)</td>
+<td>Per-provider, per-month count of new patient E/M encounters at each complexity level.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: em_new_level1_count – em_new_level5_count  |  Cerner: em_level1_count – em_level5_count.</td>
+</tr>
+<tr>
+<td>E/M established patient level counts (CPT 99211–99215)</td>
+<td>Per-provider, per-month count of established patient E/M encounters at each complexity level.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: em_est_level1_count – em_est_level5_count  |  Cerner: em_level1_count – em_level5_count.</td>
+</tr>
+<tr>
+<td>Total E/M visits by provider/month</td>
+<td>Denominator for the Level 4–5 share calculation.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: em_total_count  |  Cerner: em_total_count.</td>
+</tr>
+<tr>
+<td>Avg ICD-10 codes per encounter</td>
+<td>Proxy indicator for documentation completeness when E/M level data are unavailable.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: icd10_codes_per_enc  |  Cerner: icd10_codes_per_enc. Supplemental to E/M level data, not a replacement.</td>
+</tr>
+<tr class="group-row"><td colspan="4">Shared — All Three Algorithms</td></tr>
+<tr>
+<td>Provider IDs</td>
+<td>Consistent provider IDs linking billing data to Suki session records.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Critical join key. Must be reconciled between systems.</td>
+</tr>
+<tr>
+<td>Provider encounters by month</td>
+<td>Total completed encounters per provider per month. Used for per-encounter normalizations and cohort eligibility.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: total_encounters  |  Cerner: total_encounters.</td>
+</tr>
+<tr>
+<td>Suki adoption date</td>
+<td>Date of first completed Suki session. Defines the pre/post boundary.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Without this, there is no pre/post split.</td>
+</tr>
+<tr>
+<td>Active usage flag (monthly)</td>
+<td>Confirmation of at least one completed Suki session in the reporting month.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Defines the active-provider denominator across all three algorithms.</td>
+</tr>
+</tbody>
+</table>
+<!-- ── SUKI SCOPE ── -->
+<div class="scope-box" style="margin-top:16px">
+<p class="section-label">Suki Data — Scoped Role</p>
+<p>
+<strong>For all three CM-20 algorithms, Suki's role is identifying who is using Suki
+      (and when), not measuring financial output directly.</strong> RVU weights, billed CPT
+      codes, revenue collected, and E/M level distributions all reside in the EHR and RCM
+      system. Suki has no visibility into billing workflows.
+    </p>
+<p>
+      The value Suki provides to this measure is the <strong>adoption boundary</strong> (first
+      session date), the <strong>active usage flag</strong> (monthly denominator), and the
+      <strong>session timestamp</strong> (optional within-week active-use period definition).
+      These inputs are necessary to construct the pre/post comparison but do not constitute
+      the outcome signal.
+    </p>
+</div>
+<hr class="divider"/>
+<p class="section-label">Source Papers (4)</p>
+<div class="sources-wrap">
+<span class="source-pill">Afshar 2025b</span>
+<span class="source-pill">Boyter 2025</span>
+<span class="source-pill">Boyter / KLAS 2025</span>
+<span class="source-pill">Holmgren 2026</span>
+</div>
+<footer class="report-footer">
+<span>Regenstrief Institute / Indiana University — Suki AI Partnership</span>
+<span>CM-20 Algorithm Card  ·  June 2026</span>
+</footer>
+</div>
+</section>
+
+<section class="cm-section" id="cm-21">
+<div class="page">
+<header class="masthead">
+<p class="eyebrow">Canonical Measure Algorithm Card</p>
+<h1>CM-21 — Coding Accuracy</h1>
+<div class="masthead-meta">
+<span><span class="badge badge-nb">NB — Net Benefits</span></span>
+<span><span class="badge badge-eff">Coding Accuracy</span></span>
+<span><strong>Operationalizations:</strong> ICD-10 Coding Depth  ·  ICD-10 Suggestion Match Rate  ·  Denial Rate</span>
+</div>
+</header>
+<!-- ── MEASURE OVERVIEW ── -->
+<p class="section-label">Measure Overview</p>
+<div class="unit-card">
+<div class="unit-top">
+<div>
+<div class="unit-label">Construct</div>
+<div class="unit-value">Documentation-driven coding quality — three operationalizations</div>
+</div>
+<div class="direction-pills">
+<span class="direction-pill">↑ Higher is better (1, 2)</span>
+<span class="direction-pill lower-pill">↓ Lower is better (3)</span>
+</div>
+</div>
+<div class="unit-def">
+<p>
+        Coding accuracy captures whether clinical documentation supports correct, complete coding
+        of the patient encounter. Suki adoption may improve coding by generating more complete
+        transcripts that surface diagnoses and complexity levels a provider might otherwise omit
+        when documenting under time pressure.
+      </p>
+<p>
+        The three operationalizations measure different facets of coding quality:
+        depth (how many codes per encounter), accuracy (how well Suki’s suggestions match
+        what was billed), and payer validation (whether higher coding produces more denials).
+        Algorithm 2 is the only one where Suki contributes primary data.
+      </p>
+</div>
+<div class="unit-reprs">
+<div class="unit-reprs-label">Three Operationalizations — See Algorithms Below</div>
+<div class="unit-repr-row"><span class="unit-repr-num">1</span><span>ICD-10 diagnosis codes per encounter  —  proxy for documentation completeness  ↑ Higher is better</span></div>
+<div class="unit-repr-row"><span class="unit-repr-num">2</span><span>ICD-10 suggestion match rate (%)  —  Suki-native accuracy signal  ↑ Higher is better</span></div>
+<div class="unit-repr-row"><span class="unit-repr-num">3</span><span>Level 4–5 denial rate (%)  —  payer validation of coding uplift  ↓ Lower is better</span></div>
+</div>
+<div class="unit-ambig">
+<div class="unit-ambig-label">⚠ Cross-Cutting Ambiguities</div>
+<ul>
+<li>
+<strong>More codes ≠ better coding.</strong>
+          ICD-10 coding depth (Algorithm 1) is a completeness proxy, not a direct accuracy measure.
+          Very high code counts can signal overcoding. Always read alongside denial rate (Algorithm 3)
+          to confirm additional codes are accepted by payers.
+        </li>
+<li>
+<strong>Case mix confounding.</strong>
+          A shift toward more complex patients will raise both ICD-10 code counts and E/M levels
+          independently of Suki. Use within-provider pre/post comparisons and flag known panel
+          changes during the analysis window.
+        </li>
+<li>
+<strong>Algorithm 2 requires a pipeline not in the standard data pull.</strong>
+          Comparing Suki’s suggested codes to final billed codes requires encounter-to-claim
+          linkage. Suki may also return IMO codes that need mapping to ICD-10 before comparison.
+          Confirm pipeline availability before planning work that depends on Algorithm 2.
+        </li>
+<li>
+<strong>Denial reason codes are required for Algorithm 3.</strong>
+          Not all denials are coding-related. Distinguish coding denials from authorization
+          and eligibility denials using denial reason codes. A rising overall denial rate
+          driven by authorization changes is not a Suki signal.
+        </li>
+</ul>
+</div>
+</div>
+<!-- ── ALGORITHM 1: ICD-10 Coding Depth ── -->
+<p class="section-label">Algorithms</p>
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">1</span>
+<span class="algo-title">ICD-10 Coding Depth</span>
+<span class="direction-mini dir-higher">↑ Higher is better</span>
+<span class="algo-subtitle">Diagnoses per encounter</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Counts the average number of distinct ICD-10 diagnosis codes assigned per completed
+        encounter. More codes per encounter indicates documentation is capturing more diagnoses
+        per visit — a proxy for completeness, not direct accuracy. Pair with Algorithm 3
+        (Denial Rate) to confirm that additional codes are accepted by payers.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">ICD-10 diagnosis codes per encounter</div>
+<div class="unit-ref-def">Count of distinct ICD-10 codes assigned per completed encounter. Averaged per provider per reporting month, then averaged across the cohort. icd10_codes_per_enc from the Suki EHR data pull is the preferred field.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">Providers with ≥1 completed Suki session in the month and past the onboarding ramp (default: 30 days).</div>
+<div class="unit-ref-ambig">⚠ This is a completeness measure only. Do not use it as a standalone accuracy measure. A provider with 6 codes/encounter and a 0% denial rate is a stronger signal than one with 8 codes and a rising denial rate.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg ICD-10 codes / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: onboarding ramp (default 30 days)
+Data source: EHR — icd10_codes_per_enc (Epic / Cerner)</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    icd10_per_enc[p] = avg ICD-10 codes per encounter for provider p in month M
+                       (from EHR: icd10_codes_per_enc)
+
+  dashboard_value[M] = MEAN( icd10_per_enc[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── ALGORITHM 2: Match Rate ── -->
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">2</span>
+<span class="algo-title">ICD-10 Suggestion Match Rate</span>
+<span class="direction-mini dir-higher">↑ Higher is better</span>
+<span class="suki-native-badge">Suki Native Data</span>
+<span class="algo-subtitle">Suki-to-billed code agreement</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        The only CM-21 algorithm where Suki contributes the primary signal. Compares AI-generated
+        ICD-10 codes from the Suki structured-data endpoint to final billed codes from the EHR
+        claim record. A higher match rate indicates Suki’s coding suggestions are accurate
+        and align with what clinicians ultimately bill. Afshar 2025b (RCT, n=66) found
+        statistically significant coding improvement (p &lt; 0.001). A mature implementation
+        should approach 85–90% match rate.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">ICD-10 suggestion match rate (%)</div>
+<div class="unit-ref-def">For each completed encounter, count the Suki-suggested ICD-10 codes that also appear in the final billed codes. Divide by total billed codes.</div>
+<div class="pipeline-note">⚠ <strong>Pipeline dependency:</strong> Requires encounter-to-claim linkage between the Suki API and EHR claims records — not part of the standard Suki EHR data pull. Suki may return IMO codes; an IMO → ICD-10 mapping step is needed before comparison. Confirm pipeline availability before planning work that relies on this algorithm.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Early-use vs. mature-use trajectory</div>
+<div class="unit-ref-def">Match rate is expected to increase over time as providers become more familiar with reviewing and accepting Suki’s suggestions. The comparison is early-use period vs. mature-use period rather than a fixed pre/post adoption split.</div>
+<div class="unit-ref-ambig">⚠ Some code discrepancies are intentional — physicians or billing staff may legitimately add or remove codes during final review. A match rate of 100% would indicate codes are accepted without clinical review, which is not the goal.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Match Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Suki-suggested ICD-10 codes that appear in final billed codes</span><span class="formula-den">Total billed ICD-10 codes for the encounter</span></span>
+<div class="formula-note">Computed per encounter; averaged across all encounters in the reporting period
+Data source A: Suki API — GET /session/{id}/structured-data (AI-generated ICD-10 codes)
+Data source B: EHR claim record — final billed ICD-10 codes per encounter
+Join key: encounter ID (must be passed to Suki at session creation for linkage)
+IMO → ICD-10 mapping step required if Suki returns IMO codes</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each reporting period P (e.g., first 90 days of use vs. days 90–180):
+  For each completed encounter E in period P:
+    suki_codes[E]  = ICD-10 codes from Suki structured-data endpoint
+                     (after IMO → ICD-10 mapping if needed)
+    billed_codes[E] = ICD-10 codes from EHR claim record for encounter E
+
+    match_count[E]  = | suki_codes[E] ∩ billed_codes[E] |
+    match_rate[E]   = match_count[E] / | billed_codes[E] |
+
+  period_match_rate[P] = MEAN( match_rate[E] for E in period P )</div>
+</details>
+</div>
+</div>
+<!-- ── ALGORITHM 3: Denial Rate ── -->
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">3</span>
+<span class="algo-title">Denial Rate — Level 4–5 Claims</span>
+<span class="direction-mini dir-lower">↓ Lower is better</span>
+<span class="algo-subtitle">Payer validation of coding uplift</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        The denial rate for Level 4–5 claims serves as a payer-side validity check on
+        coding improvement. When E/M levels and ICD-10 code counts rise after Suki adoption,
+        a stable or declining denial rate confirms that the uplift reflects legitimate
+        documentation-supported complexity — not overcoding. Holmgren 2026 found no
+        increase in denials despite coding improvement, a meaningful null result. A typical
+        Level 4–5 denial baseline is under 3%.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">% of Level 4–5 claims denied</div>
+<div class="unit-ref-def">Denied Level 4–5 claims divided by total Level 4–5 claims submitted in the period. Focus on high-complexity claims because documentation quality most influences coding accuracy and denial risk at these levels.</div>
+<div class="unit-ref-ambig">⚠ Distinguish coding-related denials from authorization and eligibility denials using denial reason codes. Only coding-related denials are relevant to this measure.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Interpretation alongside CM-20c (E/M Level Share)</div>
+<div class="unit-ref-def">This metric is a guard rail, not a standalone outcome. Read it in parallel with Algorithm 3 of CM-20 (E/M Level Improvement). A rising L4–5 share + stable denial rate = legitimate coding uplift. A rising L4–5 share + rising denial rate = possible overcoding.</div>
+<div class="unit-ref-ambig">⚠ Small sample sizes produce unstable denial rates. Use quarterly aggregation or a rolling 90-day window when monthly counts are below 50 Level 4–5 claims per provider.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">L4–5 Denial Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Denied Level 4–5 claims (coding-related)</span><span class="formula-den">Total Level 4–5 claims submitted</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per quarter (or rolling 90-day window)
+Level 4–5 new patient CPTs: 99204, 99205  |  Established: 99214, 99215
+Denial filter: restrict to denial codes indicating coding/documentation issues
+Pre / post boundary: each provider's Suki adoption date
+Exclude: onboarding ramp (default 30 days)</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each reporting quarter Q:
+  active_providers = providers past ramp period with Suki adoption date before Q
+
+  For each provider p in active_providers:
+    l45_denied[p]    = count of coding-denied Level 4–5 claims in quarter Q
+    l45_submitted[p] = count of total Level 4–5 claims submitted in quarter Q
+    denial_rate[p]   = l45_denied[p] / l45_submitted[p]
+
+  cohort_denial_rate[Q] = MEAN( denial_rate[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<!-- ── TREND CHARTS ── -->
+<div class="chart-wrap">
+<div class="chart-title">Expected Trends — Algorithms 1 &amp; 3 Compared</div>
+<p class="chart-caption">
+      ICD-10 coding depth (Algorithm 1) rises post-adoption. Denial rate (Algorithm 3) should
+      hold flat or decline. Together they confirm coding improvement is documentation-supported.
+      Algorithm 2 (Match Rate) follows an early-to-mature trajectory, not a pre/post split.
+    </p>
+<div class="chart-svg-wrap">
+<svg aria-label="Two schematic charts: ICD-10 codes per encounter rising (left panel), denial rate stable or declining (right panel)" viewbox="0 0 680 250" width="100%">
+<!-- ── Left panel: ICD-10 Depth (rising) ── -->
+<!-- Panel background -->
+<rect fill="#f9fafb" height="210" rx="4" stroke="#dce4ec" width="280" x="40" y="10"></rect>
+<text fill="#3a434e" font-size="11" font-weight="700" text-anchor="middle" x="180" y="232">Alg. 1 — ICD-10 Codes / Encounter</text>
+<!-- Grid -->
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="300" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="300" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="300" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="300" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="70" x2="300" y1="198" y2="198"></line>
+<line stroke="#c5ccd6" stroke-width="1.5" x1="70" x2="70" y1="20" y2="198"></line>
+<text fill="#8a929d" font-size="9" text-anchor="end" x="63" y="34">High</text>
+<text fill="#8a929d" font-size="9" text-anchor="end" x="63" y="118">Med</text>
+<text fill="#8a929d" font-size="9" text-anchor="end" x="63" y="200">Low</text>
+<!-- Adoption line -->
+<line stroke="#315d8c" stroke-dasharray="4,3" stroke-width="1.5" x1="180" x2="180" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="9" x="184" y="36">Adopted</text>
+<!-- Pre dots -->
+<circle cx="90" cy="140" fill="#b26a00" r="3.5"></circle>
+<circle cx="130" cy="144" fill="#b26a00" r="3.5"></circle>
+<circle cx="160" cy="138" fill="#b26a00" r="3.5"></circle>
+<polyline fill="none" points="90,140 130,144 160,138" stroke="#b26a00" stroke-linejoin="round" stroke-width="1.8"></polyline>
+<!-- Post dots (rising) -->
+<circle cx="180" cy="134" fill="#00796b" r="3.5"></circle>
+<circle cx="220" cy="110" fill="#00796b" r="3.5"></circle>
+<circle cx="260" cy="82" fill="#00796b" r="3.5"></circle>
+<circle cx="290" cy="65" fill="#00796b" r="3.5"></circle>
+<polyline fill="none" points="180,134 220,110 260,82 290,65" stroke="#00796b" stroke-linejoin="round" stroke-width="2"></polyline>
+<line stroke="#aab3bf" stroke-dasharray="2,2" stroke-width="1.2" x1="160" x2="180" y1="138" y2="134"></line>
+<!-- ── Right panel: Denial Rate (stable/declining) ── -->
+<rect fill="#f9fafb" height="210" rx="4" stroke="#dce4ec" width="280" x="360" y="10"></rect>
+<text fill="#3a434e" font-size="11" font-weight="700" text-anchor="middle" x="500" y="232">Alg. 3 — L4–5 Denial Rate</text>
+<!-- Grid -->
+<line stroke="#e4e9ef" stroke-width="1" x1="390" x2="620" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="390" x2="620" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="390" x2="620" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="390" x2="620" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="390" x2="620" y1="198" y2="198"></line>
+<line stroke="#c5ccd6" stroke-width="1.5" x1="390" x2="390" y1="20" y2="198"></line>
+<text fill="#8a929d" font-size="9" text-anchor="end" x="383" y="34">High</text>
+<text fill="#8a929d" font-size="9" text-anchor="end" x="383" y="118">Med</text>
+<text fill="#8a929d" font-size="9" text-anchor="end" x="383" y="200">Low</text>
+<!-- Adoption line -->
+<line stroke="#315d8c" stroke-dasharray="4,3" stroke-width="1.5" x1="500" x2="500" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="9" x="504" y="36">Adopted</text>
+<!-- Pre dots (mid-high range = some denials) -->
+<circle cx="410" cy="90" fill="#b26a00" r="3.5"></circle>
+<circle cx="450" cy="86" fill="#b26a00" r="3.5"></circle>
+<circle cx="478" cy="92" fill="#b26a00" r="3.5"></circle>
+<polyline fill="none" points="410,90 450,86 478,92" stroke="#b26a00" stroke-linejoin="round" stroke-width="1.8"></polyline>
+<!-- Post dots (stable or declining = good) -->
+<circle cx="500" cy="90" fill="#00796b" r="3.5"></circle>
+<circle cx="540" cy="94" fill="#00796b" r="3.5"></circle>
+<circle cx="580" cy="88" fill="#00796b" r="3.5"></circle>
+<circle cx="610" cy="92" fill="#00796b" r="3.5"></circle>
+<polyline fill="none" points="500,90 540,94 580,88 610,92" stroke="#00796b" stroke-linejoin="round" stroke-width="2"></polyline>
+<line stroke="#aab3bf" stroke-dasharray="2,2" stroke-width="1.2" x1="478" x2="500" y1="92" y2="90"></line>
+<!-- Right panel label: flat = good -->
+<text fill="#00796b" font-size="9" x="504" y="78">Flat or declining = legitimate coding</text>
+<!-- Shared legend -->
+<circle cx="44" cy="242" fill="#b26a00" r="4"></circle>
+<text fill="#4a3200" font-size="10" x="52" y="246">Pre-adoption</text>
+<circle cx="130" cy="242" fill="#00796b" r="4"></circle>
+<text fill="#01574f" font-size="10" x="138" y="246">Post-adoption</text>
+<line stroke="#315d8c" stroke-dasharray="4,2" stroke-width="1.5" x1="210" x2="226" y1="242" y2="242"></line>
+<text fill="#315d8c" font-size="10" x="230" y="246">Adoption date</text>
+</svg>
+</div>
+</div>
+<!-- ── DATA REQUIREMENTS ── -->
+<p class="section-label">Data Requirements</p>
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:230px">Data Element</th>
+<th>Description</th>
+<th style="width:80px">Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="group-row"><td colspan="4">Algorithm 1 — ICD-10 Coding Depth</td></tr>
+<tr>
+<td>Avg ICD-10 diagnosis codes per encounter</td>
+<td>Average distinct ICD-10 codes assigned per completed encounter, per provider per month.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: icd10_codes_per_enc  |  Cerner: icd10_codes_per_enc.</td>
+</tr>
+<tr class="group-row"><td colspan="4">Algorithm 2 — ICD-10 Suggestion Match Rate</td></tr>
+<tr>
+<td>Suki AI-generated ICD-10 codes per session</td>
+<td>AI-suggested diagnosis codes from the Suki structured-data endpoint.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>GET /session/{id}/structured-data. Suki may return IMO codes — apply IMO → ICD-10 mapping before comparison.</td>
+</tr>
+<tr>
+<td>Final billed ICD-10 codes per encounter</td>
+<td>The ICD-10 codes that appear on the submitted claim for each encounter.</td>
+<td><span class="source-tag tag-rcm">RCM</span></td>
+<td>EHR claim record (all vendors). Requires encounter-to-claim linkage — not part of the standard Suki EHR data pull.</td>
+</tr>
+<tr>
+<td>Encounter-to-claim linkage (join key)</td>
+<td>A shared identifier allowing Suki session records to be joined to the corresponding EHR claim record.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Encounter ID must be passed to Suki at session creation. Confirm pipeline availability before relying on Algorithm 2.</td>
+</tr>
+<tr class="group-row"><td colspan="4">Algorithm 3 — Denial Rate</td></tr>
+<tr>
+<td>Denied Level 4–5 claim count</td>
+<td>Count of Level 4–5 claims denied for coding-related reasons per provider per period.</td>
+<td><span class="source-tag tag-rcm">RCM</span></td>
+<td>Epic: denial_l45_count  |  Cerner / Athena: claims system (varies). Must be filtered to coding-related denial reason codes.</td>
+</tr>
+<tr>
+<td>Total Level 4–5 claims submitted</td>
+<td>Denominator for the denial rate calculation.</td>
+<td><span class="source-tag tag-rcm">RCM</span></td>
+<td>Epic: total_l45_submitted  |  Cerner / Athena: claims system (varies).</td>
+</tr>
+<tr>
+<td>E/M level counts (new and established)</td>
+<td>Per-level counts needed to construct the Level 4–5 denominator when the claim system does not provide a pre-filtered total.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: em_new/est level counts  |  Cerner: em_level counts.</td>
+</tr>
+<tr class="group-row"><td colspan="4">Shared — All Three Algorithms</td></tr>
+<tr>
+<td>Provider IDs</td>
+<td>Consistent provider IDs linking EHR and claims records to Suki session records.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Critical join key. Must be reconciled between systems.</td>
+</tr>
+<tr>
+<td>Provider encounters by month</td>
+<td>Completed encounters per provider per month. Used for per-encounter normalizations.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>All vendors.</td>
+</tr>
+<tr>
+<td>Suki adoption date</td>
+<td>Date of first completed Suki session. Defines the pre/post boundary for Algorithms 1 and 3.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Without this, there is no pre/post split.</td>
+</tr>
+<tr>
+<td>Active usage flag (monthly)</td>
+<td>Confirmation of at least one completed Suki session in the reporting month.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Defines the active-provider denominator across all three algorithms.</td>
+</tr>
+</tbody>
+</table>
+<!-- ── SUKI SCOPE ── -->
+<div class="scope-box" style="margin-top:16px">
+<p class="section-label">Suki Data — Scoped Role</p>
+<div class="scope-native">
+<strong>Algorithm 2 is the only CM-21 algorithm where Suki provides the primary data.</strong>
+      AI-generated ICD-10 codes from the Suki structured-data endpoint (GET /session/{id}/structured-data)
+      are natively available and represent Suki’s direct coding recommendation for each
+      encounter. Comparing these suggestions to final billed codes is a direct measure of Suki’s
+      coding accuracy impact — but requires encounter-to-claim linkage beyond the standard
+      data pull.
+    </div>
+<p style="margin-top:10px">
+      For Algorithms 1 and 3, Suki’s role is limited to the
+      <strong>adoption boundary</strong> (pre/post split) and the
+      <strong>active usage flag</strong> (cohort denominator).
+      ICD-10 coding depth and claim denial data reside entirely in the EHR and RCM system.
+    </p>
+</div>
+<hr class="divider"/>
+<p class="section-label">Source Papers (3)</p>
+<div class="sources-wrap">
+<span class="source-pill">Afshar 2025b</span>
+<span class="source-pill">Boyter 2025</span>
+<span class="source-pill">Holmgren 2026</span>
+</div>
+<footer class="report-footer">
+<span>Regenstrief Institute / Indiana University — Suki AI Partnership</span>
+<span>CM-21 Algorithm Card  ·  June 2026</span>
+</footer>
+</div>
+</section>
+
+<section class="cm-section" id="cm-22">
+<div class="page">
+<header class="masthead">
+<p class="eyebrow">Canonical Measure Algorithm Card</p>
+<h1>CM-22 — Patient Volume &amp; Throughput</h1>
+<div class="masthead-meta">
+<span><span class="badge badge-nb">NB — Net Benefits</span></span>
+<span><span class="badge badge-eff">Patient Volume</span></span>
+<span><strong>Also known as:</strong> Encounters per Provider per Week  ·  Patient Throughput  ·  Volume Capacity</span>
+</div>
+</header>
+<p class="section-label">Unit</p>
+<div class="unit-card">
+<div class="unit-top">
+<div>
+<div class="unit-label">Unit</div>
+<div class="unit-value">Completed encounters per provider per week</div>
+</div>
+<div class="direction-pill">↑ Higher is better</div>
+</div>
+<div class="unit-def">
+<p>
+        A completed encounter is a patient visit that has a signed clinical note in the EHR.
+        Encounters are counted per provider per clinical week and normalized to each provider's
+        scheduled clinical hours to account for part-time work. The metric captures whether
+        providers can see more patients as documentation burden decreases after Suki adoption.
+      </p>
+</div>
+<div class="unit-methods">
+<div class="unit-method">
+<div class="unit-method-label">Gold Standard</div>
+        Completed, signed encounters from the EHR, normalized to scheduled clinical hours per week.
+        Preferred — captures realized patient throughput and controls for part-time schedules.
+      </div>
+<div class="unit-method">
+<div class="unit-method-label">Default / Practical</div>
+        Scheduled encounters per week (from the EHR schedule), when completion and signing status
+        are unavailable. Use with caution — scheduled volume does not equal completed volume
+        and may not reflect the documentation-driven capacity effect.
+      </div>
+</div>
+<div class="unit-ambig">
+<div class="unit-ambig-label">⚠ Ambiguities to Resolve</div>
+<ul>
+<li>
+<strong>Normalize for scheduled clinical hours.</strong>
+          A provider who reduces from 5 to 4 clinical days will show a raw encounter drop
+          unrelated to Suki. Divide by scheduled hours or clinical days to compute a rate;
+          compare rates, not raw counts.
+        </li>
+<li>
+<strong>Exclude providers who changed practice context.</strong>
+          Providers who changed specialty, site, or panel size during the analysis window introduce
+          confounders that are unrelated to Suki adoption. Exclude these providers or analyze them
+          separately.
+        </li>
+<li>
+<strong>Only include completed, signed encounters.</strong>
+          Scheduled-but-not-completed visits (no-shows, cancellations) and encounters without a
+          signed note should be excluded. Mixing completion statuses inflates raw counts and
+          obscures the capacity signal.
+        </li>
+</ul>
+</div>
+</div>
+<div class="caution-box">
+<strong>Interpretation caution:</strong> Increased encounter volume is not universally
+    desirable. Higher throughput achieved through documentation efficiency gains is a positive
+    signal, but it should be interpreted alongside workload indicators and care quality measures.
+    A provider seeing more patients without a corresponding reduction in documentation time
+    (CM-04) warrants investigation.
+  </div>
+<p class="section-label">Algorithm</p>
+<div class="algo-block">
+<div class="algo-header">
+<span class="algo-number">1</span>
+<span class="algo-title">Dashboard Metric — Cohort Average</span>
+<span class="algo-subtitle">For the Suki admin console</span>
+</div>
+<div class="algo-body">
+<p class="algo-purpose">
+        Produces the average completed encounters per provider per week in the cohort for a given
+        month. This number is expected to increase after Suki adoption as time freed from
+        documentation creates capacity for additional patient visits. Holmgren 2026 found
+        +0.80 completed encounters/week in ambulatory settings.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Units in this Algorithm</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Primary</span>
+<div>
+<div class="unit-ref-name">Completed encounters per provider per week</div>
+<div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. Computed per provider per calendar month, then averaged across the cohort.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Secondary</span>
+<div>
+<div class="unit-ref-name">Active providers in the cohort</div>
+<div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+<div class="unit-ref-ambig">⚠ During the onboarding ramp, some providers may temporarily see fewer patients while adapting to Suki. Exclude the ramp period to avoid a false-negative signal in the early post-adoption months.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg completed encounters / clinical week per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Per-provider weekly rate = total completed encounters in month M / clinical weeks in month M
+Clinical weeks should be normalized to scheduled clinical hours where available
+Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)</div>
+</div>
+<details>
+<summary>Pseudocode</summary>
+<div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    completed_enc[p] = completed, signed encounters for provider p in month M
+    clinical_weeks[p] = scheduled clinical weeks (or days/5) for provider p in month M
+    enc_per_week[p]  = completed_enc[p] / clinical_weeks[p]
+
+  dashboard_value[M] = MEAN( enc_per_week[p] for p in active_providers )</div>
+</details>
+</div>
+</div>
+<div class="chart-wrap">
+<div class="chart-title">Expected Trend — Completed Encounters / Provider / Week / Month</div>
+<p class="chart-caption">
+      Cohort average should increase after Suki adoption as documentation burden decreases and
+      capacity is released. Holmgren 2026: +0.80 encounters/week (ambulatory, statistically
+      significant). Shuaib 2021 reports +39% patients/hour with human scribes (ED) — an
+      upper-bound comparator from an adjacent intervention type.
+    </p>
+<div class="chart-svg-wrap">
+<svg aria-label="Schematic chart: completed encounters per provider per week, rising after Suki adoption" viewbox="0 0 680 220" width="100%">
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="30" y2="30"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="72" y2="72"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="114" y2="114"></line>
+<line stroke="#e4e9ef" stroke-width="1" x1="70" x2="650" y1="156" y2="156"></line>
+<line stroke="#d9dee6" stroke-width="1.5" x1="70" x2="650" y1="198" y2="198"></line>
+<line stroke="#c5ccd6" stroke-width="1.5" x1="70" x2="70" y1="20" y2="198"></line>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="34">High</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="118">Med</text>
+<text fill="#8a929d" font-size="10" text-anchor="end" x="62" y="200">Low</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="120" y="215">−6 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="190" y="215">−4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="260" y="215">−2 mo</text>
+<text fill="#315d8c" font-size="10.5" font-weight="700" text-anchor="middle" x="335" y="215">Adoption</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="410" y="215">+2 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="495" y="215">+4 mo</text>
+<text fill="#8a929d" font-size="10" text-anchor="middle" x="580" y="215">+6 mo</text>
+<line stroke="#315d8c" stroke-dasharray="5,3" stroke-width="1.5" x1="335" x2="335" y1="22" y2="198"></line>
+<text fill="#315d8c" font-size="10" x="339" y="38">Suki adopted</text>
+<!-- Pre-adoption: stable, mid-low (higher cy = lower on chart) -->
+<circle cx="120" cy="130" fill="#b26a00" r="4"></circle>
+<circle cx="190" cy="134" fill="#b26a00" r="4"></circle>
+<circle cx="260" cy="128" fill="#b26a00" r="4"></circle>
+<polyline fill="none" points="120,130 190,134 260,128" stroke="#b26a00" stroke-linejoin="round" stroke-width="2"></polyline>
+<!-- Post-adoption: rising (lower cy = higher on chart) -->
+<circle cx="335" cy="126" fill="#00796b" r="4"></circle>
+<circle cx="410" cy="102" fill="#00796b" r="4"></circle>
+<circle cx="495" cy="76" fill="#00796b" r="4"></circle>
+<circle cx="580" cy="60" fill="#00796b" r="4"></circle>
+<polyline fill="none" points="335,126 410,102 495,76 580,60" stroke="#00796b" stroke-linejoin="round" stroke-width="2.5"></polyline>
+<line stroke="#aab3bf" stroke-dasharray="3,2" stroke-width="1.5" x1="260" x2="335" y1="128" y2="126"></line>
+<circle cx="84" cy="170" fill="#b26a00" r="4"></circle>
+<text fill="#4a3200" font-size="11" x="92" y="174">Pre-adoption baseline</text>
+<circle cx="84" cy="186" fill="#00796b" r="4"></circle>
+<text fill="#01574f" font-size="11" x="92" y="190">Post-adoption trend</text>
+<line stroke="#315d8c" stroke-dasharray="4,2" stroke-width="1.5" x1="376" x2="392" y1="170" y2="170"></line>
+<text fill="#315d8c" font-size="11" x="396" y="174">Adoption date</text>
+</svg>
+</div>
+</div>
+<p class="section-label">Data Requirements</p>
+<table class="data-table">
+<thead>
+<tr>
+<th style="width:220px">Data Element</th>
+<th>Description</th>
+<th style="width:90px">Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total completed encounters per provider/month</td>
+<td>Count of signed, completed encounters per provider per calendar month. The primary numerator for this measure.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: total_encounters  |  Cerner: total_encounters. Include only encounters with a signed note. Exclude no-shows and cancellations.</td>
+</tr>
+<tr>
+<td>Avg completed encounters per working day</td>
+<td>An alternative denominator-normalized form. Use when scheduled hours data are unavailable.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Epic: encounters_per_day  |  Cerner: encounters_per_day. Consistent with per-week normalization when multiplied by 5.</td>
+</tr>
+<tr>
+<td>Scheduled clinical hours</td>
+<td>Each provider's scheduled clinical time per week. Used to normalize encounter counts for part-time providers.</td>
+<td><span class="source-tag tag-ehr">EHR / HR</span></td>
+<td>Available from EHR scheduling module or HR system. Critical for fair comparison across full-time and part-time providers.</td>
+</tr>
+<tr>
+<td>Provider specialty</td>
+<td>Provider specialty code. Used to stratify results and exclude providers who changed specialty during the analysis window.</td>
+<td><span class="source-tag tag-ehr">EHR</span></td>
+<td>Encounter volume norms vary substantially by specialty. Report results by specialty when the cohort is mixed.</td>
+</tr>
+<tr>
+<td>Provider identifiers</td>
+<td>Consistent provider IDs linking EHR encounter records to Suki session records.</td>
+<td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+<td>Critical join key. Must be reconciled between systems before analysis.</td>
+</tr>
+<tr>
+<td>Suki adoption date</td>
+<td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Without this, there is no pre/post split.</td>
+</tr>
+<tr>
+<td>Active usage flag (monthly)</td>
+<td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+<td><span class="source-tag tag-suki">Suki</span></td>
+<td>Session count per week can also serve to flag whether an individual week qualifies as an “active Suki use” week, enabling week-level rather than month-level pre/post splits.</td>
+</tr>
+</tbody>
+</table>
+<div class="scope-box" style="margin-top:16px">
+<p class="section-label">Suki Data — Scoped Role</p>
+<p>
+<strong>Suki identifies which weeks are active-use weeks, but encounter counts come entirely
+      from the EHR.</strong> The Suki session count per week provides a finer-grained signal than
+      the adoption date alone: a provider who used Suki in 3 out of 4 weeks in a month can be
+      analyzed at the week level, with the 3 Suki weeks as “post-adoption” and the
+      1 non-Suki week as a within-provider control.
+    </p>
+<p>
+      This week-level design is stronger than a simple pre/post month comparison for short
+      analysis windows. It requires Suki session data at the weekly grain and matched encounter
+      data from the EHR at the same grain.
+    </p>
+</div>
+<hr class="divider"/>
+<p class="section-label">Source Papers (3)</p>
+<div class="sources-wrap">
+<span class="source-pill">Holmgren 2026</span>
+<span class="source-pill">PHTI 2025</span>
+<span class="source-pill">Shuaib 2021</span>
+</div>
+<footer class="report-footer">
+<span>Regenstrief Institute / Indiana University — Suki AI Partnership</span>
+<span>CM-22 Algorithm Card  ·  June 2026</span>
+</footer>
+</div>
+</section>
+
+
+<script>
+(function () {
+  var sections = document.querySelectorAll('.cm-section');
+  var links    = document.querySelectorAll('.nav-item');
+  var nav      = document.querySelector('.cm-nav');
+
+  function update() {
+    var offset = nav ? nav.offsetHeight + 24 : 60;
+    var active = sections[0] && sections[0].id;
+    sections.forEach(function (s) {
+      if (s.getBoundingClientRect().top <= offset) active = s.id;
+    });
+    links.forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + active);
+    });
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

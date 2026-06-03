@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-22 · Patient Volume &amp; Throughput — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5d6cd;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #a5d6cd;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #1a3330;
+      line-height: 1.55;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-def p { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #1a3330;
+      line-height: 1.5;
+    }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 5px;
+    }
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef9ed;
+      border-top: 1px solid #e8c87a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li {
+      font-size: 13px;
+      color: #4a3200;
+      margin-bottom: 5px;
+      line-height: 1.45;
+    }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose {
+      font-size: 13px;
+      color: #3a434e;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .formula-num {
+      display: block;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 4px 3px;
+      white-space: nowrap;
+    }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: inherit;
+      margin-top: 8px;
+      white-space: pre;
+    }
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .algo-units-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--blue);
+      background: #f0f4f9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #dce4ec;
+    }
+    .unit-ref-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig {
+      font-size: 12px;
+      color: #4a3200;
+      margin-top: 6px;
+      padding: 5px 8px;
+      background: #fef9ed;
+      border-left: 3px solid #e8c87a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.4;
+    }
+    details { margin-top: 8px; }
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      padding: 4px 0;
+      user-select: none;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #2d3640;
+      overflow-x: auto;
+    }
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th {
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #edf0f4;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ehr  { background: var(--blue-light); color: var(--blue); }
+    .tag-suki { background: var(--teal-light); color: var(--teal); }
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fa9c2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a434e;
+      line-height: 1.5;
+    }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    /* Caution note for "higher is better" measures */
+    .caution-box {
+      background: var(--amber-light);
+      border: 1px solid #e8c87a;
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #4a3200;
+      line-height: 1.5;
+    }
+    .caution-box strong { color: #2e1f00; }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--ink);
+    }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-22 &mdash; Patient Volume &amp; Throughput</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Patient Volume</span></span>
+      <span><strong>Also known as:</strong> Encounters per Provider per Week &nbsp;·&nbsp; Patient Throughput &nbsp;·&nbsp; Volume Capacity</span>
+    </div>
+  </header>
+
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Completed encounters per provider per week</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A completed encounter is a patient visit that has a signed clinical note in the EHR.
+        Encounters are counted per provider per clinical week and normalized to each provider's
+        scheduled clinical hours to account for part-time work. The metric captures whether
+        providers can see more patients as documentation burden decreases after Suki adoption.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Completed, signed encounters from the EHR, normalized to scheduled clinical hours per week.
+        Preferred &mdash; captures realized patient throughput and controls for part-time schedules.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Scheduled encounters per week (from the EHR schedule), when completion and signing status
+        are unavailable. Use with caution &mdash; scheduled volume does not equal completed volume
+        and may not reflect the documentation-driven capacity effect.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Normalize for scheduled clinical hours.</strong>
+          A provider who reduces from 5 to 4 clinical days will show a raw encounter drop
+          unrelated to Suki. Divide by scheduled hours or clinical days to compute a rate;
+          compare rates, not raw counts.
+        </li>
+        <li>
+          <strong>Exclude providers who changed practice context.</strong>
+          Providers who changed specialty, site, or panel size during the analysis window introduce
+          confounders that are unrelated to Suki adoption. Exclude these providers or analyze them
+          separately.
+        </li>
+        <li>
+          <strong>Only include completed, signed encounters.</strong>
+          Scheduled-but-not-completed visits (no-shows, cancellations) and encounters without a
+          signed note should be excluded. Mixing completion statuses inflates raw counts and
+          obscures the capacity signal.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="caution-box">
+    <strong>Interpretation caution:</strong> Increased encounter volume is not universally
+    desirable. Higher throughput achieved through documentation efficiency gains is a positive
+    signal, but it should be interpreted alongside workload indicators and care quality measures.
+    A provider seeing more patients without a corresponding reduction in documentation time
+    (CM-04) warrants investigation.
+  </div>
+
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
+      <span class="algo-subtitle">For the Suki admin console</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces the average completed encounters per provider per week in the cohort for a given
+        month. This number is expected to increase after Suki adoption as time freed from
+        documentation creates capacity for additional patient visits. Holmgren 2026 found
+        +0.80 completed encounters/week in ambulatory settings.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Completed encounters per provider per week</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed per provider per calendar month, then averaged across the cohort.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; During the onboarding ramp, some providers may temporarily see fewer patients while adapting to Suki. Exclude the ramp period to avoid a false-negative signal in the early post-adoption months.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg completed encounters / clinical week per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Per-provider weekly rate = total completed encounters in month M / clinical weeks in month M
+Clinical weeks should be normalized to scheduled clinical hours where available
+Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    completed_enc[p] = completed, signed encounters for provider p in month M
+    clinical_weeks[p] = scheduled clinical weeks (or days/5) for provider p in month M
+    enc_per_week[p]  = completed_enc[p] / clinical_weeks[p]
+
+  dashboard_value[M] = MEAN( enc_per_week[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Completed Encounters / Provider / Week / Month</div>
+    <p class="chart-caption">
+      Cohort average should increase after Suki adoption as documentation burden decreases and
+      capacity is released. Holmgren 2026: +0.80 encounters/week (ambulatory, statistically
+      significant). Shuaib 2021 reports +39% patients/hour with human scribes (ED) &mdash; an
+      upper-bound comparator from an adjacent intervention type.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: completed encounters per provider per week, rising after Suki adoption">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <!-- Pre-adoption: stable, mid-low (higher cy = lower on chart) -->
+        <circle cx="120" cy="130" r="4" fill="#b26a00"/>
+        <circle cx="190" cy="134" r="4" fill="#b26a00"/>
+        <circle cx="260" cy="128" r="4" fill="#b26a00"/>
+        <polyline points="120,130 190,134 260,128" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption: rising (lower cy = higher on chart) -->
+        <circle cx="335" cy="126" r="4" fill="#00796b"/>
+        <circle cx="410" cy="102" r="4" fill="#00796b"/>
+        <circle cx="495" cy="76"  r="4" fill="#00796b"/>
+        <circle cx="580" cy="60"  r="4" fill="#00796b"/>
+        <polyline points="335,126 410,102 495,76 580,60" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="128" x2="335" y2="126" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
+        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:220px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Total completed encounters per provider/month</td>
+        <td>Count of signed, completed encounters per provider per calendar month. The primary numerator for this measure.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: total_encounters &nbsp;|&nbsp; Cerner: total_encounters. Include only encounters with a signed note. Exclude no-shows and cancellations.</td>
+      </tr>
+      <tr>
+        <td>Avg completed encounters per working day</td>
+        <td>An alternative denominator-normalized form. Use when scheduled hours data are unavailable.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: encounters_per_day &nbsp;|&nbsp; Cerner: encounters_per_day. Consistent with per-week normalization when multiplied by 5.</td>
+      </tr>
+      <tr>
+        <td>Scheduled clinical hours</td>
+        <td>Each provider's scheduled clinical time per week. Used to normalize encounter counts for part-time providers.</td>
+        <td><span class="source-tag tag-ehr">EHR / HR</span></td>
+        <td>Available from EHR scheduling module or HR system. Critical for fair comparison across full-time and part-time providers.</td>
+      </tr>
+      <tr>
+        <td>Provider specialty</td>
+        <td>Provider specialty code. Used to stratify results and exclude providers who changed specialty during the analysis window.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Encounter volume norms vary substantially by specialty. Report results by specialty when the cohort is mixed.</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR encounter records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between systems before analysis.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Session count per week can also serve to flag whether an individual week qualifies as an &ldquo;active Suki use&rdquo; week, enabling week-level rather than month-level pre/post splits.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki identifies which weeks are active-use weeks, but encounter counts come entirely
+      from the EHR.</strong> The Suki session count per week provides a finer-grained signal than
+      the adoption date alone: a provider who used Suki in 3 out of 4 weeks in a month can be
+      analyzed at the week level, with the 3 Suki weeks as &ldquo;post-adoption&rdquo; and the
+      1 non-Suki week as a within-provider control.
+    </p>
+    <p>
+      This week-level design is stronger than a simple pre/post month comparison for short
+      analysis windows. It requires Suki session data at the weekly grain and matched encounter
+      data from the EHR at the same grain.
+    </p>
+  </div>
+
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Holmgren 2026</span>
+    <span class="source-pill">PHTI 2025</span>
+    <span class="source-pill">Shuaib 2021</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-22 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

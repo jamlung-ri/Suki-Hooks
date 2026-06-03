@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-07 · Total EHR Time — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .page-break { page-break-before: always; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5d6cd;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #a5d6cd;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #1a3330;
+      line-height: 1.55;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-def p { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #b2d8d2;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #1a3330;
+      line-height: 1.5;
+    }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 5px;
+    }
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef9ed;
+      border-top: 1px solid #e8c87a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li {
+      font-size: 13px;
+      color: #4a3200;
+      margin-bottom: 5px;
+      line-height: 1.45;
+    }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose {
+      font-size: 13px;
+      color: #3a434e;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .formula-num {
+      display: block;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 4px 3px;
+      white-space: nowrap;
+    }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: inherit;
+      margin-top: 8px;
+      white-space: pre;
+    }
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce4ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .algo-units-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--blue);
+      background: #f0f4f9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #dce4ec;
+    }
+    .unit-ref-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf0f4;
+    }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig {
+      font-size: 12px;
+      color: #4a3200;
+      margin-top: 6px;
+      padding: 5px 8px;
+      background: #fef9ed;
+      border-left: 3px solid #e8c87a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.4;
+    }
+    details { margin-top: 8px; }
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      padding: 4px 0;
+      user-select: none;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa;
+      border: 1px solid #dce4ec;
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #2d3640;
+      overflow-x: auto;
+    }
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th {
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424a55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #edf0f4;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ehr  { background: var(--blue-light); color: var(--blue); }
+    .tag-suki { background: var(--teal-light); color: var(--teal); }
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fa9c2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a434e;
+      line-height: 1.5;
+    }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--ink);
+    }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-07 &mdash; Total EHR Time</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">EHR Efficiency</span></span>
+      <span><strong>Also known as:</strong> Total EHR Time &nbsp;·&nbsp; Login Time &nbsp;·&nbsp; Active EHR Time &nbsp;·&nbsp; EHR Burden</span>
+    </div>
+  </header>
+
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Total EHR minutes per encounter</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A total EHR minute is any minute of logged activity in the EHR system by a given provider,
+        across all task types &mdash; note creation, inbox management, order entry, results review,
+        and any other EHR interaction. Minutes are summed per provider per encounter-equivalent
+        period and normalized to completed encounters.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Full EHR audit-log telemetry capturing all activity types across all EHR modules
+        (documentation, inbox, orders, results, admin). Preferred &mdash; gives the broadest
+        and most complete view of EHR burden.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Documentation time + inbox time only, when full audit-log is unavailable.
+        These two components are the most reliably extracted from most EHR telemetry
+        systems and account for the largest share of total EHR time.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Scope of "EHR time."</strong>
+          Different EHR telemetry fields vary in which activities they include. Before using any
+          field, confirm whether it captures documentation only, documentation + inbox, or all EHR
+          activity. Mixing narrow and broad definitions across pre/post windows invalidates the
+          comparison. This measure is explicitly broader than CM-04 (Documentation Time).
+        </li>
+        <li>
+          <strong>Per-encounter vs. per-workday normalization.</strong>
+          Some studies report total EHR time per day (Ma 2025: &minus;19.95 min/day); others
+          normalize to encounters. Per-encounter normalization is preferred when encounter volume
+          itself may change after Suki adoption (see CM-22). Per-day is acceptable when encounter
+          volume is stable.
+        </li>
+        <li>
+          <strong>Inbox and orders may dilute the Suki signal.</strong>
+          Suki directly impacts documentation time; its effect on inbox and order entry is indirect
+          and smaller. A large inbox component in the denominator will attenuate the observed effect
+          size relative to a documentation-only measure. Report the component breakdown when possible.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
+      <span class="algo-subtitle">For the Suki admin console</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces the average total EHR minutes per encounter per provider in the cohort for a given
+        month. This is the broadest efficiency indicator in the CM suite: it captures all EHR time,
+        not just documentation. Ma 2025 found a larger total-EHR-time reduction (&minus;19.95
+        min/day) than documentation-time-alone reduction (&minus;6.89 min/day) in the same cohort.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Total EHR minutes per encounter</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Averaged per provider per reporting month.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; Providers still in the onboarding ramp should be excluded. EHR time may temporarily increase during initial Suki learning as providers adapt their workflow.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg total EHR min / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)
+Scope: all EHR activity types (documentation + inbox + orders + results review)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    total_ehr_min[p]  = SUM of all EHR activity minutes for provider p in month M
+                        (documentation + inbox + orders + results review)
+    encounters[p]     = completed encounters for provider p in month M
+    ehr_per_enc[p]    = total_ehr_min[p] / encounters[p]
+
+  dashboard_value[M] = MEAN( ehr_per_enc[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Total EHR Min / Encounter / Month</div>
+    <p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The effect compounds as providers become
+      proficient with ambient documentation. Ma 2025 reports &minus;19.95 min/day total EHR time
+      reduction &mdash; larger than the documentation-time-alone effect in the same study.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: total EHR minutes per encounter per month, declining after Suki adoption">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <circle cx="120" cy="75"  r="4" fill="#b26a00"/>
+        <circle cx="190" cy="68"  r="4" fill="#b26a00"/>
+        <circle cx="260" cy="77"  r="4" fill="#b26a00"/>
+        <polyline points="120,75 190,68 260,77" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="335" cy="79"  r="4" fill="#00796b"/>
+        <circle cx="410" cy="105" r="4" fill="#00796b"/>
+        <circle cx="495" cy="132" r="4" fill="#00796b"/>
+        <circle cx="580" cy="150" r="4" fill="#00796b"/>
+        <polyline points="335,79 410,105 495,132 580,150" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="77" x2="335" y2="79" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
+        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:220px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Avg total EHR time per encounter (min)</td>
+        <td>Per-provider total EHR activity time from audit-log, covering all activity types. The primary data element for this measure.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: avg_total_time_min &nbsp;|&nbsp; Cerner: telemetry varies by version. Confirm whether field includes inbox and orders or documentation only.</td>
+      </tr>
+      <tr>
+        <td>Business-hours EHR time per provider/month (min)</td>
+        <td>Total EHR activity during scheduled working hours, per provider per month.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: business_hours_min &nbsp;|&nbsp; Athena: business_hours_numerator. Used to split in-hours vs. after-hours components.</td>
+      </tr>
+      <tr>
+        <td>After-hours EHR time per provider/month (min)</td>
+        <td>Total EHR activity outside scheduled working hours, per provider per month. Overlaps with CM-05 (After-Hours Documentation) if scoped to documentation tasks.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: after_hours_min &nbsp;|&nbsp; Cerner: after_hours_min.</td>
+      </tr>
+      <tr>
+        <td>Total inbox time per provider/month (hrs)</td>
+        <td>Time spent managing the EHR inbox (messages, results, referrals). May be a significant share of total EHR time independent of Suki adoption.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: inbox_time_hrs &nbsp;|&nbsp; Athena: total_inbox_time_hours. Report separately to isolate Suki's documentation-specific effect.</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR audit records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between EHR and Suki systems before analysis.</td>
+      </tr>
+      <tr>
+        <td>Encounters by month</td>
+        <td>Completed encounters per provider per calendar month. Used to normalize total EHR time to a per-encounter rate.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Limit to eligible encounter types. Exclude encounters during the onboarding ramp period.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki provides a partial proxy for the documentation component of total EHR time,
+      but cannot observe inbox activity, order entry, or results review.</strong>
+      Session duration from the Suki API reflects in-app documentation time only. The majority of
+      total EHR time &mdash; inbox management, chart review, and orders &mdash; occurs entirely
+      within the EHR and is invisible to Suki.
+    </p>
+    <p>
+      Suki's primary contributions to this measure are the <strong>adoption date</strong> (pre/post
+      boundary) and the <strong>active usage flag</strong> (denominator definition). For the
+      outcome signal itself, the EHR full audit-log is the authoritative source. Organizations
+      that report only Suki session duration for this measure will systematically understate total
+      EHR time and the true magnitude of any change.
+    </p>
+  </div>
+
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Holmgren 2026</span>
+    <span class="source-pill">Ma 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-07 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

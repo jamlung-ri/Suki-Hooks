@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-20 · Financial Productivity — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .unit-def p { margin: 0 0 8px; }
+    .unit-def p:last-child { margin: 0; }
+    .unit-reprs { padding: 12px 18px; border-bottom: 1px solid #b2d8d2; }
+    .unit-reprs-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--teal); margin-bottom: 8px; }
+    .unit-repr-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; font-size: 13px; color: #1a3330; }
+    .unit-repr-num { font-weight: 800; color: var(--blue); min-width: 16px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def  { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table .group-row td { background: #f7f9fb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 6px 12px; border-bottom: 1px solid var(--line); }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-rcm    { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .caution-box { background: var(--amber-light); border: 1px solid #e8c87a; border-left: 4px solid var(--amber); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #4a3200; line-height: 1.5; }
+    .caution-box strong { color: #2e1f00; }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-20 &mdash; Financial Productivity</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Financial Productivity</span></span>
+      <span><strong>Operationalizations:</strong> RVUs per Encounter &nbsp;·&nbsp; Billing Amount &nbsp;·&nbsp; E/M Level Improvement</span>
+    </div>
+  </header>
+
+  <!-- ── MEASURE OVERVIEW ── -->
+  <p class="section-label">Measure Overview</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Construct</div>
+        <div class="unit-value">Financial output per provider &mdash; three operationalizations</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better (all three)</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Financial productivity captures whether Suki adoption translates into measurable revenue
+        impact. The underlying mechanism is documentation completeness: faster, more thorough
+        notes may enable providers to capture the full complexity of an encounter, support
+        higher E/M billing levels, and reduce coding omissions that leave revenue on the table.
+      </p>
+      <p>
+        All three operationalizations measure financial output and are expected to increase after
+        Suki adoption. They are complementary, not interchangeable &mdash; RVU output captures
+        work intensity, billing revenue captures collected dollars, and E/M level distribution
+        captures coding behavior. Use all three together when possible.
+      </p>
+    </div>
+
+    <div class="unit-reprs">
+      <div class="unit-reprs-label">Three Operationalizations &mdash; See Algorithms Below</div>
+      <div class="unit-repr-row"><span class="unit-repr-num">1</span><span>wRVUs per provider per week — work intensity per encounter</span></div>
+      <div class="unit-repr-row"><span class="unit-repr-num">2</span><span>Paid revenue per provider per month ($) — collected dollars after adjustments</span></div>
+      <div class="unit-repr-row"><span class="unit-repr-num">3</span><span>% encounters billed at Level 4&ndash;5 — high-complexity coding capture rate</span></div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve (All Three)</div>
+      <ul>
+        <li>
+          <strong>Case mix must be stable.</strong>
+          Suki adoption does not change which patients a provider sees. A shift in patient
+          complexity &mdash; independently of Suki &mdash; will change RVU output, revenue, and
+          E/M levels. Use within-provider pre/post comparisons, and flag any known panel changes
+          during the analysis window.
+        </li>
+        <li>
+          <strong>Use adjusted revenue, not gross charges.</strong>
+          Gross charges vary by contract and payer mix. Adjusted net revenue (collected) is the
+          meaningful signal. Pair with wRVU output to show the coding mechanism behind any revenue
+          change.
+        </li>
+        <li>
+          <strong>Rising E/M levels must be read alongside denial rate (CM-21c).</strong>
+          Increased billing at Level 4&ndash;5 should not be accompanied by increased denials.
+          A denial rate that rises in step with coding levels is a signal of overcoding, not
+          legitimate complexity capture. Read CM-20 and CM-21c together.
+        </li>
+        <li>
+          <strong>Report within specialty.</strong>
+          wRVU weights, revenue, and E/M distributions vary substantially by specialty. Mixing
+          specialties in one cohort without normalization produces uninterpretable averages.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM 1: wRVUs ── -->
+  <p class="section-label">Algorithms</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">wRVUs per Provider per Week</span>
+      <span class="algo-subtitle">Work intensity measure</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Work relative value units (wRVUs) are the CMS-assigned measure of physician work per
+        procedure. Summing wRVUs per provider per week provides a payer-neutral measure of
+        productive output that controls for payer mix and contract variation. Holmgren 2026
+        found +0.04 wRVU/encounter (+$3,044/year) at UCSF; Boyter/KLAS 2025 found
+        +$13,049/year average across sites (primarily from HCC capture).
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">wRVUs per provider per week</div>
+            <div class="unit-ref-def">For each provider: multiply each billed CPT code by its CMS wRVU weight, sum across all encounters in the week. Average the per-provider weekly total across the cohort.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">Providers with ≥1 completed Suki session in the month and past the onboarding ramp (default: 30 days). Normalize for scheduled clinical hours when part-time providers are included.</div>
+            <div class="unit-ref-ambig">&#x26A0; Use the same prior-year period as the pre-adoption window to control for seasonal variation in encounter mix and wRVU output.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg wRVUs / provider / week, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Per-provider weekly wRVU = Σ(CPT code × CMS wRVU weight) across all encounters in week W
+Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: onboarding ramp (default 30 days); use same-period prior year as pre window</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    For each week W in month M:
+      wrvu_week[p,W] = SUM( cpt_wrvu_weight[cpt] * cpt_count[p, cpt, W] for all CPT codes )
+    avg_wrvu_per_week[p] = MEAN( wrvu_week[p,W] for W in month M )
+
+  dashboard_value[M] = MEAN( avg_wrvu_per_week[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── ALGORITHM 2: Revenue ── -->
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">2</span>
+      <span class="algo-title">Paid Revenue per Provider per Month</span>
+      <span class="algo-subtitle">Adjusted net revenue</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Measures total adjusted net revenue (collected dollars after payer adjustments and
+        write-offs) per provider per month. Revenue per provider is the most financially direct
+        signal in this measure. Use adjusted net revenue rather than gross charges. Pair with
+        wRVU output (Algorithm 1) to distinguish a revenue change driven by coding improvement
+        from one driven by payer mix or contract changes.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Paid revenue per provider per month ($)</div>
+            <div class="unit-ref-def">Adjusted net revenue collected from payers, attributed to the provider and period in which the encounter occurred. Excludes gross charges and pending amounts.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">Same definition as Algorithm 1 — providers past the onboarding ramp with active Suki use in the reporting month.</div>
+            <div class="unit-ref-ambig">&#x26A0; Dollar figures vary substantially by specialty and payer mix. Report within specialty when the cohort includes multiple specialties, and note any payer mix changes during the analysis window.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (adjusted net revenue / provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Data source: EHR claims / RCM system — revenue_paid field
+Pre / post boundary: each provider's Suki adoption date
+Exclude: onboarding ramp (default 30 days)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    revenue[p] = adjusted net revenue attributed to provider p in month M
+                 (from RCM system: revenue_paid field)
+
+  dashboard_value[M] = MEAN( revenue[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── ALGORITHM 3: E/M Level ── -->
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">3</span>
+      <span class="algo-title">E/M Level Improvement — Level 4&ndash;5 Share</span>
+      <span class="algo-subtitle">Coding complexity capture</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        The Level 4&ndash;5 share captures whether documentation is supporting high-complexity
+        billing. Suki may enable more complete visit documentation that supports legitimate
+        coding at higher E/M levels. Boyter 2025 found +$1,907/year from E/M level uplift;
+        Afshar 2025b (RCT, n=66) found statistically significant ICD-10 coding improvement
+        (p &lt; 0.001). Read alongside Denial Rate (CM-21c) to confirm uplift is supported
+        by documentation, not overcoding.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">% encounters billed at Level 4&ndash;5</div>
+            <div class="unit-ref-def">Level 4–5 encounter count (CPT 99204–99205 new; 99214–99215 established) divided by total E/M encounters. Both new and established patient series must be tracked separately.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">New vs. established patient split</div>
+            <div class="unit-ref-def">E/M level distributions differ between new and established patient visit types. Track both series and report separately to avoid confounding from panel composition changes.</div>
+            <div class="unit-ref-ambig">&#x26A0; A shift toward more complex patients raises E/M levels independently of Suki. A stable new/established split with rising Level 4–5 share is a cleaner signal.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">L4&ndash;5 Share</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Level 4 + Level 5 encounters (new + established)</span><span class="formula-den">Total E/M encounters</span></span>
+<div class="formula-note">Track per provider per month; average across active cohort
+New patient CPTs: 99204 (L4), 99205 (L5)
+Established CPTs: 99214 (L4), 99215 (L5)
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: onboarding ramp (default 30 days); track new/established separately</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    l45_enc[p]   = count of Level 4 + Level 5 encounters (new and established) in month M
+    total_em[p]  = count of total E/M encounters in month M
+    l45_share[p] = l45_enc[p] / total_em[p]
+
+  dashboard_value[M] = MEAN( l45_share[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── TREND CHART ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; All Three Metrics Rise After Adoption</div>
+    <p class="chart-caption">
+      wRVUs per week, paid revenue per month, and Level 4&ndash;5 share are all expected to
+      increase post-adoption. The schematic below represents any of the three metrics.
+      Holmgren 2026: +0.04 wRVU/encounter (+$3,044/year). Boyter/KLAS 2025: +$13,049/year.
+      Boyter 2025: +$1,907/year from E/M uplift alone.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: financial productivity metrics rising after Suki adoption">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <circle cx="120" cy="132" r="4" fill="#b26a00"/>
+        <circle cx="190" cy="136" r="4" fill="#b26a00"/>
+        <circle cx="260" cy="130" r="4" fill="#b26a00"/>
+        <polyline points="120,132 190,136 260,130" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="335" cy="128" r="4" fill="#00796b"/>
+        <circle cx="410" cy="104" r="4" fill="#00796b"/>
+        <circle cx="495" cy="78"  r="4" fill="#00796b"/>
+        <circle cx="580" cy="62"  r="4" fill="#00796b"/>
+        <polyline points="335,128 410,104 495,78 580,62" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="130" x2="335" y2="128" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
+        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:220px">Data Element</th>
+        <th>Description</th>
+        <th style="width:80px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="group-row"><td colspan="4">Algorithm 1 — wRVUs per Provider per Week</td></tr>
+      <tr>
+        <td>Total work RVUs by provider/month</td>
+        <td>Sum of wRVU weights for all billed CPT codes per provider per month.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: wrvu_total &nbsp;|&nbsp; Cerner: wrvu_total. Requires CMS wRVU fee schedule for the applicable year.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Algorithm 2 — Paid Revenue per Provider per Month</td></tr>
+      <tr>
+        <td>Total paid revenue by provider/month ($)</td>
+        <td>Adjusted net revenue collected from payers, attributed to provider and encounter month.</td>
+        <td><span class="source-tag tag-rcm">RCM</span></td>
+        <td>Epic: revenue_paid &nbsp;|&nbsp; Cerner: revenue_paid. Use net (collected) not gross (charged) figures.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Algorithm 3 — E/M Level Improvement</td></tr>
+      <tr>
+        <td>E/M new patient level counts (CPT 99201&ndash;99205)</td>
+        <td>Per-provider, per-month count of new patient E/M encounters at each complexity level.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: em_new_level1_count &ndash; em_new_level5_count &nbsp;|&nbsp; Cerner: em_level1_count &ndash; em_level5_count.</td>
+      </tr>
+      <tr>
+        <td>E/M established patient level counts (CPT 99211&ndash;99215)</td>
+        <td>Per-provider, per-month count of established patient E/M encounters at each complexity level.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: em_est_level1_count &ndash; em_est_level5_count &nbsp;|&nbsp; Cerner: em_level1_count &ndash; em_level5_count.</td>
+      </tr>
+      <tr>
+        <td>Total E/M visits by provider/month</td>
+        <td>Denominator for the Level 4&ndash;5 share calculation.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: em_total_count &nbsp;|&nbsp; Cerner: em_total_count.</td>
+      </tr>
+      <tr>
+        <td>Avg ICD-10 codes per encounter</td>
+        <td>Proxy indicator for documentation completeness when E/M level data are unavailable.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: icd10_codes_per_enc &nbsp;|&nbsp; Cerner: icd10_codes_per_enc. Supplemental to E/M level data, not a replacement.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Shared — All Three Algorithms</td></tr>
+      <tr>
+        <td>Provider IDs</td>
+        <td>Consistent provider IDs linking billing data to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between systems.</td>
+      </tr>
+      <tr>
+        <td>Provider encounters by month</td>
+        <td>Total completed encounters per provider per month. Used for per-encounter normalizations and cohort eligibility.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: total_encounters &nbsp;|&nbsp; Cerner: total_encounters.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of first completed Suki session. Defines the pre/post boundary.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation of at least one completed Suki session in the reporting month.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Defines the active-provider denominator across all three algorithms.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>For all three CM-20 algorithms, Suki's role is identifying who is using Suki
+      (and when), not measuring financial output directly.</strong> RVU weights, billed CPT
+      codes, revenue collected, and E/M level distributions all reside in the EHR and RCM
+      system. Suki has no visibility into billing workflows.
+    </p>
+    <p>
+      The value Suki provides to this measure is the <strong>adoption boundary</strong> (first
+      session date), the <strong>active usage flag</strong> (monthly denominator), and the
+      <strong>session timestamp</strong> (optional within-week active-use period definition).
+      These inputs are necessary to construct the pre/post comparison but do not constitute
+      the outcome signal.
+    </p>
+  </div>
+
+  <hr class="divider">
+  <p class="section-label">Source Papers (4)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Boyter 2025</span>
+    <span class="source-pill">Boyter / KLAS 2025</span>
+    <span class="source-pill">Holmgren 2026</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-20 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>
