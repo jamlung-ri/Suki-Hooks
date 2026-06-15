@@ -23,18 +23,34 @@ except ImportError:
 # ── CM order and display labels ─────────────────────────────────────────────
 
 CM_FILES = [
+    "CM-01-Clinician-Burnout.html",
+    "CM-02-Cognitive-Task-Load.html",
+    "CM-03-Professional-Fulfillment.html",
     "CM-04-Documentation-Time.html",
     "CM-05-After-Hours-Documentation.html",
+    "CM-06-Chart-Closure-Timeliness.html",
     "CM-07-Total-EHR-Time.html",
+    "CM-09-Note-Inaccuracy.html",
+    "CM-17-Patient-Experience.html",
+    "CM-18-Physician-Patient-Interaction.html",
+    "CM-19-Clinical-Patient-Safety.html",
     "CM-20-Financial-Productivity.html",
     "CM-21-Coding-Accuracy.html",
     "CM-22-Patient-Volume.html",
 ]
 
 CM_LABELS = {
+    "CM-01-Clinician-Burnout.html":         ("CM-01", "Clinician Burnout"),
+    "CM-02-Cognitive-Task-Load.html":            ("CM-02", "Cognitive Load"),
+    "CM-03-Professional-Fulfillment.html":  ("CM-03", "Professional Fulfillment"),
     "CM-04-Documentation-Time.html":        ("CM-04", "Documentation Time"),
     "CM-05-After-Hours-Documentation.html": ("CM-05", "After-Hours Documentation"),
+    "CM-06-Chart-Closure-Timeliness.html":  ("CM-06", "Chart Closure Timeliness"),
     "CM-07-Total-EHR-Time.html":            ("CM-07", "Total EHR Time"),
+    "CM-09-Note-Inaccuracy.html":           ("CM-09", "Note Inaccuracy"),
+    "CM-17-Patient-Experience.html":        ("CM-17", "Patient Experience"),
+    "CM-18-Physician-Patient-Interaction.html": ("CM-18", "Physician-Patient Interaction"),
+    "CM-19-Clinical-Patient-Safety.html":   ("CM-19", "Clinical Patient Safety"),
     "CM-20-Financial-Productivity.html":    ("CM-20", "Financial Productivity"),
     "CM-21-Coding-Accuracy.html":           ("CM-21", "Coding Accuracy"),
     "CM-22-Patient-Volume.html":            ("CM-22", "Patient Volume"),

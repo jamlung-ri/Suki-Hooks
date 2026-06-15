@@ -141,6 +141,10 @@
     }
     .tag-nb  { background: var(--teal-light); color: var(--teal); }
     .tag-eff { background: var(--blue-light); color: var(--blue); }
+    .tag-us  { background: var(--soft); color: var(--muted); }
+    .tag-oi  { background: var(--teal-light); color: var(--teal); }
+    .tag-iq  { background: #f3eef9; color: #6d4c8d; }
+    .tag-warn { background: #fff3df; color: var(--amber); }
     .tag-tool { background: var(--soft); color: var(--muted); }
 
     /* ── Primary / featured card ── */
@@ -229,7 +233,7 @@
       </div>
       <div class="card-meta">
         <span class="tag tag-nb">NB &mdash; Net Benefits</span>
-        <span class="tag tag-eff">CM-04 &middot; CM-05 &middot; CM-07 &middot; CM-20 &middot; CM-21 &middot; CM-22</span>
+        <span class="tag tag-eff">CM-01 &middot; CM-02 &middot; CM-03 &middot; CM-04 &middot; CM-05 &middot; CM-06 &middot; CM-07 &middot; CM-09 &middot; CM-17 &middot; CM-18 &middot; CM-19 &middot; CM-20 &middot; CM-21 &middot; CM-22</span>
       </div>
     </a>
   </div>
@@ -237,6 +241,37 @@
   <!-- ── Individual cards ── -->
   <p class="section-label">Individual Algorithm Cards</p>
   <div class="card-grid">
+
+    <a href="CM-01-Clinician-Burnout.html" class="card">
+      <div class="card-code">CM-01</div>
+      <div class="card-title">Clinician Burnout</div>
+      <div class="card-desc">PFI Work Exhaustion subscale (1&ndash;5), lower is better. Survey-based, dose-response design across Suki utilization tiers.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-us">Provider Wellbeing</span>
+      </div>
+    </a>
+
+    <a href="CM-02-Cognitive-Task-Load.html" class="card">
+      <div class="card-code">CM-02</div>
+      <div class="card-title">Cognitive Task Load</div>
+      <div class="card-desc">NASA-TLX / Physician Task Load (PTL) survey score. Pre/post-deployment waves, bundled engagement item with CM-18.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-us">Provider Wellbeing</span>
+      </div>
+    </a>
+
+    <a href="CM-03-Professional-Fulfillment.html" class="card">
+      <div class="card-code">CM-03</div>
+      <div class="card-title">Professional Fulfillment</div>
+      <div class="card-desc">PFI Professional Fulfillment subscale. Secondary/exploratory, bundled with CM-01 &mdash; expected null (dissociation finding).</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-us">Provider Wellbeing</span>
+        <span class="tag tag-warn">Secondary / Exploratory</span>
+      </div>
+    </a>
 
     <a href="CM-04-Documentation-Time.html" class="card">
       <div class="card-code">CM-04</div>
@@ -258,6 +293,16 @@
       </div>
     </a>
 
+    <a href="CM-06-Chart-Closure-Timeliness.html" class="card">
+      <div class="card-code">CM-06</div>
+      <div class="card-title">Chart Closure Timeliness</div>
+      <div class="card-desc">% of encounters with notes closed within 24 hours. Suki draft-availability rate vs. EHR signature-confirmed closure.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-eff">Documentation Efficiency</span>
+      </div>
+    </a>
+
     <a href="CM-07-Total-EHR-Time.html" class="card">
       <div class="card-code">CM-07</div>
       <div class="card-title">Total EHR Time</div>
@@ -265,6 +310,50 @@
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">EHR Efficiency</span>
+      </div>
+    </a>
+
+    <a href="CM-09-Note-Inaccuracy.html" class="card">
+      <div class="card-code">CM-09</div>
+      <div class="card-title">Note Inaccuracy Rate</div>
+      <div class="card-desc">% of notes with &ge;1 fabricated or incorrect element. PDQI-9/PDSQI-9 Accuracy pilot, human rating + LLM-as-judge.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-iq">Information Quality</span>
+        <span class="tag tag-warn">Pilot / Calibration</span>
+      </div>
+    </a>
+
+    <a href="CM-17-Patient-Experience.html" class="card">
+      <div class="card-code">CM-17</div>
+      <div class="card-title">Patient Experience</div>
+      <div class="card-desc">PDRQ-9 relationship-quality score. Targeted multilingual-cohort design via transcript <code>lang_id</code> (H4 pathway).</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-oi">Organizational Impact</span>
+        <span class="tag tag-warn">Tier 3 &mdash; 5/12</span>
+      </div>
+    </a>
+
+    <a href="CM-18-Physician-Patient-Interaction.html" class="card">
+      <div class="card-code">CM-18</div>
+      <div class="card-title">Physician-Patient Interaction</div>
+      <div class="card-desc">Consultation duration (Suki-native) + post-encounter engagement Likert + exploratory talk-time/turn-taking.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-oi">Organizational Impact</span>
+        <span class="tag tag-warn">Tier 3 &mdash; 6/12</span>
+      </div>
+    </a>
+
+    <a href="CM-19-Clinical-Patient-Safety.html" class="card">
+      <div class="card-code">CM-19</div>
+      <div class="card-title">Clinical Patient Safety</div>
+      <div class="card-desc">Documentation-completeness vs. clinical-action linkage (Castro 2025 replication). Scope-narrowing applies &mdash; see card.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-oi">Organizational Impact</span>
+        <span class="tag tag-warn">Monitor &mdash; 6/12</span>
       </div>
     </a>
 

@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-09 · Note Inaccuracy Rate — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-iq  { background: var(--violet-light); color: var(--violet); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--violet-light); border: 1px solid #d6c5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #ddcdec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #d6c5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #2e2240; line-height: 1.55; border-bottom: 1px solid #ddcdec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #ddcdec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #2e2240; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #ddcdec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--violet); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1410; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0f0c; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-09 &mdash; Note Inaccuracy Rate</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-iq">IQ &mdash; Information Quality</span></span>
+      <span><span class="badge badge-warn">Pilot / Calibration Design</span></span>
+      <span><strong>Also known as:</strong> Hallucination Rate &nbsp;&middot;&nbsp; Addition Errors &nbsp;&middot;&nbsp; Negation Errors &nbsp;&middot;&nbsp; Freedom from Hallucination (PDQI)</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">% of notes containing &ge;1 fabricated or incorrect element</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        The presence of <strong>clinically inaccurate or fabricated content</strong> in an
+        AI-generated note &mdash; information that was not stated in the encounter, or stated
+        but factually wrong. Distinct from CM-08 (Note Completeness), which measures what was
+        <em>left out</em>. Hallucinations and incorrect facts are less frequent than omissions
+        but more dangerous per event: a note that says nothing about chest pain is an omission;
+        a note that inverts a negation ("denies chest pain" &rarr; "reports chest pain") is a
+        patient safety risk.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        <strong>PDQI-9 / PDSQI-9 Accuracy domain</strong> &mdash; 5-point Likert subscale
+        including a falsification/fabrication criterion, scored by physician raters. PDSQI-9 is
+        the AI-note-adapted version; Afshar 2025b validated an LLM-as-judge implementation
+        against physician ratings with agreement sufficient for research-grade use.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>Automated transcript-to-note flagging</strong> using Suki's
+        <code>source_transcripts[]</code> evidence-linking primitive &mdash; per-sentence
+        hallucination / addition / negation-reversal flags, used as a pre-screening signal and
+        sampling frame for the human/LLM rating pipeline below.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>The Missing Feedback Loop.</strong> Suki generates a note; the physician reviews, edits, and signs it in the EHR. The physician's edits are the most direct signal of where Suki was wrong &mdash; but Suki never sees those edits. Without the EHR's final note text and edit/version history, CM-09 can only be measured against the <em>transcript</em>, not the clinician's final intent, and only via one-off rater exercises rather than continuous monitoring.</li>
+        <li><strong>Wide published-rate range (3&ndash;36%).</strong> Baker 2023 (36%), Palm 2025 (31%), Kernberg 2023 (3.2% incorrect facts but 86% omissions) &mdash; rates vary enormously by error definition (hallucination vs. incorrect-fact vs. negation-reversal vs. any flagged sentence). The error taxonomy must be fixed before any rate is reported or compared across sources.</li>
+        <li><strong>Reproducibility / cross-replicate consistency.</strong> Kernberg 2023 found only 53% of data elements consistent across 3 model runs of the same case &mdash; different errors appear on each run, so a single-pass audit may not represent the model's typical behavior. Consider whether a pilot should sample multiple generations per encounter.</li>
+        <li><strong>Note Amendment Rate (CM-08/CM-09 boundary).</strong> The corpus flags an unresolved "row-13 amendment rate" item &mdash; post-signature re-opens that <em>correct</em> wrong content belong to CM-09; re-opens that <em>add</em> missing content belong to CM-08. Clarify with Suki whether their amendment-rate concept distinguishes these, or covers any pre-signature edit.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Human Rating / LLM-as-Judge Scoring &mdash; PDQI-9/PDSQI-9 Accuracy Pilot</span>
+      <span class="algo-subtitle">Rapid pilot &rarr; scale on agreement</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        A staged pilot that pulls a sample of session transcript/note pairs (using the
+        <code>source_transcripts[]</code> evidence links as the basis for review), has 2&ndash;3
+        physician raters score the PDQI-9/PDSQI-9 Accuracy domain, runs an LLM-as-judge prompt on
+        the same rubric over the same pairs, and &mdash; if human/LLM agreement is sufficient
+        (r &ge; 0.7) &mdash; scales the LLM-as-judge scoring to the full session corpus as an
+        ongoing inaccuracy-rate signal.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">PDQI-9/PDSQI-9 Accuracy domain score (1&ndash;5, higher = better / "freedom from hallucination")</div>
+            <div class="unit-ref-def">Scored per note by physician raters during the pilot; scored per note by an LLM judge using the identical rubric for both the pilot calibration set and (if agreement is sufficient) the full corpus. Reported as a cohort mean and, separately, as the % of notes scoring below an accuracy threshold (i.e., a derived "inaccuracy rate").</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name"><code>source_transcripts[]</code>-based automated flag rate</div>
+            <div class="unit-ref-def">Per note, the % of sentences whose cited transcript evidence does not support the claim (hallucination), has no transcript evidence at all (addition error), or shows inverted polarity vs. the transcript (negation error). Computed for every session, not just the rated sample &mdash; serves as a continuous pre-screening signal and as the sampling frame for the next pilot wave.</div>
+            <div class="unit-ref-ambig">&#x26A0; This is a <em>screening</em> signal, not a validated accuracy score &mdash; it tells you where to look, not how accurate the note is overall. Do not report it as equivalent to the PDQI-9/PDSQI-9 score until correlation with human ratings is established.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Human&ndash;LLM agreement (r)</div>
+            <div class="unit-ref-def">Pearson/Spearman correlation between physician-rater PDQI-9/PDSQI-9 Accuracy scores and LLM-as-judge scores on the same calibration sample. The gating value for whether automated scoring can be scaled to the full corpus.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap:</strong> until the EHR-side final note and edit history are available (see Missing Feedback Loop above), every score in this algorithm is computed against the <em>transcript</em>, not the clinician's final accepted note &mdash; so even a high-agreement, fully-scaled pipeline measures "accuracy vs. what was said," not "accuracy vs. what the clinician kept."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Inaccuracy Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(notes with PDQI-9/PDSQI-9 Accuracy score below threshold)</span><span class="formula-den">COUNT(notes rated)</span></span> × 100
+<div class="formula-note">Pilot design (Afshar 2025b pattern):
+  1. Sample 50-100 completed session transcript/note pairs via source_transcripts[]
+  2. 2-3 physician raters score PDQI-9/PDSQI-9 Accuracy domain (1-5) per note, flagging sentences
+  3. LLM-as-judge scores the same pairs using the identical rubric
+  4. Compute human-LLM agreement r on the calibration sample
+  5. If r >= 0.7: scale LLM-as-judge scoring to the full session corpus
+     If r <  0.7: refine rubric/prompt and re-pilot before scaling
+Reporting cadence: pilot wave (one-time calibration) -> ongoing (if scaled), by cohort / utilization tier</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">sample = SELECT 50..100 completed sessions WHERE source_transcripts[] is non-empty
+
+for session in sample:
+  pairs[session] = (session.transcript, session.note_content, session.source_transcripts)
+
+# Step 1: automated pre-screen (runs on full corpus, not just sample)
+for session in all_completed_sessions:
+  flags[session] = []
+  for sentence in session.note_content:
+    evidence = session.source_transcripts[sentence]
+    if evidence is empty:
+        flags[session].append("addition_error")
+    elif NOT SUPPORTS(evidence, sentence):
+        flags[session].append("hallucination")
+    elif POLARITY(evidence) != POLARITY(sentence):
+        flags[session].append("negation_error")
+  flag_rate[session] = COUNT(flags[session]) / COUNT(sentences in session.note_content)
+
+# Step 2: human + LLM rating (sample only)
+for session in sample:
+  human_score[session]  = MEAN(rater.score(PDQI9_Accuracy, pairs[session]) for rater in raters)
+  llm_score[session]    = LLM_JUDGE(PDQI9_Accuracy_rubric, pairs[session])
+
+agreement_r = CORRELATION(human_score, llm_score)  # across sample
+
+if agreement_r >= 0.7:
+  # scale: apply LLM_JUDGE to all_completed_sessions
+  inaccuracy_rate = COUNT(s where llm_score[s] < THRESHOLD) / COUNT(all_completed_sessions) * 100
+else:
+  inaccuracy_rate = COUNT(s where human_score[s] < THRESHOLD) / COUNT(sample) * 100  # pilot-only estimate
+
+dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_rate), "agreement_r": agreement_r }</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Pilot Calibration: Agreement Up, Inaccuracy Rate Down</div>
+    <p class="chart-caption">
+      Across successive pilot waves (e.g., as the rubric/prompt is refined and as model versions
+      improve), the expected pattern is rising human&ndash;LLM agreement (enabling scale-up) and a
+      declining flagged-inaccuracy rate. The agreement line crossing the r&nbsp;=&nbsp;0.7
+      threshold is the point at which automated scoring can replace the manual rating sample.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 640 230" width="100%" aria-label="Two-line chart: human-LLM agreement rising across pilot waves and crossing an r=0.7 threshold, while flagged inaccuracy rate declines">
+        <!-- Axes -->
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#d9dee6" stroke-width="1.5"/>
+        <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">Mid</text>
+        <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+
+        <!-- r = 0.7 threshold line -->
+        <line x1="60" y1="62" x2="600" y2="62" stroke="#e8c87a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="604" y="66" font-size="10" fill="#a3791a">r = 0.7</text>
+
+        <!-- Agreement line (rising, teal) -->
+        <polyline points="100,150 240,108 380,72 520,48" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="100" cy="150" r="4" fill="#00796b"/>
+        <circle cx="240" cy="108" r="4" fill="#00796b"/>
+        <circle cx="380" cy="72"  r="4" fill="#00796b"/>
+        <circle cx="520" cy="48"  r="4" fill="#00796b"/>
+
+        <!-- Flag/inaccuracy rate line (declining, violet, dashed) -->
+        <polyline points="100,60 240,82 380,108 520,138" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="100" cy="60"  r="4" fill="#6d4c8d"/>
+        <circle cx="240" cy="82"  r="4" fill="#6d4c8d"/>
+        <circle cx="380" cy="108" r="4" fill="#6d4c8d"/>
+        <circle cx="520" cy="138" r="4" fill="#6d4c8d"/>
+
+        <!-- X-axis labels -->
+        <text x="100" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 1</text>
+        <text x="240" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 2</text>
+        <text x="380" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 3</text>
+        <text x="520" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 4 (scaled)</text>
+
+        <!-- Legend -->
+        <circle cx="64" cy="220" r="4" fill="#00796b"/>
+        <text   x="72" y="224" font-size="10" fill="#01574f">Human-LLM agreement (r)</text>
+        <circle cx="260" cy="220" r="4" fill="#6d4c8d"/>
+        <text   x="268" y="224" font-size="10" fill="#4a3a5c">Flagged inaccuracy rate</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>source_transcripts[]</code> evidence links</td>
+        <td>Each note sentence mapped to the transcript segment(s) that produced it &mdash; the key primitive enabling transcript-to-note auditing at scale without listening to audio.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>Full transcript</td>
+        <td>Ground truth of what was said during the encounter; basis for any note comparison.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr>
+        <td>Generated note content</td>
+        <td>The AI-generated note text to be rated/flagged.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>Structured diagnoses / ICD-10 codes</td>
+        <td>Supports the "ICD-10 fidelity" measurement method &mdash; compares H3/PBC-generated codes against conversation context.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/structured-data</code></td>
+      </tr>
+      <tr>
+        <td>Session audio</td>
+        <td>Raw audio for re-review when a transcript-level flag is ambiguous.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/recording</code> &mdash; retained 30 days.</td>
+      </tr>
+      <tr>
+        <td>PDQI-9 / PDSQI-9 Accuracy ratings (physician raters + LLM judge)</td>
+        <td>The pilot's primary unit &mdash; 1-5 Likert Accuracy domain score per note, from 2-3 physician raters and an LLM-as-judge on the same pairs.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>Solicited externally for the pilot; not Suki-native.</td>
+      </tr>
+      <tr>
+        <td>Final signed note text</td>
+        <td>Gold standard to diff against the Suki draft &mdash; closes the Missing Feedback Loop.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+      </tr>
+      <tr>
+        <td>Note version history / edit audit trail</td>
+        <td>Reconstructs physician edits between Suki output and the final note &mdash; the most direct signal of where Suki was wrong.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic NoteActivity; EHR audit log table.</td>
+      </tr>
+      <tr>
+        <td>Note signature timestamp + signatory</td>
+        <td>Confirms the physician reviewed and accepted the note.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE.SIGN_INST</code>.</td>
+      </tr>
+      <tr>
+        <td>Encounter-to-note linkage</td>
+        <td>Joins Suki <code>session_id</code> to the EHR note record.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR encounter ID, MRN, or CSN.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <code>source_transcripts[]</code> is the key enabling primitive: it makes
+      transcript-to-note auditing tractable at scale, supporting hallucination-rate,
+      addition-error, negation-error, and ICD-10-fidelity flagging today, without any EHR
+      integration.
+    </p>
+    <p>
+      However, Suki has <strong>no native survey or human-rating collection mechanism</strong>
+      &mdash; PDQI-9/PDSQI-9 ratings must be solicited externally as a pilot (physician raters
+      plus LLM-as-judge), following the Afshar 2025b calibration pattern. And because of the
+      <strong>Missing Feedback Loop</strong>, every Suki-native or pilot-based score in this
+      card measures accuracy <em>relative to the transcript</em>, not relative to the
+      clinician's final signed note &mdash; closing that gap requires either an EHR integration
+      exposing note version history, or a contractual data-sharing provision for note edit logs
+      / final note text.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Baker 2023</span>
+    <span class="source-pill">Palm 2025</span>
+    <span class="source-pill">Kernberg 2023</span>
+    <span class="source-pill">Bundy 2024</span>
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Wang 2025</span>
+    <span class="source-pill">Biro 2025</span>
+    <span class="source-pill">Shah 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-09 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

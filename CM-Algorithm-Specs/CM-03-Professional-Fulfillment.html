@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-03 · Professional Fulfillment and Meaningfulness — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-03 &mdash; Professional Fulfillment and Meaningfulness</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-us">Provider Wellbeing</span></span>
+      <span><span class="badge badge-warn">Secondary / Exploratory</span></span>
+      <span><strong>Also known as:</strong> Meaning in Work &nbsp;&middot;&nbsp; PFI Professional Fulfillment Subscale</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">PFI Professional Fulfillment subscale score (1&ndash;5)</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Provider-reported positive engagement with clinical work &mdash; the presence of
+        meaning, reward, and satisfaction in the work itself. This is the
+        <strong>positive pole</strong> of the wellbeing spectrum, dissociable from CM-01
+        (absence of exhaustion). Removing a negative (burnout) does not imply adding a positive
+        (fulfillment), and the strongest available evidence shows exactly this dissociation.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Stanford Professional Fulfillment Index (PFI), Professional Fulfillment subscale &mdash;
+        6-item, 1&ndash;5 scale (higher = better). The instrument used in Afshar 2025b. If a full
+        PFI is administered for CM-01, this subscale is collected "for free" in the same
+        instrument.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Custom meaningfulness-of-work and work-life balance Likert items (Afshar 2025b, Boyter
+        2025, Duggan 2025) &mdash; conceptually adjacent supplements with weaker instrument
+        validation; not a substitute for the PFI subscale.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Expected null result.</strong> Afshar 2025b (RCT, n=66) found professional fulfillment increased at p=0.04, which <strong>missed</strong> the pre-specified alpha of 0.025, while burnout (CM-01) decreased significantly (&minus;0.44). The expected outcome for CM-03 is a null result &mdash; this should be stated up front in any report, not discovered after the fact.</li>
+        <li><strong>Low actionability.</strong> The H1 deep-dive scores CM-03 as Tier 3 (7/12), driven by Low Actionability &mdash; no current Suki hook is designed to act on meaning, reward, or engagement (unlike CM-01/CM-02, where H1/H8/H10/H11 plausibly act on burden or cognitive-load mechanisms). Even a clean measurement gives no lever to pull.</li>
+        <li><strong>Do not separately scope.</strong> If a full Stanford PFI is administered for CM-01, the Professional Fulfillment subscale is collected in the same instrument at no additional respondent burden. Standing up a separate CM-03 data-collection effort is not recommended.</li>
+        <li><strong>Framing risk.</strong> Reporting CM-03 as a standalone, primary value-proposition metric risks being read as "Suki doesn't improve wellbeing" when the more accurate reading is "Suki improves one wellbeing construct (burnout) and not a different, dissociable one (fulfillment)."</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Survey Instrument Scoring &mdash; Bundled Dissociation Check</span>
+      <span class="algo-subtitle">Same administration as CM-01 PFI</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces a cohort-level professional-fulfillment score from the same Phase 0 / Phase 3
+        PFI administration used for CM-01, reported alongside the CM-01 burnout delta as a
+        <strong>dissociation check</strong>, not a standalone outcome. The expected result is
+        a flat or non-significant change in this score even where CM-01's burnout score
+        decreases.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">PFI Professional Fulfillment subscale score (1&ndash;5)</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed as the mean of the 6 subscale items per respondent per administration wave, then averaged within each utilization-tier cohort. Collected from the same survey instance as CM-01's Work Exhaustion subscale.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light)</div>
+            <div class="unit-ref-def">Identical cohort definition to CM-01 &mdash; heavy (&ge;70% of eligible encounters with a completed Suki session), moderate (30&ndash;69%), light (&lt;30%), assigned per provider by week 4 of adoption. Reuse the CM-01 tier assignment; do not recompute separately.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">CM-01 Work Exhaustion delta (for dissociation comparison)</div>
+            <div class="unit-ref-def">The same respondents' CM-01 burnout-score change, reported side-by-side with the CM-03 fulfillment-score change. The comparison itself &mdash; not either score alone &mdash; is the CM-03 finding: did burnout improve while fulfillment did not (replicating Afshar 2025b), or did both move together?</div>
+            <div class="unit-ref-ambig">&#x26A0; A significant CM-03 increase would be a notable departure from the strongest prior RCT and should be reported carefully &mdash; not assumed to be a measurement artifact, but also not over-claimed from a single deployment.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Subscale Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (item response, 1&ndash;5) across 6 items</span><span class="formula-den">6</span></span>
+<div class="formula-note">Administration: bundled with CM-01's PFI &mdash; Phase 0 (pre-deployment baseline) and Phase 3 (months 4-9 follow-up)
+Cohort: heavy / moderate / light Suki utilization tier (identical to CM-01)
+Reporting: cohort-mean subscale score per wave, reported alongside the CM-01 Work Exhaustion delta
+Expected result: flat / non-significant change (dissociation) &mdash; treat a null result as the default, not a failure</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">Phase 0 (T0, pre-deployment, same respondents as CM-01):
+  fulfillment[p, T0] = MEAN(PFI Professional Fulfillment items 1..6) for provider p
+
+Phase 3 (T3, months 4-9, same respondents where possible):
+  fulfillment[p, T3] = MEAN(PFI Professional Fulfillment items 1..6) for provider p
+
+tier[p] = HEAVY / MODERATE / LIGHT   (reuse CM-01 tier assignment, week 4)
+
+For each tier T in {HEAVY, MODERATE, LIGHT}:
+  cohort_fulfillment[T, T0] = MEAN(fulfillment[p, T0] for p in tier T)
+  cohort_fulfillment[T, T3] = MEAN(fulfillment[p, T3] for p in tier T)
+  fulfillment_delta[T] = cohort_fulfillment[T, T3] - cohort_fulfillment[T, T0]
+
+# Dissociation check: compare against CM-01's exhaustion_delta[T] for the same tier T
+dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
+  Expected: exhaustion_delta < 0 (improvement) AND fulfillment_delta ~ 0 (null)</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Dissociation: CM-01 Burnout vs. CM-03 Fulfillment</div>
+    <p class="chart-caption">
+      The expected pattern is dissociation: the CM-01 Work Exhaustion score (left) declines for
+      the heavy-utilization cohort, while the CM-03 Professional Fulfillment score (right) stays
+      flat. A flat right panel is the expected, reportable result &mdash; not a failed measurement.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 250" width="100%" aria-label="Two schematic panels: CM-01 Work Exhaustion score declining (left), CM-03 Professional Fulfillment score flat (right), for the heavy-utilization cohort">
+        <!-- Left panel: CM-01 Work Exhaustion (declining = good) -->
+        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
+        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">CM-01 Work Exhaustion (1&ndash;5, lower = better)</text>
+        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="300" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
+        <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 0</text>
+        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 3</text>
+        <circle cx="120" cy="70"  r="3.5" fill="#b26a00"/>
+        <circle cx="250" cy="140" r="3.5" fill="#00796b"/>
+        <polyline points="120,70 250,140" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+
+        <!-- Right panel: CM-03 Professional Fulfillment (flat = expected) -->
+        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
+        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">CM-03 Professional Fulfillment (1&ndash;5, higher = better)</text>
+        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="198" x2="620" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
+        <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 0</text>
+        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 3</text>
+        <circle cx="440" cy="110" r="3.5" fill="#b26a00"/>
+        <circle cx="570" cy="106" r="3.5" fill="#6d4c8d"/>
+        <polyline points="440,110 570,106" fill="none" stroke="#6d4c8d" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <text x="570" y="92" text-anchor="middle" font-size="9" fill="#4a3a5c">Flat = expected (dissociation)</text>
+
+        <!-- Shared legend -->
+        <circle cx="44"  cy="242" r="4" fill="#b26a00"/>
+        <text   x="52"  y="246" font-size="10" fill="#4a3200">Phase 0 baseline</text>
+        <circle cx="170" cy="242" r="4" fill="#00796b"/>
+        <text   x="178" y="246" font-size="10" fill="#01574f">Phase 3 &mdash; improvement</text>
+        <circle cx="330" cy="242" r="4" fill="#6d4c8d"/>
+        <text   x="338" y="246" font-size="10" fill="#4a3a5c">Phase 3 &mdash; no change (expected)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>PFI Professional Fulfillment subscale responses (Phase 0 &amp; Phase 3)</td>
+        <td>6-item, 1&ndash;5 scale, collected from the same survey instance as CM-01's Work Exhaustion subscale &mdash; no additional respondent burden if CM-01 is already in scope.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Administered by customer or research team; bundle with CM-01, do not stand up separately.</td>
+      </tr>
+      <tr>
+        <td>CM-01 Work Exhaustion subscale scores (same respondents)</td>
+        <td>Used for the dissociation comparison &mdash; the CM-03 finding is the joint pattern of (CM-01 delta, CM-03 delta), not either alone.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>See CM-01 Algorithm Card.</td>
+      </tr>
+      <tr>
+        <td>Sessions per provider per week / utilization tier</td>
+        <td>Reuse CM-01's heavy/moderate/light tier assignment; do not recompute independently.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>See CM-01 Algorithm Card for derivation.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Anchors the Phase 0 / Phase 3 windows, identical to CM-01.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Shared with CM-01; not a distinct data request.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's role for CM-03 is identical to CM-01</strong> &mdash; adoption-boundary and
+      utilization-cohort scaffolding only. CM-03 has no distinct Suki-native data requirement
+      and no product mechanism currently targets this construct. Suki cannot observe "meaning"
+      or "reward" directly, and there is no in-app survey-distribution capability for either
+      measure.
+    </p>
+    <p>
+      CM-03 should be measured only as a secondary/exploratory outcome bundled with CM-01's PFI
+      administration, framed explicitly as a test of the burnout/fulfillment dissociation finding
+      &mdash; not as a standalone value-proposition metric, and not as the basis for sample-size
+      or power calculations.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Boyter 2025</span>
+    <span class="source-pill">Duggan 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-03 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

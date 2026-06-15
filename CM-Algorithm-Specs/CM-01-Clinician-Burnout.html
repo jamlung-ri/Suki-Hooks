@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-01 · Clinician Burnout and Exhaustion — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-01 &mdash; Clinician Burnout and Exhaustion</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-us">Provider Wellbeing</span></span>
+      <span><strong>Also known as:</strong> Work Exhaustion &nbsp;&middot;&nbsp; Emotional Exhaustion &nbsp;&middot;&nbsp; Burnout Syndrome</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">PFI Work Exhaustion subscale score (1&ndash;5)</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Provider-reported emotional exhaustion, depersonalization, and interpersonal disengagement
+        from clinical work &mdash; the core burnout syndrome &mdash; measured via a validated
+        psychometric instrument administered at defined intervals around Suki adoption.
+        Distinct from in-encounter cognitive load (CM-02) and professional fulfillment (CM-03),
+        which are adjacent but dissociable constructs.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Stanford Professional Fulfillment Index (PFI), Work Exhaustion subscale &mdash; 10-item,
+        1&ndash;5 scale (higher = worse). The instrument used in the strongest external RCT
+        (Afshar 2025b, n=66), which found a &minus;0.44 reduction.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Mini-Z / Mini-Z 2.0 &mdash; 10-item brief burnout screen, 10&ndash;50 scale
+        (<strong>higher = better</strong>, opposite polarity from PFI). Lower respondent burden;
+        widely used in quality-improvement contexts and proposed as the Phase 0/Phase 3 instrument.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>The baseline problem.</strong> A true pre/post comparison requires a baseline survey administered <em>before</em> Suki go-live. If Suki is engaged retrospectively, this window is permanently lost &mdash; CM-01 then can only be measured as a cohort-level dose-response comparison (heavy vs. light users at follow-up), not an individual-level pre/post change.</li>
+        <li><strong>Self-report inflation.</strong> Self-report-only studies (Shah 2024: &minus;1.94 on the PFI Work Exhaustion subscale) substantially overstate effect size relative to the RCT (Afshar 2025b: &minus;0.44) &mdash; a gap expected from volunteer/selection bias in non-randomized designs. Do not present self-report-only deltas as equivalent to RCT effect sizes.</li>
+        <li><strong>Instrument-direction mismatch.</strong> PFI Work Exhaustion is 1&ndash;5 where higher = worse; Mini-Z is 10&ndash;50 where higher = better. If a site switches instruments between baseline and follow-up, scores must be normalized to a common direction before any comparison is made.</li>
+        <li><strong>Individual-level linkage vs. anonymity.</strong> Linking a provider's baseline survey response to their post-deployment utilization tier requires either non-anonymous administration (reduces candor on a sensitive topic) or a study-specific pseudonymous code maintained outside Suki.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Survey Instrument Scoring &mdash; Dose-Response Cohort Comparison</span>
+      <span class="algo-subtitle">Phase 0 / Phase 3 administration</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces a cohort-level burnout score for each administration wave, compared across
+        Suki utilization tiers rather than (or in addition to) a simple pre/post pooled
+        comparison. The score is expected to decrease (PFI scale) after Suki adoption,
+        with the largest decrease in the heaviest-utilization cohort.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">PFI Work Exhaustion subscale score (1&ndash;5)</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed as the mean of the 10 subscale items per respondent per administration wave, then averaged within each utilization-tier cohort.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light)</div>
+            <div class="unit-ref-def">Per the PHTI 2025 framework: heavy (&ge;70% of eligible encounters with a completed Suki session), moderate (30&ndash;69%), light (&lt;30%), assigned per provider by week 4 of adoption and held fixed for the comparison window.</div>
+            <div class="unit-ref-ambig">&#x26A0; Tier assignment is the only place Suki contributes primary data to this algorithm. Without a pre-deployment baseline, the comparison is heavy-vs-light at follow-up, not within-provider change.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Subscale Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (item response, 1&ndash;5) across 10 items</span><span class="formula-den">10</span></span>
+<div class="formula-note">Administration: Phase 0 (pre-deployment baseline, 4 weeks before go-live) &mdash; Phase 3 (months 4&ndash;9 follow-up)
+Cohort: heavy / moderate / light Suki utilization tier, assigned at week 4 of adoption
+Reporting: cohort-mean subscale score per wave; report dose-response delta (heavy minus light), not just pooled pre/post
+Corroboration: report alongside after-hours/pajama-time delta where EHR audit-log data is available</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">Phase 0 (T0, pre-deployment, all eligible providers):
+  score[p, T0] = MEAN(PFI Work Exhaustion items 1..10) for provider p
+
+Weeks 1-16: track Suki sessions per provider per week
+  utilization_pct[p] = completed sessions / eligible encounters (rolling 4-week)
+  tier[p] = HEAVY if utilization_pct[p] >= 0.70
+            MODERATE if 0.30 <= utilization_pct[p] < 0.70
+            LIGHT if utilization_pct[p] < 0.30
+  (assigned at week 4, held fixed)
+
+Phase 3 (T3, months 4-9, same respondents where possible):
+  score[p, T3] = MEAN(PFI Work Exhaustion items 1..10) for provider p
+
+For each tier T in {HEAVY, MODERATE, LIGHT}:
+  cohort_score[T, T0] = MEAN(score[p, T0] for p in tier T)
+  cohort_score[T, T3] = MEAN(score[p, T3] for p in tier T)
+  dose_response_delta[T] = cohort_score[T, T3] - cohort_score[T, T0]
+
+dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
+  (expect HEAVY delta more negative than LIGHT delta, on the PFI 1-5 scale)</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; PFI Work Exhaustion Score / Cohort / Wave</div>
+    <p class="chart-caption">
+      Cohort-mean PFI Work Exhaustion score should decrease from Phase 0 (pre-deployment baseline)
+      to Phase 3 (months 4&ndash;9), with the heavy-utilization cohort showing the largest decline
+      (dose-response). Literature anchor: Afshar 2025b RCT, &minus;0.44 (objective gold standard);
+      self-report-only designs (Shah 2024, &minus;1.94) substantially overstate this effect.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: PFI Work Exhaustion score declining from Phase 0 to Phase 3, more steeply for heavy Suki users than light users">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="150" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Phase 0 (baseline)</text>
+        <text x="500" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Phase 3 (months 4&ndash;9)</text>
+        <!-- Heavy-utilization cohort -->
+        <circle cx="150" cy="78" r="4" fill="#b26a00"/>
+        <circle cx="500" cy="140" r="4" fill="#00796b"/>
+        <polyline points="150,78 500,140" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Light-utilization cohort -->
+        <circle cx="150" cy="86" r="4" fill="#b26a00"/>
+        <circle cx="500" cy="100" r="4" fill="#6d4c8d"/>
+        <polyline points="150,86 500,100" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3200">Phase 0 baseline (all providers)</text>
+        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
+        <text   x="92"  y="190" font-size="11" fill="#01574f">Phase 3 &mdash; heavy-utilization cohort</text>
+        <circle cx="340"  cy="186" r="4" fill="#6d4c8d"/>
+        <text   x="348"  y="190" font-size="11" fill="#4a3a5c">Phase 3 &mdash; light-utilization cohort</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>PFI Work Exhaustion subscale responses (Phase 0)</td>
+        <td>10-item, 1&ndash;5 scale, administered to all eligible providers 4 weeks before Suki go-live. The single most time-sensitive data element &mdash; permanently unavailable if missed.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Administered by customer or research team; Suki has no in-app distribution mechanism.</td>
+      </tr>
+      <tr>
+        <td>PFI Work Exhaustion subscale responses (Phase 3)</td>
+        <td>Same instrument, administered months 4&ndash;9 post go-live to the same respondent pool where possible.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Alternative: Mini-Z / Mini-Z 2.0 (10&ndash;50 scale, higher = better) if lower respondent burden is required &mdash; note the direction reversal.</td>
+      </tr>
+      <tr>
+        <td>Sessions per provider per week</td>
+        <td>Completed Suki session counts, used to compute rolling utilization percentage and assign heavy/moderate/light tier at week 4.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/status (aggregated). Defines the independent variable for the dose-response design.</td>
+      </tr>
+      <tr>
+        <td>Session status distribution</td>
+        <td>completed vs. skipped vs. failed rate per provider &mdash; an adoption-quality covariate; high skip/fail rates plausibly track frustration, a burnout precursor.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/status.</td>
+      </tr>
+      <tr>
+        <td>Session-timing distribution (business hours)</td>
+        <td>% of a provider's sessions started outside a defined business-hours window &mdash; a rough Suki-native proxy for after-hours documentation activity (a mechanism, not the outcome).</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Derived from GET /session/{id}/transcript start/end timestamps.</td>
+      </tr>
+      <tr>
+        <td>After-hours / "pajama time" EHR active time</td>
+        <td>Objective correlate of the documentation-burden pathway believed to drive burnout reduction. Reported alongside the survey delta as mechanism-level corroboration.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Signal "Time Outside Scheduled Hours" / "Pajama Time," or vendor equivalent.</td>
+      </tr>
+      <tr>
+        <td>Provider schedule / specialty / FTE status</td>
+        <td>Defines the business-hours window for classifying session timestamps and EHR activity; used to stratify and exclude part-time or non-clinical staff.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR scheduling module and provider directory.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Anchors the utilization-tier tracking window.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Does not itself define a pre/post split for CM-01 &mdash; the Phase 0 survey must precede this date.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's role for CM-01 is limited to adoption-boundary and utilization-cohort scaffolding.</strong>
+      Session counts and timing define the heavy/moderate/light dose-response cohorts, and
+      session-timing distribution provides a rough proxy for after-hours activity. Suki has no
+      native survey-response or rating data for this measure &mdash; burnout itself is a
+      provider-reported psychological construct with no API analog.
+    </p>
+    <p>
+      The PFI Work Exhaustion (or Mini-Z) survey must be administered and captured by the customer
+      or research team, on the schedule above. Without a pre-deployment (Phase 0) baseline, CM-01
+      can only be reported as a cohort-level dose-response comparison at follow-up, not an
+      individual-level pre/post change.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Shah 2024</span>
+    <span class="source-pill">Tierney 2025</span>
+    <span class="source-pill">Olson 2025</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">van Buchem 2024</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-01 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

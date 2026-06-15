@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-02 · Cognitive and Task Load — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12px; color: #5a1916; margin-top: 6px; padding: 6px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-02 &mdash; Cognitive and Task Load</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-us">Provider Wellbeing</span></span>
+      <span><strong>Also known as:</strong> Mental Workload &nbsp;&middot;&nbsp; NASA-TLX &nbsp;&middot;&nbsp; Physician Task Load</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">NASA-TLX / PTL score (0&ndash;100)</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        The mental effort, time pressure, and frustration a clinician experiences
+        <em>during</em> or <em>immediately after</em> a clinical encounter &mdash; the
+        in-the-moment cognitive demand of documentation, measured via the NASA Task Load
+        Index or a brief physician-specific adaptation. Distinct from CM-01 (sustained
+        emotional exhaustion over weeks-to-months) and CM-04 (objective documentation
+        duration).
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        NASA-TLX (full) &mdash; 6-domain instrument (Mental Demand, Physical Demand, Temporal
+        Demand, Performance, Effort, Frustration), 0&ndash;100 per subscale. Used in Bracken
+        2025, PHTI 2025, Omon 2025, Stults 2025. Frustration and Temporal Demand subscales are
+        most relevant to documentation-specific burden.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Physician Task Load Index (PTL) &mdash; 4-item NASA-TLX adaptation, 0&ndash;100 scale
+        (lower = better), used in Shah 2024. Lower respondent burden, suitable for repeated or
+        frequent administration (e.g., end-of-shift).
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>The timing problem.</strong> NASA-TLX validity depends on proximity to the encounter &mdash; ideally administered immediately post-encounter, not weeks later. Suki has no mechanism to trigger a micro-survey on session completion, so administration falls back to end-of-shift or periodic, which introduces recall aggregation across multiple encounters.</li>
+        <li><strong>Composite vs. subscale.</strong> Full NASA-TLX (6 domains) vs. Frustration/Temporal Demand subscales only vs. PTL (4 items) are not interchangeable scores. Pick one operationalization and apply it consistently across the comparison window.</li>
+        <li><strong>Pathway attribution.</strong> Four distinct hooks (H1 ambient documentation, H8 orders staging, H10 pre-visit summaries, H11 chart Q&amp;A) plausibly reduce cognitive load through different mechanisms. A NASA-TLX change cannot, by itself, identify which pathway drove it &mdash; pathway isolation requires session-level exposure flags not yet available.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Survey Instrument Scoring &mdash; End-of-Shift Dose-Response Comparison</span>
+      <span class="algo-subtitle">Periodic administration</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces a cohort-level workload score, compared between heavy- and light-utilization
+        Suki users at the same point in time (dose-response), since a true pre/post comparison
+        requires the same pre-deployment baseline timing discipline as CM-01. The score is
+        expected to be lower (PTL/NASA-TLX scale) in heavier-utilization cohorts.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">NASA-TLX / PTL score (0&ndash;100)</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed per respondent per administration (end-of-shift or per-encounter where feasible), then averaged within each utilization-tier cohort for the reporting period.</div>
+            <div class="pipeline-note">&#x26A0; <strong>Trigger mechanism not available:</strong> session completion (status = completed) is, in principle, exactly the timestamped event a per-encounter micro-survey would need, but no in-app or webhook-based trigger exists today. Per-encounter administration is aspirational; end-of-shift is the practical default.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light)</div>
+            <div class="unit-ref-def">Same PHTI 2025 tiering used in CM-01: heavy (&ge;70% of eligible encounters with a completed Suki session), moderate (30&ndash;69%), light (&lt;30%), assigned per provider by week 4 of adoption.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Cognitive-offload proxy (note content volume + structured codes)</div>
+            <div class="unit-ref-def">Number and length of Suki-generated note sections, and count of auto-generated ICD-10/IMO codes per encounter &mdash; a rough proxy for documentation work removed from the clinician. Reported as a secondary, corroborating signal alongside the survey score, not as a substitute.</div>
+            <div class="unit-ref-ambig">&#x26A0; Does not measure perceived effort directly. An elevated skipped/failed session rate for a provider may also flag sessions where ambient capture itself added friction (a frustration signal) rather than reducing it.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (PTL or NASA-TLX score per respondent, in the wave)</span><span class="formula-den">Number of respondents in the cohort</span></span>
+<div class="formula-note">PTL score = MEAN(4 items) &times; 25  (0-100 scale, lower = better)
+NASA-TLX composite = MEAN(6 subscales, each 0-100); or report Frustration / Temporal Demand subscales individually
+Administration: end-of-shift or periodic (per-encounter aspirational, pending trigger mechanism)
+Cohort: heavy / moderate / light Suki utilization tier (PHTI 2025), assigned at week 4
+Corroboration: report alongside cognitive-offload proxy (note content volume, structured codes) where available</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each reporting wave W (end-of-shift or periodic):
+  For each respondent p:
+    if PTL administered:
+      score[p, W] = MEAN(PTL items 1..4) * 25
+    if NASA-TLX administered:
+      score[p, W] = MEAN(subscale_1..6)   # or report Frustration/Temporal Demand alone
+
+  tier[p] = HEAVY / MODERATE / LIGHT  (per CM-01 utilization tiering, week-4 snapshot)
+
+For each tier T in {HEAVY, MODERATE, LIGHT}:
+  cohort_score[T, W] = MEAN(score[p, W] for p in tier T)
+
+dashboard_value[W] = cohort_score[HEAVY, W] vs cohort_score[LIGHT, W]
+  (expect HEAVY cohort score lower, i.e. less workload, than LIGHT cohort)
+
+Secondary (corroboration, per encounter):
+  offload_proxy = note_section_count + structured_code_count   (from Suki content/structured-data)</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; NASA-TLX / PTL Score / Cohort / Wave</div>
+    <p class="chart-caption">
+      Cohort-mean workload score should be lower in the heavy-utilization cohort than the
+      light-utilization cohort at the same point in time, and should decline for the heavy
+      cohort across waves as familiarity with ambient capture increases. Without a
+      pre-deployment baseline, the comparison is heavy-vs-light at a given wave, not a
+      within-provider pre/post change.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: NASA-TLX/PTL score lower for heavy Suki users than light users, declining over successive waves for the heavy cohort">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="160" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 1</text>
+        <text x="340" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 2</text>
+        <text x="520" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 3</text>
+        <!-- Light-utilization cohort: flat, higher -->
+        <circle cx="160" cy="76" r="4" fill="#6d4c8d"/>
+        <circle cx="340" cy="80" r="4" fill="#6d4c8d"/>
+        <circle cx="520" cy="78" r="4" fill="#6d4c8d"/>
+        <polyline points="160,76 340,80 520,78" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <!-- Heavy-utilization cohort: declining -->
+        <circle cx="160" cy="100" r="4" fill="#00796b"/>
+        <circle cx="340" cy="130" r="4" fill="#00796b"/>
+        <circle cx="520" cy="162" r="4" fill="#00796b"/>
+        <polyline points="160,100 340,130 520,162" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#6d4c8d"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a3a5c">Light-utilization cohort</text>
+        <circle cx="280"  cy="170" r="4" fill="#00796b"/>
+        <text   x="288"  y="174" font-size="11" fill="#01574f">Heavy-utilization cohort</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>NASA-TLX or PTL responses</td>
+        <td>End-of-shift (or periodic) workload ratings per respondent per wave.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Administered by customer or research team; no Suki-native distribution. Pick one instrument and hold it fixed across waves.</td>
+      </tr>
+      <tr>
+        <td>Session completion timestamps</td>
+        <td>status = completed, timestamped &mdash; the trigger point an immediate post-encounter micro-survey would use, if one existed.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/status. Currently informational only &mdash; no survey trigger wired to this event.</td>
+      </tr>
+      <tr>
+        <td>Note content volume (sections, length)</td>
+        <td>Number and length of Suki-generated note sections per encounter &mdash; cognitive-offload proxy.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/content.</td>
+      </tr>
+      <tr>
+        <td>Structured diagnoses (PBC) count</td>
+        <td>Count of auto-generated ICD-10/IMO codes per encounter &mdash; coding-offload proxy, one component of task load.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/structured-data.</td>
+      </tr>
+      <tr>
+        <td>Session skip/fail rate</td>
+        <td>Elevated skipped/failed rates, especially concentrated by encounter type, may flag sessions where ambient capture added friction &mdash; a frustration signal.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/status.</td>
+      </tr>
+      <tr>
+        <td>In-encounter EHR active time</td>
+        <td>Keystrokes/clicks during the visit window &mdash; objective proxy for in-visit task load, the mechanism NASA-TLX is meant to capture.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Signal "Time in Notes" filtered to the encounter window, or vendor equivalent.</td>
+      </tr>
+      <tr>
+        <td>Order-entry / chart-navigation events during encounter</td>
+        <td>Isolates the H8 (orders staging) and H10/H11 (pre-visit summary, chart Q&amp;A) pathways from the H1 (note-writing) pathway.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR order-entry and chart-navigation audit logs. Same data request as CM-18.</td>
+      </tr>
+      <tr>
+        <td>Suki utilization tier / adoption date</td>
+        <td>Defines the heavy/moderate/light dose-response cohorts, as in CM-01.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Derived from session counts per provider per week.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's role for CM-02 is limited to utilization-cohort scaffolding and cognitive-offload proxies.</strong>
+      Session counts define the dose-response cohorts, and note content volume / structured-code
+      counts provide a rough, secondary signal for documentation work removed from the clinician.
+      Suki has no in-session or immediate post-session micro-survey mechanism, so it cannot
+      natively trigger the NASA-TLX/PTL administration that the instrument's validity depends on.
+    </p>
+    <p>
+      NASA-TLX or PTL responses must be collected externally (end-of-shift or periodic), on a
+      heavy-vs-light cohort comparison basis. Report the offload proxy alongside the survey score
+      as corroborating evidence, not as a substitute for it.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (7)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Bracken 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+    <span class="source-pill">Omon 2025</span>
+    <span class="source-pill">Stults 2025</span>
+    <span class="source-pill">Karavassilis 2025</span>
+    <span class="source-pill">Shah 2024</span>
+    <span class="source-pill">Olson 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-02 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-19 · Clinical Patient Safety — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--red); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--red); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-oi  { background: var(--teal-light); color: var(--teal); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .badge-crit { background: var(--red-light); color: var(--red); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--red-light); border: 1px solid #f0c4c0; border-left: 4px solid var(--red); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #f3d2cf; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--red); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #f0c4c0; font-size: 12px; font-weight: 700; color: var(--red); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #3a1310; line-height: 1.55; border-bottom: 1px solid #f3d2cf; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #f3d2cf; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #3a1310; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #f3d2cf; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--red); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1410; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0f0c; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table tr.group-row td { background: #f0f4f9; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #49525d; padding: 6px 12px; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-19 &mdash; Clinical Patient Safety</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-oi">OI &mdash; Organizational Impact</span></span>
+      <span><span class="badge badge-warn">Monitor &mdash; 6/12 (High Actionability)</span></span>
+      <span><span class="badge badge-crit">Scope Narrowing Applies</span></span>
+      <span><strong>Also known as:</strong> AHRQ Harm Score &nbsp;&middot;&nbsp; Patient Safety Events &nbsp;&middot;&nbsp; Likelihood of Psychiatric Intervention (reclassification candidate)</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">AHRQ Harm Score / adverse-event rate (gold standard) &mdash; documentation-completeness &harr; clinical-action odds ratio (near-term proxy)</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower harm = better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Patient <strong>harm</strong> outcomes associated with ambient AI documentation &mdash;
+        adverse events, AHRQ harm scores, and gaps between what gets documented and what
+        clinical action actually follows. The canonical measures corpus calls this
+        <strong>"the most concerning and least studied outcome dimension"</strong> &mdash; only
+        9 papers touch it, most using simulated or survey data rather than real patient
+        outcomes. H1 (ambient documentation) itself is rated <strong>○ (none)</strong> for CM-19
+        &mdash; ambient note generation alone does not plausibly move a harm outcome. H8 (orders
+        staging) and H11 (chart Q&amp;A) are the hooks that introduce safety-relevant pathways.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        AHRQ Harm Score / formal adverse-event and incident reports &mdash; typically live in
+        administrative/risk-management systems separate from the EHR proper, and are likely the
+        hardest data of any canonical measure to access.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>Castro 2025 replication design</strong>: an adjusted odds ratio (aOR) linking a
+        Suki-native documentation-completeness signal to EHR order/intervention data for the
+        same encounters. <strong>Not itself a CM-19 finding</strong> until paired with a
+        downstream clinical-action or harm signal &mdash; see Scope Narrowing below.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Scope Narrowing (Critical &mdash; Read Before Reporting Any Error-Rate Data)</div>
+      <ul>
+        <li><strong>True patient safety requires measured patient harm outcomes.</strong> Errors in documentation that do not demonstrate a downstream patient outcome are technical quality issues (&rarr; CM-09 Note Inaccuracy Rate), not safety. Severity of error is not patient safety without evidence of patient harm.</li>
+        <li><strong>Several commonly-cited "safety" items are likely misclassified</strong> absent outcome evidence: "Clinically Significant Errors in AI Notes" (Biro 2025, Anderson 2025) &rarr; CM-09; "Negation Errors" (Bundy 2024) &rarr; CM-09; RDoC/PHQ-9 documentation level (Castro 2025) &rarr; CM-08; "Likelihood of Psychiatric Intervention, aOR" (Castro 2025) &rarr; quality-of-care/clinical-decision-rate, adjacent to but not itself safety.</li>
+        <li><strong>Suki's own evidence-linking and note-accuracy work (CM-09's H15/<code>source_transcripts[]</code>) will generate data that looks safety-relevant but should be reported under CM-09/CM-08</strong> unless paired with an observed clinical action or harm signal.</li>
+        <li><strong>H8 and H11 are the relevant future hooks for CM-19, not H1.</strong> Any CM-19 evaluation plan should be scoped against H8/H11 deployment timelines, not current production capability.</li>
+        <li><strong>Pearlman/Castro-style aOR findings cut both directions.</strong> A significant aOR (e.g., Castro 2025's 0.83, p=.005 &mdash; more documentation, less intervention) is a potential unintended consequence, not automatically "bad" without further investigation &mdash; but it is the kind of signal CM-19 needs.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Linkage / Association Design &mdash; Documentation Completeness vs. Clinical Action (Castro 2025 Replication)</span>
+      <span class="algo-subtitle">Becomes a CM-19 finding only with EHR linkage</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Replicates the only landmark CM-19 design pattern in the literature: Castro 2025 found
+        that ambient scribe use was associated with <strong>more psychiatric symptom
+        documentation but significantly <em>less</em> psychiatric intervention</strong> (aOR
+        0.83, p=.005, preprint only). The design links a <em>documented</em> signal
+        (documentation completeness &mdash; something Suki's structured-data output plausibly
+        increases) to a <em>clinical action</em> signal (intervention rate &mdash; something only
+        the EHR can provide), then tests the association via logistic regression.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary (available today)</span>
+          <div>
+            <div class="unit-ref-name">Documentation-completeness signal</div>
+            <div class="unit-ref-def">Per encounter: presence of a relevant symptom/diagnosis as a structured code in Suki's PBC/ICD-10 output (the Suki-side analog of Castro 2025's RDoC level / PHQ-9 documentation). Available today via <code>GET /session/{id}/structured-data</code> &mdash; no new instrumentation required.</div>
+            <div class="unit-ref-ambig">&#x26A0; On its own, this signal is a CM-08 (Note Completeness) finding, not CM-19 &mdash; see Scope Narrowing.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary (the missing link)</span>
+          <div>
+            <div class="unit-ref-name">EHR order/intervention rate for the same encounters</div>
+            <div class="unit-ref-def">E.g., psychiatric referral, medication order, follow-up scheduling &mdash; the clinical-action half of the design. Requires encounter-level linkage between Suki <code>session_id</code> and EHR order data.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap (the single biggest structural gap for CM-19):</strong> without encounter-level linkage to EHR orders/interventions, no Suki-native documentation signal can be tested against a clinical-action outcome &mdash; which is the only thing that makes a finding "CM-19" rather than "CM-08/CM-09." H8's order-staging audit trail (staged vs. manual, accepted/edited/rejected) is the future hook most likely to close this, once it ships.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Adjusted odds ratio (aOR) of intervention given documentation completeness</div>
+            <div class="unit-ref-def">The actual CM-19-candidate output &mdash; logistic regression of intervention occurrence on documentation-completeness level, adjusted for covariates (visit type, provider specialty, patient demographics). Only valid once the linkage above exists.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">aOR</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">odds(intervention | high documentation completeness)</span><span class="formula-den">odds(intervention | low documentation completeness)</span></span>  (adjusted for covariates)
+<div class="formula-note">Step 1 (available today): compute documentation_completeness[encounter] from Suki structured-data output
+Step 2 (missing link): join encounter to EHR order/intervention record -> intervention[encounter] (0/1)
+Step 3: logistic regression  intervention ~ documentation_completeness + covariates  ->  aOR + 95% CI
+Interpretation guardrail: aOR significantly != 1 is a CM-19-relevant signal (association between
+  documentation and clinical action) — but per Scope Narrowing, frame as hypothesis-generating
+  replication of Castro 2025, not as a harm measurement, unless an actual harm/incident outcome
+  is also available for the same encounters</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each completed session s:
+  structured = GET /session/{s.id}/structured-data
+  documentation_completeness[s] = HAS_RELEVANT_STRUCTURED_CODE(structured)  # e.g., psych symptom/diagnosis code
+
+# [MISSING LINK — requires EHR integration]
+for each session s:
+  intervention[s] = EHR_ORDER_OCCURRED(s.encounter_id, window = encounter_date..+N days)
+  # e.g., psychiatric referral, medication order, follow-up scheduling
+
+covariates[s] = { visit_type, provider_specialty, patient_age_band, ... }  # from EHR
+
+model = LOGISTIC_REGRESSION(
+  outcome    = intervention,
+  predictor  = documentation_completeness,
+  covariates = covariates
+)
+
+dashboard_value = {
+  "aOR": model.odds_ratio("documentation_completeness"),
+  "ci_95": model.confidence_interval("documentation_completeness"),
+  "n_encounters": COUNT(sessions with both documentation_completeness and intervention available)
+}
+# If aOR significantly < 1 (replicating Castro 2025): flag for H8/H11-informed follow-up,
+# report as CM-19-relevant hypothesis, not as a harm measurement</div>
+      </details>
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">2</span>
+      <span class="algo-title">Retrospective Annotation &mdash; CM-09 Pipeline (Open Question 5)</span>
+      <span class="algo-subtitle">Low-cost, prepares for future CM-19 identification</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        A lightweight addition to the CM-09 (Note Inaccuracy) PDQI-9/PDSQI-9 rating pipeline:
+        when a human rater or LLM-as-judge identifies an error in an AI-generated note, also
+        capture whether a <strong>downstream clinical action was observed</strong> as a result
+        of that error. This does not require new EHR access beyond what CM-09 already needs for
+        its rating sample, and creates a retrospective dataset that can be mined for CM-19
+        candidates once EHR order/intervention linkage (Algorithm 1) becomes available.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary (annotation field)</span>
+          <div>
+            <div class="unit-ref-name">Downstream clinical action observed: yes / no / unknown</div>
+            <div class="unit-ref-def">Added as a field on the CM-09 PDQI-9/PDSQI-9 rating instrument, completed by the same human rater / LLM-as-judge already reviewing the note for accuracy. "Unknown" is an acceptable and expected majority answer given the Missing Feedback Loop (CM-09) &mdash; raters typically only see the transcript and generated note, not the final chart.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name"><code>source_transcripts[]</code> (H11 audit trail, if available)</div>
+            <div class="unit-ref-def">Where H11 (chart Q&amp;A) is in use, the interaction log provides a more direct trace of whether a documented item was acted upon &mdash; useful context for the rater's annotation.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pipeline-note"><strong>Why this matters now:</strong> this annotation is nearly free to add to an already-planned CM-09 pilot, and turns "unknown" cases into a labeled backlog. If/when Algorithm 1's EHR linkage ships, this backlog can be re-queried for cases marked "yes" to bootstrap a CM-19 cohort without waiting for a new prospective study.</div>
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Pattern &mdash; Documentation Completeness vs. Intervention Rate</div>
+    <p class="chart-caption">Hypothesis to test (Castro 2025 replication), not an assumed result. Castro 2025 found higher documentation completeness associated with <em>lower</em> psychiatric intervention rates (aOR 0.83, p=.005) &mdash; a pattern worth detecting either direction.</p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 720 230" width="100%" height="230" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+        <!-- Axes -->
+        <line x1="60" y1="20" x2="60" y2="180" stroke="#c7ced8" stroke-width="1"/>
+        <line x1="60" y1="180" x2="660" y2="180" stroke="#c7ced8" stroke-width="1"/>
+        <text x="20" y="24" font-size="11" fill="#646a73">50%</text>
+        <text x="20" y="103" font-size="11" fill="#646a73">25%</text>
+        <text x="28" y="184" font-size="11" fill="#646a73">0%</text>
+        <line x1="60" y1="20" x2="660" y2="20" stroke="#edf0f4" stroke-width="1"/>
+        <line x1="60" y1="100" x2="660" y2="100" stroke="#edf0f4" stroke-width="1"/>
+
+        <!-- Bars: intervention rate by documentation-completeness tertile -->
+        <g>
+          <rect x="140" y="68" width="80" height="112" fill="#315d8c" opacity="0.85"/>
+          <text x="180" y="60" font-size="12" fill="#315d8c" font-weight="700" text-anchor="middle">42%</text>
+          <text x="180" y="200" font-size="12" fill="#202124" text-anchor="middle">Low</text>
+
+          <rect x="320" y="96" width="80" height="84" fill="#315d8c" opacity="0.85"/>
+          <text x="360" y="88" font-size="12" fill="#315d8c" font-weight="700" text-anchor="middle">35%</text>
+          <text x="360" y="200" font-size="12" fill="#202124" text-anchor="middle">Medium</text>
+
+          <rect x="500" y="124" width="80" height="56" fill="#315d8c" opacity="0.85"/>
+          <text x="540" y="116" font-size="12" fill="#315d8c" font-weight="700" text-anchor="middle">28%</text>
+          <text x="540" y="200" font-size="12" fill="#202124" text-anchor="middle">High</text>
+        </g>
+
+        <text x="360" y="218" font-size="11" fill="#646a73" text-anchor="middle">Documentation-Completeness Tertile (per encounter)</text>
+        <text x="36" y="100" font-size="11" fill="#646a73" text-anchor="middle" transform="rotate(-90 36 100)">Intervention Rate</text>
+
+        <!-- Annotation -->
+        <line x1="140" y1="55" x2="580" y2="115" stroke="#b3261e" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="430" y="42" font-size="11" fill="#b3261e" text-anchor="middle">Declining slope = Castro 2025 pattern (aOR &lt; 1)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr><th>Field / Signal</th><th>Source</th><th>Status</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr class="group-row"><td colspan="4">Algorithm 1 &mdash; Documentation-Completeness Signal (Suki-Native, Available Today)</td></tr>
+      <tr>
+        <td>Structured diagnoses / PBC / ICD-10 output</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Available</td>
+        <td><code>GET /session/{id}/structured-data</code> &mdash; basis for documentation-completeness flag</td>
+      </tr>
+      <tr>
+        <td>Session status</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Available</td>
+        <td>Denominator hygiene &mdash; restrict to <code>status=completed</code></td>
+      </tr>
+
+      <tr class="group-row"><td colspan="4">Algorithm 1 &mdash; Clinical-Action Linkage (Missing &mdash; Highest Priority)</td></tr>
+      <tr>
+        <td>EHR order / intervention data, linked to encounter</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Missing</td>
+        <td>The single biggest structural gap for CM-19. Without this, documentation-completeness findings remain CM-08/CM-09.</td>
+      </tr>
+      <tr>
+        <td>Encounter covariates (visit type, provider specialty, patient demographics)</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Missing</td>
+        <td>Required for adjusted odds ratio (aOR) regression</td>
+      </tr>
+
+      <tr class="group-row"><td colspan="4">Gold-Standard Harm Outcomes (Out of Reach)</td></tr>
+      <tr>
+        <td>AHRQ Harm Score / formal incident reports</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Out of reach</td>
+        <td>Typically held in separate risk-management / patient-safety systems, not the EHR proper</td>
+      </tr>
+      <tr>
+        <td>PHQ-9 / structured screening documentation</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Missing</td>
+        <td>Cross-validation for Suki's documentation-completeness signal (Castro 2025 used RDoC/PHQ-9 levels)</td>
+      </tr>
+
+      <tr class="group-row"><td colspan="4">Future Hooks (Aspirational)</td></tr>
+      <tr>
+        <td>H8 order-staging audit trail (AI-staged vs. manual; accepted / edited / rejected)</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Aspirational</td>
+        <td>Sprint 3D &mdash; most direct future path to closing the clinical-action linkage gap</td>
+      </tr>
+      <tr>
+        <td>H11 chart Q&amp;A interaction log + answer-accuracy audit</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Aspirational</td>
+        <td>Sprint 3B &mdash; relevant if chart Q&amp;A answers influence clinical decisions</td>
+      </tr>
+
+      <tr class="group-row"><td colspan="4">Algorithm 2 &mdash; CM-09 Retrospective Annotation</td></tr>
+      <tr>
+        <td>"Downstream clinical action observed: yes/no/unknown" rating field</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>To be added</td>
+        <td>Appended to existing CM-09 PDQI-9/PDSQI-9 rating instrument &mdash; minimal incremental cost</td>
+      </tr>
+      <tr>
+        <td><code>source_transcripts[]</code></td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Available</td>
+        <td>Context for rater annotation; also CM-09's primary evidence-linking field</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <p class="section-label">Suki Data Scope</p>
+  <div class="scope-box">
+    <p>
+      <strong>Nothing in Suki's current data measures CM-19 directly.</strong> The structured
+      diagnoses/PBC output that looks most safety-relevant (<code>/structured-data</code>) is a
+      <strong>CM-08 documentation-completeness signal</strong> until it can be linked to EHR
+      order/intervention data for the same encounters &mdash; that linkage does not exist today
+      and is the single largest structural gap blocking CM-19 measurement.
+    </p>
+    <p>
+      <strong>H1 (ambient documentation) is rated ○ (none) for CM-19</strong> &mdash; ambient note
+      generation alone does not plausibly move a harm outcome. The hooks that matter for CM-19
+      are <strong>H8 (order staging)</strong>, the "highest-stakes new safety variable" once it
+      ships, and <strong>H11 (chart Q&amp;A)</strong>, which "could improve or worsen safety
+      depending on answer accuracy." Neither is in production today.
+    </p>
+    <p>
+      <strong>Recommended near-term path:</strong> (1) pursue an EHR order/intervention linkage
+      pilot to enable the Castro 2025 replication design in Algorithm 1 &mdash; this is the
+      highest-value single ask for this measure; (2) add the low-cost retrospective annotation
+      from Algorithm 2 to the CM-09 pilot now, so a labeled backlog exists by the time linkage is
+      available; (3) when reporting any error/inaccuracy findings from CM-09's evidence-linking
+      work, hold the line on Scope Narrowing &mdash; do not report them as CM-19 patient-safety
+      findings without an observed downstream clinical action.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── SOURCES ── -->
+  <p class="section-label">Sources</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Castro 2025</span>
+    <span class="source-pill">Anderson 2025</span>
+    <span class="source-pill">Suhail 2026</span>
+    <span class="source-pill">Bracken 2025</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">Haberle 2024</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>CM-19 Algorithm Card &middot; June 2026</span>
+    <span>Canonical Measures &mdash; Suki Algorithm Specs</span>
+  </footer>
+
+</div>
+</body>
+</html>

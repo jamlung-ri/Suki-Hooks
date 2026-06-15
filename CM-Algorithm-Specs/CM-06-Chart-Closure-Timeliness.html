@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-06 · Chart Closure Timeliness — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--blue); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--blue-light); border: 1px solid #c2d4e6; border-left: 4px solid var(--blue); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #cdddec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #c2d4e6; font-size: 12px; font-weight: 700; color: var(--blue); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1c2c3d; line-height: 1.55; border-bottom: 1px solid #cdddec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #cdddec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1c2c3d; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #cdddec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1410; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0f0c; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-06 &mdash; Chart Closure Timeliness</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-eff">EFF &mdash; Documentation Efficiency</span></span>
+      <span><span class="badge badge-nb">Tier 1 &mdash; 10/12</span></span>
+      <span><strong>Also known as:</strong> Same-Day Encounter Closure &nbsp;&middot;&nbsp; Chart Closure Time &nbsp;&middot;&nbsp; 24-Hour Documentation Deficiency Rate &nbsp;&middot;&nbsp; Pre-Next-Visit Closure</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">% of encounters with notes closed within 24 hours</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Whether and how quickly clinical notes are <strong>completed and signed</strong> &mdash;
+        a documentation-<em>completion-behavior</em> measure, distinct from how long the note
+        took to write (CM-04). A note can be drafted in 3 minutes (fast CM-04) and sit unsigned
+        for 2 days (poor CM-06), or take 15 minutes to draft but be signed immediately. The
+        canonical definition prefers the <strong>24-hour, duration-bounded window</strong> for
+        pre/post evaluation over the stricter calendar-bounded "same-day" convention.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        EHR-confirmed note-signature timestamp vs. encounter-end timestamp, reported as a
+        24-hour closure rate (%) or 24-hour deficiency rate (% &mdash; the complement). This is
+        the basis for Boyter 2025/KLAS's &minus;41% chart-closure-time finding (UAL data) and
+        FMOL's 84% improvement in notes closed within 7 days.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Suki <strong>draft-availability rate</strong> within 24 hours &mdash; using the elapsed
+        time between the session-completion timestamp (<code>status = completed</code>) and the
+        encounter-end timestamp, bucketed the same way as the EHR-confirmed measure. A leading
+        proxy, not the canonical measure itself (see ambiguity below).
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Same-day vs. 24-hour window.</strong> "Same-day" is calendar-bounded &mdash; a 4:45 PM encounter closed at 7:00 AM the next day fails "same-day" despite closing in under 15 hours. "Within 24 hours" is duration-bounded and does not penalize late-day visits. The canonical definition recommends the 24-hour window for pre/post evaluation; document which convention any given site uses, since Suki's own bucket and an EHR-reported "same-day" rate will diverge for reasons unrelated to documentation behavior.</li>
+        <li><strong>Overlap with CM-04.</strong> The "time to chart" framing risks restating CM-04 (Documentation Time). CM-06's scope is held strictly to <strong>completion/signature behavior</strong>, not drafting duration &mdash; even though both measures draw on the same underlying Suki session-timestamp data.</li>
+        <li><strong>Draft-availability vs. signature.</strong> Suki's <code>status = completed</code> event marks the note <em>draft</em> as ready, not signed. The clinician still has to review and sign it in the EHR. Any Suki-only report of "closure" should be explicitly labeled draft-availability until EHR signature data is confirmed available.</li>
+        <li><strong>Bucket field source-of-truth unconfirmed.</strong> The Suki-EHR crosswalk already defines <code>same_day_count</code>, <code>next_day_count</code>, <code>two_three_day_count</code>, <code>four_five_day_count</code>, <code>six_plus_day_count</code> &mdash; but whether their "day signed" component is EHR-sourced (answers CM-06 directly) or derived from Suki's own completion timestamp (answers draft-availability) is unconfirmed.</li>
+        <li><strong>Pearlman 2025 benchmark unverified.</strong> Its "Time to Close Encounter" outcome is not yet confirmed to measure note signature vs. a broader workflow event (e.g., room turnover, discharge) &mdash; treat as a candidate, not confirmed, benchmark.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Dashboard Metric &mdash; Closure-Delay Bucket Distribution (Cohort Average)</span>
+      <span class="algo-subtitle">Draft-availability proxy, mirrors crosswalk buckets</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        For each completed session, computes the elapsed time between the encounter-end
+        timestamp and the session-completion timestamp, assigns it to a closure-delay bucket
+        (same-day / next-day / 2&ndash;3 days / 4&ndash;5 days / 6+ days &mdash; mirroring the
+        bucket structure already defined in the Suki-EHR crosswalk), and reports the cohort-level
+        24-hour draft-availability rate plus the full bucket distribution.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">24-hour draft-availability rate (%)</div>
+            <div class="unit-ref-def">Share of completed sessions where (session-completion timestamp &minus; encounter-end timestamp) &le; 24 hours. The canonical-unit analog of the EHR-confirmed 24-hour closure rate, computed from Suki-native timestamps.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap:</strong> this measures when the <em>draft</em> became available, not when the note was <em>signed</em>. Without an EHR signature-confirmation callback or export, this rate is a leading-indicator proxy, not the canonical measure &mdash; the single biggest structural gap for CM-06.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Closure-delay bucket distribution</div>
+            <div class="unit-ref-def">Same-day / next-day / 2&ndash;3 days / 4&ndash;5 days / 6+ days &mdash; the full distribution of draft-availability delay, reported as counts mirroring <code>same_day_count</code> ... <code>six_plus_day_count</code> in the crosswalk. Reported alongside the primary rate to show the shape of the tail, not just the 24-hour cutoff.</div>
+            <div class="unit-ref-ambig">&#x26A0; If/when these crosswalk fields are confirmed to be EHR-signature-sourced for a given site, they should be used directly in place of this Suki-derived bucketing &mdash; the formula below would then need no Suki-side timestamp math at all.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Session status distribution (denominator hygiene)</div>
+            <div class="unit-ref-def"><code>completed</code> vs. <code>skipped</code>/<code>failed</code>/<code>aborted</code> &mdash; defines the denominator correctly, excluding encounters where no Suki draft was ever produced rather than counting them as "never closed."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">24-Hour Draft-Availability Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(sessions where delay_hours &le; 24)</span><span class="formula-den">COUNT(sessions where status = completed)</span></span> × 100
+<div class="formula-note">delay_hours = session_completion_timestamp − encounter_end_timestamp  (hours)
+Bucket assignment (mirrors crosswalk fields):
+  same_day_count        : delay_hours &le; 24 AND signed same calendar day as encounter
+  next_day_count        : delay_hours &le; 24 AND signed next calendar day  (or 24 &lt; delay_hours &le; 48)
+  two_three_day_count   : 48 &lt; delay_hours &le; 72
+  four_five_day_count   : 72 &lt; delay_hours &le; 120
+  six_plus_day_count    : delay_hours &gt; 120
+Denominator excludes skipped/failed/aborted sessions (no draft ever produced)
+Report: 24-hour rate (primary) + full bucket distribution (secondary), per cohort and pre/post adoption</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each session s where s.status == "completed":
+  encounter_end   = s.encounter_end_timestamp
+  draft_available = s.completion_timestamp
+  delay_hours      = HOURS(draft_available - encounter_end)
+
+  if delay_hours <= 24 and SAME_CALENDAR_DAY(encounter_end, draft_available):
+      bucket[s] = "same_day"
+  elif delay_hours <= 48:
+      bucket[s] = "next_day"
+  elif delay_hours <= 72:
+      bucket[s] = "two_three_day"
+  elif delay_hours <= 120:
+      bucket[s] = "four_five_day"
+  else:
+      bucket[s] = "six_plus_day"
+
+completed_sessions = COUNT(s where s.status == "completed")
+within_24h         = COUNT(s where delay_hours[s] <= 24)
+
+dashboard_value = {
+  "rate_24h"  : within_24h / completed_sessions * 100,
+  "buckets"   : { b: COUNT(s where bucket[s] == b) for b in BUCKET_NAMES }
+}
+# Report per cohort (heavy/moderate/light utilization tier) and pre/post adoption window
+# Label explicitly as "draft-availability," not "chart closure," until EHR signature
+# linkage is confirmed (see Pipeline gap above)</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Closure-Delay Bucket Shift, Pre- vs. Post-Adoption</div>
+    <p class="chart-caption">
+      Stacked distribution of completed sessions across closure-delay buckets, before and after
+      Suki adoption. The expected shift is a larger same-day / next-day share and a smaller
+      4&ndash;5 day / 6+ day tail &mdash; consistent with Boyter 2025/KLAS's &minus;41% chart-closure-time
+      and FMOL's 84% improvement in notes closed within 7 days, though both of those benchmarks
+      reflect EHR-confirmed signature events rather than Suki draft-availability.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 640 230" width="100%" aria-label="Stacked bar chart comparing closure-delay bucket distribution pre- and post-adoption, showing a shift toward same-day and next-day buckets post-adoption">
+        <!-- Axis -->
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#d9dee6" stroke-width="1.5"/>
+        <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">100%</text>
+        <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">50%</text>
+        <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">0%</text>
+
+        <!-- Pre-adoption stacked bar: same-day 22%, next-day 23%, 2-3day 25%, 4-5day 15%, 6+day 15% -->
+        <g>
+          <rect x="160" y="159" width="110" height="21" fill="#00796b"/>
+          <rect x="160" y="125" width="110" height="34" fill="#4fa89e"/>
+          <rect x="160" y="90"  width="110" height="35" fill="#9fcbc4"/>
+          <rect x="160" y="69"  width="110" height="21" fill="#f0c987"/>
+          <rect x="160" y="48"  width="110" height="21" fill="#e08e7d"/>
+        </g>
+        <text x="215" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Pre-Adoption</text>
+
+        <!-- Post-adoption: same-day 45%, next-day 30%, 2-3day 15%, 4-5day 6%, 6+day 4% -->
+        <g>
+          <rect x="370" y="115" width="110" height="65" fill="#00796b"/>
+          <rect x="370" y="73"  width="110" height="42" fill="#4fa89e"/>
+          <rect x="370" y="52"  width="110" height="21" fill="#9fcbc4"/>
+          <rect x="370" y="44"  width="110" height="8"  fill="#f0c987"/>
+          <rect x="370" y="38"  width="110" height="6"  fill="#e08e7d"/>
+        </g>
+        <text x="425" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Post-Adoption</text>
+
+        <!-- Legend -->
+        <g font-size="10" fill="#3a434e">
+          <rect x="60"  y="206" width="11" height="11" fill="#00796b"/>
+          <text x="76"  y="215">Same-day</text>
+          <rect x="160" y="206" width="11" height="11" fill="#4fa89e"/>
+          <text x="176" y="215">Next-day</text>
+          <rect x="255" y="206" width="11" height="11" fill="#9fcbc4"/>
+          <text x="271" y="215">2&ndash;3 days</text>
+          <rect x="355" y="206" width="11" height="11" fill="#f0c987"/>
+          <text x="371" y="215">4&ndash;5 days</text>
+          <rect x="455" y="206" width="11" height="11" fill="#e08e7d"/>
+          <text x="471" y="215">6+ days</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Session completion timestamp (<code>status = completed</code>)</td>
+        <td>Marks when the Suki note draft became available &mdash; the anchor for the draft-availability rate and bucket assignment.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Draft-ready, not signed &mdash; see Pipeline gap.</td>
+      </tr>
+      <tr>
+        <td>Session creation / encounter-end timestamp</td>
+        <td>Start-of-clock for delay_hours.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Cross-checkable against transcript timestamps.</td>
+      </tr>
+      <tr>
+        <td>Session status distribution (<code>completed</code>/<code>skipped</code>/<code>failed</code>/<code>aborted</code>)</td>
+        <td>Denominator hygiene &mdash; excludes encounters with no Suki draft from the closure-rate denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>&mdash;</td>
+      </tr>
+      <tr>
+        <td>Closure-delay bucket fields (<code>same_day_count</code> ... <code>six_plus_day_count</code>)</td>
+        <td>Already defined in the Suki-EHR crosswalk; would directly answer CM-06 if EHR-signature-sourced.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Source-of-truth (EHR vs. Suki timestamp) unconfirmed &mdash; see Open Questions.</td>
+      </tr>
+      <tr>
+        <td>Note signature timestamp</td>
+        <td>Ground-truth event CM-06 measures &mdash; when the note moved from draft to signed/final.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: <code>HNO_NOTE</code> signature instant; Cerner/Athena: equivalent note-status field.</td>
+      </tr>
+      <tr>
+        <td>Encounter end timestamp (EHR-side)</td>
+        <td>Cross-check / alternative anchor where Suki and EHR scheduling data diverge.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Standard encounter/appointment record.</td>
+      </tr>
+      <tr>
+        <td>Provider's daily encounter sequence (schedule)</td>
+        <td>Required for the "note completed before next patient" operationalization.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR scheduling export; no Suki-native concept of schedule sequence.</td>
+      </tr>
+      <tr>
+        <td>Note status transitions (draft &rarr; pended &rarr; signed)</td>
+        <td>Distinguishes "never closed" from "closed late" for accurate 24-hour deficiency rates.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR audit log / note status history.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      Suki's session lifecycle natively supports a <strong>draft-availability closure-delay
+      distribution</strong> &mdash; bucketing completed sessions into same-day / next-day /
+      2&ndash;3 / 4&ndash;5 / 6+ day buckets based on the gap between encounter-end and
+      session-completion timestamps, mirroring the structure already defined in the Suki-EHR
+      crosswalk. This is among the strongest Suki-native signals of any canonical measure
+      (Tier 1, 10/12).
+    </p>
+    <p>
+      The single biggest gap is that <code>status = completed</code> marks the note as
+      <strong>drafted, not signed</strong>. Without an EHR signature-confirmation callback or
+      export &mdash; or confirmation that the crosswalk's bucket fields are already
+      EHR-sourced &mdash; every Suki-only "closure" metric should be reported explicitly as a
+      <strong>draft-availability proxy</strong>, not the canonical chart-closure measure.
+      "Note completed before next patient" additionally requires provider schedule data Suki
+      does not hold natively.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">Boyter 2025</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">Haberle 2024</span>
+    <span class="source-pill">Pearlman 2025 (benchmark unverified)</span>
+    <span class="source-pill">Shuaib 2021</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-06 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

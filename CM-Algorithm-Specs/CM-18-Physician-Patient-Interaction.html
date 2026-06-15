@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-18 · Physician-Patient Interaction Quality — Algorithm Card</title>
+  <style>
+    :root {
+      --ink:        #202124;
+      --muted:      #646a73;
+      --line:       #d9dee6;
+      --paper:      #fbfaf7;
+      --panel:      #ffffff;
+      --soft:       #f1f4f8;
+      --teal:       #00796b;
+      --teal-light: #e0f2f1;
+      --blue:       #315d8c;
+      --blue-light: #eaf1f8;
+      --amber:      #b26a00;
+      --amber-light:#fff3df;
+      --red:        #b3261e;
+      --red-light:  #fdecea;
+      --violet:     #6d4c8d;
+      --violet-light:#f3eef9;
+      --radius:     6px;
+      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-oi  { background: var(--teal-light); color: var(--teal); }
+    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pills { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; }
+    .direction-pill.lower-pill { color: var(--violet); border-color: #d6c5e6; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-reprs { padding: 12px 18px; border-bottom: 1px solid #b2d8d2; }
+    .unit-reprs-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 8px; }
+    .unit-repr-row { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 13px; color: #1a3330; }
+    .unit-repr-num { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 1px solid #a5d6cd; font-size: 10px; font-weight: 800; color: var(--teal); flex-shrink: 0; }
+    .direction-mini { font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 999px; flex-shrink: 0; }
+    .direction-mini.dir-higher { background: var(--teal-light); color: var(--teal); }
+    .direction-mini.dir-lower  { background: var(--violet-light); color: var(--violet); }
+    .direction-mini.dir-context { background: #f0f4f9; color: #49525d; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1f00; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .suki-native-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--teal-light); color: var(--teal); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1410; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0f0c; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .data-table tr.group-row td { background: #f0f4f9; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #49525d; padding: 6px 12px; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
+    .scope-box .section-label { color: #49525d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-18 &mdash; Physician-Patient Interaction Quality</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-oi">OI &mdash; Organizational Impact</span></span>
+      <span><span class="badge badge-warn">Tier 3 &mdash; 6/12 (H1 = ● for this measure)</span></span>
+      <span><strong>Also known as:</strong> Doctor-Patient Interaction Time &nbsp;&middot;&nbsp; Undivided Attention to Patients &nbsp;&middot;&nbsp; Consultation Duration &nbsp;&middot;&nbsp; Time Searching for Information</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Consultation duration (minutes) &mdash; primary representation</div>
+      </div>
+      <div class="direction-pills">
+        <div class="direction-pill">&#x2191; Higher = more face time</div>
+      </div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A <strong>behavioral</strong> measure of the clinical encounter itself &mdash; face-to-face
+        time, clinician attentiveness, screen time, and perceived engagement during the visit.
+        Distinct from CM-17 (the patient's own report of relationship quality) and from CM-22
+        (patient volume/throughput &mdash; "time does not measure quality," so "patients seen per
+        hour" was explicitly reassigned out of this measure).
+      </p>
+    </div>
+
+    <div class="unit-reprs">
+      <div class="unit-reprs-label">Multiple Operationalizations (this card covers 3)</div>
+      <div class="unit-repr-row">
+        <span class="unit-repr-num">1</span>
+        <span class="direction-mini dir-higher">&#x2191; Higher</span>
+        Consultation duration (minutes) &mdash; direct timing, Suki-native via transcript timestamps
+      </div>
+      <div class="unit-repr-row">
+        <span class="unit-repr-num">2</span>
+        <span class="direction-mini dir-higher">&#x2191; Higher</span>
+        Post-encounter engagement Likert item (1&ndash;5) &mdash; "I had undivided attention to give to my patient"
+      </div>
+      <div class="unit-repr-row">
+        <span class="unit-repr-num">3</span>
+        <span class="direction-mini dir-context">Context-dependent</span>
+        Talk-time / turn-taking ratio (clinician : patient speech time) &mdash; exploratory, unvalidated
+      </div>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Direct observation/timing of doctor-patient interaction time (Shuaib 2021, human-scribe
+        comparator: interaction time <strong>doubled</strong>, throughput +39%) and validated
+        engagement survey items (Duggan 2025, Stults 2025: "I have undivided attention to give to
+        my patients").
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>Consultation duration from Suki transcript timestamps</strong> &mdash; the single
+        strongest Suki-native data point for CM-18, directly matching one of the measure's four
+        defined methods with no additional instrumentation, comparable in directness to CM-06's
+        session-completion timestamps.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>No single validated instrument.</strong> Unlike CM-01/02/03/17, CM-18 has no PFI/PDRQ-9-style scale &mdash; the literature uses custom Likert items, primarily from Duggan 2025 and Stults 2025.</li>
+        <li><strong>Shuaib 2021's magnitude is a ceiling, not an expectation.</strong> It is a human-scribe comparator (doubled interaction time, +39% throughput) and likely represents an upper bound on what ambient AI alone would achieve.</li>
+        <li><strong>"Time searching for information" is entirely out of scope for Suki.</strong> This defined method requires in-encounter EHR active time (clicks/keystrokes during the visit window) &mdash; Suki has no visibility into EHR screen activity at all.</li>
+        <li><strong>Talk-time/turn-taking is exploratory only.</strong> The transcript contains the raw data, but no validated methodology has been applied to Suki transcripts for this purpose &mdash; report only as a secondary/corroborating signal, not equivalent to observed attentiveness.</li>
+        <li><strong>H10/H11 exposure metadata missing.</strong> Same gap as CM-02 &mdash; sessions need a flag for whether a pre-visit summary (H10) or in-visit chart Q&amp;A (H11) was used, to isolate whether either feature changed in-encounter behavior.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM 1 ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Dashboard Metric &mdash; Consultation Duration (Cohort Average)</span>
+      <span class="suki-native-badge">Suki-Native</span>
+      <span class="algo-subtitle">Lead metric &mdash; no new instrumentation</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Computes encounter length directly from transcript start/end timestamps and reports the
+        cohort-average consultation duration, pre/post Suki adoption and by utilization tier.
+        This is the lead quantitative signal for CM-18 &mdash; it requires no new instrumentation
+        and directly matches one of the four defined CM-18 measurement methods ("Consultation
+        duration / direct timing").
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Consultation duration (minutes)</div>
+            <div class="unit-ref-def">Per-session encounter length = (timestamp of final transcript segment) &minus; (timestamp of first transcript segment). Reported as a cohort mean, pre/post adoption and by utilization tier.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light)</div>
+            <div class="unit-ref-def">Standard cohort definition (as CM-01/02/03/06) for dose-response comparison against self-report engagement items in Algorithm 2.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">H10/H11 exposure flag</div>
+            <div class="unit-ref-def">Whether the session used a pre-visit summary (H10) or in-visit chart Q&amp;A (H11) &mdash; enables a within-provider comparison of consultation duration with vs. without these features.</div>
+            <div class="unit-ref-ambig">&#x26A0; Not currently exposed at the session level &mdash; same gap noted in CM-02's report.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Mean Consultation Duration</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (last_segment_ts &minus; first_segment_ts) across sessions</span><span class="formula-den">COUNT(sessions where status = completed)</span></span>
+<div class="formula-note">Per session: duration_minutes = MINUTES(transcript[-1].end_ts - transcript[0].start_ts)
+Report: cohort mean, pre/post adoption, by utilization tier, and split by H10/H11 exposure flag (where available)
+Cross-check: compare against EHR-side encounter duration (scheduled or actual) where available</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each session s where s.status == "completed":
+  duration[s] = MINUTES(s.transcript[-1].end_ts - s.transcript[0].start_ts)
+  tier[s]      = utilization_tier(s.provider)
+  exposure[s]  = { "h10": s.used_previsit_summary, "h11": s.used_chart_qa }  # if available
+
+dashboard_value = {
+  "overall_mean"     : MEAN(duration[s] for s in completed_sessions),
+  "by_tier"          : { t: MEAN(duration[s] for s in completed_sessions if tier[s] == t)
+                          for t in {"heavy","moderate","light"} },
+  "by_h10_h11"       : { flag: MEAN(duration[s] for s in completed_sessions if exposure[s][flag])
+                          for flag in {"h10","h11"} }  # if exposure data available
+}
+# Report pre/post adoption and by cohort; use Shuaib 2021 (doubled) as a ceiling reference, not a target</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── ALGORITHM 2 ── -->
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">2</span>
+      <span class="algo-title">Survey Instrument Scoring &mdash; Post-Encounter Engagement Likert Item</span>
+      <span class="algo-subtitle">Bundled with CM-02 NASA-TLX/PTL administration</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Adds a single post-encounter or end-of-shift Likert item (e.g., "Today, documentation did
+        not prevent me from being fully present with my patients," modeled on Duggan
+        2025/Stults 2025) bundled with whatever CM-02 NASA-TLX/PTL administration is already
+        planned &mdash; the timing requirements are similar (close to the encounter), so a single
+        administration mechanism can carry both measures.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Engagement Likert item score (1&ndash;5, higher = better)</div>
+            <div class="unit-ref-def">Single item, custom (no validated CM-18 instrument exists) &mdash; e.g., "I had undivided attention to give to my patients today" or "Documentation did not prevent me from being fully present." Reported as a cohort mean per administration wave.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light)</div>
+            <div class="unit-ref-def">Same cohort definition as Algorithm 1 and as CM-01/02/03/06 &mdash; reused, not recomputed.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Engagement Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (item response, 1&ndash;5) across respondents</span><span class="formula-den">N respondents</span></span>
+<div class="formula-note">Administration: bundled with CM-02's NASA-TLX/PTL wave (Phase 0 baseline + end-of-shift/Phase 3 follow-up)
+Cohort: heavy / moderate / light Suki utilization tier (identical to CM-01/02/03/06)
+Reporting: cohort-mean engagement score per wave, alongside Algorithm 1's consultation-duration delta for the same cohort
+LLM-as-judge: does not apply — no note/transcript artifact is being rated for quality in the CM-08/CM-09 sense</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ALGORITHM 3 ── -->
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">3</span>
+      <span class="algo-title">Exploratory &mdash; Talk-Time / Turn-Taking Distribution</span>
+      <span class="algo-subtitle">Secondary / corroborating signal only</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Uses transcript speaker/segment structure to compute the ratio of clinician-speech time
+        to patient-speech time, and simple turn-taking patterns, as a rough structural proxy for
+        "attentiveness." Reported only as exploratory corroboration alongside Algorithms 1 and 2
+        &mdash; not as a primary or standalone outcome.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Clinician : patient speech-time ratio</div>
+            <div class="unit-ref-def">Per session, the proportion of total transcribed speech time attributed to the clinician vs. the patient, derived from transcript speaker/segment structure.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap:</strong> no validated methodology has been applied to Suki transcripts for this purpose. This requires methodological work, not just data access, before it is reportable &mdash; treat as hypothesis-generating only.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Talk-Time Ratio</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (segment duration where speaker = clinician)</span><span class="formula-den">&#x2211; (segment duration, all speakers)</span></span>
+<div class="formula-note">Direction is context-dependent: neither a higher nor a lower clinician-speech share is unambiguously "better" —
+report alongside Algorithm 1 (consultation duration) and Algorithm 2 (engagement Likert) as a descriptive,
+hypothesis-generating signal only. Do not present as equivalent to observed attentiveness.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Consultation Duration and Engagement, Pre- vs. Post-Adoption</div>
+    <p class="chart-caption">
+      Left: cohort-mean consultation duration is expected to increase modestly post-adoption,
+      well short of Shuaib 2021's doubling (a human-scribe ceiling, not an ambient-AI
+      expectation). Right: the post-encounter engagement Likert score is expected to increase in
+      parallel for the heavy-utilization cohort.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 250" width="100%" aria-label="Two schematic panels: consultation duration increasing modestly pre to post adoption (left), and engagement Likert score increasing for the heavy-utilization cohort (right)">
+        <!-- Left panel: Consultation duration -->
+        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
+        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Consultation Duration (minutes, cohort mean)</text>
+        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="300" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
+        <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Pre-Adoption</text>
+        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Post-Adoption</text>
+        <circle cx="120" cy="160" r="3.5" fill="#b26a00"/>
+        <circle cx="250" cy="125" r="3.5" fill="#00796b"/>
+        <polyline points="120,160 250,125" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="120" y1="40" x2="250" y2="40" stroke="#cfd6de" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="250" y="36" text-anchor="end" font-size="9" fill="#8a929d">Shuaib 2021 ceiling (doubled)</text>
+
+        <!-- Right panel: Engagement Likert -->
+        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
+        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Engagement Likert (1&ndash;5, heavy-utilization cohort)</text>
+        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4e9ef" stroke-width="1"/>
+        <line x1="390" y1="198" x2="620" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">5</text>
+        <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">3</text>
+        <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">1</text>
+        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 0</text>
+        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 3</text>
+        <circle cx="440" cy="155" r="3.5" fill="#b26a00"/>
+        <circle cx="570" cy="100" r="3.5" fill="#00796b"/>
+        <polyline points="440,155 570,100" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+
+        <!-- Shared legend -->
+        <circle cx="44"  cy="242" r="4" fill="#b26a00"/>
+        <text   x="52"  y="246" font-size="10" fill="#4a3200">Pre / Phase 0</text>
+        <circle cx="160" cy="242" r="4" fill="#00796b"/>
+        <text   x="168" y="246" font-size="10" fill="#01574f">Post / Phase 3</text>
+        <line x1="320" y1="242" x2="350" y2="242" stroke="#cfd6de" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="356" y="246" font-size="10" fill="#8a929d">Human-scribe ceiling (Shuaib 2021)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="group-row"><td colspan="4">Algorithm 1 &mdash; Consultation Duration</td></tr>
+      <tr>
+        <td>Transcript start/end timestamps</td>
+        <td>Per-session encounter length, computed directly &mdash; the strongest Suki-native CM-18 signal.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr>
+        <td>Session status distribution</td>
+        <td>Adoption-quality covariate, as in CM-02.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/status</code></td>
+      </tr>
+      <tr>
+        <td>H10/H11 exposure flag at session level</td>
+        <td>Enables within-provider comparison of duration with vs. without pre-visit summaries / chart Q&amp;A.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Missing &mdash; same gap as CM-02.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Algorithm 2 &mdash; Post-Encounter Engagement Likert</td></tr>
+      <tr>
+        <td>Engagement Likert responses</td>
+        <td>Single custom item, bundled with CM-02's NASA-TLX/PTL administration.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>No Suki-native distribution mechanism &mdash; external administration.</td>
+      </tr>
+      <tr>
+        <td>Suki utilization tier / session counts</td>
+        <td>Reuses the CM-01/02/03/06 tier definition.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Shared cohort definition, not recomputed.</td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Algorithm 3 &mdash; Talk-Time / Turn-Taking (Exploratory)</td></tr>
+      <tr>
+        <td>Transcript speaker/segment structure</td>
+        <td>Raw data for talk-time ratio &mdash; no validated methodology applied yet.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr class="group-row"><td colspan="4">Out of Scope for Suki</td></tr>
+      <tr>
+        <td>In-encounter EHR active time (clicks/keystrokes during the visit window)</td>
+        <td>Directly operationalizes "Time searching for information" &mdash; the one CM-18 method Suki cannot touch at all.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Signal "Time in Notes" filtered to the encounter window; same audit-log ask as CM-02 &mdash; request once, use for both.</td>
+      </tr>
+      <tr>
+        <td>Order-entry / chart-navigation events during the encounter</td>
+        <td>Isolates whether H8/H10/H11 reduce in-visit screen time specifically.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Same data as CM-02's EHR-side request.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Consultation duration is Suki-native and directly matches a defined CM-18
+      method</strong> &mdash; no new instrumentation required, and the strongest Suki signal for
+      this measure (comparable in directness to CM-06's session-completion timestamps). Talk-time
+      ratio is computable from the same transcript data but is exploratory/unvalidated.
+    </p>
+    <p>
+      The engagement Likert item has no Suki-native equivalent and must be bundled with CM-02's
+      administration. "Time searching for information" &mdash; one of CM-18's four defined
+      methods &mdash; is entirely out of scope for Suki and requires the same EHR audit-log
+      request already made for CM-02; this is a smaller EHR-data ask overall than CM-02 or CM-06,
+      since it can be requested once and used for both measures.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (7)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Shuaib 2021</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Stults 2025</span>
+    <span class="source-pill">Tierney 2025</span>
+    <span class="source-pill">Balloch 2024</span>
+    <span class="source-pill">Karavassilis 2025</span>
+    <span class="source-pill">Prasad 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-18 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>
