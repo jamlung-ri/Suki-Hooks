@@ -398,6 +398,54 @@
       overflow-x: auto;
     }
 
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      background: #f7f9fb;
+      border-bottom: 1px solid var(--line);
+    }
+    .algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 10px 20px 9px;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      margin-bottom: -1px;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .algo-tab:hover { background: #eef2f6; }
+    .algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      border-bottom-color: var(--blue);
+    }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.7; }
+    .algo-panel[hidden] { display: none; }
+
     /* ── TREND CHART ── */
     .chart-wrap {
       background: var(--panel);
@@ -505,6 +553,16 @@
       margin: 28px 0;
     }
 
+    /* ── Inline code ── */
+    code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.91em;
+      color: inherit;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+
     /* ── Footer ── */
     .report-footer {
       margin-top: 48px;
@@ -602,13 +660,24 @@
   <!-- ── ALGORITHM ── -->
   <p class="section-label">Algorithm</p>
 
-  <div class="algo-block">
-    <div class="algo-header">
-      <span class="algo-number">1</span>
-      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
-      <span class="algo-subtitle">For the Suki admin console</span>
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
+      <!-- Future tabs: add a <button> here and a matching <div id="algo-panel-*"> below -->
     </div>
-    <div class="algo-body">
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic" role="tabpanel">
       <p class="algo-purpose">
         Produces the average documentation minutes per encounter per provider in the cohort for a
         given month. This number is expected to decrease after Suki adoption as note creation
@@ -655,9 +724,138 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
 
   dashboard_value[M] = MEAN( doc_min_per_enc[p] for p in active_providers )</div>
       </details>
-
     </div>
-  </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        When Epic Signal/UAL telemetry is unavailable, per-note authoring time can be approximated
+        from Clarity&rsquo;s note edit-event log. This is a <strong>within-provider proxy</strong>
+        &mdash; directionally valid for pre/post Suki comparisons, but not a substitute for
+        Signal minutes. Two tiers are available, in priority order.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity Tables &mdash; Join path verified in EHI knowledge graph</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">NOTES_HISTORY_LOG</div>
+            <div class="unit-ref-def">Per-edit event stream: timestamps (<code>EDIT_HX_INSTANT</code>) for note creation, edits, and signature events. Drives the sessionization in Tier 1.</div>
+            <div class="unit-ref-ambig">&#x26A0; If this table only records create and sign events (not intermediate edits), Tier 1 degenerates to Tier 2 &mdash; verify event density against real data before choosing the tier.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def">Note master: <code>ENTRY_USER_ID</code> (note author), <code>PAT_ENC_CSN_ID</code> (encounter link), <code>CREATE_INSTANT_DTTM</code> and <code>LST_FILED_INST_DTTM</code> (create and sign timestamps), <code>UNSIGNED_YN</code> (signature status).</div>
+            <div class="unit-ref-ambig">&#x26A0; Attribute documentation time to <code>ENTRY_USER_ID</code> (note author), <em>not</em> <code>VISIT_PROV_ID</code> from PAT_ENC &mdash; they differ for scribe-entered notes and resident/attending co-sign workflows.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Filter</span>
+          <div>
+            <div class="unit-ref-name">PAT_ENC</div>
+            <div class="unit-ref-def">Encounter-level filters: <code>ENC_TYPE_C</code> (exclude telephone/proxy types), <code>EFFECTIVE_DATE_DTTM</code>, and the join to per-provider Suki adoption data.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="algo-purpose" style="margin-top:14px">
+        <strong>Tier 1 (Preferred) &mdash; Sessionized Active Authoring Time</strong><br>
+        Collapse a note&rsquo;s edit events into work sessions (gap threshold: 10 min default, tunable).
+        Sum only within-session durations; discard idle gaps.
+        Output: average <em>active</em> authoring minutes per note per provider.
+      </p>
+
+      <details>
+        <summary>Pseudocode &mdash; Tier 1 (sessionized)</summary>
+        <div class="pseudo">-- 1. per-note edit events attributed to the note author
+WITH ev AS (
+  SELECT h.NOTE_ID, h.ENTRY_USER_ID AS author_id, h.PAT_ENC_CSN_ID,
+         l.EDIT_HX_INSTANT AS ts
+  FROM HNO_INFO h
+  JOIN NOTES_HISTORY_LOG l ON l.NOTE_ID = h.NOTE_ID
+  WHERE h.UNSIGNED_YN = 'N'                          -- signed notes only
+),
+-- 2. gap to previous edit; gap &gt; 10 min = new session
+gaps AS (
+  SELECT *, DATEDIFF(minute,
+              LAG(ts) OVER (PARTITION BY NOTE_ID ORDER BY ts), ts) AS gap_min
+  FROM ev
+),
+seg AS (
+  SELECT NOTE_ID, author_id, PAT_ENC_CSN_ID,
+         SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 10 THEN 0
+                  ELSE gap_min END) AS active_min  -- ⚠ 10-min threshold is tunable
+  FROM gaps GROUP BY NOTE_ID, author_id, PAT_ENC_CSN_ID
+)
+SELECT s.author_id,
+       phase(e.EFFECTIVE_DATE_DTTM, k.suki_golive) AS phase,   -- ⚠ confirm Suki go-live
+       AVG(s.active_min) AS avg_active_doc_min_per_note
+FROM seg s
+JOIN PAT_ENC e   ON e.PAT_ENC_CSN_ID = s.PAT_ENC_CSN_ID
+JOIN suki_adoption k ON k.epic_prov_id = s.author_id
+WHERE e.ENC_CLOSED_YN = 'Y' AND e.ENC_TYPE_C NOT IN (1, 31)
+GROUP BY s.author_id, phase;</div>
+      </details>
+
+      <p class="algo-purpose" style="margin-top:14px">
+        <strong>Tier 2 (Fallback) &mdash; Create&rarr;Sign Elapsed Span</strong><br>
+        Single subtraction per note: wall-clock time from <code>CREATE_INSTANT_DTTM</code>
+        to <code>LST_FILED_INST_DTTM</code>. Simpler but includes idle periods &mdash; overstates active work.
+      </p>
+
+      <details>
+        <summary>Pseudocode &mdash; Tier 2 (elapsed span)</summary>
+        <div class="pseudo">SELECT h.ENTRY_USER_ID AS author_id,
+       AVG(DATEDIFF(minute,
+                   h.CREATE_INSTANT_DTTM,
+                   h.LST_FILED_INST_DTTM)) AS avg_span_min
+FROM HNO_INFO h
+WHERE h.UNSIGNED_YN = 'N'
+GROUP BY h.ENTRY_USER_ID;
+-- Wall-clock; includes idle time → overstates active authoring</div>
+      </details>
+
+      <div class="unit-ambig" style="margin-top:16px">
+        <div class="unit-ambig-label">&#x26A0; Proxy Caveats &amp; Guardrails</div>
+        <ul>
+          <li>
+            <strong>Event-gated, not keystroke-gated.</strong> This measures wall-clock <em>between</em>
+            logged edit events, not keystroke-active time. Tier 1 is less sensitive to long idle gaps than
+            Tier 2, but is still a proxy. Report it as &ldquo;note-authoring time,&rdquo; not &ldquo;documentation time.&rdquo;
+          </li>
+          <li>
+            <strong>Floor estimate, not full Signal.</strong> Signal/UAL captures note authoring, chart review,
+            inbox, and order entry. This proxy captures only note-authoring events &mdash; a subset.
+            Do not compare proxy minutes directly to Signal minutes without a correction factor.
+          </li>
+          <li>
+            <strong>Calibrate against Signal where possible.</strong> If any provider-period overlap between
+            Signal and Clarity data exists, compute a correction factor rather than presenting proxy minutes
+            as equivalent.
+          </li>
+          <li>
+            <strong>Multi-author notes.</strong> Attribution uses <code>ENTRY_USER_ID</code>. Resident or
+            scribe edits on an attending&rsquo;s note should not be charged to the attending.
+          </li>
+          <li>
+            <strong>Open questions before deployment:</strong>
+            (1) What is the actual event density in <code>NOTES_HISTORY_LOG</code> &mdash; does it log intermediate
+            edits or only create/sign endpoints?
+            (2) Is any Signal extract available for calibration on a provider subset?
+            (3) What session threshold (5, 10, or 15 min) best fits local workflows?
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /.algo-switcher -->
 
   <!-- ── EXPECTED TREND ── -->
   <div class="chart-wrap">
@@ -765,6 +963,24 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
         <td><span class="source-tag tag-suki">Suki</span></td>
         <td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
       </tr>
+      <tr style="background:#f7fbf7">
+        <td><code>NOTES_HISTORY_LOG</code></td>
+        <td>Per-edit event stream for every clinical note. Each row is a timestamped edit action on a note. Used by the Clarity proxy algorithm (Algorithm 2, Tier 1) to sessionize authoring time.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Clarity table. Verify event density before choosing Tier 1 vs. Tier 2 &mdash; if only create/sign events are logged, Tier 1 degenerates to Tier 2.</td>
+      </tr>
+      <tr style="background:#f7fbf7">
+        <td><code>HNO_INFO</code></td>
+        <td>Note master record. Contains the note author (<code>ENTRY_USER_ID</code>), encounter link (<code>PAT_ENC_CSN_ID</code>), create timestamp (<code>CREATE_INSTANT_DTTM</code>), and sign timestamp (<code>LST_FILED_INST_DTTM</code>).</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Clarity table. Join anchor for the proxy algorithm. Attribute to <code>ENTRY_USER_ID</code>, not the visit provider.</td>
+      </tr>
+      <tr style="background:#f7fbf7">
+        <td><code>PAT_ENC</code></td>
+        <td>Encounter record. Provides encounter type (<code>ENC_TYPE_C</code>), effective date, and attending provider. Used for encounter-level filters in the proxy algorithm.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Clarity table. Exclude telephone (type 1) and MyChart proxy (type 31) encounter types from the proxy calculation.</td>
+      </tr>
     </tbody>
   </table>
 
@@ -799,9 +1015,30 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
   <!-- ── Footer ── -->
   <footer class="report-footer">
     <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
-    <span>CM-04 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+    <span>CM-04 Algorithm Card &nbsp;·&nbsp; Updated June 2026 &mdash; Epic EHI KG proxy added</span>
   </footer>
 
 </div>
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    // Activate the first tab on load
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>
