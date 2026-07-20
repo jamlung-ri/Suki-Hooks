@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -6,28 +6,32 @@
   <title>Suki AI -- CM Algorithm Cards</title>
   <style>
 
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
     :root {
-      --ink:        #202124;
-      --muted:      #646a73;
-      --line:       #d9dee6;
-      --paper:      #fbfaf7;
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
       --panel:      #ffffff;
-      --soft:       #f1f4f8;
-      --teal:       #00796b;
-      --teal-light: #e0f2f1;
-      --blue:       #315d8c;
-      --blue-light: #eaf1f8;
-      --amber:      #b26a00;
-      --amber-light:#fff3df;
-      --red:        #b3261e;
-      --red-light:  #fdecea;
-      --violet:     #6d4c8d;
-      --violet-light:#f3eef9;
-      --radius:     6px;
-      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
     a { color: var(--teal); }
     .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
     @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
@@ -40,71 +44,71 @@
     .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
     .badge-nb  { background: var(--teal-light); color: var(--teal); }
     .badge-eff { background: var(--blue-light); color: var(--blue); }
-    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
     .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
-    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
-    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
     .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
     .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
-    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
-    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
     .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
-    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
-    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
-    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2ced8; }
     .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
-    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
     .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
     .unit-ambig ul { margin: 0; padding-left: 18px; }
-    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
     .unit-ambig li:last-child { margin-bottom: 0; }
-    .unit-ambig li strong { color: #2e1f00; }
+    .unit-ambig li strong { color: #2e1700; }
     .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
     .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
     .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
     .algo-title { font-weight: 700; font-size: 13.5px; }
     .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
     .algo-body { padding: 16px 18px; }
-    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
-    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
     .formula-lhs { font-weight: 700; color: var(--blue); }
     .formula-eq { color: var(--muted); padding: 0 6px; }
     .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
     .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
     .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
     .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
-    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
-    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
-    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
     .unit-ref-item:last-child { border-bottom: 0; }
     .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
     .tag-primary   { background: var(--teal-light); color: var(--teal); }
     .tag-secondary { background: var(--blue-light); color: var(--blue); }
     .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
-    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
-    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
     details { margin-top: 8px; }
     details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
     details summary::-webkit-details-marker { display: none; }
     details summary::before { content: "â–¶ "; font-size: 9px; vertical-align: middle; }
     details[open] summary::before { content: "â–¼ "; }
     details[open] summary { margin-bottom: 8px; }
-    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
     .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
     .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
     .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
     .chart-svg-wrap { overflow-x: auto; }
     .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
     .data-table thead tr { background: #eef3f7; }
-    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
     .data-table tr:last-child td { border-bottom: 0; }
     .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
     .tag-ehr    { background: var(--blue-light); color: var(--blue); }
     .tag-suki   { background: var(--teal-light); color: var(--teal); }
     .tag-survey { background: var(--violet-light); color: var(--violet); }
-    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
-    .scope-box .section-label { color: #49525d; }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
     .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
     .scope-box strong { color: var(--ink); }
     .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -118,7 +122,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: #1e2d3d;
+      background: #1e2f3d;
       display: flex;
       flex-wrap: wrap;
       align-items: stretch;
@@ -150,12 +154,12 @@
       min-width: 80px;
     }
     .nav-item:hover { border-bottom-color: rgba(0,121,107,0.6); }
-    .nav-item.active { border-bottom-color: #00796b; }
+    .nav-item.active { border-bottom-color: #005a79; }
     .nav-code {
-      font-family: "Courier New", Courier, monospace;
+      font-family: 'JetBrains Mono','Courier New',monospace;
       font-size: 11.5px;
       font-weight: 700;
-      color: #7fb8d0;
+      color: #7fabd0;
       letter-spacing: 0.04em;
     }
     .nav-name {
@@ -165,7 +169,7 @@
       margin-top: 1px;
     }
     .cm-section {
-      border-bottom: 3px solid #d9dee6;
+      border-bottom: 3px solid #dae2e3;
       scroll-margin-top: 56px;
     }
     .cm-section:last-child { border-bottom: 0; }
@@ -204,6 +208,7 @@
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-01 &mdash; Clinician Burnout and Exhaustion</h1>
     <div class="masthead-meta">
@@ -346,32 +351,32 @@ dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
     </p>
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: PFI Work Exhaustion score declining from Phase 0 to Phase 3, more steeply for heavy Suki users than light users">
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
-        <text x="150" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Phase 0 (baseline)</text>
-        <text x="500" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Phase 3 (months 4&ndash;9)</text>
+        <text x="150" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Phase 0 (baseline)</text>
+        <text x="500" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Phase 3 (months 4&ndash;9)</text>
         <!-- Heavy-utilization cohort -->
-        <circle cx="150" cy="78" r="4" fill="#b26a00"/>
-        <circle cx="500" cy="140" r="4" fill="#00796b"/>
-        <polyline points="150,78 500,140" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="150" cy="78" r="4" fill="#b25700"/>
+        <circle cx="500" cy="140" r="4" fill="#005a79"/>
+        <polyline points="150,78 500,140" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Light-utilization cohort -->
-        <circle cx="150" cy="86" r="4" fill="#b26a00"/>
-        <circle cx="500" cy="100" r="4" fill="#6d4c8d"/>
-        <polyline points="150,86 500,100" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="150" cy="86" r="4" fill="#b25700"/>
+        <circle cx="500" cy="100" r="4" fill="#554c8d"/>
+        <polyline points="150,86 500,100" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
         <!-- Legend -->
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Phase 0 baseline (all providers)</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Phase 3 &mdash; heavy-utilization cohort</text>
-        <circle cx="340"  cy="186" r="4" fill="#6d4c8d"/>
-        <text   x="348"  y="190" font-size="11" fill="#4a3a5c">Phase 3 &mdash; light-utilization cohort</text>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Phase 0 baseline (all providers)</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Phase 3 &mdash; heavy-utilization cohort</text>
+        <circle cx="340"  cy="186" r="4" fill="#554c8d"/>
+        <text   x="348"  y="190" font-size="11" fill="#3f3a5c">Phase 3 &mdash; light-utilization cohort</text>
       </svg>
     </div>
   </div>
@@ -484,6 +489,7 @@ dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-02 &mdash; Cognitive and Task Load</h1>
     <div class="masthead-meta">
@@ -635,12 +641,12 @@ Secondary (corroboration, per encounter):
     </p>
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: NASA-TLX/PTL score lower for heavy Suki users than light users, declining over successive waves for the heavy cohort">
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
@@ -648,20 +654,20 @@ Secondary (corroboration, per encounter):
         <text x="340" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 2</text>
         <text x="520" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 3</text>
         <!-- Light-utilization cohort: flat, higher -->
-        <circle cx="160" cy="76" r="4" fill="#6d4c8d"/>
-        <circle cx="340" cy="80" r="4" fill="#6d4c8d"/>
-        <circle cx="520" cy="78" r="4" fill="#6d4c8d"/>
-        <polyline points="160,76 340,80 520,78" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="160" cy="76" r="4" fill="#554c8d"/>
+        <circle cx="340" cy="80" r="4" fill="#554c8d"/>
+        <circle cx="520" cy="78" r="4" fill="#554c8d"/>
+        <polyline points="160,76 340,80 520,78" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
         <!-- Heavy-utilization cohort: declining -->
-        <circle cx="160" cy="100" r="4" fill="#00796b"/>
-        <circle cx="340" cy="130" r="4" fill="#00796b"/>
-        <circle cx="520" cy="162" r="4" fill="#00796b"/>
-        <polyline points="160,100 340,130 520,162" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="160" cy="100" r="4" fill="#005a79"/>
+        <circle cx="340" cy="130" r="4" fill="#005a79"/>
+        <circle cx="520" cy="162" r="4" fill="#005a79"/>
+        <polyline points="160,100 340,130 520,162" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Legend -->
-        <circle cx="84"  cy="170" r="4" fill="#6d4c8d"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3a5c">Light-utilization cohort</text>
-        <circle cx="280"  cy="170" r="4" fill="#00796b"/>
-        <text   x="288"  y="174" font-size="11" fill="#01574f">Heavy-utilization cohort</text>
+        <circle cx="84"  cy="170" r="4" fill="#554c8d"/>
+        <text   x="92"  y="174" font-size="11" fill="#3f3a5c">Light-utilization cohort</text>
+        <circle cx="280"  cy="170" r="4" fill="#005a79"/>
+        <text   x="288"  y="174" font-size="11" fill="#014157">Heavy-utilization cohort</text>
       </svg>
     </div>
   </div>
@@ -772,6 +778,7 @@ Secondary (corroboration, per encounter):
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-03 &mdash; Professional Fulfillment and Meaningfulness</h1>
     <div class="masthead-meta">
@@ -921,49 +928,49 @@ dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 250" width="100%" aria-label="Two schematic panels: CM-01 Work Exhaustion score declining (left), CM-03 Professional Fulfillment score flat (right), for the heavy-utilization cohort">
         <!-- Left panel: CM-01 Work Exhaustion (declining = good) -->
-        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
-        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">CM-01 Work Exhaustion (1&ndash;5, lower = better)</text>
-        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="300" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
+        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a454e">CM-01 Work Exhaustion (1&ndash;5, lower = better)</text>
+        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="300" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
-        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 0</text>
-        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 3</text>
-        <circle cx="120" cy="70"  r="3.5" fill="#b26a00"/>
-        <circle cx="250" cy="140" r="3.5" fill="#00796b"/>
-        <polyline points="120,70 250,140" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 0</text>
+        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 3</text>
+        <circle cx="120" cy="70"  r="3.5" fill="#b25700"/>
+        <circle cx="250" cy="140" r="3.5" fill="#005a79"/>
+        <polyline points="120,70 250,140" fill="none" stroke="#005a79" stroke-width="2" stroke-linejoin="round"/>
 
         <!-- Right panel: CM-03 Professional Fulfillment (flat = expected) -->
-        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
-        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">CM-03 Professional Fulfillment (1&ndash;5, higher = better)</text>
-        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="198" x2="620" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
+        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a454e">CM-03 Professional Fulfillment (1&ndash;5, higher = better)</text>
+        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="198" x2="620" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
-        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 0</text>
-        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 3</text>
-        <circle cx="440" cy="110" r="3.5" fill="#b26a00"/>
-        <circle cx="570" cy="106" r="3.5" fill="#6d4c8d"/>
-        <polyline points="440,110 570,106" fill="none" stroke="#6d4c8d" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"/>
-        <text x="570" y="92" text-anchor="middle" font-size="9" fill="#4a3a5c">Flat = expected (dissociation)</text>
+        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 0</text>
+        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 3</text>
+        <circle cx="440" cy="110" r="3.5" fill="#b25700"/>
+        <circle cx="570" cy="106" r="3.5" fill="#554c8d"/>
+        <polyline points="440,110 570,106" fill="none" stroke="#554c8d" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <text x="570" y="92" text-anchor="middle" font-size="9" fill="#3f3a5c">Flat = expected (dissociation)</text>
 
         <!-- Shared legend -->
-        <circle cx="44"  cy="242" r="4" fill="#b26a00"/>
-        <text   x="52"  y="246" font-size="10" fill="#4a3200">Phase 0 baseline</text>
-        <circle cx="170" cy="242" r="4" fill="#00796b"/>
-        <text   x="178" y="246" font-size="10" fill="#01574f">Phase 3 &mdash; improvement</text>
-        <circle cx="330" cy="242" r="4" fill="#6d4c8d"/>
-        <text   x="338" y="246" font-size="10" fill="#4a3a5c">Phase 3 &mdash; no change (expected)</text>
+        <circle cx="44"  cy="242" r="4" fill="#b25700"/>
+        <text   x="52"  y="246" font-size="10" fill="#4a2400">Phase 0 baseline</text>
+        <circle cx="170" cy="242" r="4" fill="#005a79"/>
+        <text   x="178" y="246" font-size="10" fill="#014157">Phase 3 &mdash; improvement</text>
+        <circle cx="330" cy="242" r="4" fill="#554c8d"/>
+        <text   x="338" y="246" font-size="10" fill="#3f3a5c">Phase 3 &mdash; no change (expected)</text>
       </svg>
     </div>
   </div>
@@ -1048,6 +1055,7 @@ dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
 
   <!-- â”€â”€ Masthead â”€â”€ -->
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-04 &mdash; Documentation Time</h1>
     <div class="masthead-meta">
@@ -1194,13 +1202,13 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: documentation minutes per encounter per month, declining after Suki adoption">
         <!-- Grid lines -->
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
         <!-- Y-axis -->
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <!-- Y labels -->
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
@@ -1209,33 +1217,33 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
         <!-- Adoption line -->
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
         <!-- Pre-adoption dots -->
-        <circle cx="120" cy="78"  r="4" fill="#b26a00"/>
-        <circle cx="190" cy="72"  r="4" fill="#b26a00"/>
-        <circle cx="260" cy="80"  r="4" fill="#b26a00"/>
-        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="120" cy="78"  r="4" fill="#b25700"/>
+        <circle cx="190" cy="72"  r="4" fill="#b25700"/>
+        <circle cx="260" cy="80"  r="4" fill="#b25700"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
         <!-- Post-adoption dots (declining) -->
-        <circle cx="335" cy="82"  r="4" fill="#00796b"/>
-        <circle cx="410" cy="110" r="4" fill="#00796b"/>
-        <circle cx="495" cy="138" r="4" fill="#00796b"/>
-        <circle cx="580" cy="155" r="4" fill="#00796b"/>
-        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="335" cy="82"  r="4" fill="#005a79"/>
+        <circle cx="410" cy="110" r="4" fill="#005a79"/>
+        <circle cx="495" cy="138" r="4" fill="#005a79"/>
+        <circle cx="580" cy="155" r="4" fill="#005a79"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Connect pre â†’ post -->
-        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
         <!-- Legend -->
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
-        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>
@@ -1333,6 +1341,7 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
 
   <!-- â”€â”€ Masthead â”€â”€ -->
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-05 &mdash; After-Hours Documentation</h1>
     <div class="masthead-meta">
@@ -1474,13 +1483,13 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: after-hours minutes per provider per month over time, declining after Suki adoption">
         <!-- Grid lines -->
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
         <!-- Y-axis -->
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <!-- Y labels -->
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
@@ -1489,33 +1498,33 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
         <!-- Adoption line -->
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
         <!-- Pre-adoption dots -->
-        <circle cx="120" cy="78"  r="4" fill="#b26a00"/>
-        <circle cx="190" cy="72"  r="4" fill="#b26a00"/>
-        <circle cx="260" cy="80"  r="4" fill="#b26a00"/>
-        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="120" cy="78"  r="4" fill="#b25700"/>
+        <circle cx="190" cy="72"  r="4" fill="#b25700"/>
+        <circle cx="260" cy="80"  r="4" fill="#b25700"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
         <!-- Post-adoption dots (declining) -->
-        <circle cx="335" cy="82"  r="4" fill="#00796b"/>
-        <circle cx="410" cy="110" r="4" fill="#00796b"/>
-        <circle cx="495" cy="138" r="4" fill="#00796b"/>
-        <circle cx="580" cy="155" r="4" fill="#00796b"/>
-        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="335" cy="82"  r="4" fill="#005a79"/>
+        <circle cx="410" cy="110" r="4" fill="#005a79"/>
+        <circle cx="495" cy="138" r="4" fill="#005a79"/>
+        <circle cx="580" cy="155" r="4" fill="#005a79"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Connect pre â†’ post -->
-        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
         <!-- Legend -->
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
-        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>
@@ -1624,6 +1633,7 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-06 &mdash; Chart Closure Timeliness</h1>
     <div class="masthead-meta">
@@ -1793,43 +1803,43 @@ dashboard_value = {
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 640 230" width="100%" aria-label="Stacked bar chart comparing closure-delay bucket distribution pre- and post-adoption, showing a shift toward same-day and next-day buckets post-adoption">
         <!-- Axis -->
-        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ccd6" stroke-width="1.5"/>
-        <line x1="60" y1="180" x2="600" y2="180" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
         <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">100%</text>
         <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">50%</text>
         <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">0%</text>
 
         <!-- Pre-adoption stacked bar: same-day 22%, next-day 23%, 2-3day 25%, 4-5day 15%, 6+day 15% -->
         <g>
-          <rect x="160" y="159" width="110" height="21" fill="#00796b"/>
-          <rect x="160" y="125" width="110" height="34" fill="#4fa89e"/>
-          <rect x="160" y="90"  width="110" height="35" fill="#9fcbc4"/>
-          <rect x="160" y="69"  width="110" height="21" fill="#f0c987"/>
-          <rect x="160" y="48"  width="110" height="21" fill="#e08e7d"/>
+          <rect x="160" y="159" width="110" height="21" fill="#005a79"/>
+          <rect x="160" y="125" width="110" height="34" fill="#4f91a8"/>
+          <rect x="160" y="90"  width="110" height="35" fill="#9fc0cb"/>
+          <rect x="160" y="69"  width="110" height="21" fill="#f0ba87"/>
+          <rect x="160" y="48"  width="110" height="21" fill="#e07d83"/>
         </g>
-        <text x="215" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Pre-Adoption</text>
+        <text x="215" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Pre-Adoption</text>
 
         <!-- Post-adoption: same-day 45%, next-day 30%, 2-3day 15%, 4-5day 6%, 6+day 4% -->
         <g>
-          <rect x="370" y="115" width="110" height="65" fill="#00796b"/>
-          <rect x="370" y="73"  width="110" height="42" fill="#4fa89e"/>
-          <rect x="370" y="52"  width="110" height="21" fill="#9fcbc4"/>
-          <rect x="370" y="44"  width="110" height="8"  fill="#f0c987"/>
-          <rect x="370" y="38"  width="110" height="6"  fill="#e08e7d"/>
+          <rect x="370" y="115" width="110" height="65" fill="#005a79"/>
+          <rect x="370" y="73"  width="110" height="42" fill="#4f91a8"/>
+          <rect x="370" y="52"  width="110" height="21" fill="#9fc0cb"/>
+          <rect x="370" y="44"  width="110" height="8"  fill="#f0ba87"/>
+          <rect x="370" y="38"  width="110" height="6"  fill="#e07d83"/>
         </g>
-        <text x="425" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Post-Adoption</text>
+        <text x="425" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Post-Adoption</text>
 
         <!-- Legend -->
-        <g font-size="10" fill="#3a434e">
-          <rect x="60"  y="206" width="11" height="11" fill="#00796b"/>
+        <g font-size="10" fill="#3a454e">
+          <rect x="60"  y="206" width="11" height="11" fill="#005a79"/>
           <text x="76"  y="215">Same-day</text>
-          <rect x="160" y="206" width="11" height="11" fill="#4fa89e"/>
+          <rect x="160" y="206" width="11" height="11" fill="#4f91a8"/>
           <text x="176" y="215">Next-day</text>
-          <rect x="255" y="206" width="11" height="11" fill="#9fcbc4"/>
+          <rect x="255" y="206" width="11" height="11" fill="#9fc0cb"/>
           <text x="271" y="215">2&ndash;3 days</text>
-          <rect x="355" y="206" width="11" height="11" fill="#f0c987"/>
+          <rect x="355" y="206" width="11" height="11" fill="#f0ba87"/>
           <text x="371" y="215">4&ndash;5 days</text>
-          <rect x="455" y="206" width="11" height="11" fill="#e08e7d"/>
+          <rect x="455" y="206" width="11" height="11" fill="#e07d83"/>
           <text x="471" y="215">6+ days</text>
         </g>
       </svg>
@@ -1948,6 +1958,7 @@ dashboard_value = {
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-07 &mdash; Total EHR Time</h1>
     <div class="masthead-meta">
@@ -2091,40 +2102,40 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
     </p>
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: total EHR minutes per encounter per month, declining after Suki adoption">
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
-        <circle cx="120" cy="75"  r="4" fill="#b26a00"/>
-        <circle cx="190" cy="68"  r="4" fill="#b26a00"/>
-        <circle cx="260" cy="77"  r="4" fill="#b26a00"/>
-        <polyline points="120,75 190,68 260,77" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
-        <circle cx="335" cy="79"  r="4" fill="#00796b"/>
-        <circle cx="410" cy="105" r="4" fill="#00796b"/>
-        <circle cx="495" cy="132" r="4" fill="#00796b"/>
-        <circle cx="580" cy="150" r="4" fill="#00796b"/>
-        <polyline points="335,79 410,105 495,132 580,150" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
-        <line x1="260" y1="77" x2="335" y2="79" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
-        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
+        <circle cx="120" cy="75"  r="4" fill="#b25700"/>
+        <circle cx="190" cy="68"  r="4" fill="#b25700"/>
+        <circle cx="260" cy="77"  r="4" fill="#b25700"/>
+        <polyline points="120,75 190,68 260,77" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="335" cy="79"  r="4" fill="#005a79"/>
+        <circle cx="410" cy="105" r="4" fill="#005a79"/>
+        <circle cx="495" cy="132" r="4" fill="#005a79"/>
+        <circle cx="580" cy="150" r="4" fill="#005a79"/>
+        <polyline points="335,79 410,105 495,132 580,150" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="77" x2="335" y2="79" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>
@@ -2229,6 +2240,7 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-09 &mdash; Note Inaccuracy Rate</h1>
     <div class="masthead-meta">
@@ -2403,41 +2415,41 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 640 230" width="100%" aria-label="Two-line chart: human-LLM agreement rising across pilot waves and crossing an r=0.7 threshold, while flagged inaccuracy rate declines">
         <!-- Axes -->
-        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ccd6" stroke-width="1.5"/>
-        <line x1="60" y1="180" x2="600" y2="180" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
         <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">Mid</text>
         <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
 
         <!-- r = 0.7 threshold line -->
-        <line x1="60" y1="62" x2="600" y2="62" stroke="#e8c87a" stroke-width="1.5" stroke-dasharray="4,3"/>
-        <text x="604" y="66" font-size="10" fill="#a3791a">r = 0.7</text>
+        <line x1="60" y1="62" x2="600" y2="62" stroke="#e8b07a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="604" y="66" font-size="10" fill="#a35d1a">r = 0.7</text>
 
         <!-- Agreement line (rising, teal) -->
-        <polyline points="100,150 240,108 380,72 520,48" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
-        <circle cx="100" cy="150" r="4" fill="#00796b"/>
-        <circle cx="240" cy="108" r="4" fill="#00796b"/>
-        <circle cx="380" cy="72"  r="4" fill="#00796b"/>
-        <circle cx="520" cy="48"  r="4" fill="#00796b"/>
+        <polyline points="100,150 240,108 380,72 520,48" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="100" cy="150" r="4" fill="#005a79"/>
+        <circle cx="240" cy="108" r="4" fill="#005a79"/>
+        <circle cx="380" cy="72"  r="4" fill="#005a79"/>
+        <circle cx="520" cy="48"  r="4" fill="#005a79"/>
 
         <!-- Flag/inaccuracy rate line (declining, violet, dashed) -->
-        <polyline points="100,60 240,82 380,108 520,138" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
-        <circle cx="100" cy="60"  r="4" fill="#6d4c8d"/>
-        <circle cx="240" cy="82"  r="4" fill="#6d4c8d"/>
-        <circle cx="380" cy="108" r="4" fill="#6d4c8d"/>
-        <circle cx="520" cy="138" r="4" fill="#6d4c8d"/>
+        <polyline points="100,60 240,82 380,108 520,138" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="100" cy="60"  r="4" fill="#554c8d"/>
+        <circle cx="240" cy="82"  r="4" fill="#554c8d"/>
+        <circle cx="380" cy="108" r="4" fill="#554c8d"/>
+        <circle cx="520" cy="138" r="4" fill="#554c8d"/>
 
         <!-- X-axis labels -->
-        <text x="100" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 1</text>
-        <text x="240" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 2</text>
-        <text x="380" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 3</text>
-        <text x="520" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Wave 4 (scaled)</text>
+        <text x="100" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 1</text>
+        <text x="240" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 2</text>
+        <text x="380" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 3</text>
+        <text x="520" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 4 (scaled)</text>
 
         <!-- Legend -->
-        <circle cx="64" cy="220" r="4" fill="#00796b"/>
-        <text   x="72" y="224" font-size="10" fill="#01574f">Human-LLM agreement (r)</text>
-        <circle cx="260" cy="220" r="4" fill="#6d4c8d"/>
-        <text   x="268" y="224" font-size="10" fill="#4a3a5c">Flagged inaccuracy rate</text>
+        <circle cx="64" cy="220" r="4" fill="#005a79"/>
+        <text   x="72" y="224" font-size="10" fill="#014157">Human-LLM agreement (r)</text>
+        <circle cx="260" cy="220" r="4" fill="#554c8d"/>
+        <text   x="268" y="224" font-size="10" fill="#3f3a5c">Flagged inaccuracy rate</text>
       </svg>
     </div>
   </div>
@@ -2565,6 +2577,7 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-17 &mdash; Patient Experience and Relationship Quality</h1>
     <div class="masthead-meta">
@@ -2721,31 +2734,31 @@ for cohort_name in {"multilingual", "english_only"}:
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 560 230" width="100%" aria-label="Bar chart comparing PDRQ-9 mean scores between English-only and multilingual patient cohorts, showing a larger uplift for the multilingual cohort">
         <!-- Axis -->
-        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ccd6" stroke-width="1.5"/>
-        <line x1="60" y1="180" x2="520" y2="180" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="520" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
         <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">5.0</text>
         <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">3.0</text>
         <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">1.0</text>
-        <line x1="60" y1="180" x2="520" y2="180" stroke="#d9dee6" stroke-width="1"/>
+        <line x1="60" y1="180" x2="520" y2="180" stroke="#dae2e3" stroke-width="1"/>
 
         <!-- English-only cohort: baseline vs Suki, small gap -->
-        <rect x="110" y="64" width="50" height="116" fill="#cfd6de"/>
-        <rect x="180" y="58" width="50" height="122" fill="#00796b"/>
-        <text x="170" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">English-Only</text>
+        <rect x="110" y="64" width="50" height="116" fill="#cfd7de"/>
+        <rect x="180" y="58" width="50" height="122" fill="#005a79"/>
+        <text x="170" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">English-Only</text>
 
         <!-- Multilingual cohort: baseline vs Suki, larger gap -->
-        <rect x="330" y="64" width="50" height="116" fill="#cfd6de"/>
-        <rect x="400" y="34" width="50" height="146" fill="#00796b"/>
-        <text x="390" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Multilingual</text>
+        <rect x="330" y="64" width="50" height="116" fill="#cfd7de"/>
+        <rect x="400" y="34" width="50" height="146" fill="#005a79"/>
+        <text x="390" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Multilingual</text>
 
         <!-- annotation -->
-        <text x="425" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#01574f">Hypothesized larger uplift</text>
+        <text x="425" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#014157">Hypothesized larger uplift</text>
 
         <!-- Legend -->
-        <rect x="64"  y="208" width="14" height="11" fill="#cfd6de"/>
-        <text x="82"  y="217" font-size="10" fill="#49525d">Baseline (no Suki / pre-deployment)</text>
-        <rect x="290" y="208" width="14" height="11" fill="#00796b"/>
-        <text x="308" y="217" font-size="10" fill="#01574f">With Suki (H1 + H4)</text>
+        <rect x="64"  y="208" width="14" height="11" fill="#cfd7de"/>
+        <text x="82"  y="217" font-size="10" fill="#49545d">Baseline (no Suki / pre-deployment)</text>
+        <rect x="290" y="208" width="14" height="11" fill="#005a79"/>
+        <text x="308" y="217" font-size="10" fill="#014157">With Suki (H1 + H4)</text>
       </svg>
     </div>
   </div>
@@ -2859,6 +2872,7 @@ for cohort_name in {"multilingual", "english_only"}:
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-18 &mdash; Physician-Patient Interaction Quality</h1>
     <div class="masthead-meta">
@@ -3111,49 +3125,49 @@ hypothesis-generating signal only. Do not present as equivalent to observed atte
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 250" width="100%" aria-label="Two schematic panels: consultation duration increasing modestly pre to post adoption (left), and engagement Likert score increasing for the heavy-utilization cohort (right)">
         <!-- Left panel: Consultation duration -->
-        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
-        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Consultation Duration (minutes, cohort mean)</text>
-        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="300" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
+        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a454e">Consultation Duration (minutes, cohort mean)</text>
+        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="300" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
-        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Pre-Adoption</text>
-        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Post-Adoption</text>
-        <circle cx="120" cy="160" r="3.5" fill="#b26a00"/>
-        <circle cx="250" cy="125" r="3.5" fill="#00796b"/>
-        <polyline points="120,160 250,125" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
-        <line x1="120" y1="40" x2="250" y2="40" stroke="#cfd6de" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Pre-Adoption</text>
+        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Post-Adoption</text>
+        <circle cx="120" cy="160" r="3.5" fill="#b25700"/>
+        <circle cx="250" cy="125" r="3.5" fill="#005a79"/>
+        <polyline points="120,160 250,125" fill="none" stroke="#005a79" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="120" y1="40" x2="250" y2="40" stroke="#cfd7de" stroke-width="1.5" stroke-dasharray="4,3"/>
         <text x="250" y="36" text-anchor="end" font-size="9" fill="#8a929d">Shuaib 2021 ceiling (doubled)</text>
 
         <!-- Right panel: Engagement Likert -->
-        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
-        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Engagement Likert (1&ndash;5, heavy-utilization cohort)</text>
-        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="198" x2="620" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
+        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a454e">Engagement Likert (1&ndash;5, heavy-utilization cohort)</text>
+        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="198" x2="620" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">5</text>
         <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">3</text>
         <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">1</text>
-        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 0</text>
-        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#315d8c">Phase 3</text>
-        <circle cx="440" cy="155" r="3.5" fill="#b26a00"/>
-        <circle cx="570" cy="100" r="3.5" fill="#00796b"/>
-        <polyline points="440,155 570,100" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
+        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 0</text>
+        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 3</text>
+        <circle cx="440" cy="155" r="3.5" fill="#b25700"/>
+        <circle cx="570" cy="100" r="3.5" fill="#005a79"/>
+        <polyline points="440,155 570,100" fill="none" stroke="#005a79" stroke-width="2" stroke-linejoin="round"/>
 
         <!-- Shared legend -->
-        <circle cx="44"  cy="242" r="4" fill="#b26a00"/>
-        <text   x="52"  y="246" font-size="10" fill="#4a3200">Pre / Phase 0</text>
-        <circle cx="160" cy="242" r="4" fill="#00796b"/>
-        <text   x="168" y="246" font-size="10" fill="#01574f">Post / Phase 3</text>
-        <line x1="320" y1="242" x2="350" y2="242" stroke="#cfd6de" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <circle cx="44"  cy="242" r="4" fill="#b25700"/>
+        <text   x="52"  y="246" font-size="10" fill="#4a2400">Pre / Phase 0</text>
+        <circle cx="160" cy="242" r="4" fill="#005a79"/>
+        <text   x="168" y="246" font-size="10" fill="#014157">Post / Phase 3</text>
+        <line x1="320" y1="242" x2="350" y2="242" stroke="#cfd7de" stroke-width="1.5" stroke-dasharray="4,3"/>
         <text x="356" y="246" font-size="10" fill="#8a929d">Human-scribe ceiling (Shuaib 2021)</text>
       </svg>
     </div>
@@ -3270,6 +3284,7 @@ hypothesis-generating signal only. Do not present as equivalent to observed atte
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-19 &mdash; Clinical Patient Safety</h1>
     <div class="masthead-meta">
@@ -3472,35 +3487,35 @@ dashboard_value = {
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 720 230" width="100%" height="230" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
         <!-- Axes -->
-        <line x1="60" y1="20" x2="60" y2="180" stroke="#c7ced8" stroke-width="1"/>
-        <line x1="60" y1="180" x2="660" y2="180" stroke="#c7ced8" stroke-width="1"/>
-        <text x="20" y="24" font-size="11" fill="#646a73">50%</text>
-        <text x="20" y="103" font-size="11" fill="#646a73">25%</text>
-        <text x="28" y="184" font-size="11" fill="#646a73">0%</text>
-        <line x1="60" y1="20" x2="660" y2="20" stroke="#edf0f4" stroke-width="1"/>
-        <line x1="60" y1="100" x2="660" y2="100" stroke="#edf0f4" stroke-width="1"/>
+        <line x1="60" y1="20" x2="60" y2="180" stroke="#c7d0d8" stroke-width="1"/>
+        <line x1="60" y1="180" x2="660" y2="180" stroke="#c7d0d8" stroke-width="1"/>
+        <text x="20" y="24" font-size="11" fill="#636363">50%</text>
+        <text x="20" y="103" font-size="11" fill="#636363">25%</text>
+        <text x="28" y="184" font-size="11" fill="#636363">0%</text>
+        <line x1="60" y1="20" x2="660" y2="20" stroke="#edf1f4" stroke-width="1"/>
+        <line x1="60" y1="100" x2="660" y2="100" stroke="#edf1f4" stroke-width="1"/>
 
         <!-- Bars: intervention rate by documentation-completeness tertile -->
         <g>
-          <rect x="140" y="68" width="80" height="112" fill="#315d8c" opacity="0.85"/>
-          <text x="180" y="60" font-size="12" fill="#315d8c" font-weight="700" text-anchor="middle">42%</text>
-          <text x="180" y="200" font-size="12" fill="#202124" text-anchor="middle">Low</text>
+          <rect x="140" y="68" width="80" height="112" fill="#31628c" opacity="0.85"/>
+          <text x="180" y="60" font-size="12" fill="#31628c" font-weight="700" text-anchor="middle">42%</text>
+          <text x="180" y="200" font-size="12" fill="#323c43" text-anchor="middle">Low</text>
 
-          <rect x="320" y="96" width="80" height="84" fill="#315d8c" opacity="0.85"/>
-          <text x="360" y="88" font-size="12" fill="#315d8c" font-weight="700" text-anchor="middle">35%</text>
-          <text x="360" y="200" font-size="12" fill="#202124" text-anchor="middle">Medium</text>
+          <rect x="320" y="96" width="80" height="84" fill="#31628c" opacity="0.85"/>
+          <text x="360" y="88" font-size="12" fill="#31628c" font-weight="700" text-anchor="middle">35%</text>
+          <text x="360" y="200" font-size="12" fill="#323c43" text-anchor="middle">Medium</text>
 
-          <rect x="500" y="124" width="80" height="56" fill="#315d8c" opacity="0.85"/>
-          <text x="540" y="116" font-size="12" fill="#315d8c" font-weight="700" text-anchor="middle">28%</text>
-          <text x="540" y="200" font-size="12" fill="#202124" text-anchor="middle">High</text>
+          <rect x="500" y="124" width="80" height="56" fill="#31628c" opacity="0.85"/>
+          <text x="540" y="116" font-size="12" fill="#31628c" font-weight="700" text-anchor="middle">28%</text>
+          <text x="540" y="200" font-size="12" fill="#323c43" text-anchor="middle">High</text>
         </g>
 
-        <text x="360" y="218" font-size="11" fill="#646a73" text-anchor="middle">Documentation-Completeness Tertile (per encounter)</text>
-        <text x="36" y="100" font-size="11" fill="#646a73" text-anchor="middle" transform="rotate(-90 36 100)">Intervention Rate</text>
+        <text x="360" y="218" font-size="11" fill="#636363" text-anchor="middle">Documentation-Completeness Tertile (per encounter)</text>
+        <text x="36" y="100" font-size="11" fill="#636363" text-anchor="middle" transform="rotate(-90 36 100)">Intervention Rate</text>
 
         <!-- Annotation -->
-        <line x1="140" y1="55" x2="580" y2="115" stroke="#b3261e" stroke-width="1.5" stroke-dasharray="4 3"/>
-        <text x="430" y="42" font-size="11" fill="#b3261e" text-anchor="middle">Declining slope = Castro 2025 pattern (aOR &lt; 1)</text>
+        <line x1="140" y1="55" x2="580" y2="115" stroke="#b31e28" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="430" y="42" font-size="11" fill="#b31e28" text-anchor="middle">Declining slope = Castro 2025 pattern (aOR &lt; 1)</text>
       </svg>
     </div>
   </div>
@@ -3637,6 +3652,7 @@ dashboard_value = {
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-20 &mdash; Financial Productivity</h1>
     <div class="masthead-meta">
@@ -3903,40 +3919,40 @@ Exclude: onboarding ramp (default 30 days); track new/established separately</di
     </p>
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: financial productivity metrics rising after Suki adoption">
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
-        <circle cx="120" cy="132" r="4" fill="#b26a00"/>
-        <circle cx="190" cy="136" r="4" fill="#b26a00"/>
-        <circle cx="260" cy="130" r="4" fill="#b26a00"/>
-        <polyline points="120,132 190,136 260,130" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
-        <circle cx="335" cy="128" r="4" fill="#00796b"/>
-        <circle cx="410" cy="104" r="4" fill="#00796b"/>
-        <circle cx="495" cy="78"  r="4" fill="#00796b"/>
-        <circle cx="580" cy="62"  r="4" fill="#00796b"/>
-        <polyline points="335,128 410,104 495,78 580,62" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
-        <line x1="260" y1="130" x2="335" y2="128" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
-        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
+        <circle cx="120" cy="132" r="4" fill="#b25700"/>
+        <circle cx="190" cy="136" r="4" fill="#b25700"/>
+        <circle cx="260" cy="130" r="4" fill="#b25700"/>
+        <polyline points="120,132 190,136 260,130" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="335" cy="128" r="4" fill="#005a79"/>
+        <circle cx="410" cy="104" r="4" fill="#005a79"/>
+        <circle cx="495" cy="78"  r="4" fill="#005a79"/>
+        <circle cx="580" cy="62"  r="4" fill="#005a79"/>
+        <polyline points="335,128 410,104 495,78 580,62" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="130" x2="335" y2="128" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>
@@ -4059,6 +4075,7 @@ Exclude: onboarding ramp (default 30 days); track new/established separately</di
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-21 &mdash; Coding Accuracy</h1>
     <div class="masthead-meta">
@@ -4337,72 +4354,72 @@ Exclude: onboarding ramp (default 30 days)</div>
       <svg viewBox="0 0 680 250" width="100%" aria-label="Two schematic charts: ICD-10 codes per encounter rising (left panel), denial rate stable or declining (right panel)">
         <!-- â”€â”€ Left panel: ICD-10 Depth (rising) â”€â”€ -->
         <!-- Panel background -->
-        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
-        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Alg. 1 â€” ICD-10 Codes / Encounter</text>
+        <rect x="40" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
+        <text x="180" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a454e">Alg. 1 â€” ICD-10 Codes / Encounter</text>
         <!-- Grid -->
-        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="300" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="300" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="300" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="300" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="300" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="300" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20"  x2="70"  y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
         <!-- Adoption line -->
-        <line x1="180" y1="22" x2="180" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,3"/>
-        <text x="184" y="36" font-size="9" fill="#315d8c">Adopted</text>
+        <line x1="180" y1="22" x2="180" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="184" y="36" font-size="9" fill="#31628c">Adopted</text>
         <!-- Pre dots -->
-        <circle cx="90"  cy="140" r="3.5" fill="#b26a00"/>
-        <circle cx="130" cy="144" r="3.5" fill="#b26a00"/>
-        <circle cx="160" cy="138" r="3.5" fill="#b26a00"/>
-        <polyline points="90,140 130,144 160,138" fill="none" stroke="#b26a00" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="90"  cy="140" r="3.5" fill="#b25700"/>
+        <circle cx="130" cy="144" r="3.5" fill="#b25700"/>
+        <circle cx="160" cy="138" r="3.5" fill="#b25700"/>
+        <polyline points="90,140 130,144 160,138" fill="none" stroke="#b25700" stroke-width="1.8" stroke-linejoin="round"/>
         <!-- Post dots (rising) -->
-        <circle cx="180" cy="134" r="3.5" fill="#00796b"/>
-        <circle cx="220" cy="110" r="3.5" fill="#00796b"/>
-        <circle cx="260" cy="82"  r="3.5" fill="#00796b"/>
-        <circle cx="290" cy="65"  r="3.5" fill="#00796b"/>
-        <polyline points="180,134 220,110 260,82 290,65" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
-        <line x1="160" y1="138" x2="180" y2="134" stroke="#aab3bf" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <circle cx="180" cy="134" r="3.5" fill="#005a79"/>
+        <circle cx="220" cy="110" r="3.5" fill="#005a79"/>
+        <circle cx="260" cy="82"  r="3.5" fill="#005a79"/>
+        <circle cx="290" cy="65"  r="3.5" fill="#005a79"/>
+        <polyline points="180,134 220,110 260,82 290,65" fill="none" stroke="#005a79" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="160" y1="138" x2="180" y2="134" stroke="#aab5bf" stroke-width="1.2" stroke-dasharray="2,2"/>
 
         <!-- â”€â”€ Right panel: Denial Rate (stable/declining) â”€â”€ -->
-        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce4ec"/>
-        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a434e">Alg. 3 â€” L4&ndash;5 Denial Rate</text>
+        <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
+        <text x="500" y="232" text-anchor="middle" font-size="11" font-weight="700" fill="#3a454e">Alg. 3 â€” L4&ndash;5 Denial Rate</text>
         <!-- Grid -->
-        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="390" y1="198" x2="620" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="390" y1="30"  x2="620" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="72"  x2="620" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="114" x2="620" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="156" x2="620" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="390" y1="198" x2="620" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="390" y1="20"  x2="390" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
         <!-- Adoption line -->
-        <line x1="500" y1="22" x2="500" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,3"/>
-        <text x="504" y="36" font-size="9" fill="#315d8c">Adopted</text>
+        <line x1="500" y1="22" x2="500" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="504" y="36" font-size="9" fill="#31628c">Adopted</text>
         <!-- Pre dots (mid-high range = some denials) -->
-        <circle cx="410" cy="90"  r="3.5" fill="#b26a00"/>
-        <circle cx="450" cy="86"  r="3.5" fill="#b26a00"/>
-        <circle cx="478" cy="92"  r="3.5" fill="#b26a00"/>
-        <polyline points="410,90 450,86 478,92" fill="none" stroke="#b26a00" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="410" cy="90"  r="3.5" fill="#b25700"/>
+        <circle cx="450" cy="86"  r="3.5" fill="#b25700"/>
+        <circle cx="478" cy="92"  r="3.5" fill="#b25700"/>
+        <polyline points="410,90 450,86 478,92" fill="none" stroke="#b25700" stroke-width="1.8" stroke-linejoin="round"/>
         <!-- Post dots (stable or declining = good) -->
-        <circle cx="500" cy="90"  r="3.5" fill="#00796b"/>
-        <circle cx="540" cy="94"  r="3.5" fill="#00796b"/>
-        <circle cx="580" cy="88"  r="3.5" fill="#00796b"/>
-        <circle cx="610" cy="92"  r="3.5" fill="#00796b"/>
-        <polyline points="500,90 540,94 580,88 610,92" fill="none" stroke="#00796b" stroke-width="2" stroke-linejoin="round"/>
-        <line x1="478" y1="92" x2="500" y2="90" stroke="#aab3bf" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <circle cx="500" cy="90"  r="3.5" fill="#005a79"/>
+        <circle cx="540" cy="94"  r="3.5" fill="#005a79"/>
+        <circle cx="580" cy="88"  r="3.5" fill="#005a79"/>
+        <circle cx="610" cy="92"  r="3.5" fill="#005a79"/>
+        <polyline points="500,90 540,94 580,88 610,92" fill="none" stroke="#005a79" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="478" y1="92" x2="500" y2="90" stroke="#aab5bf" stroke-width="1.2" stroke-dasharray="2,2"/>
         <!-- Right panel label: flat = good -->
-        <text x="504" y="78" font-size="9" fill="#00796b">Flat or declining = legitimate coding</text>
+        <text x="504" y="78" font-size="9" fill="#005a79">Flat or declining = legitimate coding</text>
 
         <!-- Shared legend -->
-        <circle cx="44"  cy="242" r="4" fill="#b26a00"/>
-        <text   x="52"  y="246" font-size="10" fill="#4a3200">Pre-adoption</text>
-        <circle cx="130" cy="242" r="4" fill="#00796b"/>
-        <text   x="138" y="246" font-size="10" fill="#01574f">Post-adoption</text>
-        <line   x1="210" y1="242" x2="226" y2="242" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="230" y="246" font-size="10" fill="#315d8c">Adoption date</text>
+        <circle cx="44"  cy="242" r="4" fill="#b25700"/>
+        <text   x="52"  y="246" font-size="10" fill="#4a2400">Pre-adoption</text>
+        <circle cx="130" cy="242" r="4" fill="#005a79"/>
+        <text   x="138" y="246" font-size="10" fill="#014157">Post-adoption</text>
+        <line   x1="210" y1="242" x2="226" y2="242" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="230" y="246" font-size="10" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>
@@ -4531,6 +4548,7 @@ Exclude: onboarding ramp (default 30 days)</div>
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-22 &mdash; Patient Volume &amp; Throughput</h1>
     <div class="masthead-meta">
@@ -4680,42 +4698,42 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
     </p>
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: completed encounters per provider per week, rising after Suki adoption">
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">âˆ’2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
         <!-- Pre-adoption: stable, mid-low (higher cy = lower on chart) -->
-        <circle cx="120" cy="130" r="4" fill="#b26a00"/>
-        <circle cx="190" cy="134" r="4" fill="#b26a00"/>
-        <circle cx="260" cy="128" r="4" fill="#b26a00"/>
-        <polyline points="120,130 190,134 260,128" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="120" cy="130" r="4" fill="#b25700"/>
+        <circle cx="190" cy="134" r="4" fill="#b25700"/>
+        <circle cx="260" cy="128" r="4" fill="#b25700"/>
+        <polyline points="120,130 190,134 260,128" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
         <!-- Post-adoption: rising (lower cy = higher on chart) -->
-        <circle cx="335" cy="126" r="4" fill="#00796b"/>
-        <circle cx="410" cy="102" r="4" fill="#00796b"/>
-        <circle cx="495" cy="76"  r="4" fill="#00796b"/>
-        <circle cx="580" cy="60"  r="4" fill="#00796b"/>
-        <polyline points="335,126 410,102 495,76 580,60" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
-        <line x1="260" y1="128" x2="335" y2="126" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
-        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+        <circle cx="335" cy="126" r="4" fill="#005a79"/>
+        <circle cx="410" cy="102" r="4" fill="#005a79"/>
+        <circle cx="495" cy="76"  r="4" fill="#005a79"/>
+        <circle cx="580" cy="60"  r="4" fill="#005a79"/>
+        <polyline points="335,126 410,102 495,76 580,60" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="128" x2="335" y2="126" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>

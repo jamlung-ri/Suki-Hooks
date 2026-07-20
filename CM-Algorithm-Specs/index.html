@@ -5,25 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CM Algorithm Cards — Suki AI Partnership</title>
   <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
     :root {
-      --ink:        #202124;
-      --muted:      #646a73;
-      --line:       #d9dee6;
-      --paper:      #fbfaf7;
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
       --panel:      #ffffff;
-      --soft:       #f1f4f8;
-      --teal:       #00796b;
-      --teal-light: #e0f2f1;
-      --blue:       #315d8c;
-      --blue-light: #eaf1f8;
-      --amber:      #b26a00;
-      --radius:     6px;
-      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
     * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
     body {
       margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
       font-size: 14px;
       line-height: 1.55;
       color: var(--ink);
@@ -97,12 +101,12 @@
       transition: box-shadow 0.12s, border-left-color 0.12s;
     }
     .card:hover {
-      box-shadow: 0 4px 16px rgba(32,33,36,0.13);
+      box-shadow: 0 4px 16px rgba(50,60,67,0.13);
       border-left-color: var(--blue);
       text-decoration: none;
     }
     .card-code {
-      font-family: "Courier New", Courier, monospace;
+      font-family: 'JetBrains Mono','Courier New',monospace;
       font-size: 11px;
       font-weight: 700;
       color: var(--blue);
@@ -143,8 +147,8 @@
     .tag-eff { background: var(--blue-light); color: var(--blue); }
     .tag-us  { background: var(--soft); color: var(--muted); }
     .tag-oi  { background: var(--teal-light); color: var(--teal); }
-    .tag-iq  { background: #f3eef9; color: #6d4c8d; }
-    .tag-warn { background: #fff3df; color: var(--amber); }
+    .tag-iq  { background: #f0eef9; color: #554c8d; }
+    .tag-warn { background: #ffefdf; color: var(--amber); }
     .tag-tool { background: var(--soft); color: var(--muted); }
 
     /* ── Primary / featured card ── */
@@ -212,6 +216,7 @@
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</p>
     <h1>CM Algorithm Cards</h1>
     <p>

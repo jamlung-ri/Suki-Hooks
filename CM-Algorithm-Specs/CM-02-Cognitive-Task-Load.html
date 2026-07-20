@@ -5,28 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CM-02 · Cognitive and Task Load — Algorithm Card</title>
   <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
     :root {
-      --ink:        #202124;
-      --muted:      #646a73;
-      --line:       #d9dee6;
-      --paper:      #fbfaf7;
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
       --panel:      #ffffff;
-      --soft:       #f1f4f8;
-      --teal:       #00796b;
-      --teal-light: #e0f2f1;
-      --blue:       #315d8c;
-      --blue-light: #eaf1f8;
-      --amber:      #b26a00;
-      --amber-light:#fff3df;
-      --red:        #b3261e;
-      --red-light:  #fdecea;
-      --violet:     #6d4c8d;
-      --violet-light:#f3eef9;
-      --radius:     6px;
-      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
     a { color: var(--teal); }
     .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
     @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
@@ -39,72 +43,72 @@
     .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
     .badge-nb  { background: var(--teal-light); color: var(--teal); }
     .badge-eff { background: var(--blue-light); color: var(--blue); }
-    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
     .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
-    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
-    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
     .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
     .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
-    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
-    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
     .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
-    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
-    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
-    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2ced8; }
     .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
-    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
     .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
     .unit-ambig ul { margin: 0; padding-left: 18px; }
-    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
     .unit-ambig li:last-child { margin-bottom: 0; }
-    .unit-ambig li strong { color: #2e1f00; }
+    .unit-ambig li strong { color: #2e1700; }
     .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
     .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
     .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
     .algo-title { font-weight: 700; font-size: 13.5px; }
     .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
     .algo-body { padding: 16px 18px; }
-    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
-    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
     .formula-lhs { font-weight: 700; color: var(--blue); }
     .formula-eq { color: var(--muted); padding: 0 6px; }
     .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
     .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
     .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
     .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
-    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
-    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
-    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
     .unit-ref-item:last-child { border-bottom: 0; }
     .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
     .tag-primary   { background: var(--teal-light); color: var(--teal); }
     .tag-secondary { background: var(--blue-light); color: var(--blue); }
     .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
-    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
-    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
-    .pipeline-note { font-size: 12px; color: #5a1916; margin-top: 6px; padding: 6px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12px; color: #5a161a; margin-top: 6px; padding: 6px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
     details { margin-top: 8px; }
     details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
     details summary::-webkit-details-marker { display: none; }
     details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
     details[open] summary::before { content: "▼ "; }
     details[open] summary { margin-bottom: 8px; }
-    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
     .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
     .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
     .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
     .chart-svg-wrap { overflow-x: auto; }
     .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
     .data-table thead tr { background: #eef3f7; }
-    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
     .data-table tr:last-child td { border-bottom: 0; }
     .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
     .tag-ehr    { background: var(--blue-light); color: var(--blue); }
     .tag-suki   { background: var(--teal-light); color: var(--teal); }
     .tag-survey { background: var(--violet-light); color: var(--violet); }
-    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
-    .scope-box .section-label { color: #49525d; }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
     .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
     .scope-box strong { color: var(--ink); }
     .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -117,6 +121,7 @@
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-02 &mdash; Cognitive and Task Load</h1>
     <div class="masthead-meta">
@@ -268,12 +273,12 @@ Secondary (corroboration, per encounter):
     </p>
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: NASA-TLX/PTL score lower for heavy Suki users than light users, declining over successive waves for the heavy cohort">
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
@@ -281,20 +286,20 @@ Secondary (corroboration, per encounter):
         <text x="340" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 2</text>
         <text x="520" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Wave 3</text>
         <!-- Light-utilization cohort: flat, higher -->
-        <circle cx="160" cy="76" r="4" fill="#6d4c8d"/>
-        <circle cx="340" cy="80" r="4" fill="#6d4c8d"/>
-        <circle cx="520" cy="78" r="4" fill="#6d4c8d"/>
-        <polyline points="160,76 340,80 520,78" fill="none" stroke="#6d4c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="160" cy="76" r="4" fill="#554c8d"/>
+        <circle cx="340" cy="80" r="4" fill="#554c8d"/>
+        <circle cx="520" cy="78" r="4" fill="#554c8d"/>
+        <polyline points="160,76 340,80 520,78" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
         <!-- Heavy-utilization cohort: declining -->
-        <circle cx="160" cy="100" r="4" fill="#00796b"/>
-        <circle cx="340" cy="130" r="4" fill="#00796b"/>
-        <circle cx="520" cy="162" r="4" fill="#00796b"/>
-        <polyline points="160,100 340,130 520,162" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="160" cy="100" r="4" fill="#005a79"/>
+        <circle cx="340" cy="130" r="4" fill="#005a79"/>
+        <circle cx="520" cy="162" r="4" fill="#005a79"/>
+        <polyline points="160,100 340,130 520,162" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Legend -->
-        <circle cx="84"  cy="170" r="4" fill="#6d4c8d"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3a5c">Light-utilization cohort</text>
-        <circle cx="280"  cy="170" r="4" fill="#00796b"/>
-        <text   x="288"  y="174" font-size="11" fill="#01574f">Heavy-utilization cohort</text>
+        <circle cx="84"  cy="170" r="4" fill="#554c8d"/>
+        <text   x="92"  y="174" font-size="11" fill="#3f3a5c">Light-utilization cohort</text>
+        <circle cx="280"  cy="170" r="4" fill="#005a79"/>
+        <text   x="288"  y="174" font-size="11" fill="#014157">Heavy-utilization cohort</text>
       </svg>
     </div>
   </div>

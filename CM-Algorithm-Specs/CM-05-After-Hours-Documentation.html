@@ -5,30 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CM-05 · After-Hours Documentation — Algorithm Card</title>
   <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
     :root {
-      --ink:        #202124;
-      --muted:      #646a73;
-      --line:       #d9dee6;
-      --paper:      #fbfaf7;
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
       --panel:      #ffffff;
-      --soft:       #f1f4f8;
-      --teal:       #00796b;
-      --teal-light: #e0f2f1;
-      --blue:       #315d8c;
-      --blue-light: #eaf1f8;
-      --amber:      #b26a00;
-      --amber-light:#fff3df;
-      --red:        #b3261e;
-      --red-light:  #fdecea;
-      --violet:     #6d4c8d;
-      --violet-light:#f3eef9;
-      --radius:     6px;
-      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
     * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
     body {
       margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
       font-size: 14px;
       line-height: 1.55;
       color: var(--ink);
@@ -108,7 +112,7 @@
     /* ── UNIT CARD ── */
     .unit-card {
       background: var(--teal-light);
-      border: 1px solid #a5d6cd;
+      border: 1px solid #a5c9d6;
       border-left: 4px solid var(--teal);
       border-radius: var(--radius);
       margin-bottom: 28px;
@@ -120,7 +124,7 @@
       justify-content: space-between;
       gap: 16px;
       padding: 16px 18px 14px;
-      border-bottom: 1px solid #b2d8d2;
+      border-bottom: 1px solid #b2ced8;
     }
     .unit-label {
       font-size: 10.5px;
@@ -143,7 +147,7 @@
       padding: 5px 10px;
       border-radius: 999px;
       background: #fff;
-      border: 1px solid #a5d6cd;
+      border: 1px solid #a5c9d6;
       font-size: 12px;
       font-weight: 700;
       color: var(--teal);
@@ -153,24 +157,24 @@
     .unit-def {
       padding: 14px 18px 12px;
       font-size: 13.5px;
-      color: #1a3330;
+      color: #1a2d33;
       line-height: 1.55;
-      border-bottom: 1px solid #b2d8d2;
+      border-bottom: 1px solid #b2ced8;
     }
     .unit-def p { margin: 0; }
     .unit-methods {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      border-bottom: 1px solid #b2d8d2;
+      border-bottom: 1px solid #b2ced8;
     }
     .unit-method {
       padding: 12px 18px;
       font-size: 13px;
-      color: #1a3330;
+      color: #1a2d33;
       line-height: 1.5;
     }
     .unit-method:first-child {
-      border-right: 1px solid #b2d8d2;
+      border-right: 1px solid #b2ced8;
     }
     .unit-method-label {
       font-size: 11px;
@@ -182,8 +186,8 @@
     }
     .unit-ambig {
       padding: 12px 18px;
-      background: #fef9ed;
-      border-top: 1px solid #e8c87a;
+      background: #fef5ed;
+      border-top: 1px solid #e8b07a;
     }
     .unit-ambig-label {
       font-size: 11px;
@@ -199,12 +203,12 @@
     }
     .unit-ambig li {
       font-size: 13px;
-      color: #4a3200;
+      color: #4a2400;
       margin-bottom: 5px;
       line-height: 1.45;
     }
     .unit-ambig li:last-child { margin-bottom: 0; }
-    .unit-ambig li strong { color: #2e1f00; }
+    .unit-ambig li strong { color: #2e1700; }
 
     /* ── ALGORITHM BLOCK ── */
     .algo-block {
@@ -250,7 +254,7 @@
     }
     .algo-purpose {
       font-size: 13px;
-      color: #3a434e;
+      color: #3a454e;
       margin: 0 0 14px;
       line-height: 1.5;
     }
@@ -258,11 +262,11 @@
     /* Formula display */
     .formula-wrap {
       background: #f4f7fa;
-      border: 1px solid #dce4ec;
+      border: 1px solid #dce5ec;
       border-radius: var(--radius);
       padding: 14px 16px;
       margin: 0 0 14px;
-      font-family: "Courier New", Courier, monospace;
+      font-family: 'JetBrains Mono','Courier New',monospace;
       font-size: 13px;
       overflow-x: auto;
     }
@@ -301,7 +305,7 @@
     /* ── ALGO UNITS SUBSECTION ── */
     .algo-units {
       margin-bottom: 14px;
-      border: 1px solid #dce4ec;
+      border: 1px solid #dce5ec;
       border-radius: var(--radius);
       overflow: hidden;
     }
@@ -311,16 +315,16 @@
       text-transform: uppercase;
       letter-spacing: 0.09em;
       color: var(--blue);
-      background: #f0f4f9;
+      background: #f0f5f9;
       padding: 7px 12px;
-      border-bottom: 1px solid #dce4ec;
+      border-bottom: 1px solid #dce5ec;
     }
     .unit-ref-item {
       display: flex;
       gap: 10px;
       align-items: flex-start;
       padding: 10px 12px;
-      border-bottom: 1px solid #edf0f4;
+      border-bottom: 1px solid #edf1f4;
     }
     .unit-ref-item:last-child { border-bottom: 0; }
     .unit-ref-tag {
@@ -347,16 +351,16 @@
     }
     .unit-ref-def {
       font-size: 12.5px;
-      color: #3a434e;
+      color: #3a454e;
       line-height: 1.45;
     }
     .unit-ref-ambig {
       font-size: 12px;
-      color: #4a3200;
+      color: #4a2400;
       margin-top: 6px;
       padding: 5px 8px;
-      background: #fef9ed;
-      border-left: 3px solid #e8c87a;
+      background: #fef5ed;
+      border-left: 3px solid #e8b07a;
       border-radius: 0 var(--radius) var(--radius) 0;
       line-height: 1.4;
     }
@@ -386,15 +390,15 @@
     details[open] summary { margin-bottom: 8px; }
     .pseudo {
       background: #f4f7fa;
-      border: 1px solid #dce4ec;
+      border: 1px solid #dce5ec;
       border-left: 3px solid var(--blue);
       border-radius: var(--radius);
       padding: 12px 14px;
-      font-family: "Courier New", Courier, monospace;
+      font-family: 'JetBrains Mono','Courier New',monospace;
       font-size: 12px;
       line-height: 1.6;
       white-space: pre-wrap;
-      color: #2d3640;
+      color: #2d3740;
       overflow-x: auto;
     }
 
@@ -437,7 +441,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.07em;
-      color: #424a55;
+      color: #424c55;
       text-align: left;
       border-bottom: 1px solid var(--line);
       white-space: nowrap;
@@ -445,7 +449,7 @@
     .data-table td {
       padding: 9px 12px;
       font-size: 13px;
-      border-bottom: 1px solid #edf0f4;
+      border-bottom: 1px solid #edf1f4;
       vertical-align: top;
     }
     .data-table tr:last-child td { border-bottom: 0; }
@@ -466,15 +470,15 @@
     .scope-box {
       background: var(--soft);
       border: 1px solid var(--line);
-      border-left: 4px solid #8fa9c2;
+      border-left: 4px solid #8fabc2;
       border-radius: var(--radius);
       padding: 14px 16px;
       margin-bottom: 20px;
       font-size: 13px;
-      color: #3a434e;
+      color: #3a454e;
       line-height: 1.5;
     }
-    .scope-box .section-label { color: #49525d; }
+    .scope-box .section-label { color: #49545d; }
     .scope-box p { margin: 0 0 8px; }
     .scope-box p:last-child { margin: 0; }
     .scope-box strong { color: var(--ink); }
@@ -482,16 +486,16 @@
     /* ── KEY FINDING ── */
     .key-finding {
       background: var(--red-light);
-      border: 1px solid #f2b8b5;
+      border: 1px solid #f2b5b9;
       border-left: 4px solid var(--red);
       border-radius: var(--radius);
       padding: 12px 16px;
       margin-bottom: 20px;
       font-size: 13px;
-      color: #5a1916;
+      color: #5a161a;
       line-height: 1.5;
     }
-    .key-finding strong { color: #3c100e; }
+    .key-finding strong { color: #3c0e11; }
 
     /* ── SOURCES ── */
     .sources-wrap {
@@ -539,6 +543,7 @@
 
   <!-- ── Masthead ── -->
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-05 &mdash; After-Hours Documentation</h1>
     <div class="masthead-meta">
@@ -680,13 +685,13 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: after-hours minutes per provider per month over time, declining after Suki adoption">
         <!-- Grid lines -->
-        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4e9ef" stroke-width="1"/>
-        <line x1="70" y1="198" x2="650" y2="198" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
         <!-- Y-axis -->
-        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ccd6" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
         <!-- Y labels -->
         <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
@@ -695,33 +700,33 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#315d8c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
         <!-- Adoption line -->
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#315d8c">Suki adopted</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
         <!-- Pre-adoption dots -->
-        <circle cx="120" cy="78"  r="4" fill="#b26a00"/>
-        <circle cx="190" cy="72"  r="4" fill="#b26a00"/>
-        <circle cx="260" cy="80"  r="4" fill="#b26a00"/>
-        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b26a00" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="120" cy="78"  r="4" fill="#b25700"/>
+        <circle cx="190" cy="72"  r="4" fill="#b25700"/>
+        <circle cx="260" cy="80"  r="4" fill="#b25700"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
         <!-- Post-adoption dots (declining) -->
-        <circle cx="335" cy="82"  r="4" fill="#00796b"/>
-        <circle cx="410" cy="110" r="4" fill="#00796b"/>
-        <circle cx="495" cy="138" r="4" fill="#00796b"/>
-        <circle cx="580" cy="155" r="4" fill="#00796b"/>
-        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#00796b" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="335" cy="82"  r="4" fill="#005a79"/>
+        <circle cx="410" cy="110" r="4" fill="#005a79"/>
+        <circle cx="495" cy="138" r="4" fill="#005a79"/>
+        <circle cx="580" cy="155" r="4" fill="#005a79"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Connect pre → post -->
-        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab3bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
         <!-- Legend -->
-        <circle cx="84"  cy="170" r="4" fill="#b26a00"/>
-        <text   x="92"  y="174" font-size="11" fill="#4a3200">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#00796b"/>
-        <text   x="92"  y="190" font-size="11" fill="#01574f">Post-adoption trend</text>
-        <line   x1="376" y1="170" x2="392" y2="170" stroke="#315d8c" stroke-width="1.5" stroke-dasharray="4,2"/>
-        <text   x="396" y="174" font-size="11" fill="#315d8c">Adoption date</text>
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
       </svg>
     </div>
   </div>

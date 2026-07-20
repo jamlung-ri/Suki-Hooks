@@ -6,26 +6,28 @@
 <title>Suki — EHR / Suki Data Crosswalk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
 :root {
-  --paper:       #f5f1e8;
-  --paper-2:     #ebe5d6;
-  --paper-3:     #e0d9c5;
-  --ink:         #1a1814;
-  --ink-2:       #3a342c;
-  --ink-3:       #6b6458;
-  --ink-4:       #9a9283;
-  --rule:        #c9c1ad;
-  --rule-2:      #d9d2bd;
-  --accent:      #a23b2a;
-  --accent-soft: #e8d4c8;
-  --brand:       #28b0e0;
-  --brand-deep:  #1a8eb8;
-  --brand-soft:  #d4ecf2;
-  --brand-ink:   #343c44;
-  --green:       #2a6e3a;
-  --green-soft:  #d4eadb;
+  --paper:       #f7f9f9;
+  --paper-2:     #ededed;
+  --paper-3:     #dae2e3;
+  --ink:         #323c43;
+  --ink-2:       #343e48;
+  --ink-3:       #636363;
+  --ink-4:       #a6acb1;
+  --rule:        #c1c1c1;
+  --rule-2:      #dae2e3;
+  --accent:      #a3272f;
+  --accent-soft: #fbe9ea;
+  --brand:       #24afdf;
+  --brand-deep:  #009cc8;
+  --brand-soft:  #dbf1f9;
+  --brand-ink:   #343e48;
+  --green:       #2d6a4f;
+  --green-soft:  #e7f3ed;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,7 +35,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: var(--ink);
@@ -62,14 +64,14 @@ body {
   opacity: 0.9;
 }
 .masthead-title {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 26px;
   font-weight: 400;
   letter-spacing: -0.01em;
   color: #fff;
 }
 .masthead-sub {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 12px;
   color: rgba(255,255,255,0.55);
   letter-spacing: 0.01em;
@@ -92,7 +94,7 @@ body {
   overflow-x: auto;
 }
 .jump-nav-label {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -128,7 +130,7 @@ body {
   border-bottom-color: var(--accent);
 }
 .jump-btn .cm-name {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: var(--ink-4);
@@ -169,7 +171,7 @@ body {
   letter-spacing: 0.04em;
 }
 .cm-group-name {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 19px;
   font-weight: 400;
   color: var(--ink-2);
@@ -198,11 +200,11 @@ body {
   background: #fff;
   transition: background 0.12s;
 }
-.acc-head:hover { background: #faf6ea; }
+.acc-head:hover { background: #faf2ea; }
 .acc-row.open .acc-head { background: var(--paper-2); border-bottom: 1px solid var(--rule-2); }
 
 .acc-alias {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 15px;
   font-weight: 400;
   color: var(--ink-2);
@@ -219,14 +221,14 @@ body {
   white-space: nowrap;
 }
 .acc-head .solo-name {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 11px;
   color: var(--ink-4);
   margin-top: 2px;
 }
 
 .suki-badge {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -243,7 +245,7 @@ body {
 .suki-badge.native-data {
   background: var(--brand-soft);
   color: var(--brand-deep);
-  border: 1px solid #a8d8ee;
+  border: 1px solid #a8ceee;
 }
 
 .acc-caret {
@@ -271,7 +273,7 @@ body {
 
 /* EHR table */
 .panel-label {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.13em;
@@ -285,7 +287,7 @@ body {
   font-size: 13px;
 }
 .ehr-table th {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -303,9 +305,9 @@ body {
   line-height: 1.4;
 }
 .ehr-table tr:last-child td { border-bottom: none; }
-.ehr-table tr:hover td { background: #faf6ea; }
+.ehr-table tr:hover td { background: #faf2ea; }
 .ehr-table td:first-child {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 13px;
   color: var(--ink-2);
   width: 48%;
@@ -334,7 +336,7 @@ body {
   padding: 16px 18px;
 }
 .suki-card .card-label {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.13em;
@@ -348,11 +350,11 @@ body {
 .suki-card.opp-card {
   border-left: 3px solid var(--brand);
   background: var(--brand-soft);
-  border-color: #a8d8ee;
+  border-color: #a8ceee;
 }
 .suki-card.opp-card .card-label { color: var(--brand-deep); }
 .suki-card p {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 14px;
   line-height: 1.55;
   color: var(--ink-2);
@@ -392,7 +394,7 @@ body {
 }
 .sub-details-head:hover { background: var(--paper-3); }
 .sub-details-label {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -422,7 +424,7 @@ body {
 }
 .algo-row:last-child { margin-bottom: 0; }
 .algo-row-label {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -483,7 +485,7 @@ body {
   color: var(--ink-3);
 }
 .compare-expr {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-style: italic;
   font-size: 14px;
   color: var(--ink-3);
@@ -508,7 +510,7 @@ body {
   letter-spacing: 0.02em;
 }
 .delta-tag {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -520,22 +522,22 @@ body {
 .delta-tag.higher {
   background: var(--green-soft);
   color: var(--green);
-  border: 1px solid #b0d4ba;
+  border: 1px solid #b0d4c4;
 }
 .delta-tag.lower {
   background: var(--accent-soft);
   color: var(--accent);
-  border: 1px solid #d4b4a8;
+  border: 1px solid #d4a8ab;
 }
 .how-it-works {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 14px;
   line-height: 1.55;
   color: var(--ink-2);
   margin-bottom: 10px;
 }
 .delta-interp {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-style: italic;
   font-size: 14px;
   line-height: 1.5;
@@ -545,7 +547,7 @@ body {
   border-left: 2px solid var(--rule);
 }
 .watch-list {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 12px;
   color: var(--ink-3);
   line-height: 1.5;
@@ -578,7 +580,7 @@ body {
 }
 .bench-section .panel-label { margin-bottom: 8px; }
 .bench-text {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 14px;
   line-height: 1.55;
   color: var(--ink-2);
@@ -595,7 +597,7 @@ body {
   border-top: 1px solid var(--rule-2);
 }
 .notes-section p {
-  font-family: 'Newsreader', serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-style: italic;
   font-size: 13px;
   color: var(--ink-3);
@@ -607,7 +609,7 @@ body {
   max-width: 1240px;
   margin: 0 auto;
   padding: 0 40px 60px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
   font-size: 11px;
   font-style: italic;
   color: var(--ink-4);
@@ -620,6 +622,7 @@ body {
 
 <header class="masthead">
   <div class="masthead-brand">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" style="height:22px;display:block;">
     <span class="masthead-logo">Suki &mdash; IU OSI</span>
     <h1 class="masthead-title">EHR / Suki Data Crosswalk</h1>
   </div>

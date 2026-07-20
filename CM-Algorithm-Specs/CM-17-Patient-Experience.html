@@ -5,28 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CM-17 · Patient Experience and Relationship Quality — Algorithm Card</title>
   <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
     :root {
-      --ink:        #202124;
-      --muted:      #646a73;
-      --line:       #d9dee6;
-      --paper:      #fbfaf7;
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
       --panel:      #ffffff;
-      --soft:       #f1f4f8;
-      --teal:       #00796b;
-      --teal-light: #e0f2f1;
-      --blue:       #315d8c;
-      --blue-light: #eaf1f8;
-      --amber:      #b26a00;
-      --amber-light:#fff3df;
-      --red:        #b3261e;
-      --red-light:  #fdecea;
-      --violet:     #6d4c8d;
-      --violet-light:#f3eef9;
-      --radius:     6px;
-      --shadow:     0 2px 8px rgba(32,33,36,0.07);
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
     a { color: var(--teal); }
     .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
     @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
@@ -39,74 +43,74 @@
     .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
     .badge-nb  { background: var(--teal-light); color: var(--teal); }
     .badge-oi  { background: var(--teal-light); color: var(--teal); }
-    .badge-us  { background: #f0f4f9; color: #49525d; }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
     .badge-warn { background: var(--amber-light); color: var(--amber); }
     .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
-    .unit-card { background: var(--teal-light); border: 1px solid #a5d6cd; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
-    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2d8d2; flex-wrap: wrap; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
     .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
     .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
-    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5d6cd; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
-    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a3330; line-height: 1.55; border-bottom: 1px solid #b2d8d2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
     .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
-    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2d8d2; }
-    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a3330; line-height: 1.5; }
-    .unit-method:first-child { border-right: 1px solid #b2d8d2; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2ced8; }
     .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
-    .unit-ambig { padding: 12px 18px; background: #fef9ed; border-top: 1px solid #e8c87a; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
     .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
     .unit-ambig ul { margin: 0; padding-left: 18px; }
-    .unit-ambig li { font-size: 13px; color: #4a3200; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
     .unit-ambig li:last-child { margin-bottom: 0; }
-    .unit-ambig li strong { color: #2e1f00; }
+    .unit-ambig li strong { color: #2e1700; }
     .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
     .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
     .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
     .algo-title { font-weight: 700; font-size: 13.5px; }
     .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
     .algo-body { padding: 16px 18px; }
-    .algo-purpose { font-size: 13px; color: #3a434e; margin: 0 0 14px; line-height: 1.5; }
-    .formula-wrap { background: #f4f7fa; border: 1px solid #dce4ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: "Courier New", Courier, monospace; font-size: 13px; overflow-x: auto; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
     .formula-lhs { font-weight: 700; color: var(--blue); }
     .formula-eq { color: var(--muted); padding: 0 6px; }
     .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
     .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
     .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
     .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
-    .algo-units { margin-bottom: 14px; border: 1px solid #dce4ec; border-radius: var(--radius); overflow: hidden; }
-    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f4f9; padding: 7px 12px; border-bottom: 1px solid #dce4ec; }
-    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf0f4; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
     .unit-ref-item:last-child { border-bottom: 0; }
     .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
     .tag-primary   { background: var(--teal-light); color: var(--teal); }
     .tag-secondary { background: var(--blue-light); color: var(--blue); }
     .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
-    .unit-ref-def { font-size: 12.5px; color: #3a434e; line-height: 1.45; }
-    .unit-ref-ambig { font-size: 12px; color: #4a3200; margin-top: 6px; padding: 5px 8px; background: #fef9ed; border-left: 3px solid #e8c87a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
-    .pipeline-note { font-size: 12.5px; color: #7a1410; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
-    .pipeline-note strong { color: #5c0f0c; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
     details { margin-top: 8px; }
     details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
     details summary::-webkit-details-marker { display: none; }
     details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
     details[open] summary::before { content: "▼ "; }
     details[open] summary { margin-bottom: 8px; }
-    .pseudo { background: #f4f7fa; border: 1px solid #dce4ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: "Courier New", Courier, monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3640; overflow-x: auto; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
     .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
     .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
     .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
     .chart-svg-wrap { overflow-x: auto; }
     .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
     .data-table thead tr { background: #eef3f7; }
-    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424a55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf0f4; vertical-align: top; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
     .data-table tr:last-child td { border-bottom: 0; }
     .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
     .tag-ehr    { background: var(--blue-light); color: var(--blue); }
     .tag-suki   { background: var(--teal-light); color: var(--teal); }
     .tag-survey { background: var(--violet-light); color: var(--violet); }
-    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fa9c2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a434e; line-height: 1.5; }
-    .scope-box .section-label { color: #49525d; }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
     .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
     .scope-box strong { color: var(--ink); }
     .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
@@ -119,6 +123,7 @@
 <div class="page">
 
   <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
     <p class="eyebrow">Canonical Measure Algorithm Card</p>
     <h1>CM-17 &mdash; Patient Experience and Relationship Quality</h1>
     <div class="masthead-meta">
@@ -275,31 +280,31 @@ for cohort_name in {"multilingual", "english_only"}:
     <div class="chart-svg-wrap">
       <svg viewBox="0 0 560 230" width="100%" aria-label="Bar chart comparing PDRQ-9 mean scores between English-only and multilingual patient cohorts, showing a larger uplift for the multilingual cohort">
         <!-- Axis -->
-        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ccd6" stroke-width="1.5"/>
-        <line x1="60" y1="180" x2="520" y2="180" stroke="#d9dee6" stroke-width="1.5"/>
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="520" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
         <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">5.0</text>
         <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">3.0</text>
         <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">1.0</text>
-        <line x1="60" y1="180" x2="520" y2="180" stroke="#d9dee6" stroke-width="1"/>
+        <line x1="60" y1="180" x2="520" y2="180" stroke="#dae2e3" stroke-width="1"/>
 
         <!-- English-only cohort: baseline vs Suki, small gap -->
-        <rect x="110" y="64" width="50" height="116" fill="#cfd6de"/>
-        <rect x="180" y="58" width="50" height="122" fill="#00796b"/>
-        <text x="170" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">English-Only</text>
+        <rect x="110" y="64" width="50" height="116" fill="#cfd7de"/>
+        <rect x="180" y="58" width="50" height="122" fill="#005a79"/>
+        <text x="170" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">English-Only</text>
 
         <!-- Multilingual cohort: baseline vs Suki, larger gap -->
-        <rect x="330" y="64" width="50" height="116" fill="#cfd6de"/>
-        <rect x="400" y="34" width="50" height="146" fill="#00796b"/>
-        <text x="390" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a434e">Multilingual</text>
+        <rect x="330" y="64" width="50" height="116" fill="#cfd7de"/>
+        <rect x="400" y="34" width="50" height="146" fill="#005a79"/>
+        <text x="390" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Multilingual</text>
 
         <!-- annotation -->
-        <text x="425" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#01574f">Hypothesized larger uplift</text>
+        <text x="425" y="24" text-anchor="middle" font-size="10" font-weight="700" fill="#014157">Hypothesized larger uplift</text>
 
         <!-- Legend -->
-        <rect x="64"  y="208" width="14" height="11" fill="#cfd6de"/>
-        <text x="82"  y="217" font-size="10" fill="#49525d">Baseline (no Suki / pre-deployment)</text>
-        <rect x="290" y="208" width="14" height="11" fill="#00796b"/>
-        <text x="308" y="217" font-size="10" fill="#01574f">With Suki (H1 + H4)</text>
+        <rect x="64"  y="208" width="14" height="11" fill="#cfd7de"/>
+        <text x="82"  y="217" font-size="10" fill="#49545d">Baseline (no Suki / pre-deployment)</text>
+        <rect x="290" y="208" width="14" height="11" fill="#005a79"/>
+        <text x="308" y="217" font-size="10" fill="#014157">With Suki (H1 + H4)</text>
       </svg>
     </div>
   </div>
