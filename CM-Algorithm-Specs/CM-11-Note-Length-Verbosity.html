@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-11 · Note Length and Verbosity — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-iq  { background: var(--violet-light); color: var(--violet); }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--violet-light); border: 1px solid #cac5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d1cdec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cac5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #262240; line-height: 1.55; border-bottom: 1px solid #d1cdec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #d1cdec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #262240; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #d1cdec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--violet); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-11 &mdash; Note Length and Verbosity</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-iq">IQ &mdash; Information Quality</span></span>
+      <span><span class="badge badge-eff">Automated NLP Text Metric</span></span>
+      <span><strong>Also known as:</strong> Note Length &nbsp;&middot;&nbsp; Word Count &nbsp;&middot;&nbsp; Lexical Diversity &nbsp;&middot;&nbsp; Documentation Length</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Words (or characters) per note; secondary: lexical diversity (type-token ratio)</div>
+      </div>
+      <div class="direction-pill">&#8597; Direction not asserted &mdash; context-dependent</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        The length and lexical richness of an AI-generated note, measured as word count,
+        character count, or lexical diversity (unique vocabulary / total words). Unlike CM-08,
+        CM-09, and CM-10, this unit is <strong>fully automated</strong> &mdash; it can be computed
+        directly from note text without a human or LLM rater, using either Suki-native note content
+        or, if accessible, EHR note-text fields.
+      </p>
+      <p>
+        Note length is a <strong>secondary / proxy</strong> measure, not a quality measure in its
+        own right. Longer notes can indicate greater thoroughness (fewer omissions, see CM-08) or
+        over-generation and padding that increases physician editing burden (Wojda 2025, Shah 2025
+        flag verbosity as a specific concern). This card does not assert which interpretation
+        applies &mdash; see the Expected Trend section below.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        <strong>Word count</strong> (tokenized, whitespace/punctuation-normalized) per note &mdash;
+        the most directly comparable operationalization across papers and across note templates,
+        since it is less sensitive to formatting than raw character count.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>Character count</strong> per note or per calendar week &mdash; often the only
+        granularity available from EHR-side documentation-length telemetry (chars/week) when
+        word-level tokenization access is not available.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Direction is genuinely ambiguous.</strong> Unlike every other measure in this batch, there is no single expected direction after Suki adoption. Longer notes may reflect improved thoroughness (which should co-occur with a falling CM-08 omission rate) or increased padding/over-generation (which physicians report as added editing burden). CM-11 should always be interpreted alongside CM-08 (Completeness) and CM-10 (Overall Quality) &mdash; never read as a standalone quality signal in either direction.</li>
+        <li><strong>Word count, character count, and note-length ratio are not interchangeable.</strong> Note length ratio (AI note length / human-authored note length) requires a human-authored reference note for the same encounter, which may not exist in AI-first documentation workflows.</li>
+        <li><strong>Lexical diversity is length-sensitive.</strong> Type-token ratio is mechanically higher for shorter notes; comparing raw TTR across notes of different lengths requires a length-normalization method (e.g., MTLD or a fixed-window TTR), not a raw ratio.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Automated Text-Metric Computation &mdash; Note Length &amp; Lexical Diversity</span>
+      <span class="algo-subtitle">Fully automated &mdash; no rater pipeline required</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Computed directly from note text for every completed session &mdash; word count,
+        character count, and lexical diversity require no human or LLM rating step, unlike CM-08,
+        CM-09, and CM-10. The output is a distribution (not a single pass/fail value) reported
+        alongside CM-08 and CM-10 so a length change can be interpreted rather than read in
+        isolation.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Word count per note (tokenized)</div>
+            <div class="unit-ref-def">Total tokens in the generated note after whitespace/punctuation normalization. Reported as a cohort mean and full distribution per period.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Character count per note</div>
+            <div class="unit-ref-def">Total characters in the generated note. Used when word-level tokenization is unavailable, e.g. for EHR-side documentation-length telemetry reported as characters/week.</div>
+            <div class="unit-ref-ambig">&#x26A0; Sensitive to note template/formatting (headers, structured fields) &mdash; less portable across EHR templates than word count.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Lexical diversity (type-token ratio)</div>
+            <div class="unit-ref-def">Unique word count / total word count per note, as a secondary richness signal alongside raw length.</div>
+            <div class="unit-ref-ambig">&#x26A0; Length-sensitive &mdash; requires normalization (MTLD or fixed-window TTR) before comparing notes of different lengths.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Note length ratio (AI note / human-authored reference note)</div>
+            <div class="unit-ref-def">Ratio of AI note length to a human-authored comparison note for the same encounter, where available (e.g., simulation or RCT designs with a paired human note).</div>
+            <div class="unit-ref-ambig">&#x26A0; Requires a human-authored reference note per encounter &mdash; often unavailable outside controlled study designs.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Mean Note Length</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&sum; (word count per note, in the period)</span><span class="formula-den">COUNT(notes in the period)</span></span>
+<div class="formula-note">Reporting grain: cohort mean and full distribution, per month
+No single pass/fail threshold is applied to the mean or distribution.
+Flag only statistical outliers (e.g., notes >2 SD from the cohort mean) for manual review --
+  outliers may indicate either exceptional thoroughness or malfunctioning generation, not
+  a length target to hit.
+Always report alongside CM-08 (Completeness) and CM-10 (Overall Quality) in the same period,
+  so a length change can be interpreted rather than read as good or bad on its own.</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">for session in all_completed_sessions:
+  note_text = session.note_content
+  word_count[session] = COUNT(TOKENIZE(note_text))
+  char_count[session] = LENGTH(note_text)
+  unique_words = COUNT(DISTINCT TOKENIZE(note_text)))
+  lexical_diversity[session] = unique_words / word_count[session]  # raw TTR, needs normalization
+  lexical_diversity_normalized[session] = MTLD(TOKENIZE(note_text))  # length-independent variant
+
+  if human_reference_note[session] exists:
+    length_ratio[session] = word_count[session] / COUNT(TOKENIZE(human_reference_note[session]))
+
+mean_word_count = MEAN(word_count[s] for s in all_completed_sessions in period)
+distribution = HISTOGRAM(word_count.values())
+outliers = [s for s in all_completed_sessions if ABS(word_count[s] - mean_word_count) > 2 * STDDEV(word_count.values())]
+
+dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribution,
+                     "mean_lexical_diversity_normalized": MEAN(lexical_diversity_normalized.values()),
+                     "outlier_sessions": outliers }
+# No pass/fail evaluation here -- read alongside CM-08 and CM-10 for interpretation</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Note Length: No Single Direction Assumed</div>
+    <p class="chart-caption">
+      Unlike every other measure in this batch, CM-11 does not assume a single expected direction
+      after Suki adoption. A post-adoption change in mean note length is consistent with two
+      opposite interpretations, and this card intentionally does not pick one: <strong>Scenario
+      A</strong> &mdash; length increases alongside improved thoroughness (would co-occur with a
+      falling CM-08 omission rate); <strong>Scenario B</strong> &mdash; length settles or falls as
+      generation is tuned to avoid padding (would co-occur with a stable or rising CM-10 composite
+      score). Read this chart together with CM-08 and CM-10 for the same period, never alone.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: mean note length diverging into two equally plausible post-adoption scenarios, one rising (associated with improved thoroughness) and one falling (associated with reduced padding), from the same pre-adoption baseline">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">Longer</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Baseline</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Shorter</text>
+        <!-- X-axis labels -->
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Adoption marker line -->
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
+        <!-- Pre-adoption dots (flat baseline, neutral gray) -->
+        <circle cx="120" cy="114" r="4" fill="#8a929d"/>
+        <circle cx="190" cy="112" r="4" fill="#8a929d"/>
+        <circle cx="260" cy="115" r="4" fill="#8a929d"/>
+        <polyline points="120,114 190,112 260,115" fill="none" stroke="#8a929d" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Scenario A: rising (blue) -->
+        <circle cx="335" cy="112" r="4" fill="#31628c"/>
+        <circle cx="410" cy="88"  r="4" fill="#31628c"/>
+        <circle cx="495" cy="64"  r="4" fill="#31628c"/>
+        <circle cx="580" cy="46"  r="4" fill="#31628c"/>
+        <polyline points="335,112 410,88 495,64 580,46" fill="none" stroke="#31628c" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
+        <!-- Scenario B: falling (violet) -->
+        <circle cx="335" cy="116" r="4" fill="#554c8d"/>
+        <circle cx="410" cy="136" r="4" fill="#554c8d"/>
+        <circle cx="495" cy="156" r="4" fill="#554c8d"/>
+        <circle cx="580" cy="170" r="4" fill="#554c8d"/>
+        <polyline points="335,116 410,136 495,156 580,170" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
+        <!-- Connector at adoption boundary -->
+        <line x1="260" y1="115" x2="335" y2="114" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#8a929d"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a4a4a">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#31628c"/>
+        <text   x="92"  y="190" font-size="11" fill="#1c3a54">Scenario A &mdash; longer (pair with CM-08)</text>
+        <circle cx="340" cy="186" r="4" fill="#554c8d"/>
+        <text   x="348" y="190" font-size="11" fill="#3f3a5c">Scenario B &mdash; shorter (pair with CM-10)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Generated note content</td>
+        <td>The AI-generated note text; source for word count, character count, and lexical diversity computation.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>Full transcript</td>
+        <td>Encounter length/content context; useful for interpreting note length relative to encounter length.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr>
+        <td>Human-authored reference note (if available)</td>
+        <td>Enables the note-length-ratio variant (AI note / human note); typically only present in simulation or RCT designs.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Not available for AI-first documentation workflows without a comparison arm.</td>
+      </tr>
+      <tr>
+        <td>Final signed note text</td>
+        <td>Length/diversity computed on the physician-accepted version, not just the Suki draft, once available.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE_TEXT</code> / <code>HNO_PLAIN_TEXT</code> (unconfirmed/exploratory &mdash; field availability and text format not yet verified against a live Epic EHI extract).</td>
+      </tr>
+      <tr>
+        <td>Documentation length telemetry (chars/week)</td>
+        <td>Weekly aggregate character output per provider, if available as a pre-computed EHR telemetry field rather than raw note text.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Unconfirmed/exploratory &mdash; naming and availability vendor-specific; treat as a possible fallback when raw note text access is restricted.</td>
+      </tr>
+      <tr>
+        <td>Encounter-to-note linkage</td>
+        <td>Joins Suki <code>session_id</code> to the EHR note record, needed to pair note-length data with EHR-side note text.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR encounter ID, MRN, or CSN.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's generated note content is sufficient on its own to compute CM-11's primary
+      unit.</strong> Word count, character count, and lexical diversity require no rater pipeline
+      and no EHR access &mdash; they can be computed for every completed session directly from
+      <code>GET /session/{id}/content</code>.
+    </p>
+    <p>
+      EHR-side note text (Epic <code>HNO_NOTE_TEXT</code> / <code>HNO_PLAIN_TEXT</code>, unconfirmed
+      exploratory field names) would extend this measure to the physician-accepted final note
+      rather than just the Suki draft, and would support the note-length-ratio variant against a
+      human-authored reference note where one exists. Neither addition is required to compute the
+      primary unit today; they refine the reference point, not the computability of the measure.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Cao 2024</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Kanaparthy 2025</span>
+    <span class="source-pill">Wojda 2025</span>
+    <span class="source-pill">Shah 2025</span>
+    <span class="source-pill">Moramarco 2022</span>
+    <span class="source-pill">van Buchem 2024</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-11 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

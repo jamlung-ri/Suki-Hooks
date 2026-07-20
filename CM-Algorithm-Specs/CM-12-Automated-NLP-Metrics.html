@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-12 · Automated NLP Evaluation Metrics — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-iq  { background: var(--violet-light); color: var(--violet); }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--violet-light); border: 1px solid #cac5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d1cdec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cac5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #262240; line-height: 1.55; border-bottom: 1px solid #d1cdec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #d1cdec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #262240; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #d1cdec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--violet); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-12 &mdash; Automated NLP Evaluation Metrics</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-iq">IQ &mdash; Information Quality</span></span>
+      <span><span class="badge badge-warn">Methodological / Calibration Tool</span></span>
+      <span><strong>Also known as:</strong> ROUGE Score &nbsp;&middot;&nbsp; BERTScore &nbsp;&middot;&nbsp; BLEURT &nbsp;&middot;&nbsp; F1 Score &nbsp;&middot;&nbsp; SAIL Score &nbsp;&middot;&nbsp; LLM-as-Evaluator Agreement</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Automated similarity score (ROUGE-L, BERTScore F1, or token-level F1) between AI note and a reference note</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher = closer match to reference</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        <strong>This is a methodological measure, not a clinical outcome.</strong> CM-12 computes
+        n-gram overlap (ROUGE), semantic similarity (BERTScore/BLEURT), or token-level
+        precision/recall (F1) between an AI-generated note and a reference note. It does not
+        assess Suki's documentation quality directly &mdash; it assesses whether an
+        <em>automated evaluation method</em> (used to scale up CM-08/CM-09/CM-10 scoring) agrees
+        closely enough with human judgment to be trusted.
+      </p>
+      <p>
+        Concretely: CM-12 is the correlation-validation step that answers <em>"how do we know our
+        LLM-as-judge pipeline for CM-08/CM-09/CM-10 is trustworthy?"</em> &mdash; it is a
+        calibration check for other measures' evaluation pipelines, not a longitudinal outcome
+        measure of Suki's performance. See Expected Trend below.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        <strong>BERTScore / entity-level F1</strong> &mdash; embedding-based semantic similarity,
+        captures paraphrase-level overlap rather than exact wording, generally considered a
+        stronger candidate for clinical text than raw n-gram overlap.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>ROUGE-1/2/L</strong> &mdash; n-gram overlap, cheap to compute, the most widely
+        reported baseline in this literature. Per Moramarco 2022, a naive Levenshtein (edit)
+        distance baseline performs comparably to BERTScore on clinical notes &mdash; metric choice
+        should be validated per use case, not assumed from general-domain NLP benchmarks.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Expensive metrics may not earn their keep.</strong> Moramarco 2022's central finding: Levenshtein distance performs as well as BERTScore on clinical notes. Before committing to an embedding-based metric pipeline, benchmark it against a cheap edit-distance baseline on the specific note types in scope.</li>
+        <li><strong>A high automated score does not certify clinical quality.</strong> Per the corpus Key Note, these are research tools, not clinical quality measures &mdash; a high ROUGE/BERTScore/F1 says the AI note textually resembles the reference, not that it is clinically accurate (CM-09) or complete (CM-08) on its own.</li>
+        <li><strong>Requires a trusted reference note.</strong> Every variant of this metric needs a physician-authored or otherwise-trusted comparison note per encounter &mdash; the same reference-availability constraint noted for CM-11's note-length-ratio variant.</li>
+        <li><strong>No fixed acceptability threshold exists in this corpus.</strong> Thresholds for "acceptable" ROUGE/BERTScore/F1 in clinical documentation must be locally calibrated against the human/LLM-judge ratings from the CM-08/09/10 pilots &mdash; general-domain NLP benchmarks (e.g., news summarization) do not transfer.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Correlation-Validation Step &mdash; Automated Metric vs. Human/LLM-Judge Agreement</span>
+      <span class="algo-subtitle">Calibration check for the CM-08/09/10 pipeline &mdash; not a standalone outcome</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        For the same sample already scored by physician raters and an LLM-as-judge during the
+        CM-08/CM-09/CM-10 pilot, compute one or more automated NLP metrics on the same note/
+        reference pairs and correlate each metric against the human/LLM-judge composite score.
+        This establishes whether a given automated metric is trustworthy enough to supplement or
+        pre-screen for the rating pipeline at scale &mdash; it is a tool-validation step, not a
+        measure of Suki's clinical performance in its own right.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Automated metric score (ROUGE-L / BERTScore F1 / token F1 &mdash; select per pilot), 0&ndash;1 scale</div>
+            <div class="unit-ref-def">Computed per note/reference pair for every candidate metric under evaluation. Not reported as a standalone dashboard value &mdash; only meaningful in relation to its correlation with human ratings, below.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Reference note (physician-authored or trusted comparison note)</div>
+            <div class="unit-ref-def">The comparison text every candidate metric is scored against.</div>
+            <div class="unit-ref-ambig">&#x26A0; Same reference-availability constraint as CM-11's note-length-ratio variant &mdash; often unavailable outside simulation/RCT designs or once EHR final-note access exists.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Metric-to-human correlation (r)</div>
+            <div class="unit-ref-def">Pearson/Spearman correlation between the automated metric score and the human-rater / LLM-judge composite score (from CM-08/09/10) on the same sample. The gating value for whether the automated metric can be trusted as a scaling/screening signal for those measures.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Scope reminder:</strong> this algorithm validates an evaluation tool, not Suki's documentation quality. A high metric-to-human correlation means the automated metric can be trusted as a scaling signal for CM-08/09/10 &mdash; it says nothing about the AI note's accuracy or completeness on its own.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Metric Validity (r)</span><span class="formula-eq">=</span> CORRELATION(automated_metric_score, human/LLM-judge composite score)  <span class="formula-eq">[per candidate metric, per calibration sample]</span>
+<div class="formula-note">Calibration design:
+  1. Reuse the CM-08/09/10 pilot sample (same note/reference pairs already scored by raters + LLM-judge)
+  2. Compute each candidate automated metric (Levenshtein, ROUGE-1/2/L, BERTScore, token F1) on the same pairs
+  3. Correlate each candidate metric against the human/LLM-judge composite score
+  4. Approve any metric with r >= threshold (locally calibrated, no universal cutoff) as a scaling/screening signal
+  5. Re-run whenever the note-generation model version changes, or the CM-08/09/10 sample is refreshed
+Reporting cadence: one-time or periodic recalibration -- NOT a continuously tracked operational metric.
+No pre/post Suki-adoption trend applies to this measure.</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">calibration_sample = CM_08_09_10_pilot_sample  # reuse, do not re-collect
+
+CANDIDATE_METRICS = ["levenshtein", "rouge1", "rouge2", "rougeL", "bertscore", "token_f1"]
+
+for pair in calibration_sample:
+  reference = pair.reference_note  # physician-authored or trusted comparison note
+  note      = pair.generated_note
+  human_score = pair.human_llm_judge_composite_score  # already computed for CM-08/09/10
+
+  for metric in CANDIDATE_METRICS:
+    metric_score[metric][pair] = COMPUTE_METRIC(metric, note, reference)
+
+for metric in CANDIDATE_METRICS:
+  agreement_r[metric] = CORRELATION(
+    [metric_score[metric][p] for p in calibration_sample],
+    [p.human_llm_judge_composite_score for p in calibration_sample]
+  )
+
+approved_metrics = [m for m in CANDIDATE_METRICS if agreement_r[m] >= LOCAL_THRESHOLD]
+
+dashboard_value = { "agreement_r_by_metric": agreement_r, "approved_metrics": approved_metrics }
+# Re-run this entire calibration when the note-generation model version changes,
+# or when the CM-08/09/10 pilot sample is refreshed -- not on a recurring monitoring cadence.</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Metric-to-Human Agreement by Method &mdash; No Pre/Post Trend Applies</div>
+    <p class="chart-caption">
+      <strong>No pre/post Suki-adoption trend applies to this measure.</strong> CM-12 is a one-time
+      or periodically-repeated calibration check across candidate automated metrics, not a
+      longitudinal outcome &mdash; there is nothing analogous to "before Suki" and "after Suki" for
+      a tool-validation step. The chart below compares candidate metrics against a fixed agreement
+      threshold in a single calibration run; it should be re-run (not tracked as a continuous
+      trend) when the note-generation model changes or the CM-08/09/10 sample is refreshed.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 640 230" width="100%" aria-label="Scatter-style chart comparing candidate automated NLP metrics (Levenshtein, ROUGE-L, BERTScore, LLM-as-judge) by their correlation with human ratings, against a fixed r=0.7 approval threshold, with no time axis">
+        <!-- Axes -->
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
+        <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">Mid</text>
+        <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+
+        <!-- r = 0.7 threshold line -->
+        <line x1="60" y1="62" x2="600" y2="62" stroke="#e8b07a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="604" y="66" font-size="10" fill="#a35d1a">r = 0.7 (approval threshold)</text>
+
+        <!-- Scatter points per candidate metric (no connecting line -- not a time series) -->
+        <circle cx="130" cy="120" r="5" fill="#31628c"/>
+        <circle cx="270" cy="108" r="5" fill="#31628c"/>
+        <circle cx="410" cy="46"  r="5" fill="#31628c"/>
+        <circle cx="530" cy="34"  r="5" fill="#31628c"/>
+
+        <!-- X-axis labels: candidate metrics, not time -->
+        <text x="130" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Levenshtein</text>
+        <text x="270" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">ROUGE-L</text>
+        <text x="410" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">BERTScore</text>
+        <text x="530" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">LLM-as-judge</text>
+
+        <!-- Legend -->
+        <circle cx="64" cy="220" r="4" fill="#31628c"/>
+        <text   x="72" y="224" font-size="10" fill="#1c3a54">Metric-to-human agreement (r), single calibration run</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Generated note content</td>
+        <td>The AI-generated note text scored against the reference for each candidate metric.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>Full transcript</td>
+        <td>Alternate reference text if no physician-authored note exists for the pair.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr>
+        <td>Reference note (physician-authored or trusted comparison note)</td>
+        <td>The comparison text every candidate metric is computed against.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Same reference-availability constraint as CM-11; may come from EHR final note text once accessible.</td>
+      </tr>
+      <tr>
+        <td>Human / LLM-judge composite scores</td>
+        <td>Reused directly from the CM-08/09/10 pilot &mdash; not re-collected for CM-12.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>CM-12 depends on CM-08/09/10 having already run a rating pilot on the same sample.</td>
+      </tr>
+      <tr>
+        <td>Final signed note text</td>
+        <td>Preferred reference source once available &mdash; closes the same Missing Feedback Loop noted for CM-08/09.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+      </tr>
+      <tr>
+        <td>Encounter-to-note linkage</td>
+        <td>Joins Suki <code>session_id</code> to the EHR note record.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR encounter ID, MRN, or CSN.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      Suki's note content and transcript endpoints supply the AI-note side of every metric
+      computation. <strong>Suki has no native reference-note store and does not compute
+      ROUGE/BERTScore/F1 itself</strong> &mdash; metric computation, and the correlation step
+      against human ratings, happen entirely outside Suki, at the evaluation-pipeline level.
+    </p>
+    <p>
+      CM-12 is fully dependent on the CM-08/CM-09/CM-10 rating pipeline having already run: it
+      reuses that pilot's note/reference pairs and human/LLM-judge scores rather than collecting
+      new ones. It should be treated as a validation add-on to those measures' pipelines, not a
+      standalone data-collection effort.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (7)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Moramarco 2022</span>
+    <span class="source-pill">Gebauer 2025</span>
+    <span class="source-pill">Suhail 2026</span>
+    <span class="source-pill">Wang 2021</span>
+    <span class="source-pill">van Buchem 2024</span>
+    <span class="source-pill">Castro 2025</span>
+    <span class="source-pill">Balloch 2024</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-12 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

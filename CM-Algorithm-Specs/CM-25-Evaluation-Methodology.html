@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-25 · Evaluation Methodology Quality — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --slate:      #49545d;
+      --slate-light:#f0f5f9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--slate); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--slate); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-us  { background: var(--slate-light); color: var(--slate); }
+    .badge-cat { background: var(--blue-light); color: var(--blue); }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--slate-light); border: 1px solid #cdd7de; border-left: 4px solid var(--slate); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d6e0e6; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cdd7de; font-size: 12px; font-weight: 700; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #263138; line-height: 1.55; border-bottom: 1px solid #d6e0e6; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .removal-flag {
+      padding: 12px 18px; background: #fdeaeb; border-top: 1px solid #e3aeb2;
+      font-size: 13px; color: #5c0c11; line-height: 1.5;
+    }
+    .removal-flag-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--red); margin-bottom: 6px; }
+    .removal-flag strong { color: #430509; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--slate); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--slate); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--slate); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--slate); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--slate); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+    code { font-family: 'JetBrains Mono','Courier New',monospace; font-size: 0.91em; color: inherit; background: rgba(0, 0, 0, 0.06); border-radius: 3px; padding: 1px 4px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-25 &mdash; Evaluation Methodology Quality</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-us">Meta-Measure &mdash; Not a D&amp;M Outcome</span></span>
+      <span><span class="badge badge-cat">Literature-Corpus Quality Control</span></span>
+      <span><span class="badge badge-warn">&#x26A0; Candidate for Removal &mdash; Team Decision Pending</span></span>
+      <span><strong>Also known as:</strong> Inter-Rater Reliability (ICC) &nbsp;&middot;&nbsp; Evidence-Design Tier &nbsp;&middot;&nbsp; Study Rigor Score &nbsp;&middot;&nbsp; Methodological Quality</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Study-rigor profile &mdash; Inter-rater reliability (ICC) + Evidence-design tier</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher reliability / rigor is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A composite indicator of how trustworthy a given <strong>published study&rsquo;s</strong> measurement
+        approach is &mdash; combining (a) inter-rater reliability, typically the Intraclass Correlation
+        Coefficient (ICC) or RWG agreement statistic among independent human/LLM raters, and (b) an
+        evidence-design tier ranking the study&rsquo;s methodological rigor (e.g., RCT &gt; propensity-matched
+        observational &gt; pre-post QI study with no control).
+      </p>
+      <p>
+        This is <strong>not a property of Suki&rsquo;s product or of any clinical outcome</strong> &mdash; it
+        is a property of how a given source paper in the literature review was conducted. It scores the
+        evidence, not Suki.
+      </p>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>AI-derived categorization, human judgment required.</strong> The corpus&rsquo;s own Key Note
+          is explicit that methodology-quality assessment should be conducted by the human research team, not
+          generated by AI. The content on this card documents the mechanics used elsewhere in the review (ICC,
+          evidence tiering) &mdash; the team should own all final quality judgments, not treat this card&rsquo;s
+          formula as a substitute for expert review.
+        </li>
+        <li>
+          <strong>No single accepted composite formula.</strong> ICC and evidence-design tier are measured on
+          different scales (a continuous 0&ndash;1 statistic vs. an ordinal category) and the corpus does not
+          specify a validated way to combine them into one score. Treat &ldquo;study-rigor profile&rdquo; as a
+          reporting convention &mdash; report both components side by side &mdash; not a validated single number.
+        </li>
+        <li>
+          <strong>Applies to source papers, not to Suki.</strong> Nothing on this page describes Suki&rsquo;s
+          product or clinical quality &mdash; it describes how rigorously a cited study measured something else
+          (documentation time, note accuracy, burnout, etc.). Confirm this is understood before this card
+          circulates outside the review team.
+        </li>
+      </ul>
+    </div>
+
+    <div class="removal-flag">
+      <div class="removal-flag-label">&#x26A0; Removal-Candidate Flag</div>
+      <p style="margin:0">
+        <strong>This measure was flagged as a candidate for removal from the canonical set</strong> &mdash; it
+        evaluates study rigor, not a Suki product/clinical outcome, and does not fit the D&amp;M framework as
+        an AI-derived category. Retained here as a literature-corpus quality-control mechanism pending a team
+        decision on whether to keep it as CM-25 or fold its mechanics directly into each paper&rsquo;s record
+        in the review database instead.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Study Rigor Profile &mdash; ICC + Evidence-Design Tier</span>
+      <span class="algo-subtitle">Applied to literature-review source papers, not to Suki sessions</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Scores a source paper&rsquo;s methodological trustworthiness on two independent axes: statistical
+        agreement among the paper&rsquo;s own raters (ICC), and a design-tier ranking of the study&rsquo;s
+        overall rigor. Used internally to weight how much confidence to place in a paper&rsquo;s reported
+        effect sizes when synthesizing across the literature-review corpus &mdash; it is not computed from any
+        Suki product or clinical data.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Inter-rater reliability (ICC)</div>
+            <div class="unit-ref-def">Continuous 0&ndash;1 statistic, computed per source paper across its own reported independent raters (human and/or LLM-as-judge). Not reported by every paper &mdash; only those that used multi-rater scoring.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Evidence-design tier</div>
+            <div class="unit-ref-def">Ordinal ranking of the study&rsquo;s design (RCT &gt; propensity-matched observational &gt; pre-post QI, no control &gt; case report / simulation-only), assigned during literature-review coding.</div>
+            <div class="unit-ref-ambig">&#x26A0; Tier assignment is a human-review judgment call for borderline designs (e.g., a QI study with partial matching) &mdash; not a mechanical function of reported keywords.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Cross-replicate consistency</div>
+            <div class="unit-ref-def">Where reported (e.g., Kernberg 2023: 53%), the stability of a paper&rsquo;s measures across repeated model runs on the same input &mdash; an additional rigor signal specific to papers evaluating LLM-generated content.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">ICC (two-way random)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Between-Rater Variance</span><span class="formula-den">Between-Rater Variance + Within-Rater (Residual) Variance</span></span>
+<div class="formula-note">Standard two-way random-effects ICC (Shrout &amp; Fleiss 1979 / McGraw &amp; Wong 1996 form)
+Computed per source paper, across that paper's own reported raters
+Reporting grain: one ICC value (where available) + one evidence-tier label, per source paper</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Rigor Profile Assembly (mechanics only, not a combined score)</summary>
+        <div class="pseudo">for paper P in corpus:
+
+  # Component 1: inter-rater reliability (only if P reports independent raters)
+  if P.reports_multi_rater_scores:
+    icc[P] = ICC_TWO_WAY_RANDOM(P.rater_scores)      # or RWG, if P used a within-group agreement design
+  else:
+    icc[P] = NOT_REPORTED
+
+  # Component 2: evidence-design tier (human-assigned during literature-review coding)
+  tier[P] = CASE
+    WHEN P.design == "RCT" (incl. stepped-wedge)                THEN 1   # highest rigor
+    WHEN P.design == "propensity-matched observational"          THEN 2
+    WHEN P.design == "pre-post QI, no control"                   THEN 3
+    WHEN P.design IN ("case report", "simulation-only")          THEN 4   # lowest rigor
+    ELSE tier[P] = REQUIRES_HUMAN_REVIEW                                  # ambiguous design
+
+  # Component 3 (where reported): cross-replicate consistency
+  consistency[P] = P.cross_replicate_consistency_pct  OR  NOT_REPORTED
+
+  # This algorithm deliberately does NOT auto-combine these into one number.
+  # Per the Key Note above, the human research team reviews the profile as a whole.
+  rigor_profile[P] = { icc: icc[P], design_tier: tier[P], cross_replicate: consistency[P] }</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Not Applicable</div>
+    <p class="chart-caption">
+      There is no pre/post Suki-adoption axis for this measure. CM-25 scores a source paper&rsquo;s study
+      rigor at the time it was published &mdash; it does not track anything that changes as a Suki customer
+      adopts or matures on the product. No trend chart applies.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 160" width="100%" aria-label="Not applicable: this measure has no pre/post adoption trend to plot">
+        <line x1="70" y1="20" x2="70" y2="130" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="70" y1="130" x2="650" y2="130" stroke="#dae2e3" stroke-width="1.5"/>
+        <rect x="200" y="52" width="280" height="44" rx="5" fill="#f0f5f9" stroke="#cdd7de"/>
+        <text x="340" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#49545d">Not applicable</text>
+        <text x="340" y="86" text-anchor="middle" font-size="10" fill="#49545d">No pre/post adoption trend exists for this measure</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Study design classification</td>
+        <td>The source paper's reported design (RCT, propensity-matched observational, pre-post QI, case report, simulation-only).</td>
+        <td>&mdash;</td>
+        <td>Read from the paper&rsquo;s Methods section and captured during literature-review coding &mdash; not from Suki or EHR data.</td>
+      </tr>
+      <tr>
+        <td>Rater scores (2+ independent raters, human and/or LLM-as-judge)</td>
+        <td>Per-item or per-note scores from independent raters, where the paper reports them. Basis for the ICC calculation.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>Only available for papers that report multi-rater scoring (e.g., Kernberg 2023, Foo 2025); most corpus papers do not report inter-rater statistics at all.</td>
+      </tr>
+      <tr>
+        <td>Sample size / control-group description</td>
+        <td>Number of encounters/notes evaluated and whether a comparison or control group was used.</td>
+        <td>&mdash;</td>
+        <td>Literature-review coding field; supports the evidence-tier assignment.</td>
+      </tr>
+      <tr>
+        <td>Benchmark dataset availability flag</td>
+        <td>Whether the paper's evaluation used a publicly available benchmark dataset.</td>
+        <td>&mdash;</td>
+        <td>Per Gebauer 2025's scoping review of benchmarking datasets in this domain.</td>
+      </tr>
+      <tr>
+        <td>Cross-replicate consistency (where reported)</td>
+        <td>% of data elements consistent across repeated model runs on the same input.</td>
+        <td>&mdash;</td>
+        <td>Reported only by Kernberg 2023 (53%) in the current corpus.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki data has no role in this measure.</strong> CM-25 evaluates the methodological rigor of a
+      cited source paper&rsquo;s own study design &mdash; it is entirely internal to the literature-review
+      process and does not draw on any Suki API, EHR, or product telemetry.
+    </p>
+    <p>
+      Suki&rsquo;s product and clinical data are the <em>subject</em> being evaluated by the other canonical
+      measures (CM-01 through CM-24); CM-25 evaluates the trustworthiness of the published evidence
+      <em>about</em> those subjects, independent of Suki. If this measure is retained, it should stay scoped
+      to the literature-review team&rsquo;s own workflow and should not appear in any Suki-facing dashboard or
+      customer-reporting context.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (14)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Anderson 2025</span>
+    <span class="source-pill">Baker 2023</span>
+    <span class="source-pill">Biro 2025</span>
+    <span class="source-pill">Castro 2025</span>
+    <span class="source-pill">Falcetta 2023</span>
+    <span class="source-pill">Foo 2025</span>
+    <span class="source-pill">Gebauer 2025</span>
+    <span class="source-pill">Kernberg 2023</span>
+    <span class="source-pill">Moramarco 2022</span>
+    <span class="source-pill">Palm 2025</span>
+    <span class="source-pill">Pearlman 2025</span>
+    <span class="source-pill">Wang 2021</span>
+    <span class="source-pill">Wang 2025</span>
+    <span class="source-pill">van Buchem 2021</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-25 Algorithm Card &nbsp;&middot;&nbsp; July 2026 &mdash; Meta-measure, flagged for removal-decision review</span>
+  </footer>
+
+</div>
+</body>
+</html>

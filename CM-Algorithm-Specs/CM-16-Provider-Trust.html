@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-16 · Provider Trust in AI — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
+    .badge-u   { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2ced8; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-16 &mdash; Provider Trust in AI</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-u">U &mdash; Use</span></span>
+      <span><span class="badge badge-eff">Trust &amp; Reliability</span></span>
+      <span><strong>Also known as:</strong> Trust in AI &nbsp;&middot;&nbsp; Provider Skepticism &nbsp;&middot;&nbsp; Accuracy Confidence</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Trust-in-AI Likert score (1&ndash;5, provisional anchor)</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        The degree to which clinicians perceive AI-generated documentation as accurate and
+        dependable enough to act on without exhaustive verification. This is an
+        <strong>attitudinal precondition</strong> that shapes adoption before and during use: a
+        clinician who doubts output accuracy will either reject the tool or spend significant
+        time re-checking every note, negating efficiency gains. Placed in the Use (U) dimension
+        rather than User Satisfaction (US) because it precedes adoption rather than resulting
+        from it. Distinct from general satisfaction (CM-15, overall experience after use) and
+        from adoption behavior (CM-13, what clinicians actually do).
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        A direct single-item "Trust in AI" Likert rating administered as part of a controlled
+        study, per Afshar 2025b (reported as a secondary RCT outcome) &mdash; the only
+        quantitative instance of this construct in the corpus.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Qualitative thematic coding of verification behavior, hesitation, and skepticism from
+        semi-structured interviews (Shah 2025, Wojda 2025). Given that 2 of the 3 papers
+        measuring this construct are qualitative, this is the more commonly available
+        operationalization in practice.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Sparse quantitative coverage.</strong> Only 3 papers in the corpus formally measure this as a study outcome, and 2 of the 3 are qualitative. No paper reports a validated multi-item trust instrument with published psychometrics &mdash; the 1&ndash;5 anchor above is a provisional convention, not corpus-confirmed.</li>
+        <li><strong>No true pre-exposure baseline for tool-specific trust.</strong> Trust in <em>this specific tool</em> cannot be rated before any use. The Phase 0 wave below should be understood as generalized/dispositional trust in AI documentation tools broadly, not trust in Suki specifically &mdash; a related but distinct precursor construct.</li>
+        <li><strong>Overreliance confound.</strong> A high trust score alone does not distinguish appropriate confidence from unsafe over-reliance (automation bias). This measure should not be reported as a safety signal on its own &mdash; pairing with a verification-behavior or error-detection measure is a scope boundary with CM-19 (Clinical Patient Safety), not something CM-16 resolves by itself.</li>
+        <li><strong>Qualitative-to-quantitative comparability.</strong> Verification-behavior and skepticism themes from interviews (Shah 2025, Wojda 2025) are not directly poolable with the Likert item from Afshar 2025b without a coding rubric that maps themes to an ordinal trust proxy.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Survey Instrument Scoring &mdash; Dose-Response Cohort Comparison</span>
+      <span class="algo-subtitle">Dispositional / experience-based administration</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces a cohort-level trust score for each administration wave, compared across Suki
+        utilization tiers, and paired with a qualitative verification-behavior theme code as a
+        companion signal (not merged into the numeric score). The quantitative score is
+        expected to increase from generalized/dispositional trust (Phase 0) to experience-based
+        trust in Suki specifically (Phase 3), most in the heaviest-utilization cohort.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Trust-in-AI Likert score (1&ndash;5)</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed as the mean of the administered trust item(s) per respondent per wave, then averaged within each utilization-tier cohort.</div>
+            <div class="unit-ref-ambig">&#x26A0; Item wording and anchor are provisional given the thin quantitative base &mdash; see Ambiguities above.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light)</div>
+            <div class="unit-ref-def">Per the PHTI 2025 framework: heavy (&ge;70% of eligible encounters with a completed Suki session), moderate (30&ndash;69%), light (&lt;30%), assigned per provider by week 4 of adoption and held fixed for the comparison window.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Verification-behavior / skepticism theme code (qualitative)</div>
+            <div class="unit-ref-def">Thematic code (e.g., "always re-checks," "spot-checks," "rarely verifies") assigned from interview transcripts, reported alongside &mdash; not averaged into &mdash; the quantitative score.</div>
+            <div class="unit-ref-ambig">&#x26A0; No standardized coding rubric exists in the corpus; establish a project-specific taxonomy before coding, and do not pool with the Likert score.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Trust Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (Trust-in-AI item response, 1&ndash;5) across administered items</span><span class="formula-den">number of items administered</span></span>
+<div class="formula-note">Administration: Phase 0 (dispositional trust in AI documentation tools generally, at/before go-live)
+                Phase 3 (experience-based trust in Suki specifically, months 4-9)
+Cohort: heavy / moderate / light Suki utilization tier, assigned at week 4 of adoption
+Reporting: cohort-mean score per wave; report alongside (not blended with) qualitative verification-behavior theme codes
+Caution: a high score alone is not a safety signal -- see Ambiguities (overreliance confound)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">Phase 0 (T0, at/before go-live, all eligible providers):
+  score[p, T0] = MEAN(trust item responses, 1-5) for provider p
+  # measures generalized/dispositional trust in AI documentation tools, not Suki specifically
+
+Weeks 1-16: track Suki sessions per provider per week
+  utilization_pct[p] = completed sessions / eligible encounters (rolling 4-week)
+  tier[p] = HEAVY if utilization_pct[p] >= 0.70
+            MODERATE if 0.30 <= utilization_pct[p] < 0.70
+            LIGHT if utilization_pct[p] < 0.30
+  (assigned at week 4, held fixed)
+
+Phase 3 (T3, months 4-9, same respondents where possible):
+  score[p, T3] = MEAN(trust item responses, 1-5) for provider p  # now Suki-specific
+  theme_code[p, T3] = CODE_INTERVIEW(transcript[p])  # qualitative, reported separately
+
+For each tier T in {HEAVY, MODERATE, LIGHT}:
+  cohort_score[T, T0] = MEAN(score[p, T0] for p in tier T)
+  cohort_score[T, T3] = MEAN(score[p, T3] for p in tier T)
+  dose_response_delta[T] = cohort_score[T, T3] - cohort_score[T, T0]
+  theme_distribution[T] = FREQUENCY(theme_code[p, T3] for p in tier T)
+
+dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
+  (report alongside theme_distribution[T], not merged into it)</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Trust-in-AI Score / Cohort / Wave</div>
+    <p class="chart-caption">
+      Cohort-mean trust score is projected to increase from generalized/dispositional trust
+      (Phase 0) to Suki-specific, experience-based trust (Phase 3), most in the
+      heavy-utilization cohort. Only 3 papers in this corpus formally measure trust as a study
+      outcome (1 quantitative, 2 qualitative), so this dose-response shape is a plausible
+      projection, not a corpus-replicated finding.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: trust-in-AI score increasing from Phase 0 (dispositional) to Phase 3 (experience-based), more steeply for heavy Suki users than light users">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="150" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Phase 0 (dispositional)</text>
+        <text x="500" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Phase 3 (experience-based)</text>
+        <!-- Heavy-utilization cohort -->
+        <circle cx="150" cy="122" r="4" fill="#b25700"/>
+        <circle cx="500" cy="58" r="4" fill="#005a79"/>
+        <polyline points="150,122 500,58" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Light-utilization cohort -->
+        <circle cx="150" cy="128" r="4" fill="#b25700"/>
+        <circle cx="500" cy="112" r="4" fill="#554c8d"/>
+        <polyline points="150,128 500,112" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Phase 0 baseline (all providers)</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Phase 3 &mdash; heavy-utilization cohort</text>
+        <circle cx="340"  cy="186" r="4" fill="#554c8d"/>
+        <text   x="348"  y="190" font-size="11" fill="#3f3a5c">Phase 3 &mdash; light-utilization cohort</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Trust-in-AI Likert survey (Phase 0)</td>
+        <td>Single or short multi-item rating of dispositional trust in AI documentation tools, administered at or before go-live.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>No validated multi-item corpus instrument exists; item wording is provisional.</td>
+      </tr>
+      <tr>
+        <td>Trust-in-AI Likert survey (Phase 3)</td>
+        <td>Same item(s), reworded to reference Suki specifically, administered months 4&ndash;9 post go-live.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Per Afshar 2025b's secondary-outcome design.</td>
+      </tr>
+      <tr>
+        <td>Verification-behavior interview transcripts</td>
+        <td>Semi-structured interviews probing hesitation, skepticism, and note-verification habits; thematically coded.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Per Shah 2025 / Wojda 2025 methodology; establish a project-specific coding rubric.</td>
+      </tr>
+      <tr>
+        <td>Sessions per provider per week</td>
+        <td>Completed Suki session counts, used to compute rolling utilization percentage and assign heavy/moderate/light tier at week 4.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/status (aggregated). Defines the independent variable for the dose-response design.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Anchors the utilization-tier tracking window.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Does not itself define the Phase 0/Phase 3 split &mdash; the dispositional survey should precede this date where possible.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's role for CM-16 is limited to utilization-cohort scaffolding.</strong> Session
+      counts and timing define the heavy/moderate/light dose-response cohorts used to compare
+      trust trajectories. Suki has no native trust, skepticism, or verification-behavior signal
+      &mdash; this is an attitudinal construct with no API analog, and the platform cannot
+      observe whether a clinician re-checked or accepted a note without independent
+      verification.
+    </p>
+    <p>
+      The Trust-in-AI Likert item(s) and verification-behavior interviews must be administered
+      and captured by the customer or research team, on the schedule above. Given the thin
+      quantitative evidence base (1 of 3 corpus papers), any Suki-sponsored fielding of this
+      measure should be treated as exploratory rather than a replication of an established
+      finding.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Shah 2025</span>
+    <span class="source-pill">Wojda 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-16 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

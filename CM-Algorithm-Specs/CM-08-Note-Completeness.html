@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-08 · Note Completeness and Omission Rate — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-iq  { background: var(--violet-light); color: var(--violet); }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--violet-light); border: 1px solid #cac5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d1cdec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cac5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #262240; line-height: 1.55; border-bottom: 1px solid #d1cdec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #d1cdec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #262240; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #d1cdec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--violet); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-08 &mdash; Note Completeness and Omission Rate</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-iq">IQ &mdash; Information Quality</span></span>
+      <span><span class="badge badge-warn">Pilot / Calibration Design</span></span>
+      <span><strong>Also known as:</strong> Omissions &nbsp;&middot;&nbsp; Omission Errors (%) &nbsp;&middot;&nbsp; Thoroughness (PDQI domain) &nbsp;&middot;&nbsp; Completeness</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">% of notes with &ge;1 clinically relevant element omitted (below Thoroughness threshold)</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        The absence of <strong>clinically relevant information</strong> from an AI-generated note
+        &mdash; content that was present in the encounter (or in a reference note) but does not
+        appear anywhere in the generated note. Distinct from CM-09 (Note Inaccuracy Rate), which
+        measures content that is <em>present but wrong</em>. Omissions are the dominant error type
+        in ambient documentation: all 5 simulation studies in this corpus that categorize error
+        types find omissions account for 71&ndash;86% of all errors, making completeness the single
+        most consistent Information Quality finding in the literature.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        <strong>PDQI-9 / PDSQI-9 Thoroughness domain</strong> &mdash; 5-point Likert subscale
+        scored by physician raters against a reference (transcript or physician-authored note).
+        PDSQI-9 is the AI-note-adapted version; the same LLM-as-judge validation pattern used for
+        CM-09's Accuracy domain (Afshar 2025b) applies to Thoroughness.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>Reference-checklist coverage check</strong> using Suki's
+        <code>source_transcripts[]</code> evidence-linking primitive in reverse &mdash; flags
+        transcript-evidenced clinical elements that have no corresponding sentence anywhere in the
+        generated note. Used as a pre-screening signal and sampling frame for the rating pipeline.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>The Missing Feedback Loop (shared with CM-09).</strong> Suki never sees the physician's post-generation edits. Without the EHR's final signed note and edit/version history, CM-08 can only be measured against the <em>transcript</em>, not the clinician's final accepted note, and only via one-off rater exercises rather than continuous monitoring.</li>
+        <li><strong>Wide published omission rates (71&ndash;86%).</strong> Kernberg 2023 (86%), Arko 2025 (71%) &mdash; rates vary with the reference standard used (transcript-based vs. physician-authored-note-based) and with how "clinically relevant element" is operationalized. The element checklist and reference standard must be fixed before a rate is reported or compared across sources.</li>
+        <li><strong><code>amendment_count</code> is a weak, indirect telemetry proxy.</strong> The vendor metrics mapping links an "amended or addendum note count" field to CM-08 as an indirect proxy. It conflates omission-driven re-opens with accuracy corrections (CM-09) and unrelated edits (formatting, dictation fixes, coding changes) &mdash; it should not be used as a standalone completeness signal, only as a low-cost screening input pending validation against rater scores.</li>
+        <li><strong>Note Amendment Rate (CM-08/CM-09 boundary).</strong> The corpus flags an unresolved "row-13 amendment rate" item &mdash; post-signature re-opens that <em>add</em> missing content belong to CM-08; re-opens that <em>correct</em> wrong content belong to CM-09. Clarify with Suki whether their amendment-rate concept distinguishes these, or covers any pre-signature edit.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Human Rating / LLM-as-Judge Scoring &mdash; PDQI-9/PDSQI-9 Thoroughness Pilot</span>
+      <span class="algo-subtitle">Rapid pilot &rarr; scale on agreement</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        A staged pilot that pulls a sample of session transcript/note pairs (using the
+        <code>source_transcripts[]</code> evidence links as the basis for review), has 2&ndash;3
+        physician raters score the PDQI-9/PDSQI-9 Thoroughness domain, runs an LLM-as-judge prompt
+        on the same rubric over the same pairs, and &mdash; if human/LLM agreement is sufficient
+        (r &ge; 0.7) &mdash; scales the LLM-as-judge scoring to the full session corpus as an
+        ongoing omission-rate signal. Mirrors the CM-09 Inaccuracy Rate pilot design exactly, with
+        the opposite error type and reference direction.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">PDQI-9/PDSQI-9 Thoroughness domain score (1&ndash;5, higher = better / more complete)</div>
+            <div class="unit-ref-def">Scored per note by physician raters during the pilot; scored per note by an LLM judge using the identical rubric for both the pilot calibration set and (if agreement is sufficient) the full corpus. Reported as a cohort mean and, separately, as the % of notes scoring below a completeness threshold (i.e., a derived "omission rate").</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name"><code>source_transcripts[]</code>-based automated omission-flag rate</div>
+            <div class="unit-ref-def">Per note, the % of transcript-evidenced clinical elements (history items, medications, findings) that have no corresponding sentence anywhere in the generated note &mdash; the reverse direction of CM-09's hallucination flag. Computed for every session, not just the rated sample &mdash; serves as a continuous pre-screening signal and as the sampling frame for the next pilot wave.</div>
+            <div class="unit-ref-ambig">&#x26A0; This is a <em>screening</em> signal, not a validated completeness score &mdash; it tells you where to look, not how complete the note is overall. Do not report it as equivalent to the PDQI-9/PDSQI-9 score until correlation with human ratings is established.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Human&ndash;LLM agreement (r)</div>
+            <div class="unit-ref-def">Pearson/Spearman correlation between physician-rater PDQI-9/PDSQI-9 Thoroughness scores and LLM-as-judge scores on the same calibration sample. The gating value for whether automated scoring can be scaled to the full corpus.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap:</strong> until the EHR-side final note and edit history are available (see Missing Feedback Loop above), every score in this algorithm is computed against the <em>transcript</em>, not the clinician's final accepted note &mdash; so even a high-agreement, fully-scaled pipeline measures "completeness vs. what was said," not "completeness vs. what the clinician kept."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Omission Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(notes with PDQI-9/PDSQI-9 Thoroughness score below threshold)</span><span class="formula-den">COUNT(notes rated)</span></span> × 100
+<div class="formula-note">Pilot design (mirrors CM-09 / Afshar 2025b pattern):
+  1. Sample 50-100 completed session transcript/note pairs via source_transcripts[]
+  2. 2-3 physician raters score PDQI-9/PDSQI-9 Thoroughness domain (1-5) per note, flagging missing elements
+  3. LLM-as-judge scores the same pairs using the identical rubric
+  4. Compute human-LLM agreement r on the calibration sample
+  5. If r >= 0.7: scale LLM-as-judge scoring to the full session corpus
+     If r <  0.7: refine rubric/prompt and re-pilot before scaling
+amendment_count is not part of this pilot design; track separately as a low-cost weak-proxy signal only.
+Reporting cadence: pilot wave (one-time calibration) -> ongoing (if scaled), by cohort / utilization tier</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">sample = SELECT 50..100 completed sessions WHERE source_transcripts[] is non-empty
+
+for session in sample:
+  pairs[session] = (session.transcript, session.note_content, session.source_transcripts)
+
+# Step 1: automated pre-screen (runs on full corpus, not just sample)
+for session in all_completed_sessions:
+  expected_elements = EXTRACT_ELEMENTS(session.transcript)  # meds, history items, findings, etc.
+  flags[session] = []
+  for element in expected_elements:
+    if NOT ANY(element supported by sentence in session.note_content):
+        flags[session].append("omission")
+  omission_flag_rate[session] = COUNT(flags[session]) / COUNT(expected_elements)
+
+# Step 2: human + LLM rating (sample only)
+for session in sample:
+  human_score[session]  = MEAN(rater.score(PDQI9_Thoroughness, pairs[session]) for rater in raters)
+  llm_score[session]    = LLM_JUDGE(PDQI9_Thoroughness_rubric, pairs[session])
+
+agreement_r = CORRELATION(human_score, llm_score)  # across sample
+
+if agreement_r >= 0.7:
+  # scale: apply LLM_JUDGE to all_completed_sessions
+  omission_rate = COUNT(s where llm_score[s] < THRESHOLD) / COUNT(all_completed_sessions) * 100
+else:
+  omission_rate = COUNT(s where human_score[s] < THRESHOLD) / COUNT(sample) * 100  # pilot-only estimate
+
+dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(omission_flag_rate), "agreement_r": agreement_r }</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Pilot Calibration: Agreement Up, Omission Rate Down</div>
+    <p class="chart-caption">
+      Across successive pilot waves (e.g., as the rubric/prompt is refined and as model versions
+      improve), the expected pattern is rising human&ndash;LLM agreement (enabling scale-up) and a
+      declining flagged-omission rate. The agreement line crossing the r&nbsp;=&nbsp;0.7 threshold
+      is the point at which automated scoring can replace the manual rating sample.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 640 230" width="100%" aria-label="Two-line chart: human-LLM agreement rising across pilot waves and crossing an r=0.7 threshold, while flagged omission rate declines">
+        <!-- Axes -->
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
+        <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
+        <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">Mid</text>
+        <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
+
+        <!-- r = 0.7 threshold line -->
+        <line x1="60" y1="62" x2="600" y2="62" stroke="#e8b07a" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="604" y="66" font-size="10" fill="#a35d1a">r = 0.7</text>
+
+        <!-- Agreement line (rising, teal) -->
+        <polyline points="100,152 240,110 380,74 520,50" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="100" cy="152" r="4" fill="#005a79"/>
+        <circle cx="240" cy="110" r="4" fill="#005a79"/>
+        <circle cx="380" cy="74"  r="4" fill="#005a79"/>
+        <circle cx="520" cy="50"  r="4" fill="#005a79"/>
+
+        <!-- Omission rate line (declining, violet, dashed) -->
+        <polyline points="100,44 240,68 380,96 520,128" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="100" cy="44"  r="4" fill="#554c8d"/>
+        <circle cx="240" cy="68"  r="4" fill="#554c8d"/>
+        <circle cx="380" cy="96"  r="4" fill="#554c8d"/>
+        <circle cx="520" cy="128" r="4" fill="#554c8d"/>
+
+        <!-- X-axis labels -->
+        <text x="100" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 1</text>
+        <text x="240" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 2</text>
+        <text x="380" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 3</text>
+        <text x="520" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 4 (scaled)</text>
+
+        <!-- Legend -->
+        <circle cx="64" cy="220" r="4" fill="#005a79"/>
+        <text   x="72" y="224" font-size="10" fill="#014157">Human-LLM agreement (r)</text>
+        <circle cx="260" cy="220" r="4" fill="#554c8d"/>
+        <text   x="268" y="224" font-size="10" fill="#3f3a5c">Flagged omission rate</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>source_transcripts[]</code> evidence links</td>
+        <td>Each note sentence mapped to the transcript segment(s) that produced it &mdash; used in reverse here to find transcript elements with no matching note sentence.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>Full transcript</td>
+        <td>Ground truth of what was discussed during the encounter; basis for the expected-element checklist.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr>
+        <td>Generated note content</td>
+        <td>The AI-generated note text to be rated/flagged for omissions.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td><code>amendment_count</code> (amended / addendum note count)</td>
+        <td>Count of post-signature note re-opens. Mapped by the vendor metrics catalog as an indirect CM-08 proxy.</td>
+        <td><span class="source-tag tag-suki">Suki</span> <span class="source-tag tag-ehr">EHR</span></td>
+        <td>&#x26A0; Weak proxy &mdash; conflates omission fixes, accuracy corrections (CM-09), and unrelated edits. Use only as a screening input, not a standalone rate.</td>
+      </tr>
+      <tr>
+        <td>PDQI-9 / PDSQI-9 Thoroughness ratings (physician raters + LLM judge)</td>
+        <td>The pilot's primary unit &mdash; 1-5 Likert Thoroughness domain score per note, from 2-3 physician raters and an LLM-as-judge on the same pairs.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>Solicited externally for the pilot; not Suki-native.</td>
+      </tr>
+      <tr>
+        <td>Final signed note text</td>
+        <td>Gold standard to diff against the Suki draft &mdash; closes the Missing Feedback Loop.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+      </tr>
+      <tr>
+        <td>Note version history / edit audit trail</td>
+        <td>Reconstructs physician edits between Suki output and the final note, including additions the physician made to restore omitted content.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic NoteActivity; EHR audit log table.</td>
+      </tr>
+      <tr>
+        <td>Note signature timestamp + signatory</td>
+        <td>Confirms the physician reviewed and accepted the note.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE.SIGN_INST</code>.</td>
+      </tr>
+      <tr>
+        <td>Encounter-to-note linkage</td>
+        <td>Joins Suki <code>session_id</code> to the EHR note record.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR encounter ID, MRN, or CSN.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <code>source_transcripts[]</code> is the key enabling primitive, used in reverse from CM-09:
+      it makes it possible to check whether every transcript-evidenced clinical element has a
+      corresponding note sentence, supporting omission-flag screening at scale without any EHR
+      integration.
+    </p>
+    <p>
+      Suki also exposes an <code>amendment_count</code>-style telemetry field, but it is a
+      <strong>weak, indirect proxy</strong> for completeness &mdash; it counts note re-opens
+      without distinguishing why the note was re-opened. As with CM-09, Suki has no native survey
+      or human-rating collection mechanism, so PDQI-9/PDSQI-9 Thoroughness ratings must be
+      solicited externally as a pilot. And because of the <strong>Missing Feedback Loop</strong>,
+      every Suki-native or pilot-based score in this card measures completeness <em>relative to
+      the transcript</em>, not relative to the clinician's final signed note &mdash; closing that
+      gap requires either an EHR integration exposing note version history, or a contractual
+      data-sharing provision for note edit logs / final note text.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Kernberg 2023</span>
+    <span class="source-pill">Arko 2025</span>
+    <span class="source-pill">Biro 2025</span>
+    <span class="source-pill">Anderson 2025</span>
+    <span class="source-pill">Foo 2025</span>
+    <span class="source-pill">Baker 2023</span>
+    <span class="source-pill">Bracken 2025</span>
+    <span class="source-pill">Wang 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-08 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

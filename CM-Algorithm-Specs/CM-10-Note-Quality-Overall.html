@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-10 · Note Quality Overall — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+    .badge-iq  { background: var(--violet-light); color: var(--violet); }
+    .badge-us  { background: #f0f5f9; color: #49545d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--violet-light); border: 1px solid #cac5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d1cdec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cac5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #262240; line-height: 1.55; border-bottom: 1px solid #d1cdec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #d1cdec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #262240; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #d1cdec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--violet); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-10 &mdash; Note Quality Overall</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-iq">IQ &mdash; Information Quality</span></span>
+      <span><span class="badge badge-us">Composite / Rollup Measure</span></span>
+      <span><strong>Also known as:</strong> PDQI-9 Score &nbsp;&middot;&nbsp; PDSQI-9 &nbsp;&middot;&nbsp; SAIL Score &nbsp;&middot;&nbsp; Overall PDQI Score &nbsp;&middot;&nbsp; Global Rating &nbsp;&middot;&nbsp; Documentation Quality</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Composite PDQI-9/PDSQI-9 quality score (9 domains, 1&ndash;5 each; range 9&ndash;45)</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        An aggregate quality rating of the AI-generated note across all nine PDQI-9/PDSQI-9
+        domains: Accuracy, Thoroughness, Usefulness, Organization, Comprehensibility,
+        Succinctness, Synthesis, Consistency, and an overall impression item. It is explicitly a
+        <strong>rollup</strong>: two of its nine domains are independently tracked as their own
+        canonical measures elsewhere in this corpus &mdash; <strong>Accuracy is CM-09</strong>
+        (Note Inaccuracy Rate) and <strong>Thoroughness is CM-08</strong> (Note Completeness). The
+        remaining six domains (Usefulness, Organization, Comprehensibility, Succinctness,
+        Synthesis, Consistency) are captured only through this composite.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        <strong>PDQI-9 human-rater composite</strong> &mdash; the original validated 9-item
+        instrument, 5-point Likert per item (max 45), designed for human-authored notes and widely
+        used in simulation studies as the reference standard.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>PDSQI-9 LLM-as-judge composite</strong> &mdash; the AI-note-adapted version.
+        Afshar 2025b validated an LLM-as-judge implementation against physician ratings
+        (3.97&ndash;4.99/5.0 in that RCT), making fully automated composite scoring feasible at
+        scale once agreement is established.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Raw scores are not self-interpreting.</strong> Kernberg 2023 reports approximate scale anchors of 26.2 &asymp; "terrible or bad" and 36.6 &asymp; "good or excellent" (their study mean: 29.7, closer to terrible) &mdash; without publishing the anchor points alongside a raw composite number, the score cannot be read as pass/fail or good/bad on its own.</li>
+        <li><strong>Composite masks which domain moved.</strong> Because Accuracy (CM-09) and Thoroughness (CM-08) are two of the nine inputs, a stable or improving composite score can hide a decline in one domain offset by a gain in another. Always report the composite alongside its component domain scores, not as a replacement for them.</li>
+        <li><strong>SAIL score is a different instrument.</strong> SAIL is a separate standards-based scoring approach, not numerically equivalent to a PDQI-9/PDSQI-9 sum or mean. Do not average or convert between instruments; report on separate tracks if both are collected.</li>
+        <li><strong>Per-section and per-note-type scoring variants exist.</strong> Some studies apply PDQI by note section (e.g., SOAP Subjective / Plan) or by note type (progress note vs. discharge summary) rather than to the whole note. These variants are not interchangeable with a whole-note composite.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Human Rating / LLM-as-Judge Scoring &mdash; PDQI-9/PDSQI-9 Composite Pilot</span>
+      <span class="algo-subtitle">Rapid pilot &rarr; scale on agreement</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        A staged pilot that pulls a sample of session transcript/note pairs, has 2&ndash;3
+        physician raters score all nine PDQI-9/PDSQI-9 domains per note, runs an LLM-as-judge
+        prompt on the same rubric over the same pairs, and &mdash; if human/LLM agreement is
+        sufficient (r &ge; 0.7) &mdash; scales the LLM-as-judge composite scoring to the full
+        session corpus. This is the same rating pipeline used for CM-08 and CM-09; CM-10 reports
+        the full nine-domain composite rather than a single domain.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">PDQI-9/PDSQI-9 composite score (sum of 9 domains, range 9&ndash;45; reported as mean 1&ndash;5)</div>
+            <div class="unit-ref-def">Scored per note by physician raters during the pilot; scored per note by an LLM judge using the identical rubric for both the pilot calibration set and (if agreement is sufficient) the full corpus. Reported as a cohort mean composite value.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Per-domain subscale scores (Accuracy, Thoroughness, Usefulness, Organization, Comprehensibility, Succinctness, Synthesis, Consistency)</div>
+            <div class="unit-ref-def">The nine individual 1&ndash;5 domain scores that sum to the composite. Accuracy is reported separately as CM-09; Thoroughness is reported separately as CM-08.</div>
+            <div class="unit-ref-ambig">&#x26A0; Always compute and retain per-domain scores, not only the composite &mdash; without them, a change in the composite cannot be attributed to a specific quality dimension.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">SAIL score (alternate composite instrument)</div>
+            <div class="unit-ref-def">A separate standards-based AI documentation quality score, collected if the pilot design includes it alongside PDQI-9/PDSQI-9.</div>
+            <div class="unit-ref-ambig">&#x26A0; Not numerically equivalent to the PDQI-9/PDSQI-9 composite &mdash; report on a separate track, do not blend into a single "quality score."</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Human&ndash;LLM agreement (r)</div>
+            <div class="unit-ref-def">Pearson/Spearman correlation between physician-rater composite scores and LLM-as-judge composite scores on the same calibration sample. The gating value for whether automated scoring can be scaled to the full corpus.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap:</strong> as with CM-08 and CM-09, every score in this algorithm is computed against the <em>transcript</em>, not the clinician's final accepted note, until the EHR-side final note and edit history are available.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Composite Quality Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&sum; (domain score, across 9 PDQI-9/PDSQI-9 domains)</span><span class="formula-den">9</span></span>
+<div class="formula-note">Pilot design (shared with CM-08 / CM-09 / Afshar 2025b pattern):
+  1. Sample 50-100 completed session transcript/note pairs via source_transcripts[]
+  2. 2-3 physician raters score all 9 PDQI-9/PDSQI-9 domains (1-5 each) per note
+  3. LLM-as-judge scores the same pairs using the identical rubric
+  4. Compute human-LLM agreement r on the calibration sample, overall and per domain
+  5. If r >= 0.7: scale LLM-as-judge composite scoring to the full session corpus
+     If r <  0.7: refine rubric/prompt and re-pilot before scaling
+Report the composite mean AND all 9 per-domain means -- never the composite alone
+Reporting cadence: pilot wave (one-time calibration) -> ongoing (if scaled), by cohort / utilization tier</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">sample = SELECT 50..100 completed sessions WHERE source_transcripts[] is non-empty
+DOMAINS = ["Accuracy", "Thoroughness", "Usefulness", "Organization",
+           "Comprehensibility", "Succinctness", "Synthesis", "Consistency", "Overall"]
+
+for session in sample:
+  pairs[session] = (session.transcript, session.note_content, session.source_transcripts)
+
+# Human + LLM rating, all 9 domains
+for session in sample:
+  human_domain_scores[session] = { d: MEAN(rater.score(d, pairs[session]) for rater in raters) for d in DOMAINS }
+  llm_domain_scores[session]   = { d: LLM_JUDGE(d + "_rubric", pairs[session]) for d in DOMAINS }
+  human_composite[session] = MEAN(human_domain_scores[session].values())
+  llm_composite[session]   = MEAN(llm_domain_scores[session].values())
+
+agreement_r = CORRELATION(human_composite, llm_composite)  # across sample
+agreement_r_by_domain = { d: CORRELATION([human_domain_scores[s][d] for s in sample],
+                                          [llm_domain_scores[s][d] for s in sample]) for d in DOMAINS }
+
+if agreement_r >= 0.7:
+  # scale: apply LLM_JUDGE to all_completed_sessions
+  composite_score = MEAN(llm_composite[s] for s in all_completed_sessions)
+  domain_scores    = { d: MEAN(llm_domain_scores[s][d] for s in all_completed_sessions) for d in DOMAINS }
+else:
+  composite_score = MEAN(human_composite[s] for s in sample)  # pilot-only estimate
+  domain_scores    = { d: MEAN(human_domain_scores[s][d] for s in sample) for d in DOMAINS }
+
+dashboard_value = { "composite_score": composite_score, "domain_scores": domain_scores, "agreement_r": agreement_r }</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Composite PDQI-9/PDSQI-9 Score / Cohort / Month</div>
+    <p class="chart-caption">
+      The composite score is expected to rise after Suki adoption if its component domains improve
+      &mdash; most directly Thoroughness (CM-08) and Accuracy (CM-09). Because the composite has no
+      universal pass/fail cut point, read the trend against instrument-specific anchors reported in
+      the literature (Kernberg 2023: ~26 &asymp; poor, ~37 &asymp; good on a comparable 9-item scale),
+      not as an absolute target.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: composite PDQI-9/PDSQI-9 quality score rising after Suki adoption, moving from a lower baseline range toward a higher quality range">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High (&asymp;good/excellent)</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low (&asymp;terrible/bad)</text>
+        <!-- X-axis labels -->
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Adoption marker line -->
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
+        <!-- Pre-adoption dots (baseline, amber) -->
+        <circle cx="120" cy="150" r="4" fill="#b25700"/>
+        <circle cx="190" cy="146" r="4" fill="#b25700"/>
+        <circle cx="260" cy="148" r="4" fill="#b25700"/>
+        <polyline points="120,150 190,146 260,148" fill="none" stroke="#b25700" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption dots (rising = improving quality, teal) -->
+        <circle cx="335" cy="144" r="4" fill="#005a79"/>
+        <circle cx="410" cy="118" r="4" fill="#005a79"/>
+        <circle cx="495" cy="92"  r="4" fill="#005a79"/>
+        <circle cx="580" cy="70"  r="4" fill="#005a79"/>
+        <polyline points="335,144 410,118 495,92 580,70" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Connector at adoption boundary -->
+        <line x1="260" y1="148" x2="335" y2="144" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#b25700"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#005a79"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#31628c">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>source_transcripts[]</code> evidence links</td>
+        <td>Each note sentence mapped to the transcript segment(s) that produced it &mdash; supports rater review across all 9 domains.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>Full transcript</td>
+        <td>Ground truth of what was said during the encounter; basis for rater review.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/transcript</code></td>
+      </tr>
+      <tr>
+        <td>Generated note content</td>
+        <td>The AI-generated note text to be rated across all PDQI-9/PDSQI-9 domains.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/content</code></td>
+      </tr>
+      <tr>
+        <td>PDQI-9 / PDSQI-9 composite ratings (physician raters + LLM judge)</td>
+        <td>The pilot's primary unit &mdash; all 9 domain scores per note, from 2-3 physician raters and an LLM-as-judge on the same pairs.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>Solicited externally for the pilot; not Suki-native.</td>
+      </tr>
+      <tr>
+        <td>SAIL score ratings (if collected)</td>
+        <td>Alternate composite instrument, collected on a separate track if the pilot design includes it.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td>Not numerically equivalent to PDQI-9/PDSQI-9; do not blend.</td>
+      </tr>
+      <tr>
+        <td>Final signed note text</td>
+        <td>Gold standard to diff against the Suki draft &mdash; closes the Missing Feedback Loop.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+      </tr>
+      <tr>
+        <td>Note version history / edit audit trail</td>
+        <td>Reconstructs physician edits between Suki output and the final note.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic NoteActivity; EHR audit log table.</td>
+      </tr>
+      <tr>
+        <td>Encounter-to-note linkage</td>
+        <td>Joins Suki <code>session_id</code> to the EHR note record.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR encounter ID, MRN, or CSN.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      Suki's <code>source_transcripts[]</code>, transcript, and note content endpoints supply the
+      transcript/note pairs that the composite rating pipeline is built on &mdash; the same
+      pairs used for the CM-08 and CM-09 pilots.
+    </p>
+    <p>
+      Suki has <strong>no native survey or human-rating collection mechanism</strong>, and does not
+      compute a PDQI-9/PDSQI-9/SAIL composite natively; the 9-domain scoring and composite
+      calculation happen entirely at the rating-pipeline level (human raters plus LLM-as-judge),
+      following the same Afshar 2025b calibration pattern used for CM-08/CM-09. As with those
+      measures, the <strong>Missing Feedback Loop</strong> means every composite score in this
+      card is computed relative to the transcript, not the clinician's final signed note, until an
+      EHR integration or data-sharing provision closes that gap.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Palm 2025</span>
+    <span class="source-pill">Kernberg 2023</span>
+    <span class="source-pill">Baker 2023</span>
+    <span class="source-pill">Foo 2025</span>
+    <span class="source-pill">Bracken 2025</span>
+    <span class="source-pill">Karavassilis 2025</span>
+    <span class="source-pill">van Buchem 2024</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-10 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-24 · Transcription and ASR Accuracy — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--violet); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-sq  { background: var(--violet-light); color: var(--violet); }
+    .badge-cat { background: var(--blue-light); color: var(--blue); }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--violet-light); border: 1px solid #cac5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d1cdec; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cac5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #262240; line-height: 1.55; border-bottom: 1px solid #d1cdec; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #d1cdec; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #262240; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #d1cdec; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--violet); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+    code { font-family: 'JetBrains Mono','Courier New',monospace; font-size: 0.91em; color: inherit; background: rgba(0, 0, 0, 0.06); border-radius: 3px; padding: 1px 4px; }
+    .no-data-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--amber-light); color: var(--amber); font-size: 11px; font-weight: 700; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-24 &mdash; Transcription and ASR Accuracy</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-sq">SQ &mdash; System Quality</span></span>
+      <span><span class="badge badge-cat">ASR / Transcription Quality</span></span>
+      <span><span class="badge badge-warn">&#x26A0; No Suki Data Source Available</span></span>
+      <span><strong>Also known as:</strong> Word Error Rate (WER) &nbsp;&middot;&nbsp; ASR Accuracy &nbsp;&middot;&nbsp; Medical Term Recall (MTR) &nbsp;&middot;&nbsp; Speaker Diarization Accuracy</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Word Error Rate (%) &mdash; with Speaker Diarization Accuracy (%) as companion metric</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower WER is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        <strong>Word Error Rate (WER)</strong> is the percentage of words in an ASR-generated transcript that
+        are incorrect relative to a human-transcribed reference, computed via minimum edit distance
+        (substitutions + deletions + insertions) divided by total reference words. <strong>Speaker Diarization
+        Accuracy</strong> is the percentage of transcript segments correctly attributed to the correct speaker
+        (clinician vs. patient) and is reported alongside WER as this measure&rsquo;s companion metric &mdash;
+        both describe the technical fidelity of the raw transcript that every downstream note is built on.
+      </p>
+      <p>
+        This is the <strong>upstream quality gate</strong>: if the transcript is wrong, the generated note will
+        be wrong regardless of how good the summarization/NLP layer is. It is a distinct measurement point from
+        CM-08/CM-09/CM-10/CM-12 (note-level quality), which score the <em>note</em>, not the transcript that fed it.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Human-transcribed reference transcript, produced by a professional medical transcriptionist blind to
+        the ASR output, aligned word-by-word against the ASR hypothesis using standard edit-distance tooling
+        (e.g., NIST sclite, <code>jiwer</code>).
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        <strong>None established.</strong> No fallback or proxy WER methodology is published in the corpus or
+        in any commercial ambient-AI vendor&rsquo;s public documentation, Suki included &mdash; see Data
+        Requirements below.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>No data source is currently available to populate this measure.</strong> Per the literature
+          review&rsquo;s Key Note: no commercial ambient-AI vendor &mdash; Suki included &mdash; publishes WER
+          or diarization accuracy figures. This is a documented industry-wide opacity pattern dating to van
+          Buchem 2021, not a Suki-specific gap. As of this writing there is no reference transcript, ASR
+          decoder/confidence output, or third-party WER benchmark accessible for Suki sessions, so this
+          measure cannot currently be computed on Suki data (see Data Requirements and Suki Data Scope below).
+        </li>
+        <li>
+          <strong>Only 3 papers in the entire corpus measure this directly</strong> (Anderson 2025 simulation;
+          Wang 2025 evaluation framework; van Buchem 2021 scoping review) &mdash; the published evidence base
+          for expected WER/diarization ranges in ambient clinical scribes generally, not just for Suki, is thin.
+        </li>
+        <li>
+          <strong>Upstream/downstream conflation risk.</strong> ASR errors propagate into note-quality measures
+          (CM-08, CM-09, CM-10, CM-12) with no way to isolate how much of a note-level error originated in the
+          transcript versus downstream summarization &mdash; without WER data, Transcript Error Transmission
+          Rate (Anderson 2025) also cannot be computed.
+        </li>
+        <li>
+          <strong>Word-level scoring is itself ambiguous for clinical speech.</strong> Medical terminology,
+          abbreviations, and multi-speaker crosstalk complicate standard WER alignment; Wang 2025&rsquo;s
+          Medical Term Recall (MTR) submetric exists specifically because generic WER under- or
+          over-penalizes clinical-vocabulary errors depending on tokenization choices. A fixed
+          alignment/tokenization protocol would need to be chosen before any number is reported.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">Word Error Rate &amp; Diarization Accuracy &mdash; Reference Formula</span>
+      <span class="algo-subtitle">Standard ASR evaluation method &mdash; not currently computable on Suki data</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        The standard, well-established method the field uses to score ASR transcription quality against a
+        reference transcript. The formula itself is not in question &mdash; it is the universal WER
+        definition used across speech-recognition research. What is in question is whether the required
+        reference-transcript and ASR-internal data exist for Suki sessions today; they do not (see Data
+        Requirements below).
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Word Error Rate (%)</div>
+            <div class="unit-ref-def">Edit-distance-based transcription error rate, scored per session against a human reference transcript, reported as a cohort mean and distribution.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Speaker Diarization Accuracy (%)</div>
+            <div class="unit-ref-def">% of transcript segments correctly attributed to the correct speaker, scored against ground-truth speaker-turn labels.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Medical Term Recall (MTR)</div>
+            <div class="unit-ref-def">% of clinical vocabulary (drug names, anatomical terms, abbreviations) correctly transcribed &mdash; a submetric of WER that isolates clinically consequential errors from generic ones.</div>
+            <div class="unit-ref-ambig">&#x26A0; Requires a separate clinical-vocabulary tagging pass over the reference transcript; not a byproduct of standard WER tooling.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Word Error Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Substitutions + Deletions + Insertions</span><span class="formula-den">Total Words in Reference Transcript</span></span> &times; 100
+<div class="formula-note">Alignment method: minimum edit distance (Levenshtein) word alignment, ASR hypothesis vs. human reference
+Reporting grain: per session, aggregated to cohort mean + distribution (WER varies with audio quality and speaker overlap)</div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Diarization Accuracy</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Correctly Attributed Speaker-Segments</span><span class="formula-den">Total Speaker-Segments</span></span> &times; 100
+<div class="formula-note">Requires ground-truth speaker-turn labels (who spoke each segment), scored independently of word-level WER</div>
+      </div>
+
+      <div class="pipeline-note">
+        <strong>&#x26A0; Pipeline gap:</strong> this pseudocode describes the standard field method; it cannot
+        currently be executed against Suki data. Suki does not expose a reference transcript, an ASR
+        decoder/confidence output, or ground-truth speaker labels through any documented API endpoint (see
+        Data Requirements below).
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Standard WER + Diarization Scoring</summary>
+        <div class="pseudo">for session in sample:
+  hypothesis = session.asr_transcript          # NOT currently exposed by Suki
+  reference  = session.human_reference_transcript   # NOT currently produced for Suki sessions
+
+  # 1. Word Error Rate
+  alignment = MIN_EDIT_DISTANCE_ALIGN(hypothesis.words, reference.words)
+  substitutions = COUNT(alignment.substitution_ops)
+  deletions     = COUNT(alignment.deletion_ops)
+  insertions    = COUNT(alignment.insertion_ops)
+  wer[session] = (substitutions + deletions + insertions) / COUNT(reference.words) * 100
+
+  # 2. Speaker Diarization Accuracy
+  speaker_labels_true = session.ground_truth_speaker_turns   # NOT currently collected
+  speaker_labels_asr   = session.asr_speaker_turns            # NOT currently exposed
+  diarization_acc[session] = COUNT(correctly_attributed_segments) / COUNT(total_segments) * 100
+
+  # 3. Medical Term Recall (submetric)
+  clinical_terms = TAG_CLINICAL_VOCAB(reference.words)         # separate annotation pass
+  mtr[session] = COUNT(clinical_terms correctly transcribed) / COUNT(clinical_terms) * 100
+
+dashboard_value = {
+  "wer_mean": MEAN(wer), "diarization_acc_mean": MEAN(diarization_acc), "mtr_mean": MEAN(mtr)
+}
+# ⚠ Every input marked "NOT currently exposed / collected" blocks this pipeline from running today.</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; No Data Available</div>
+    <p class="chart-caption">
+      This measure has no plottable trend today. Populating this chart would require either a reference-transcript
+      benchmark that Suki does not currently expose, or an independent third-party ASR audit &mdash; neither
+      exists yet, for Suki or for any competitor product. The chart below is left intentionally empty rather
+      than showing a projected or fabricated improvement curve.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Empty chart: no Word Error Rate or diarization accuracy data is currently available to plot for this measure">
+        <!-- Grid lines (axes shown; no data series) -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <!-- X-axis generic (no adoption boundary applies) -->
+        <text x="160" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Session cohort A</text>
+        <text x="360" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Session cohort B</text>
+        <text x="560" y="215" text-anchor="middle" font-size="10" fill="#8a929d">Session cohort C</text>
+        <!-- Dashed "no data" marker line across the plot area -->
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#a89bc9" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <!-- Centered empty-state label -->
+        <rect x="185" y="92" width="310" height="44" rx="5" fill="#f0eef9" stroke="#cac5e6"/>
+        <text x="340" y="110" text-anchor="middle" font-size="12" font-weight="700" fill="#554c8d">No data available</text>
+        <text x="340" y="126" text-anchor="middle" font-size="10" fill="#554c8d">No reference-transcript benchmark exists to plot</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Reference (human) transcript</td>
+        <td>Ground-truth transcript, produced by a professional medical transcriptionist blind to the ASR output. Required to compute WER at all.</td>
+        <td><span class="source-tag tag-survey">Human Transcriptionist</span></td>
+        <td><strong>Not currently produced or retained</strong> for Suki sessions; would need to be commissioned per session for any WER pilot.</td>
+      </tr>
+      <tr>
+        <td>ASR hypothesis output / word-level confidence</td>
+        <td>Suki&rsquo;s internal ASR decoder output &mdash; word-level timestamps, confidence scores, N-best lists.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><strong>Not exposed via any documented Suki API endpoint today.</strong> The public session content payload returns the final transcript text, not decoder-internal output.</td>
+      </tr>
+      <tr>
+        <td>Ground-truth speaker-turn labels</td>
+        <td>Human-verified record of who spoke each transcript segment. Required to score diarization accuracy.</td>
+        <td><span class="source-tag tag-survey">Human Rater</span></td>
+        <td><strong>Not currently collected</strong> for Suki sessions.</td>
+      </tr>
+      <tr>
+        <td>Third-party / vendor-published WER benchmark</td>
+        <td>An independent or vendor-disclosed WER figure that could substitute for a Suki-specific measurement.</td>
+        <td>&mdash;</td>
+        <td><strong>None published</strong> by Suki or by any commercial competitor (DAX, Abridge, Ambience) as of this writing &mdash; a documented industry-wide gap since van Buchem 2021.</td>
+      </tr>
+      <tr>
+        <td>Session audio</td>
+        <td>Raw audio for the encounter &mdash; the necessary raw input for any future WER pilot.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>GET /session/{id}/recording</code>, retained 30 days. Available today, but insufficient alone without a reference transcript.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki provides the raw input a WER pilot would require &mdash; session audio &mdash; but does not
+      currently expose ASR-internal outputs</strong> (decoder confidence, word-level alignments) or any
+      reference-transcript / human-transcription workflow needed to compute Word Error Rate or Speaker
+      Diarization Accuracy. No data source currently exists to populate this measure.
+    </p>
+    <p>
+      This is not evidence of a Suki-specific weakness: <strong>no commercial ambient-AI vendor publishes this
+      measure today</strong> &mdash; a documented industry-wide opacity pattern dating to van Buchem 2021.
+      Populating this measure for Suki would require either a dedicated benchmarking pilot (commissioning
+      reference transcripts for a sample of sessions and scoring against them) or a data-sharing / API addition
+      exposing ASR decoder output and ground-truth speaker labels.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Anderson 2025</span>
+    <span class="source-pill">Wang 2025</span>
+    <span class="source-pill">van Buchem 2021</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-24 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

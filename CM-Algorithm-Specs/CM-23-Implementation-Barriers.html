@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-23 · Implementation Barriers and Workflow Fit — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+    a { color: var(--teal); }
+    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+    .masthead-meta strong { color: var(--ink); }
+    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+    .badge-nb    { background: var(--teal-light); color: var(--teal); }
+    .badge-eff   { background: var(--blue-light); color: var(--blue); }
+    .badge-us    { background: #f0f5f9; color: #49545d; }
+    .badge-serq  { background: var(--violet-light); color: var(--violet); }
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+    .unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
+    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
+    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
+    .unit-method:first-child { border-right: 1px solid #b2ced8; }
+    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+    .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+    .formula-lhs { font-weight: 700; color: var(--blue); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+    details { margin-top: 8px; }
+    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-23 &mdash; Implementation Barriers and Workflow Fit</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-serq">SerQ &mdash; Service Quality</span></span>
+      <span><span class="badge badge-eff">Implementation &amp; Workflow Fit</span></span>
+      <span><strong>Also known as:</strong> Implementation Barriers &nbsp;&middot;&nbsp; Learning Curve &nbsp;&middot;&nbsp; Workflow Adaptation</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">FIM/AIM/IAM composite implementation-outcome score (1&ndash;5) + qualitative barrier theme frequency</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher fit / fewer barriers is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Factors that impede or facilitate ambient AI scribe adoption and sustained use,
+        including technical barriers, workflow integration challenges, specialty fit, training
+        quality, and organizational support. Mapped to the Service Quality (SerQ) dimension as a
+        property of the deployment/implementation experience, distinct from the tool's own
+        usability (CM-15) or the provider's stated intention to keep using it (CM-14). This
+        measure uniquely combines a validated quantitative implementation-outcome scale with a
+        qualitative barrier-coding component &mdash; neither is sufficient alone.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Feasibility of Intervention Measure (FIM) / Acceptability of Intervention Measure (AIM) /
+        Intervention Appropriateness Measure (IAM) &mdash; each a 4-item, 1&ndash;5 Likert scale
+        (Weiner et al. 2017), reported in the corpus via Suhail 2026.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Structured qualitative-mixed-methods assessment against an implementation-science
+        framework (CFIR, RE-AIM, or SEIPS 3.0) plus non-adopter category analysis &mdash; the
+        pattern used by most of the 12 corpus papers, since only one names a formally scored
+        instrument.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>FIM/AIM/IAM sourcing is itself flagged as unverified in the underlying literature review.</strong> The corpus notes state: "unclear where Suhail 2026 is sourcing FIM/AIM/IUS from, check that these scales appear in the paper and are correctly attributed." Do not treat this instrument as confirmed corpus-validated until independently verified against the primary source.</li>
+        <li><strong>"IUS" is an undefined acronym in the source material</strong> &mdash; possibly a typo for IAM, or a distinct scale. Unresolved; do not field an "IUS" instrument without first clarifying what it refers to.</li>
+        <li><strong>Heterogeneous frameworks are not interchangeable.</strong> RE-AIM, CFIR, SEIPS 3.0, and QUEST are structurally different mixed-methods frameworks, not alternate scoring systems for the same number. Pick one framework per deployment and hold it constant across administration waves.</li>
+        <li><strong>Non-adopter survivorship bias.</strong> Providers who fully disengage from Suki are also the least likely to respond to any follow-up survey, biasing barrier data toward moderate/partial users rather than true non-adopters &mdash; the group implementation barriers matter most for.</li>
+        <li><strong>No standardized qualitative barrier taxonomy exists in the corpus.</strong> AAFP 2021 uses 4 non-adopter types, PHTI 2025 uses 3 adoption cohorts, and other papers use free-form thematic analysis. Any dashboard-level "top barriers" frequency count requires establishing a project-specific coding taxonomy first.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">1</span>
+      <span class="algo-title">FIM/AIM/IAM Instrument Scoring &mdash; Dose-Response Cohort Comparison</span>
+      <span class="algo-subtitle">Early-adoption / mature-use administration</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Produces a cohort-level implementation-outcome composite score for each administration
+        wave, compared across Suki utilization tiers, including a non-adopter cohort unique to
+        this measure. As with usability (CM-15), a tool's implementation fit cannot be rated
+        before any exposure, so the first wave is early adoption, not a true pre-deployment
+        baseline. The composite is expected to increase from early adoption to mature use, most
+        in the heaviest-utilization cohort.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">FIM/AIM/IAM composite score (1&ndash;5)</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed as the mean of the 12 items (4 Feasibility + 4 Acceptability + 4 Appropriateness) per respondent per wave; each subscale is also reported individually, then averaged within each cohort.</div>
+            <div class="unit-ref-ambig">&#x26A0; Instrument sourcing is unverified &mdash; see Ambiguities above.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Suki utilization tier (heavy / moderate / light / non-adopter)</div>
+            <div class="unit-ref-def">Per the PHTI 2025 framework: heavy (&ge;70% of eligible encounters with a completed Suki session), moderate (30&ndash;69%), light (&lt;30%), assigned per provider by week 4 of adoption. A fourth <strong>non-adopter</strong> category (never completed a session, or discontinued entirely) is retained specifically for this measure, unlike CM-01/CM-14/CM-15/CM-16 where non-adopters are typically excluded.</div>
+            <div class="unit-ref-ambig">&#x26A0; Non-adopters are the hardest cohort to survey &mdash; see the survivorship-bias ambiguity above.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Composite Score</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (item response, 1&ndash;5) across 12 FIM/AIM/IAM items</span><span class="formula-den">12</span></span>
+<div class="formula-note">Administration: Wave 1 (early adoption, weeks 4-8 post go-live) -- Wave 2 (mature use, months 4-9)
+Cohort: heavy / moderate / light / non-adopter Suki utilization tier, assigned at week 4
+Reporting: cohort-mean composite and per-subscale (FIM, AIM, IAM) score per wave; report dose-response delta (heavy minus light) and non-adopter barrier profile separately
+Sampling: actively pursue non-adopter response (e.g., via non-Suki-channel outreach) to limit survivorship bias</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">Wave 1 (W1, weeks 4-8, all eligible providers incl. non-adopters):
+  score[p, W1] = MEAN(FIM_items + AIM_items + IAM_items, 1-5) for provider p   # 12 items
+
+Weeks 1-16: track Suki sessions per provider per week
+  utilization_pct[p] = completed sessions / eligible encounters (rolling 4-week)
+  tier[p] = HEAVY        if utilization_pct[p] >= 0.70
+            MODERATE      if 0.30 <= utilization_pct[p] < 0.70
+            LIGHT         if 0 < utilization_pct[p] < 0.30
+            NON_ADOPTER   if utilization_pct[p] == 0 (never completed a session, or discontinued)
+  (assigned at week 4, held fixed)
+
+Wave 2 (W2, months 4-9, same respondents where possible, esp. non-adopters):
+  score[p, W2] = MEAN(FIM_items + AIM_items + IAM_items, 1-5) for provider p
+
+For each tier T in {HEAVY, MODERATE, LIGHT, NON_ADOPTER}:
+  cohort_score[T, W1] = MEAN(score[p, W1] for p in tier T)
+  cohort_score[T, W2] = MEAN(score[p, W2] for p in tier T)
+  dose_response_delta[T] = cohort_score[T, W2] - cohort_score[T, W1]
+
+dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
+  reported alongside cohort_score[NON_ADOPTER] as the barrier-severity floor</div>
+      </details>
+
+    </div>
+  </div>
+
+  <div class="algo-block">
+    <div class="algo-header">
+      <span class="algo-number">2</span>
+      <span class="algo-title">Qualitative Barrier Coding &mdash; Theme Frequency by Cohort</span>
+      <span class="algo-subtitle">Companion to Algorithm 1, not merged into the composite score</span>
+    </div>
+    <div class="algo-body">
+      <p class="algo-purpose">
+        Codes semi-structured interview or open-response survey data against a bespoke barrier
+        taxonomy (technical, workflow-integration, specialty-fit, training, organizational
+        support), then reports theme frequency stratified by adoption cohort &mdash; especially
+        non-adopters vs. heavy users &mdash; to surface which barriers most differentiate
+        successful from unsuccessful implementation.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Barrier theme code (technical / workflow / specialty-fit / training / organizational)</div>
+            <div class="unit-ref-def">Assigned per respondent from interview transcripts or open-response survey items, following the taxonomy pattern observed across the corpus (e.g., AAFP 2021's 4 non-adopter types, Bundy 2024's encounter-suitability theme).</div>
+            <div class="unit-ref-ambig">&#x26A0; No single shared taxonomy exists across the corpus &mdash; define and hold constant a project-specific rubric before coding.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Adoption cohort (from Algorithm 1)</div>
+            <div class="unit-ref-def">Used to stratify theme frequency &mdash; the corpus's universal finding is heterogeneous adoption with distinct heavy, moderate, and non-/low-user cohorts, and clinicians who benefit most share high baseline documentation burden, complex narrative notes, and high patient face-time; non-adopters cluster around low baseline burden, already-optimized workflow, or technical incompatibility.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Theme Frequency [T]</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">Count of respondents in cohort T citing theme</span><span class="formula-den">Total respondents coded in cohort T</span></span>
+<div class="formula-note">Grain: one frequency table per theme category, cross-tabulated by cohort (heavy / moderate / light / non-adopter)
+Reporting: rank themes within the non-adopter cohort separately -- this is the cohort implementation-improvement effort should target first
+Not a numeric score to average with Algorithm 1's composite -- report side by side</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">taxonomy = { TECHNICAL, WORKFLOW_INTEGRATION, SPECIALTY_FIT, TRAINING, ORG_SUPPORT }
+
+for each respondent p with interview/open-response data:
+  themes[p] = CODE_AGAINST_TAXONOMY(transcript_or_response[p], taxonomy)  # 1+ themes per respondent
+
+for each cohort T in {HEAVY, MODERATE, LIGHT, NON_ADOPTER}:
+  for each theme K in taxonomy:
+    theme_frequency[T, K] = COUNT(p in T where K in themes[p]) / COUNT(p in T)
+
+dashboard_value = theme_frequency[NON_ADOPTER, *] ranked descending
+  (report cross-cohort comparison to identify which themes most distinguish
+   non-adopters from heavy users -- the actionable barrier signal)</div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; FIM/AIM/IAM Composite Score / Cohort / Wave</div>
+    <p class="chart-caption">
+      Cohort-mean composite implementation-fit score is expected to increase from early
+      adoption to mature use as training and workflow habituation progress, most in the
+      heavy-utilization cohort. The non-adopter cohort is expected to remain flat and low across
+      both waves &mdash; per the corpus's universal finding, non-adopters cluster around
+      low baseline documentation burden, an already-optimized workflow, or technical
+      incompatibility, none of which resolve simply through more exposure.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: FIM/AIM/IAM composite score increasing from early adoption to mature use for heavy and light Suki users, while the non-adopter cohort stays flat and low">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">5</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">3</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">1</text>
+        <text x="150" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Wave 1 (weeks 4&ndash;8)</text>
+        <text x="500" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Wave 2 (months 4&ndash;9)</text>
+        <!-- Heavy-utilization cohort -->
+        <circle cx="150" cy="132" r="4" fill="#b25700"/>
+        <circle cx="500" cy="66" r="4" fill="#005a79"/>
+        <polyline points="150,132 500,66" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Light-utilization cohort -->
+        <circle cx="150" cy="140" r="4" fill="#b25700"/>
+        <circle cx="500" cy="118" r="4" fill="#554c8d"/>
+        <polyline points="150,140 500,118" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <!-- Non-adopter cohort -->
+        <circle cx="150" cy="178" r="4" fill="#b31e28"/>
+        <circle cx="500" cy="174" r="4" fill="#b31e28"/>
+        <polyline points="150,178 500,174" fill="none" stroke="#b31e28" stroke-width="2" stroke-linejoin="round" stroke-dasharray="2,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#005a79"/>
+        <text   x="92"  y="174" font-size="11" fill="#014157">Heavy-utilization cohort</text>
+        <circle cx="270"  cy="170" r="4" fill="#554c8d"/>
+        <text   x="278"  y="174" font-size="11" fill="#3f3a5c">Light-utilization cohort</text>
+        <circle cx="440"  cy="170" r="4" fill="#b31e28"/>
+        <text   x="448"  y="174" font-size="11" fill="#5c1418">Non-adopter cohort</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>FIM/AIM/IAM survey responses (Wave 1)</td>
+        <td>12-item composite, administered weeks 4&ndash;8 post go-live to all eligible providers, including those who have not completed a session.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Instrument sourcing unverified &mdash; confirm against Weiner et al. 2017 before fielding.</td>
+      </tr>
+      <tr>
+        <td>FIM/AIM/IAM survey responses (Wave 2)</td>
+        <td>Same instrument, administered months 4&ndash;9 post go-live to the same respondent pool where possible.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Prioritize non-adopter response &mdash; the cohort most likely to be lost to follow-up.</td>
+      </tr>
+      <tr>
+        <td>Qualitative barrier interviews / open-response items</td>
+        <td>Semi-structured interviews or free-text survey items on implementation challenges, coded against a project-specific barrier taxonomy.</td>
+        <td><span class="source-tag tag-survey">Survey</span></td>
+        <td>Feeds Algorithm 2; not part of the numeric composite score.</td>
+      </tr>
+      <tr>
+        <td>Sessions per provider per week</td>
+        <td>Completed Suki session counts, used to compute rolling utilization percentage and assign heavy/moderate/light/non-adopter tier at week 4.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>GET /session/{id}/status (aggregated). Defines the independent variable for the dose-response design.</td>
+      </tr>
+      <tr>
+        <td>Onboarding / training completion records</td>
+        <td>Whether and when a provider completed initial Suki onboarding &mdash; a potential covariate for implementation-fit scoring.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Availability depends on whether Suki's customer success/onboarding system tracks this; confirm before relying on it.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date (or non-adoption confirmation)</td>
+        <td>Date of first completed Suki session, or confirmation that a provider never completed one. Anchors the tier and cohort tracking window.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Needed to distinguish true non-adopters from providers simply not yet reached.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's role for CM-23 is limited to utilization-cohort scaffolding and, if tracked,
+      onboarding/training completion records.</strong> Session counts and timing define the
+      heavy/moderate/light/non-adopter cohorts, and session skip/fail-rate trends offer a rough
+      early-friction proxy. Suki has no native implementation-outcome or barrier-coding data
+      &mdash; this measure is entirely provider-reported (survey and interview), with no API
+      analog for feasibility, acceptability, appropriateness, or workflow-fit perception.
+    </p>
+    <p>
+      Reaching the non-adopter cohort is the hardest part of this measure operationally: if Suki
+      has no in-app or in-product channel to reach providers who never engaged, non-adopter
+      outreach must run entirely through the customer's own communication channels, independent
+      of Suki. The FIM/AIM/IAM instrument and qualitative barrier interviews must be administered
+      and captured by the customer or research team, on the schedule above.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (12)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Kanaparthy 2025</span>
+    <span class="source-pill">Nguyen 2023</span>
+    <span class="source-pill">Olson 2025</span>
+    <span class="source-pill">Prasad 2025</span>
+    <span class="source-pill">Shah 2025</span>
+    <span class="source-pill">Suhail 2026</span>
+    <span class="source-pill">Wojda 2025</span>
+    <span class="source-pill">van Buchem 2021</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">Bundy 2024</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">You 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-23 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+</body>
+</html>

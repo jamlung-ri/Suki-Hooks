@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CM-13 · Adoption Behavior and Utilization Rate — Algorithm Card</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #005a79;
+      --teal-light: #e0edf2;
+      --blue:       #31628c;
+      --blue-light: #eaf2f8;
+      --amber:      #b25700;
+      --amber-light:#ffefdf;
+      --red:        #b31e28;
+      --red-light:  #fdeaeb;
+      --violet:     #554c8d;
+      --violet-light:#f0eef9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body {
+      margin: 0;
+      font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--amber); }
+
+    /* ── Page shell ── */
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .page-break { page-break-before: always; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .badge-u   { background: var(--amber-light); color: var(--amber); }
+    .badge-cat { background: var(--blue-light); color: var(--blue); }
+    .badge-conf { background: var(--teal-light); color: var(--teal); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    /* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--amber-light);
+      border: 1px solid #e8c9a3;
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #edd2ab;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #e8c9a3;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--amber);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #402700;
+      line-height: 1.55;
+      border-bottom: 1px solid #edd2ab;
+    }
+    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #edd2ab;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #402700;
+      line-height: 1.5;
+    }
+    .unit-method:first-child { border-right: 1px solid #edd2ab; }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 5px;
+    }
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef5ed;
+      border-top: 1px solid #e8b07a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul { margin: 0; padding-left: 18px; }
+    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+
+    /* ── ALGORITHM BLOCK ── */
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--amber);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title { font-weight: 700; font-size: 13.5px; }
+    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+    .algo-body { padding: 16px 18px; }
+    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+
+    /* Formula display */
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce5ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: 'JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs { font-weight: 700; color: var(--amber); }
+    .formula-eq { color: var(--muted); padding: 0 6px; }
+    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+
+    /* ── ALGO UNITS SUBSECTION ── */
+    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+    .algo-units-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+      color: var(--amber); background: #f9f1e8; padding: 7px 12px; border-bottom: 1px solid #dce5ec;
+    }
+    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px;
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+      white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+    .unit-ref-ambig {
+      font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed;
+      border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4;
+    }
+    .conf-note {
+      font-size: 12.5px; color: #0c4030; margin-top: 8px; padding: 8px 10px; background: var(--teal-light);
+      border-left: 3px solid var(--teal); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45;
+    }
+    .conf-note strong { color: #05271d; }
+
+    /* Collapsible pseudocode */
+    details { margin-top: 8px; }
+    details summary {
+      cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--amber); padding: 4px 0; user-select: none; list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--amber); border-radius: var(--radius);
+      padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6;
+      white-space: pre-wrap; color: #2d3740; overflow-x: auto;
+    }
+
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+    .algo-tabs { display: flex; flex-wrap: wrap; gap: 0; background: #f7f9fb; border-bottom: 1px solid var(--line); }
+    .algo-tab {
+      display: flex; flex-direction: column; align-items: flex-start; padding: 10px 20px 9px; border: none;
+      border-bottom: 3px solid transparent; background: none; cursor: pointer; font-family: inherit;
+      margin-bottom: -1px; transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .algo-tab:hover { background: #eef2f6; }
+    .algo-tab-name { font-size: 13px; font-weight: 700; color: var(--muted); }
+    .algo-tab-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .algo-tab[aria-selected="true"] { background: var(--panel); border-bottom-color: var(--amber); }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--amber); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--amber); opacity: 0.7; }
+    .algo-panel[hidden] { display: none; }
+
+    /* ── TREND CHART ── */
+    .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+    .chart-svg-wrap { overflow-x: auto; }
+
+    /* ── DATA TABLE ── */
+    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+
+    /* ── SUKI SCOPE BOX ── */
+    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+
+    /* ── SOURCES ── */
+    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+
+    /* ── Inline code ── */
+    code { font-family: 'JetBrains Mono','Courier New',monospace; font-size: 0.91em; color: inherit; background: rgba(0, 0, 0, 0.06); border-radius: 3px; padding: 1px 4px; }
+
+    /* ── Footer ── */
+    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── Masthead ── -->
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-13 &mdash; Adoption Behavior and Utilization Rate</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-u">U &mdash; Use</span></span>
+      <span><span class="badge badge-cat">Product Adoption &amp; Utilization</span></span>
+      <span><span class="badge badge-conf">Validated Production SQL</span></span>
+      <span><strong>Also known as:</strong> Utilization Rate &nbsp;&middot;&nbsp; Adoption Rate &nbsp;&middot;&nbsp; Scribe Utilization Rate &nbsp;&middot;&nbsp; Active User Count &nbsp;&middot;&nbsp; Engagement Rate</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Utilization % &mdash; Ambient Notes Created &divide; EHR Appointments Scheduled</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Utilization is the share of a provider&rsquo;s (or cohort&rsquo;s) scheduled EHR appointments in a
+        period for which an ambient note was created by Suki, computed as
+        <strong>Ambient Notes Created &divide; EHR Appointments Scheduled</strong>, where EHR Appointments
+        Scheduled = EHR Created Appointments &minus; EHR Deleted Appointments. Unlike every other measure in
+        this set, this is <strong>entirely Suki-native product telemetry</strong> &mdash; sourced from Suki&rsquo;s
+        Admin Center BigQuery tables, refreshed on a 24-hour sync cadence, available at weekly, monthly,
+        quarterly, and yearly grain, and broken out by specialty and by provider.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        <strong>Suki Admin Center Utilization metric</strong> &mdash; <code>SAFE_DIVIDE(ambient_created, appt_ehr_count)</code>
+        from <code>suki-dev.analytics.SukiUserUsage</code>. This is Suki&rsquo;s own finalized, cross-team-validated
+        metric definition (tracked in a shared BigQuery validation sheet), already run in production against
+        real customer data &mdash; not a first-attempt proxy.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Raw ambient session / note count with no appointment-based denominator. Used only when
+        <code>appt_ehr_count</code> has not yet been reliably ingested for a given customer &mdash; e.g., early
+        in onboarding before the EHR scheduling feed into Suki has stabilized.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Literature-to-metric mapping is not one-to-one.</strong> Published &ldquo;Utilization
+          Rate&rdquo; (Ma 2025: 55%), &ldquo;Adoption Rate&rdquo; (AAFP 2021: 60% post-trial), &ldquo;Scribe
+          Utilization Rate&rdquo; (Afshar 2025: 65.4%), and &ldquo;Active user count&rdquo; are often used
+          interchangeably in papers but map to at least three structurally different Suki Admin Center metrics
+          (Utilization, Adoption Rate, Engagement Rate) with different denominators and different time windows.
+          Confirm which Suki metric a paper&rsquo;s definition actually corresponds to before reporting any
+          cross-study comparison.
+        </li>
+        <li>
+          <strong>Individual vs. cohort denominator capping.</strong> Provider-level utilization queries cap
+          the ratio at 1.0 (100%), but cohort/time-series/specialty-level queries do not apply this cap &mdash;
+          a provider whose ambient-note count exceeds their EHR-scheduled appointment count in a period (e.g.,
+          walk-ins, add-on visits not yet synced, multiple notes per encounter) shows &gt;100% in the aggregate
+          view but is capped at 100% in the per-provider view.
+        </li>
+        <li>
+          <strong>Adoption Rate &ne; Utilization Rate &ne; Engagement Rate.</strong> Despite the literature
+          corpus treating &ldquo;Adoption Rate&rdquo; as an alias of this canonical measure, Suki&rsquo;s own
+          Adoption Rate metric is a trial-to-paid <em>conversion</em> definition (session activity in a 31&ndash;60
+          day post-first-use window), Engagement Rate is a depth-of-use ratio (&ge;2 vs. &ge;1 weekly ambient
+          sessions), and Utilization is the appointment-coverage ratio. These are three genuinely different
+          constructs currently bundled under one canonical measure &mdash; CM-13&rsquo;s definition should be
+          scoped or split going forward.
+        </li>
+        <li>
+          <strong>EHR Appointments Scheduled is Suki-ingested, not a live Epic pull.</strong> It is computed
+          from Suki&rsquo;s own ingestion pipeline (<code>appt_ehr_count</code>), synced every 24 hours &mdash;
+          not a real-time EHR query. Discrepancies against a health system&rsquo;s own scheduling reports
+          should be expected and reconciled before external reporting.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-util"
+              role="tab" aria-selected="true" aria-controls="algo-panel-util">
+        <span class="algo-tab-name">Utilization</span>
+        <span class="algo-tab-sub">Primary CM-13 metric</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-adopt"
+              role="tab" aria-selected="false" aria-controls="algo-panel-adopt">
+        <span class="algo-tab-name">Adoption &amp; Engagement</span>
+        <span class="algo-tab-sub">Suki-native secondary metrics</span>
+      </button>
+      <!-- No Epic tab: EHR Appointments Scheduled is itself a Suki-ingested field, not a raw Epic query. -->
+    </div>
+
+    <!-- ── Panel: Utilization ── -->
+    <div class="algo-panel algo-body" id="algo-panel-util" role="tabpanel">
+      <p class="algo-purpose">
+        Produces the % of scheduled EHR appointments in a period for which an ambient note was created, at
+        cohort, specialty, or provider grain. This is Suki&rsquo;s own production Admin Center metric &mdash;
+        the queries below are adapted directly from Suki&rsquo;s internal metric-validation document, not a
+        Regenstrief-derived proxy.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Utilization %</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed at weekly, monthly, quarterly, and yearly grain, and reportable by cohort, specialty, or individual provider.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">EHR Appointments Scheduled (<code>appt_ehr_count</code>)</div>
+            <div class="unit-ref-def">The denominator. Computed as EHR Created Appointments minus EHR Deleted Appointments, from Suki&rsquo;s ingestion of the customer&rsquo;s EHR scheduling feed.</div>
+            <div class="unit-ref-ambig">&#x26A0; This is a Suki-ingested, 24-hour-synced field &mdash; not a live Epic query. Confirm ingestion completeness for a given customer before treating small utilization swings as meaningful.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Ambient Notes Created (<code>ambient_created</code>)</div>
+            <div class="unit-ref-def">The numerator. Count of ambient sessions that produced a note, per provider per period, from <code>suki-dev.analytics.SukiUserUsage</code>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Utilization</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; Ambient Notes Created (ambient_created)</span><span class="formula-den">&#x2211; EHR Appointments Scheduled (appt_ehr_count)</span></span>
+<div class="formula-note">Reporting grain: weekly / monthly / quarterly / yearly; by cohort, specialty, or provider
+Data source: suki-dev.analytics.SukiUserUsage &mdash; synced every 24 hours, canonical organization scope
+Provider-level values are capped at 1.0 (100%); cohort / specialty / time-series aggregates are not capped
+appt_ehr_count = EHR Created Appointments − EHR Deleted Appointments (Suki-ingested EHR feed)</div>
+      </div>
+
+      <div class="conf-note">
+        <strong>&#x2713; Confidence note:</strong> This query pattern is drawn directly from Suki&rsquo;s
+        internal &ldquo;Admin Center &mdash; Validation of Metric Values&rdquo; document (v1.2). It has been
+        run against production data and cross-checked across teams via a shared validation sheet. Present this
+        algorithm with high confidence &mdash; the open questions in this card concern the CM-13
+        construct-to-metric <em>mapping</em>, not the SQL itself.
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Cohort / Time Series (adapted from Suki Query 3.1)</summary>
+        <div class="pseudo">-- weekly utilization time series, canonical organization
+WITH raw_counts AS (
+  SELECT
+    DATE_TRUNC(factDate, WEEK) AS week_start_date,
+    SUM(COALESCE(ambient_created, 0))  AS total_ambient_created,
+    SUM(COALESCE(appt_ehr_count, 0))   AS total_appt_ehr_count
+  FROM `suki-dev.analytics.SukiUserUsage`
+  WHERE organization_id = :org_id
+    AND factDate BETWEEN DATE_SUB(:as_of, INTERVAL 8 WEEK)
+                      AND DATE_SUB(:as_of, INTERVAL 1 DAY)
+  GROUP BY 1
+)
+SELECT
+  week_start_date,
+  total_ambient_created  AS ambient_notes,
+  total_appt_ehr_count   AS ehr_appointments,
+  SAFE_DIVIDE(total_ambient_created, total_appt_ehr_count) AS utilization
+  -- SAFE_DIVIDE avoids divide-by-zero for weeks with no scheduled appointments
+FROM raw_counts
+ORDER BY week_start_date ASC;</div>
+      </details>
+
+      <details>
+        <summary>Pseudocode &mdash; Provider-Level, Capped (adapted from Suki Query 3.3)</summary>
+        <div class="pseudo">SELECT
+  user_id, first_name, last_name,
+  SUM(COALESCE(ambient_created, 0))  AS total_ambient_created,
+  SUM(COALESCE(appt_ehr_count, 0))   AS total_appt_ehr_count,
+  -- Individual providers are capped at 100%; cohort/specialty views are NOT capped (see ambiguity above)
+  LEAST(1.0, SAFE_DIVIDE(SUM(COALESCE(ambient_created, 0)),
+                          SUM(COALESCE(appt_ehr_count, 0)))) AS utilization
+FROM `suki-dev.analytics.SukiUserUsage`
+WHERE organization_id = :org_id
+  AND factDate BETWEEN DATE_SUB(:as_of, INTERVAL 7 DAY) AND :as_of
+GROUP BY user_id, first_name, last_name
+HAVING utilization IS NOT NULL
+ORDER BY utilization DESC;</div>
+      </details>
+    </div>
+
+    <!-- ── Panel: Adoption & Engagement ── -->
+    <div class="algo-panel algo-body" id="algo-panel-adopt" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        Two related Suki-native metrics that other CM-13 literature aliases actually map to. <strong>Adoption
+        Rate</strong> is a trial-to-paid conversion definition (did a newly onboarded user go on to actually
+        use ambient capture); <strong>Engagement Rate</strong> is a depth-of-use ratio among already-active
+        users. Neither is interchangeable with Utilization &mdash; see the Ambiguities box above.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Adoption Rate %</div>
+            <div class="unit-ref-def">% of users, 31&ndash;60 days after their <code>first_usage_date</code>, who logged at least one ambient session (<code>session_count &gt; 0</code>) &mdash; conditional on their <code>first_ambient_date</code> falling within 30 days of first product use.</div>
+            <div class="unit-ref-ambig">&#x26A0; This is a narrower, trial-window conversion definition &mdash; not the same construct as AAFP 2021&rsquo;s &ldquo;60% post-trial adoption,&rdquo; which used a different trial design. Do not directly compare the two rates without confirming window alignment.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Engagement Rate</div>
+            <div class="unit-ref-def">Among users active at least once in a week/month (<code>ambient_cat &ge; 1</code>), the % who were active twice or more (<code>ambient_cat &ge; 2</code>) &mdash; a within-active-user depth-of-use signal, computed weekly and monthly from <code>SukiEngagementData</code>.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">License Status Count</div>
+            <div class="unit-ref-def">Snapshot count of users by SFDC license bucket (License Active, License Pending, Deactivated), from the most recent sync date &mdash; provides the total-user denominator context for adoption and utilization reporting.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Adoption Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(DISTINCT users in cohort WHERE session_count &gt; 0)</span><span class="formula-den">COUNT(DISTINCT users in cohort)</span></span>
+<div class="formula-note">Cohort = product_type IN ('ASSISTANT','COMPOSE'), status IN ('Live','Conversion Pending','Canceled - Churn')
+  AND first_usage_date within the trailing 365-60 day window of the reference date
+  AND first_ambient_date within 30 days of first_usage_date
+  AND factDate is 31-60 days after first_usage_date (the "did they convert" observation window)
+Reporting grain: monthly time series; also by specialty for the most recent day</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Adoption Rate (adapted from Suki Query 2.1 / 2.2)</summary>
+        <div class="pseudo">filtered_usage = SELECT * FROM SukiUserUsage
+  WHERE organization_id = :org_id
+    AND product_type IN ('ASSISTANT', 'COMPOSE')
+    AND status IN ('Live', 'Conversion Pending', 'Canceled - Churn')
+
+for reference_date in monthly_date_range:
+  cohort = users in filtered_usage WHERE
+    first_usage_date BETWEEN reference_date - 365d AND reference_date - 60d
+    AND first_ambient_date BETWEEN first_usage_date AND first_usage_date + 30d
+    AND DATETIME_DIFF(factDate, first_usage_date, DAY) BETWEEN 31 AND 60
+
+  suki_users      = COUNT(DISTINCT user_id in cohort)
+  adopted_users   = COUNT(DISTINCT user_id in cohort WHERE session_count > 0)
+  adoption_rate[reference_date] = SAFE_DIVIDE(adopted_users, suki_users)</div>
+      </details>
+
+      <details>
+        <summary>Pseudocode &mdash; Engagement Rate (adapted from Suki Query 1.1 / 1.2 / 1.3)</summary>
+        <div class="pseudo">-- weekly grain shown; monthly grain uses mth_ambient_cat instead of wk_ambient_cat
+SELECT
+  factDate,
+  COUNT(DISTINCT IF(wk_ambient_cat >= 1, user_id, NULL)) AS active_users,
+  SAFE_DIVIDE(
+    COUNT(DISTINCT IF(wk_ambient_cat >= 2, user_id, NULL)),
+    COUNT(DISTINCT IF(wk_ambient_cat >= 1, user_id, NULL))
+  ) AS engagement
+FROM `suki-dev.analytics.SukiEngagementData`
+WHERE organization_name IN (SELECT organization_name FROM org_filter)
+  AND time_grain = 'WEEK'
+GROUP BY factDate
+ORDER BY factDate;</div>
+      </details>
+
+      <details>
+        <summary>Pseudocode &mdash; License Status Count (adapted from Suki Query 0.1&ndash;0.3)</summary>
+        <div class="pseudo">active_users    = COUNT(DISTINCT user_id) WHERE status IN ('Live','Conversion Pending','Admin','Non Revenue')
+deactivated     = COUNT(DISTINCT user_id) WHERE status IN ('Evaluation Abandoned','Canceled - Churn')
+pending_users   = COUNT(DISTINCT user_id) WHERE status IN ('No License')
+-- All scoped to organization_id and the most recent factDate sync</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Utilization % / Cohort / Month Since Go-Live</div>
+    <p class="chart-caption">
+      Utilization has no meaningful pre-adoption baseline &mdash; by definition, Ambient Notes Created is zero
+      before a customer goes live with Suki, so this chart shows the post-go-live ramp only, not a pre/post
+      comparison. Literature benchmarks for a matured cohort: 55% (Ma 2025), 65.4% (Afshar 2025). Heavy/light
+      user heterogeneity is universal in every published deployment &mdash; the cohort mean below masks a
+      typically bimodal distribution.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: utilization percentage rising from zero at go-live toward a steady-state range over the following months">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">0%</text>
+        <!-- X-axis labels: no pre-adoption phase for this measure -->
+        <text x="120" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#b25700">Go-live</text>
+        <text x="220" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+1 mo</text>
+        <text x="320" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="420" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+3 mo</text>
+        <text x="520" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="600" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Go-live marker -->
+        <line x1="120" y1="22" x2="120" y2="198" stroke="#b25700" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <!-- Ramp (rising, amber) -->
+        <circle cx="120" cy="196" r="4" fill="#b25700"/>
+        <circle cx="220" cy="150" r="4" fill="#b25700"/>
+        <circle cx="320" cy="112" r="4" fill="#b25700"/>
+        <circle cx="420" cy="90"  r="4" fill="#b25700"/>
+        <circle cx="520" cy="76"  r="4" fill="#b25700"/>
+        <circle cx="600" cy="68"  r="4" fill="#b25700"/>
+        <polyline points="120,196 220,150 320,112 420,90 520,76 600,68" fill="none" stroke="#b25700" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Steady-state benchmark band -->
+        <line x1="70" y1="66" x2="650" y2="66" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="604" y="62" font-size="10" fill="#31628c">~55-65% (published)</text>
+        <!-- Legend -->
+        <circle cx="84" cy="180" r="4" fill="#b25700"/>
+        <text   x="92" y="184" font-size="11" fill="#4a2400">Cohort mean utilization (post go-live)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ambient_created</code></td>
+        <td>Count of ambient sessions that produced a note, per provider per period. The numerator for Utilization.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>suki-dev.analytics.SukiUserUsage</code>, refreshed every 24 hours.</td>
+      </tr>
+      <tr>
+        <td><code>appt_ehr_count</code></td>
+        <td>EHR Appointments Scheduled &mdash; Created minus Deleted. The denominator for Utilization.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Sourced from the customer&rsquo;s EHR scheduling feed, ingested into <code>SukiUserUsage</code> &mdash; not a live Epic query.</td>
+      </tr>
+      <tr>
+        <td><code>first_usage_date</code> / <code>first_ambient_date</code></td>
+        <td>Date of first product use and first ambient (ASR) use per user. Defines the Adoption Rate observation window.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Required to distinguish trial conversion from ongoing utilization.</td>
+      </tr>
+      <tr>
+        <td><code>session_count</code></td>
+        <td>Count of sessions in the observation window; <code>session_count &gt; 0</code> defines an &ldquo;adopted&rdquo; user for the Adoption Rate metric.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Per-user, per-window aggregate.</td>
+      </tr>
+      <tr>
+        <td><code>wk_ambient_cat</code> / <code>mth_ambient_cat</code></td>
+        <td>Weekly/monthly ambient-usage category bucket per user; thresholds of &ge;1 and &ge;2 define the Engagement Rate ratio.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td><code>suki-dev.analytics.SukiEngagementData</code>.</td>
+      </tr>
+      <tr>
+        <td>SFDC license status</td>
+        <td>Per-user license state (Live, Conversion Pending, Admin, Non Revenue, Evaluation Abandoned, Canceled - Churn, No License).</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Mapped into License Active / Deactivated / License Pending buckets; snapshot as of the most recent sync date.</td>
+      </tr>
+      <tr>
+        <td><code>product_type</code></td>
+        <td>Product line flag (ASSISTANT, COMPOSE, etc.) used to scope the Adoption Rate cohort.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Confirm whether Utilization should be similarly scoped &mdash; the Utilization queries do not currently filter on product_type (see Ambiguities).</td>
+      </tr>
+      <tr>
+        <td><code>specialties</code></td>
+        <td>Provider specialty field, used for the specialty-level utilization, adoption, and engagement breakdowns.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Column naming in the source query is inconsistent (&ldquo;specialties&rdquo; singular field, plural name) &mdash; confirm schema before building a downstream report.</td>
+      </tr>
+      <tr>
+        <td><code>organization_id</code></td>
+        <td>Customer organization scope key, required on every query.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>All example queries in this card are scoped to a single canonical organization.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>This measure is Suki-native telemetry end-to-end, and it is the strongest data foundation of any
+      canonical measure in this set.</strong> Every input &mdash; Ambient Notes Created, EHR Appointments
+      Scheduled, license status, session counts, and the ambient-usage category buckets &mdash; comes from
+      Suki&rsquo;s own Admin Center BigQuery tables, using query logic that Suki teams have already run in
+      production and cross-validated against each other, not a first-attempt proxy formula.
+    </p>
+    <p>
+      The one caveat: &ldquo;EHR Appointments Scheduled&rdquo; is a <em>Suki-ingested</em> field, not a live
+      Epic query &mdash; it depends on the completeness and freshness of a given customer&rsquo;s EHR
+      scheduling feed as ingested by Suki (24-hour sync cadence), and there is no separate Epic-native version
+      of this algorithm to fall back on. What most needs work is not the SQL but the <strong>mapping</strong>
+      between this metric family and the literature&rsquo;s various &ldquo;adoption/utilization&rdquo;
+      constructs &mdash; see the Ambiguities box above.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (13)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">AAFP 2021</span>
+    <span class="source-pill">Afshar 2025</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Evans 2025</span>
+    <span class="source-pill">Guo 2025</span>
+    <span class="source-pill">Lukac 2025</span>
+    <span class="source-pill">Ma 2025</span>
+    <span class="source-pill">Omon 2025</span>
+    <span class="source-pill">Shah 2025</span>
+    <span class="source-pill">Tierney 2025</span>
+    <span class="source-pill">You 2025</span>
+    <span class="source-pill">Billings 2025b</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-13 Algorithm Card &nbsp;&middot;&nbsp; July 2026</span>
+  </footer>
+
+</div>
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+</script>
+</body>
+</html>
