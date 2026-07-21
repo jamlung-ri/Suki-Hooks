@@ -148,6 +148,8 @@
     .tag-us  { background: var(--soft); color: var(--muted); }
     .tag-oi  { background: var(--teal-light); color: var(--teal); }
     .tag-iq  { background: #ede9f5; color: #574e8e; }
+    .tag-u   { background: #fbf0e0; color: var(--amber); }
+    .tag-sq  { background: #fbe9ea; color: #a3272f; }
     .tag-warn { background: #fbf0e0; color: var(--amber); }
     .tag-tool { background: var(--soft); color: var(--muted); }
 
@@ -237,8 +239,8 @@
         Use this for review, sharing, or printing the full set.
       </div>
       <div class="card-meta">
-        <span class="tag tag-nb">NB &mdash; Net Benefits</span>
-        <span class="tag tag-eff">CM-01 &middot; CM-02 &middot; CM-03 &middot; CM-04 &middot; CM-05 &middot; CM-06 &middot; CM-07 &middot; CM-09 &middot; CM-17 &middot; CM-18 &middot; CM-19 &middot; CM-20 &middot; CM-21 &middot; CM-22</span>
+        <span class="tag tag-nb">All 25 Canonical Measures</span>
+        <span class="tag tag-eff">CM-01 through CM-25</span>
       </div>
     </a>
   </div>
@@ -318,6 +320,17 @@
       </div>
     </a>
 
+    <a href="CM-08-Note-Completeness.html" class="card">
+      <div class="card-code">CM-08</div>
+      <div class="card-title">Note Completeness and Omission Rate</div>
+      <div class="card-desc">PDQI-9/PDSQI-9 Thoroughness domain. Human rating + LLM-as-judge, mirrors CM-09's pilot design for the opposite error type.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-iq">Information Quality</span>
+        <span class="tag tag-warn">Pilot / Calibration</span>
+      </div>
+    </a>
+
     <a href="CM-09-Note-Inaccuracy.html" class="card">
       <div class="card-code">CM-09</div>
       <div class="card-title">Note Inaccuracy Rate</div>
@@ -326,6 +339,75 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-iq">Information Quality</span>
         <span class="tag tag-warn">Pilot / Calibration</span>
+      </div>
+    </a>
+
+    <a href="CM-10-Note-Quality-Overall.html" class="card">
+      <div class="card-code">CM-10</div>
+      <div class="card-title">Note Quality Overall</div>
+      <div class="card-desc">Composite PDQI-9/PDSQI-9 rollup across all domains, including CM-08 Thoroughness and CM-09 Accuracy.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-iq">Information Quality</span>
+        <span class="tag tag-warn">Composite / Rollup</span>
+      </div>
+    </a>
+
+    <a href="CM-11-Note-Length-Verbosity.html" class="card">
+      <div class="card-code">CM-11</div>
+      <div class="card-title">Note Length and Verbosity</div>
+      <div class="card-desc">Word/character count and lexical diversity, fully automated. Direction not asserted &mdash; read alongside CM-08/CM-10.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-iq">Information Quality</span>
+      </div>
+    </a>
+
+    <a href="CM-12-Automated-NLP-Metrics.html" class="card">
+      <div class="card-code">CM-12</div>
+      <div class="card-title">Automated NLP Evaluation Metrics</div>
+      <div class="card-desc">ROUGE/BERTScore/F1 vs. reference text &mdash; a calibration tool for the rating pipeline, not a Suki-adoption outcome.</div>
+      <div class="card-meta">
+        <span class="tag tag-nb">NB</span>
+        <span class="tag tag-iq">Information Quality</span>
+        <span class="tag tag-warn">Methodological Tool</span>
+      </div>
+    </a>
+
+    <a href="CM-13-Adoption-Utilization.html" class="card">
+      <div class="card-code">CM-13</div>
+      <div class="card-title">Adoption Behavior and Utilization Rate</div>
+      <div class="card-desc">Ambient Notes Created &divide; EHR Appointments Scheduled. Real, validated Suki Admin Console BigQuery &mdash; not an Epic-derived measure.</div>
+      <div class="card-meta">
+        <span class="tag tag-u">U &mdash; Use</span>
+      </div>
+    </a>
+
+    <a href="CM-14-Adoption-Intention.html" class="card">
+      <div class="card-code">CM-14</div>
+      <div class="card-title">Adoption Intention and Long-Term Use</div>
+      <div class="card-desc">TAM/UTAUT behavioral-intention score. Zero corpus papers measure this directly &mdash; theory-derived, not empirically grounded.</div>
+      <div class="card-meta">
+        <span class="tag tag-u">U &mdash; Use</span>
+        <span class="tag tag-warn">Low Confidence</span>
+      </div>
+    </a>
+
+    <a href="CM-15-Provider-Satisfaction.html" class="card">
+      <div class="card-code">CM-15</div>
+      <div class="card-title">Provider Satisfaction and Usability</div>
+      <div class="card-desc">System Usability Scale (SUS) score, 0&ndash;100. Early-experience vs. mature-use wave comparison, no true pre-exposure baseline.</div>
+      <div class="card-meta">
+        <span class="tag tag-us">US &mdash; User Satisfaction</span>
+      </div>
+    </a>
+
+    <a href="CM-16-Provider-Trust.html" class="card">
+      <div class="card-code">CM-16</div>
+      <div class="card-title">Provider Trust in AI</div>
+      <div class="card-desc">Trust/confidence Likert score plus qualitative verification-behavior coding. Only 3 papers measure this construct.</div>
+      <div class="card-meta">
+        <span class="tag tag-u">U &mdash; Use</span>
       </div>
     </a>
 
@@ -389,6 +471,35 @@
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Patient Volume</span>
+      </div>
+    </a>
+
+    <a href="CM-23-Implementation-Barriers.html" class="card">
+      <div class="card-code">CM-23</div>
+      <div class="card-title">Implementation Barriers and Workflow Fit</div>
+      <div class="card-desc">FIM/AIM/IAM composite score plus qualitative barrier-frequency coding. Retains a non-adopter cohort by design.</div>
+      <div class="card-meta">
+        <span class="tag tag-us">SerQ &mdash; Service Quality</span>
+      </div>
+    </a>
+
+    <a href="CM-24-Transcription-ASR-Accuracy.html" class="card">
+      <div class="card-code">CM-24</div>
+      <div class="card-title">Transcription and ASR Accuracy</div>
+      <div class="card-desc">Word Error Rate / diarization accuracy formula given, but no vendor (including Suki) currently publishes this data.</div>
+      <div class="card-meta">
+        <span class="tag tag-sq">SQ &mdash; System Quality</span>
+        <span class="tag tag-warn">No Data Available</span>
+      </div>
+    </a>
+
+    <a href="CM-25-Evaluation-Methodology.html" class="card">
+      <div class="card-code">CM-25</div>
+      <div class="card-title">Evaluation Methodology Quality</div>
+      <div class="card-desc">ICC/evidence-tiering for source-paper rigor. Meta-measure &mdash; flagged as a candidate for removal from the canonical set.</div>
+      <div class="card-meta">
+        <span class="tag tag-tool">Meta-Measure</span>
+        <span class="tag tag-warn">Candidate for Removal</span>
       </div>
     </a>
 
