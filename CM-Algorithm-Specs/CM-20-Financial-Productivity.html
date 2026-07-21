@@ -248,6 +248,14 @@
             <div class="unit-ref-ambig">&#x26A0; Use the same prior-year period as the pre-adoption window to control for seasonal variation in encounter mix and wRVU output.</div>
           </div>
         </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Epic Reconstruction (Proposed)</span>
+          <div>
+            <div class="unit-ref-name">ARPB_TRANSACTIONS.PROC_ID</div>
+            <div class="unit-ref-def">Real, verified professional-billing charge-line table (<code>epic-ehi-kg</code>). <code>PROC_ID</code> (billed CPT/procedure code) and <code>PROC_ID_PROC_NAME</code> are present and joinable to encounter via <code>PAT_ENC_CSN_ID</code>. No pre-computed wRVU field exists in this table &mdash; wRVU totals must be derived by joining <code>PROC_ID</code> to an <strong>external CMS wRVU-weight reference table</strong>, which is not itself part of the EHI schema and must be sourced separately (e.g., the CMS Physician Fee Schedule Relative Value File for the applicable year).</div>
+            <div class="unit-ref-ambig">&#x26A0; The crosswalk's <code>wrvu_total</code> field implies a single pre-computed column; no such column was found in this schema pass. This is a from-scratch reconstruction requiring an external weight-table join, not a verified single-field Epic export.</div>
+          </div>
+        </div>
       </div>
 
       <div class="formula-wrap">
@@ -289,6 +297,20 @@ Exclude: onboarding ramp (default 30 days); use same-period prior year as pre wi
         wRVU output (Algorithm 1) to distinguish a revenue change driven by coding improvement
         from one driven by payer mix or contract changes.
       </p>
+
+      <div class="caution-box">
+        <strong>Open data gap:</strong> No paid/collected-revenue amount was found in this schema
+        pass. <code>ARPB_TRANSACTIONS</code> (professional billing, real and verified in
+        <code>epic-ehi-kg</code>) contains charge-line procedure/diagnosis fields (<code>PROC_ID</code>,
+        <code>PRIMARY_DX_ID_DX_NAME</code>) plus transaction-level dollar fields (<code>AMOUNT</code>,
+        <code>INSURANCE_AMT</code>, <code>PATIENT_AMT</code>, <code>TOTAL_MATCH_AMT</code>) &mdash;
+        but no single pre-computed "net collected revenue" column. <code>TX_TYPE_C_NAME</code>
+        distinguishes charge/payment/adjustment rows and <code>DEBIT_CREDIT_FLAG_NAME</code>
+        distinguishes debits from credits; a net-collected figure would have to be derived by
+        summing payment-type credit transactions net of adjustments per provider/encounter &mdash;
+        an unconfirmed derivation, not a verified equivalent to <code>revenue_paid</code>. Treat
+        this as an open gap rather than assuming charge amounts equal collected revenue.
+      </div>
 
       <div class="algo-units">
         <div class="algo-units-label">Units in this Algorithm</div>
@@ -364,6 +386,14 @@ Exclude: onboarding ramp (default 30 days)</div>
             <div class="unit-ref-name">New vs. established patient split</div>
             <div class="unit-ref-def">E/M level distributions differ between new and established patient visit types. Track both series and report separately to avoid confounding from panel composition changes.</div>
             <div class="unit-ref-ambig">&#x26A0; A shift toward more complex patients raises E/M levels independently of Suki. A stable new/established split with rising Level 4–5 share is a cleaner signal.</div>
+          </div>
+        </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Epic Reconstruction (Proposed)</span>
+          <div>
+            <div class="unit-ref-name">ARPB_TRANSACTIONS.PROC_ID</div>
+            <div class="unit-ref-def">Real, verified charge-line table (<code>epic-ehi-kg</code>). E/M CPT codes (99201&ndash;99215, etc.) would appear as <code>PROC_ID</code> values on charge transactions, joinable to encounter via <code>PAT_ENC_CSN_ID</code>.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Unconfirmed:</strong> filtering/classifying which <code>PROC_ID</code> values correspond to which E/M level requires a CPT-code-to-level mapping step not confirmed in this schema pass &mdash; treat as a needed mapping, not a ready-made field.</div>
           </div>
         </div>
       </div>
@@ -459,39 +489,39 @@ Exclude: onboarding ramp (default 30 days); track new/established separately</di
         <td>Total work RVUs by provider/month</td>
         <td>Sum of wRVU weights for all billed CPT codes per provider per month.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: wrvu_total &nbsp;|&nbsp; Cerner: wrvu_total. Requires CMS wRVU fee schedule for the applicable year.</td>
+        <td>Epic: wrvu_total &mdash; Suki crosswalk field; no such pre-computed column was found in the EHI schema. Verified reconstruction path: <code>ARPB_TRANSACTIONS.PROC_ID</code> (billed procedure code, <code>epic-ehi-kg</code>) joined to an external CMS wRVU-weight reference table (not part of the EHI schema). Cerner: wrvu_total, not yet researched. Requires CMS wRVU fee schedule for the applicable year.</td>
       </tr>
       <tr class="group-row"><td colspan="4">Algorithm 2 — Paid Revenue per Provider per Month</td></tr>
       <tr>
         <td>Total paid revenue by provider/month ($)</td>
         <td>Adjusted net revenue collected from payers, attributed to provider and encounter month.</td>
         <td><span class="source-tag tag-rcm">RCM</span></td>
-        <td>Epic: revenue_paid &nbsp;|&nbsp; Cerner: revenue_paid. Use net (collected) not gross (charged) figures.</td>
+        <td>Epic: revenue_paid &mdash; no single pre-computed field was found in the EHI schema pass; see the open-gap caution in Algorithm 2. <code>ARPB_TRANSACTIONS</code> (verified, <code>epic-ehi-kg</code>) has charge-line and transaction dollar fields but not a ready net-collected total. Cerner: revenue_paid, not yet researched. Use net (collected) not gross (charged) figures.</td>
       </tr>
       <tr class="group-row"><td colspan="4">Algorithm 3 — E/M Level Improvement</td></tr>
       <tr>
         <td>E/M new patient level counts (CPT 99201&ndash;99205)</td>
         <td>Per-provider, per-month count of new patient E/M encounters at each complexity level.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: em_new_level1_count &ndash; em_new_level5_count &nbsp;|&nbsp; Cerner: em_level1_count &ndash; em_level5_count.</td>
+        <td>Epic: em_new_level1_count &ndash; em_new_level5_count &mdash; Suki crosswalk fields. Verified reconstruction path: <code>ARPB_TRANSACTIONS.PROC_ID</code> (<code>epic-ehi-kg</code>) filtered to CPT 99201&ndash;99205; the CPT-to-level classification step is unconfirmed (see Algorithm 3). Cerner: em_level1_count &ndash; em_level5_count, not yet researched.</td>
       </tr>
       <tr>
         <td>E/M established patient level counts (CPT 99211&ndash;99215)</td>
         <td>Per-provider, per-month count of established patient E/M encounters at each complexity level.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: em_est_level1_count &ndash; em_est_level5_count &nbsp;|&nbsp; Cerner: em_level1_count &ndash; em_level5_count.</td>
+        <td>Epic: em_est_level1_count &ndash; em_est_level5_count &mdash; Suki crosswalk fields. Same <code>ARPB_TRANSACTIONS.PROC_ID</code> reconstruction path as above, filtered to CPT 99211&ndash;99215; classification unconfirmed. Cerner: em_level1_count &ndash; em_level5_count, not yet researched.</td>
       </tr>
       <tr>
         <td>Total E/M visits by provider/month</td>
         <td>Denominator for the Level 4&ndash;5 share calculation.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: em_total_count &nbsp;|&nbsp; Cerner: em_total_count.</td>
+        <td>Epic: em_total_count &nbsp;|&nbsp; Cerner: em_total_count. Suki crosswalk field; derivable as the total count of classified E/M <code>PROC_ID</code> values from the Algorithm 3 reconstruction above.</td>
       </tr>
       <tr>
         <td>Avg ICD-10 codes per encounter</td>
         <td>Proxy indicator for documentation completeness when E/M level data are unavailable.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: icd10_codes_per_enc &nbsp;|&nbsp; Cerner: icd10_codes_per_enc. Supplemental to E/M level data, not a replacement.</td>
+        <td>Epic: icd10_codes_per_enc &nbsp;|&nbsp; Cerner: icd10_codes_per_enc. Verified reconstruction path: <code>ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</code> (<code>epic-ehi-kg</code>) &mdash; see CM-21 Algorithm 1. Supplemental to E/M level data, not a replacement.</td>
       </tr>
       <tr class="group-row"><td colspan="4">Shared — All Three Algorithms</td></tr>
       <tr>

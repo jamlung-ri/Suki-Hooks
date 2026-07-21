@@ -365,7 +365,7 @@ dashboard_value = { "agreement_r_by_metric": agreement_r, "approved_metrics": ap
         <td>Final signed note text</td>
         <td>Preferred reference source once available &mdash; closes the same Missing Feedback Loop noted for CM-08/09.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+        <td>&#x26A0; Note text sourcing is secondary to this measure's purpose (validating the rating pipeline, not the EHR integration). If EHR-sourced reference text is needed: <code>HNO_NOTE_TEXT</code> is referenced in Epic's own docs as the reporting-grade table but is not present in this EHI export snapshot; <code>HNO_PLAIN_TEXT</code> is the closest verified candidate, but plain-text-only coverage (excludes rich-text notes) means it may understate metric performance on notes it can't see. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
       </tr>
       <tr>
         <td>Encounter-to-note linkage</td>

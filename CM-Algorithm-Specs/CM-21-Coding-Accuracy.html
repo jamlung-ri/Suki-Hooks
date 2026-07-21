@@ -259,6 +259,14 @@
             <div class="unit-ref-ambig">&#x26A0; This is a completeness measure only. Do not use it as a standalone accuracy measure. A provider with 6 codes/encounter and a 0% denial rate is a stronger signal than one with 8 codes and a rising denial rate.</div>
           </div>
         </div>
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Epic Reconstruction (Proposed)</span>
+          <div>
+            <div class="unit-ref-name">ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</div>
+            <div class="unit-ref-def">Real, verified table (<code>epic-ehi-kg</code>) &mdash; lists all diagnoses on a charge-entry session in which the charge was posted, one row per diagnosis line (<code>TX_ID</code> + <code>LINE</code>). Count of distinct diagnosis lines per charge is a direct, verified proxy for ICD-10 coding depth. Join to encounter via <code>ARPB_TRANSACTIONS.TX_ID</code> &rarr; <code>PAT_ENC_CSN_ID</code>, since <code>ARPB_CHG_ENTRY_DX</code> itself carries only <code>TX_ID</code>/<code>LINE</code>, not the encounter CSN directly.</div>
+            <div class="unit-ref-ambig">&#x26A0; This counts diagnosis lines per <em>charge</em>, not necessarily per <em>encounter</em>, if a single encounter generates multiple charge transactions &mdash; aggregate across all <code>TX_ID</code>s for a given <code>PAT_ENC_CSN_ID</code> before comparing to the encounter-level <code>icd10_codes_per_enc</code> crosswalk field.</div>
+          </div>
+        </div>
       </div>
 
       <div class="formula-wrap">
@@ -266,7 +274,9 @@
 <div class="formula-note">Reporting grain: one value per cohort per calendar month
 Pre / post boundary: each provider's Suki adoption date (first completed session)
 Exclude: onboarding ramp (default 30 days)
-Data source: EHR — icd10_codes_per_enc (Epic / Cerner)</div>
+Data source: EHR — icd10_codes_per_enc (Epic / Cerner)
+Verified Epic reconstruction: COUNT(DISTINCT DX_ID_DX_NAME) from ARPB_CHG_ENTRY_DX,
+grouped by TX_ID → PAT_ENC_CSN_ID (via ARPB_TRANSACTIONS)</div>
       </div>
 
       <details>
@@ -374,6 +384,7 @@ IMO → ICD-10 mapping step required if Suki returns IMO codes</div>
           <div>
             <div class="unit-ref-name">% of Level 4&ndash;5 claims denied</div>
             <div class="unit-ref-def">Denied Level 4–5 claims divided by total Level 4–5 claims submitted in the period. Focus on high-complexity claims because documentation quality most influences coding accuracy and denial risk at these levels.</div>
+            <div class="pipeline-note">&#x26A0; <strong>No denial/remittance table found:</strong> this schema pass (<code>epic-ehi-kg</code>) surfaced no claim-denial or remittance-advice table. <code>ARPB_TRANSACTIONS</code> is charge/payment/adjustment transaction data, not payer remittance/denial-reason data. Denial data likely lives in a separate claims-clearinghouse or payer-side system, not the standard EHI export &mdash; this sub-algorithm cannot currently be reconstructed from EHI alone.</div>
             <div class="unit-ref-ambig">&#x26A0; Distinguish coding-related denials from authorization and eligibility denials using denial reason codes. Only coding-related denials are relevant to this measure.</div>
           </div>
         </div>
@@ -511,7 +522,7 @@ Exclude: onboarding ramp (default 30 days)</div>
         <td>Avg ICD-10 diagnosis codes per encounter</td>
         <td>Average distinct ICD-10 codes assigned per completed encounter, per provider per month.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: icd10_codes_per_enc &nbsp;|&nbsp; Cerner: icd10_codes_per_enc.</td>
+        <td>Epic: icd10_codes_per_enc &mdash; Suki crosswalk field. Verified reconstruction path: <code>ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</code> (<code>epic-ehi-kg</code>), joined via <code>ARPB_TRANSACTIONS.TX_ID</code> &rarr; <code>PAT_ENC_CSN_ID</code> (see Algorithm 1). Cerner: icd10_codes_per_enc, not yet researched.</td>
       </tr>
       <tr class="group-row"><td colspan="4">Algorithm 2 — ICD-10 Suggestion Match Rate</td></tr>
       <tr>
@@ -537,13 +548,13 @@ Exclude: onboarding ramp (default 30 days)</div>
         <td>Denied Level 4&ndash;5 claim count</td>
         <td>Count of Level 4–5 claims denied for coding-related reasons per provider per period.</td>
         <td><span class="source-tag tag-rcm">RCM</span></td>
-        <td>Epic: denial_l45_count &nbsp;|&nbsp; Cerner / Athena: claims system (varies). Must be filtered to coding-related denial reason codes.</td>
+        <td>Epic: denial_l45_count &mdash; Suki crosswalk field. No claim-denial or remittance-advice table was found in this EHI schema pass (see Algorithm 3); likely lives in a separate claims-clearinghouse or payer-side system, not the standard EHI export. Cerner / Athena: claims system (varies, not yet researched). Must be filtered to coding-related denial reason codes.</td>
       </tr>
       <tr>
         <td>Total Level 4&ndash;5 claims submitted</td>
         <td>Denominator for the denial rate calculation.</td>
         <td><span class="source-tag tag-rcm">RCM</span></td>
-        <td>Epic: total_l45_submitted &nbsp;|&nbsp; Cerner / Athena: claims system (varies).</td>
+        <td>Epic: total_l45_submitted &mdash; same gap as above; not found in this EHI schema pass. Cerner / Athena: claims system (varies, not yet researched).</td>
       </tr>
       <tr>
         <td>E/M level counts (new and established)</td>
@@ -595,6 +606,13 @@ Exclude: onboarding ramp (default 30 days)</div>
       <strong>adoption boundary</strong> (pre/post split) and the
       <strong>active usage flag</strong> (cohort denominator).
       ICD-10 coding depth and claim denial data reside entirely in the EHR and RCM system.
+    </p>
+    <p style="margin-top:10px">
+      Against the verified EHI schema (<code>epic-ehi-kg</code>), Algorithm 1&rsquo;s ICD-10 depth
+      reconstruction is solid &mdash; <code>ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</code> is a real, confirmed
+      table. Algorithm 3 is not: no denial/remittance table was found in this schema pass, so
+      denial-rate reconstruction likely requires a claims-clearinghouse or payer-side data source
+      outside the EHI export, not just deeper EHI exploration.
     </p>
   </div>
 

@@ -402,6 +402,57 @@
       overflow-x: auto;
     }
 
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 9px 20px 8px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+    .algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
+    .algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
+    .algo-panel[hidden] { display: none; }
+
     /* ── TREND CHART ── */
     .chart-wrap {
       background: var(--panel);
@@ -617,13 +668,23 @@
   <!-- ── ALGORITHM: DASHBOARD METRIC ── -->
   <p class="section-label">Algorithm</p>
 
-  <div class="algo-block">
-    <div class="algo-header">
-      <span class="algo-number">1</span>
-      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
-      <span class="algo-subtitle">For the Suki admin console</span>
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
     </div>
-    <div class="algo-body">
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic" role="tabpanel">
       <p class="algo-purpose">
         Produces the single number shown on the administrative dashboard: the average
         after-hours documentation minutes per provider in the cohort for a given month.
@@ -672,6 +733,62 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
       </details>
 
     </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        Epic Signal/UAL &mdash; the true all-activity audit-log source behind after-hours
+        documentation minutes &mdash; is a separate, proprietary reporting product and is
+        <strong>not present in the standard EHI export</strong> documented by the Epic EHI
+        knowledge graph (<code>epic-ehi-kg</code>). No equivalent all-activity timestamp table
+        was found in this schema pass. The closest EHI-only reconstruction uses note-authoring
+        timestamps from <code>HNO_INFO</code>, filtered to outside a defined scheduled-hours
+        window &mdash; but this captures only when notes were created or last edited, not the
+        full range of EHR activity (inbox messaging, order entry, chart review) that Signal/UAL
+        would count.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def"><code>CREATE_INSTANT_DTTM</code> (note create instant) and <code>LST_FILED_INST_DTTM</code> (last-filed instant), both UTC datetimes, keyed by <code>ENTRY_USER_ID</code>. Flag each note event as after-hours if it falls outside a defined scheduled-hours window, then sum per provider per month.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Weak/partial proxy, not equivalent to the canonical measure.</strong> This only captures note-authoring timestamps &mdash; it misses after-hours inbox activity, order entry, and chart/results review entirely, all of which Signal/UAL would include. Treat any rate computed this way as a documentation-only lower bound on true after-hours EHR time, not a substitute for it.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">After-Hours Note Minutes (Partial)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(HNO_INFO events where CREATE_INSTANT_DTTM or LST_FILED_INST_DTTM falls outside scheduled-hours window)</span><span class="formula-den">grouped by ENTRY_USER_ID, per month</span></span>
+<div class="formula-note">Documentation-only proxy — excludes inbox, orders, and results-review activity entirely
+Not a substitute for Signal/UAL; use only when true EHR audit-log access is unavailable</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed, partial)</summary>
+        <div class="pseudo">SELECT h.ENTRY_USER_ID,
+       h.NOTE_ID,
+       h.CREATE_INSTANT_DTTM,
+       h.LST_FILED_INST_DTTM
+FROM HNO_INFO h
+WHERE IS_OUTSIDE_SCHEDULED_HOURS(h.CREATE_INSTANT_DTTM, provider_schedule)
+   OR IS_OUTSIDE_SCHEDULED_HOURS(h.LST_FILED_INST_DTTM, provider_schedule)
+-- ⚠ No Epic Signal/UAL equivalent found in the EHI schema pass — this only reconstructs
+--   the note-authoring slice of after-hours time, not inbox/orders/chart-review activity</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <div class="key-finding">
+    <strong>Key gap:</strong> Epic Signal/UAL, the source of true all-activity audit-log time
+    behind after-hours documentation minutes, is a separate proprietary reporting product and is
+    not part of the standard EHI export explored in this schema pass. The Epic tab's
+    <code>HNO_INFO</code>-based reconstruction is the closest EHI-only proxy available, but it is
+    a partial, documentation-only signal &mdash; not a verified equivalent to Signal/UAL.
   </div>
 
   <!-- ── EXPECTED TREND ── -->
@@ -747,7 +864,7 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
         <td>EHR audit log (timestamped)</td>
         <td>Per-user, per-event activity log showing when each provider interacted with the EHR and for how long. The primary data source for computing documentation minutes.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic Signal / UAL; equivalent in Cerner, Athena. Must include provider ID, timestamp, event type, and duration.</td>
+        <td>Epic Signal / UAL &mdash; a separate, proprietary reporting product, <strong>not present in the standard EHI export</strong> documented in <code>epic-ehi-kg</code>. It cannot be reconstructed from EHI tables alone. Equivalent in Cerner, Athena (not yet researched). See the Epic tab for the closest EHI-only proxy (partial, note-timestamps only). Must include provider ID, timestamp, event type, and duration.</td>
       </tr>
       <tr>
         <td>Provider scheduled working hours</td>
@@ -759,7 +876,7 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
         <td>Note signature timestamp</td>
         <td>Date and time of initial note closure/signature and any subsequent addenda, per encounter per provider.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Needed to bound documentation scope (encounter open → final signature).</td>
+        <td>Needed to bound documentation scope (encounter open → final signature). Verified EHI proxy (epic-ehi-kg): <code>HNO_INFO.CREATE_INSTANT_DTTM</code> (note create instant) and <code>LST_FILED_INST_DTTM</code> (last-filed instant) &mdash; see the Epic tab. Captures note-authoring timestamps only, not the full EHR activity (inbox, orders) Signal/UAL would count.</td>
       </tr>
       <tr>
         <td>Provider identifiers</td>
@@ -829,5 +946,26 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
   </footer>
 
 </div>
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    // Activate the first tab on load
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>

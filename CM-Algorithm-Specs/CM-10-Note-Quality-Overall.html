@@ -396,13 +396,13 @@ dashboard_value = { "composite_score": composite_score, "domain_scores": domain_
         <td>Final signed note text</td>
         <td>Gold standard to diff against the Suki draft &mdash; closes the Missing Feedback Loop.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+        <td>&#x26A0; No verified Epic table contains full physician-edited/final-signed note text with reliable coverage. <code>HNO_NOTE_TEXT</code> is referenced in Epic's own schema docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>; <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but its own documentation says it only contains notes stored in <em>plain</em> text and explicitly excludes rich-text notes &mdash; coverage is likely incomplete. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
       </tr>
       <tr>
         <td>Note version history / edit audit trail</td>
         <td>Reconstructs physician edits between Suki output and the final note.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic NoteActivity; EHR audit log table.</td>
+        <td>&#x26A0; No table named "NoteActivity" was found in this schema &mdash; treat the prior citation as unconfirmed. The verified table is <code>NOTES_HISTORY_LOG</code> (PK <code>NOTE_CSN_ID</code>+<code>LINE</code>; columns <code>NOTE_ID</code>, <code>EDIT_HX_INSTANT</code>, <code>EDIT_HX_ACTION_C_NAME</code> &mdash; examples given are Activate/Inactivate/Edit, full value set incl. whether "Sign" is a distinct action is unconfirmed). It is an edit-<em>event</em> stream (action type + timestamp only) &mdash; it does <strong>not</strong> contain full-text version snapshots or a diff of Suki's draft vs. the signed note. No verified Epic table provides that.</td>
       </tr>
       <tr>
         <td>Encounter-to-note linkage</td>
@@ -429,6 +429,14 @@ dashboard_value = { "composite_score": composite_score, "domain_scores": domain_
       measures, the <strong>Missing Feedback Loop</strong> means every composite score in this
       card is computed relative to the transcript, not the clinician's final signed note, until an
       EHR integration or data-sharing provision closes that gap.
+    </p>
+    <p>
+      &#x26A0; Verified against Epic's real EHI schema (not the vendor-metrics-catalog guesses this
+      card previously relied on): <code>HNO_INFO</code> and <code>NOTES_HISTORY_LOG</code> exist
+      and give note metadata and edit-event timestamps, but no verified Epic table in this schema
+      stores full-text note version snapshots or a Suki-draft-vs-final diff &mdash; closing the
+      Missing Feedback Loop for CM-10 (as for CM-08/CM-09) would require a table type not found
+      here, not just access to one that already exists.
     </p>
   </div>
 

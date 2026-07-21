@@ -96,6 +96,58 @@
     details[open] summary::before { content: "▼ "; }
     details[open] summary { margin-bottom: 8px; }
     .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 9px 20px 8px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+    .algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
+    .algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
+    .algo-panel[hidden] { display: none; }
+
     .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
     .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
     .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
@@ -189,13 +241,23 @@
   <!-- ── ALGORITHM ── -->
   <p class="section-label">Algorithm</p>
 
-  <div class="algo-block">
-    <div class="algo-header">
-      <span class="algo-number">1</span>
-      <span class="algo-title">Dashboard Metric &mdash; Closure-Delay Bucket Distribution (Cohort Average)</span>
-      <span class="algo-subtitle">Draft-availability proxy, mirrors crosswalk buckets</span>
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
     </div>
-    <div class="algo-body">
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic" role="tabpanel">
       <p class="algo-purpose">
         For each completed session, computes the elapsed time between the encounter-end
         timestamp and the session-completion timestamp, assigns it to a closure-delay bucket
@@ -278,7 +340,58 @@ dashboard_value = {
       </details>
 
     </div>
-  </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        A first-attempt Epic-side algorithm that would replace the Generic tab's draft-availability proxy
+        with the true signed-chart closure event, if EHR access is available. Per the Epic EHI schema
+        (<code>epic-ehi-kg</code>), <code>PAT_ENC</code> carries both the visit date and an encounter-close
+        date as direct, verified fields &mdash; a much stronger candidate than a fabricated note-signature
+        table name.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">PAT_ENC</div>
+            <div class="unit-ref-def"><code>CONTACT_DATE</code> (visit date) and <code>ENC_CLOSE_DATE</code> (date the encounter was closed) &mdash; a direct field pairing for this measure's closure interval.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Unconfirmed:</strong> whether <code>ENC_CLOSE_DATE</code> reflects note signature specifically, or a broader encounter closure that includes coding/billing review completing after documentation. This needs validation against a live instance before trusting it as a pure &ldquo;note signed&rdquo; proxy.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Cross-check</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def"><code>LST_FILED_INST_DTTM</code> (last-filed instant) and <code>UNSIGNED_YN</code> (signature flag). If <code>ENC_CLOSE_DATE</code> proves too broad (includes non-documentation closure activity), fall back to this note-level pair instead.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">EHR 24-Hour Closure Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(encounters where ENC_CLOSE_DATE &minus; CONTACT_DATE &le; 24h)</span><span class="formula-den">COUNT(closed encounters)</span></span> × 100
+<div class="formula-note">Prefer this over the Generic tab wherever EHR access exists — it measures actual chart closure,
+not draft availability. The Generic tab remains the fallback for Suki-only deployments.</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed)</summary>
+        <div class="pseudo">SELECT e.PAT_ENC_CSN_ID,
+       DATEDIFF(hour, e.CONTACT_DATE, e.ENC_CLOSE_DATE) AS closure_delay_hours
+FROM PAT_ENC e
+WHERE e.ENC_CLOSE_DATE IS NOT NULL
+  AND e.ENC_TYPE_C NOT IN (1, 31)          -- exclude telephone/proxy types, per CM-04's convention
+-- Bucket closure_delay_hours using the same thresholds as the Generic tab
+-- ⚠ Validate ENC_CLOSE_DATE against HNO_INFO.LST_FILED_INST_DTTM on a
+--   provider-period sample before trusting this as a signature-date proxy</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
 
   <!-- ── EXPECTED TREND ── -->
   <div class="chart-wrap">
@@ -376,13 +489,13 @@ dashboard_value = {
         <td>Note signature timestamp</td>
         <td>Ground-truth event CM-06 measures &mdash; when the note moved from draft to signed/final.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: <code>HNO_NOTE</code> signature instant; Cerner/Athena: equivalent note-status field.</td>
+        <td>Epic: <code>PAT_ENC.ENC_CLOSE_DATE</code> (verified in EHI schema) as a first-attempt proxy &mdash; see the Epic tab above. <strong>Unconfirmed</strong> whether this reflects note signature specifically or broader encounter closure (coding/billing review); cross-check against <code>HNO_INFO.LST_FILED_INST_DTTM</code>/<code>UNSIGNED_YN</code> if too broad. Cerner/Athena: equivalent note-status field, not yet researched.</td>
       </tr>
       <tr>
-        <td>Encounter end timestamp (EHR-side)</td>
+        <td>Encounter/visit date (EHR-side)</td>
         <td>Cross-check / alternative anchor where Suki and EHR scheduling data diverge.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Standard encounter/appointment record.</td>
+        <td>Epic: <code>PAT_ENC.CONTACT_DATE</code> (verified in EHI schema).</td>
       </tr>
       <tr>
         <td>Provider's daily encounter sequence (schedule)</td>
@@ -442,5 +555,26 @@ dashboard_value = {
   </footer>
 
 </div>
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    // Activate the first tab on load
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>

@@ -178,7 +178,7 @@
     <div class="unit-ambig">
       <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
       <ul>
-        <li><strong>The Missing Feedback Loop.</strong> Suki generates a note; the physician reviews, edits, and signs it in the EHR. The physician's edits are the most direct signal of where Suki was wrong &mdash; but Suki never sees those edits. Without the EHR's final note text and edit/version history, CM-09 can only be measured against the <em>transcript</em>, not the clinician's final intent, and only via one-off rater exercises rather than continuous monitoring.</li>
+        <li><strong>The Missing Feedback Loop.</strong> Suki generates a note; the physician reviews, edits, and signs it in the EHR. The physician's edits are the most direct signal of where Suki was wrong &mdash; but Suki never sees those edits. Without the EHR's final note text and edit/version history, CM-09 can only be measured against the <em>transcript</em>, not the clinician's final intent, and only via one-off rater exercises rather than continuous monitoring. Verified against Epic's real schema (<code>epic-ehi-kg</code>): <code>HNO_INFO</code> gives note metadata (author, create/last-filed timestamps, signed/unsigned flag) and <code>NOTES_HISTORY_LOG</code> gives an edit-event stream (action type + timestamp) &mdash; but <strong>no verified Epic table stores full-text version snapshots or a diff of the note against Suki's draft</strong>. The gap is real, not just unexplored.</li>
         <li><strong>Wide published-rate range (3&ndash;36%).</strong> Baker 2023 (36%), Palm 2025 (31%), Kernberg 2023 (3.2% incorrect facts but 86% omissions) &mdash; rates vary enormously by error definition (hallucination vs. incorrect-fact vs. negation-reversal vs. any flagged sentence). The error taxonomy must be fixed before any rate is reported or compared across sources.</li>
         <li><strong>Reproducibility / cross-replicate consistency.</strong> Kernberg 2023 found only 53% of data elements consistent across 3 model runs of the same case &mdash; different errors appear on each run, so a single-pass audit may not represent the model's typical behavior. Consider whether a pilot should sample multiple generations per encounter.</li>
         <li><strong>Note Amendment Rate (CM-08/CM-09 boundary).</strong> The corpus flags an unresolved "row-13 amendment rate" item &mdash; post-signature re-opens that <em>correct</em> wrong content belong to CM-09; re-opens that <em>add</em> missing content belong to CM-08. Clarify with Suki whether their amendment-rate concept distinguishes these, or covers any pre-signature edit.</li>
@@ -390,19 +390,19 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
         <td>Final signed note text</td>
         <td>Gold standard to diff against the Suki draft &mdash; closes the Missing Feedback Loop.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+        <td>&#x26A0; No verified Epic table contains full physician-edited/final-signed note text with reliable coverage. <code>HNO_NOTE_TEXT</code> is referenced in Epic's own schema docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>; <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but its own documentation says it only contains notes stored in <em>plain</em> text and explicitly excludes rich-text notes &mdash; coverage is likely incomplete. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
       </tr>
       <tr>
         <td>Note version history / edit audit trail</td>
         <td>Reconstructs physician edits between Suki output and the final note &mdash; the most direct signal of where Suki was wrong.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic NoteActivity; EHR audit log table.</td>
+        <td>&#x26A0; No table named "NoteActivity" was found in this schema &mdash; treat the prior citation as unconfirmed. The verified table is <code>NOTES_HISTORY_LOG</code> (PK <code>NOTE_CSN_ID</code>+<code>LINE</code>; columns <code>NOTE_ID</code>, <code>EDIT_HX_INSTANT</code>, <code>EDIT_HX_ACTION_C_NAME</code> &mdash; examples given are Activate/Inactivate/Edit, full value set incl. whether "Sign" is a distinct action is unconfirmed). It is an edit-<em>event</em> stream (action type + timestamp only) &mdash; it does <strong>not</strong> contain full-text version snapshots or a diff of Suki's draft vs. the signed note. No verified Epic table provides that.</td>
       </tr>
       <tr>
         <td>Note signature timestamp + signatory</td>
         <td>Confirms the physician reviewed and accepted the note.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic <code>HNO_NOTE.SIGN_INST</code>.</td>
+        <td>&#x26A0; <code>HNO_NOTE.SIGN_INST</code> does not match any real table/column found in this schema &mdash; treat as unconfirmed. Verified fields on <code>HNO_INFO</code> (PK <code>NOTE_ID</code>): <code>UNSIGNED_YN</code> (signed/unsigned flag), <code>CURRENT_AUTHOR_ID</code> (current author), and <code>LST_FILED_INST_DTTM</code> (instant the note was last edited/filed &mdash; the closest available timestamp; no explicit "signature instant" column was found).</td>
       </tr>
       <tr>
         <td>Encounter-to-note linkage</td>
@@ -431,6 +431,14 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
       clinician's final signed note &mdash; closing that gap requires either an EHR integration
       exposing note version history, or a contractual data-sharing provision for note edit logs
       / final note text.
+    </p>
+    <p>
+      &#x26A0; Verified against Epic's real EHI schema (not the vendor-metrics-catalog guesses this
+      card previously relied on): <code>HNO_INFO</code> and <code>NOTES_HISTORY_LOG</code> exist
+      and give note metadata and edit-event timestamps, but no verified Epic table in this schema
+      stores full-text note version snapshots or a Suki-draft-vs-final diff &mdash; closing the
+      Missing Feedback Loop for CM-09 would require a table type not found here, not just access
+      to one that already exists.
     </p>
   </div>
 

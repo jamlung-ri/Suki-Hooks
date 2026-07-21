@@ -350,7 +350,7 @@ Secondary (corroboration, per encounter):
         <td>In-encounter EHR active time</td>
         <td>Keystrokes/clicks during the visit window &mdash; objective proxy for in-visit task load, the mechanism NASA-TLX is meant to capture.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic Signal "Time in Notes" filtered to the encounter window, or vendor equivalent.</td>
+        <td>Epic Signal "Time in Notes" filtered to the encounter window, or vendor equivalent. <strong>Caveat:</strong> Signal is a separate proprietary reporting product, not present in the standard EHI export (per <code>epic-ehi-kg</code> schema exploration) &mdash; confirm Signal access separately from EHI/Clarity access before relying on this field.</td>
       </tr>
       <tr>
         <td>Order-entry / chart-navigation events during encounter</td>

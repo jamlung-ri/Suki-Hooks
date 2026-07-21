@@ -414,24 +414,27 @@
     .algo-tabs {
       display: flex;
       flex-wrap: wrap;
-      gap: 0;
-      background: #f7f9fb;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
       border-bottom: 1px solid var(--line);
     }
     .algo-tab {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      padding: 10px 20px 9px;
+      padding: 9px 20px 8px;
       border: none;
-      border-bottom: 3px solid transparent;
-      background: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
       cursor: pointer;
       font-family: inherit;
-      margin-bottom: -1px;
-      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
     }
-    .algo-tab:hover { background: #eef2f6; }
+    .algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
     .algo-tab-name {
       font-size: 13px;
       font-weight: 700;
@@ -444,10 +447,10 @@
     }
     .algo-tab[aria-selected="true"] {
       background: var(--panel);
-      border-bottom-color: var(--blue);
+      box-shadow: inset 0 -3px 0 var(--blue);
     }
     .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
-    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.7; }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
     .algo-panel[hidden] { display: none; }
 
     /* ── TREND CHART ── */

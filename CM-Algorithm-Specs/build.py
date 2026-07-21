@@ -191,6 +191,50 @@ def extract_style(soup):
     return (tag.string or "") if tag else ""
 
 
+def split_css_statements(css_text):
+    """Split a CSS blob into top-level statements, treating @media/@font-face/
+    etc. as single atomic statements even though they contain nested braces
+    (splits only at brace-depth 0)."""
+    statements = []
+    depth = 0
+    start = 0
+    for i, ch in enumerate(css_text):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                statements.append(css_text[start:i + 1])
+                start = i + 1
+    tail = css_text[start:].strip()
+    if tail:
+        statements.append(tail)
+    return [s.strip() for s in statements if s.strip()]
+
+
+def merge_css(soups, filenames):
+    """Union of CSS statements across all cards, deduped by normalized text,
+    first-occurrence order preserved.
+
+    Cards have accumulated different bespoke classes over time (algo-switcher/
+    algo-tab, .pipeline-note, .removal-flag, .key-finding, etc.) — using only
+    one file's <style> (the old behavior, "all files share identical styles")
+    silently drops any class that file doesn't happen to define. Duplicate
+    identical rules across files are harmless under CSS cascade (same
+    selector + same value = no visual effect), so a plain first-occurrence
+    dedup is sufficient here without a full CSS parser.
+    """
+    seen = set()
+    merged = []
+    for fname in filenames:
+        for stmt in split_css_statements(extract_style(soups[fname])):
+            key = re.sub(r"\s+", " ", stmt).strip()
+            if key not in seen:
+                seen.add(key)
+                merged.append(stmt)
+    return "\n".join(merged)
+
+
 def extract_page_div(soup, filename):
     """Return the outer HTML of the .page div."""
     tag = soup.find("div", class_="page")
@@ -198,6 +242,27 @@ def extract_page_div(soup, filename):
         print(f"  Warning: no <div class='page'> found in {filename}")
         return ""
     return str(tag)
+
+
+def namespace_switcher_ids(soup, suffix):
+    """Rewrite algo-panel id=/data-panel=/aria-controls= to be unique per section.
+
+    Every card's algo-switcher uses the same simple ids (id="algo-panel-generic",
+    "algo-panel-epic", etc.) which is fine standalone but collides across
+    sections once combined — document.getElementById() in the shared switcher
+    script then only ever finds the FIRST match in the whole page, so clicking
+    a tab in any section after the first hides that section's own panels
+    correctly but "unhides" the first section's panel instead, leaving the
+    clicked section blank. Suffixing ids per section (mutated only in the
+    in-memory soup, not the source files) fixes this without touching the
+    clean ids used when a card is viewed standalone.
+    """
+    for panel in soup.select(".algo-panel[id]"):
+        panel["id"] = f'{panel["id"]}-{suffix}'
+    for tab in soup.select(".algo-tab[data-panel]"):
+        tab["data-panel"] = f'{tab["data-panel"]}-{suffix}'
+        if tab.get("aria-controls"):
+            tab["aria-controls"] = f'{tab["aria-controls"]}-{suffix}'
 
 
 def extract_switcher_script(soup):
@@ -266,8 +331,9 @@ def main():
     for fname, p in found:
         soups[fname] = BeautifulSoup(p.read_text(encoding="utf-8"), "html.parser")
 
-    # Extract shared CSS from first file (all files share identical styles)
-    shared_css = extract_style(soups[found[0][0]])
+    # Union of CSS statements across all files — different cards define
+    # different bespoke classes, so no single file's <style> is a superset
+    shared_css = merge_css(soups, [f for f, _ in found])
 
     # Build nav HTML
     nav_html = build_nav([f for f, _ in found])
@@ -276,6 +342,7 @@ def main():
     sections = []
     switcher_script = None
     for fname, _ in found:
+        namespace_switcher_ids(soups[fname], anchor_id(fname))
         page_html = extract_page_div(soups[fname], fname)
         if page_html:
             sections.append(build_section(page_html, anchor_id(fname)))

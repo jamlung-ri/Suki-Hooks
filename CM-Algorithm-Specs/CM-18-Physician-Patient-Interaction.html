@@ -492,7 +492,7 @@ hypothesis-generating signal only. Do not present as equivalent to observed atte
         <td>In-encounter EHR active time (clicks/keystrokes during the visit window)</td>
         <td>Directly operationalizes "Time searching for information" &mdash; the one CM-18 method Suki cannot touch at all.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic Signal "Time in Notes" filtered to the encounter window; same audit-log ask as CM-02 &mdash; request once, use for both.</td>
+        <td>Epic Signal "Time in Notes" filtered to the encounter window; same audit-log ask as CM-02 &mdash; request once, use for both. <strong>Caveat:</strong> Signal is a separate proprietary reporting product, not present in the standard EHI export (per <code>epic-ehi-kg</code> schema exploration) &mdash; confirm Signal access separately from EHI/Clarity access before relying on this field.</td>
       </tr>
       <tr>
         <td>Order-entry / chart-navigation events during the encounter</td>

@@ -226,7 +226,7 @@
           <span class="unit-ref-tag tag-secondary">Secondary (the missing link)</span>
           <div>
             <div class="unit-ref-name">EHR order/intervention rate for the same encounters</div>
-            <div class="unit-ref-def">E.g., psychiatric referral, medication order, follow-up scheduling &mdash; the clinical-action half of the design. Requires encounter-level linkage between Suki <code>session_id</code> and EHR order data.</div>
+            <div class="unit-ref-def">E.g., psychiatric referral, medication order, follow-up scheduling &mdash; the clinical-action half of the design. Requires encounter-level linkage between Suki <code>session_id</code> and EHR order data. <strong>Proposed Epic table (unconfirmed):</strong> <code>ORDER_PROC</code>, verified present in the EHI schema, carries per-order <code>ORDER_TIME</code>, <code>RESULT_TIME</code>, and a procedure/order-type code, joinable to the encounter via <code>PAT_ENC_CSN_ID</code> &mdash; a plausible source for "was an order placed following this documented symptom," pending confirmation that referral/medication order types are distinguishable in the order-type code set.</div>
             <div class="pipeline-note"><strong>&#x26A0; Pipeline gap (the single biggest structural gap for CM-19):</strong> without encounter-level linkage to EHR orders/interventions, no Suki-native documentation signal can be tested against a clinical-action outcome &mdash; which is the only thing that makes a finding "CM-19" rather than "CM-08/CM-09." H8's order-staging audit trail (staged vs. manual, accepted/edited/rejected) is the future hook most likely to close this, once it ships.</div>
           </div>
         </div>
@@ -387,7 +387,7 @@ dashboard_value = {
         <td>EHR order / intervention data, linked to encounter</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
         <td>Missing</td>
-        <td>The single biggest structural gap for CM-19. Without this, documentation-completeness findings remain CM-08/CM-09.</td>
+        <td>The single biggest structural gap for CM-19. Without this, documentation-completeness findings remain CM-08/CM-09. Proposed source: <code>ORDER_PROC</code> (verified present in EHI schema) &mdash; unconfirmed whether order-type granularity supports referral/medication-order classification.</td>
       </tr>
       <tr>
         <td>Encounter covariates (visit type, provider specialty, patient demographics)</td>
@@ -401,7 +401,7 @@ dashboard_value = {
         <td>AHRQ Harm Score / formal incident reports</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
         <td>Out of reach</td>
-        <td>Typically held in separate risk-management / patient-safety systems, not the EHR proper</td>
+        <td>Typically held in separate risk-management / patient-safety systems, not the EHR proper. Partial exception: <code>HSP_QI_PATIENT_SAFETY</code> is verified present in the EHI schema &mdash; a per-hospital-account patient-safety-indicator category flag. Far short of a structured AHRQ Harm Score (one categorical field, not an event-level record), but worth checking as a coarse, real, already-populated signal rather than assuming zero EHR-side safety data exists.</td>
       </tr>
       <tr>
         <td>PHQ-9 / structured screening documentation</td>

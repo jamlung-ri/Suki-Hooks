@@ -345,6 +345,58 @@
       color: #2d3740;
       overflow-x: auto;
     }
+
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 9px 20px 8px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+    .algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
+    .algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
+    .algo-panel[hidden] { display: none; }
+
     .chart-wrap {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -536,13 +588,23 @@
 
   <p class="section-label">Algorithm</p>
 
-  <div class="algo-block">
-    <div class="algo-header">
-      <span class="algo-number">1</span>
-      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
-      <span class="algo-subtitle">For the Suki admin console</span>
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
     </div>
-    <div class="algo-body">
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic" role="tabpanel">
       <p class="algo-purpose">
         Produces the average completed encounters per provider per week in the cohort for a given
         month. This number is expected to increase after Suki adoption as time freed from
@@ -594,7 +656,51 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
       </details>
 
     </div>
-  </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        The Generic tab's <code>total_encounters</code>/<code>encounters_per_day</code> fields are Suki
+        crosswalk abstractions, not literal Epic column names. Per the Epic EHI schema
+        (<code>epic-ehi-kg</code>), <code>PAT_ENC</code> is the top join-hub table in the entire
+        schema (highest inbound reference count of any table) and directly supports reconstructing
+        a completed-encounter count without needing a crosswalk abstraction layer.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">PAT_ENC</div>
+            <div class="unit-ref-def"><code>CONTACT_DATE</code> (visit date, for weekly bucketing) and <code>ENC_CLOSE_DATE</code> (encounter close date &mdash; the same field CM-06 uses as a closure-timing proxy). A completed/closed encounter count per provider per week can be reconstructed by filtering to <code>ENC_CLOSE_DATE IS NOT NULL</code>, grouped by provider and week.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Unconfirmed:</strong> the exact provider-attribution column (visit provider vs. billing provider vs. note author can differ), and whether a populated <code>ENC_CLOSE_DATE</code> is a reliable proxy for &ldquo;signed&rdquo; vs. broader encounter closure &mdash; same open question as CM-06's Epic tab.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Weekly Completed Encounters</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(PAT_ENC WHERE ENC_CLOSE_DATE IS NOT NULL, grouped by provider &amp; week)</span><span class="formula-den">1 (raw count, not a ratio)</span></span>
+<div class="formula-note">Exclude encounter types not eligible for documentation credit (e.g. telephone/proxy, per CM-04's ENC_TYPE_C convention)
+Cross-check against the Generic tab's Suki-side count where both are available, before trusting either alone</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed)</summary>
+        <div class="pseudo">SELECT provider_id,                              -- ⚠ attribution column unconfirmed
+       DATE_TRUNC('week', CONTACT_DATE) AS wk,
+       COUNT(*) AS completed_encounters
+FROM PAT_ENC
+WHERE ENC_CLOSE_DATE IS NOT NULL
+  AND ENC_TYPE_C NOT IN (1, 31)              -- exclude telephone/proxy types
+GROUP BY provider_id, wk;
+-- ⚠ Validate ENC_CLOSE_DATE population rate and provider-attribution column
+--   against a live instance before using this in place of the Generic tab</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
 
   <div class="chart-wrap">
     <div class="chart-title">Expected Trend &mdash; Completed Encounters / Provider / Week / Month</div>
@@ -661,13 +767,13 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
         <td>Total completed encounters per provider/month</td>
         <td>Count of signed, completed encounters per provider per calendar month. The primary numerator for this measure.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: total_encounters &nbsp;|&nbsp; Cerner: total_encounters. Include only encounters with a signed note. Exclude no-shows and cancellations.</td>
+        <td>Suki crosswalk field. Epic-side reconstruction: <code>PAT_ENC</code> count filtered to <code>ENC_CLOSE_DATE IS NOT NULL</code> (verified table/field, see the Epic tab) &mdash; provider-attribution column unconfirmed. Cerner: not yet researched.</td>
       </tr>
       <tr>
         <td>Avg completed encounters per working day</td>
         <td>An alternative denominator-normalized form. Use when scheduled hours data are unavailable.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: encounters_per_day &nbsp;|&nbsp; Cerner: encounters_per_day. Consistent with per-week normalization when multiplied by 5.</td>
+        <td>Suki crosswalk field. Derivable from the same <code>PAT_ENC</code> query in the Epic tab by grouping on day instead of week. Consistent with per-week normalization when multiplied by 5.</td>
       </tr>
       <tr>
         <td>Scheduled clinical hours</td>
@@ -732,5 +838,26 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
   </footer>
 
 </div>
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    // Activate the first tab on load
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>

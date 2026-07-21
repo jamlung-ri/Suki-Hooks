@@ -346,6 +346,58 @@
       color: #2d3740;
       overflow-x: auto;
     }
+
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 9px 20px 8px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+    .algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
+    .algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
+    .algo-panel[hidden] { display: none; }
+
     .chart-wrap {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -519,13 +571,23 @@
 
   <p class="section-label">Algorithm</p>
 
-  <div class="algo-block">
-    <div class="algo-header">
-      <span class="algo-number">1</span>
-      <span class="algo-title">Dashboard Metric &mdash; Cohort Average</span>
-      <span class="algo-subtitle">For the Suki admin console</span>
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
     </div>
-    <div class="algo-body">
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic" role="tabpanel">
       <p class="algo-purpose">
         Produces the average total EHR minutes per encounter per provider in the cohort for a given
         month. This is the broadest efficiency indicator in the CM suite: it captures all EHR time,
@@ -577,7 +639,70 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
       </details>
 
     </div>
-  </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        The Generic tab's <code>avg_total_time_min</code>, <code>business_hours_min</code>,
+        <code>after_hours_min</code>, and <code>inbox_time_hrs</code> fields are Suki crosswalk
+        abstractions, not literal Epic column names, and they trace back to Epic Signal/UAL &mdash;
+        a separate, proprietary reporting product <strong>not present in the standard EHI
+        export</strong> documented by the Epic EHI knowledge graph (<code>epic-ehi-kg</code>).
+        No equivalent all-activity audit-log table was found in this schema pass. Two verified EHI
+        tables can partially reconstruct total EHR time from first principles: <code>ORDER_PROC</code>
+        for the orders component and <code>HNO_INFO</code> for the notes component &mdash; the same
+        table CM-05's Epic tab uses. Combined, they cover only two of at least four activity
+        types that make up "total EHR time"; inbox management and results/chart review are entirely
+        absent from this reconstruction.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">ORDER_PROC</div>
+            <div class="unit-ref-def"><code>ORDER_TIME</code> (order placed), <code>RESULT_TIME</code> (most recent result), <code>PROC_BGN_TIME</code>/<code>PROC_ENDING_TIME</code> (procedure start/end), <code>CHRG_DROPPED_TIME</code> (charge generated), and <code>INSTANTIATED_TIME</code>. Joinable to encounter via <code>PAT_ENC_CSN_ID</code>. Reconstructs the "orders" component &mdash; order-entry activity per provider per encounter.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def"><code>CREATE_INSTANT_DTTM</code> and <code>LST_FILED_INST_DTTM</code>, keyed by <code>ENTRY_USER_ID</code> and joinable to encounter via <code>PAT_ENC_CSN_ID</code>. Reconstructs the "notes" component &mdash; the same fields CM-05's Epic tab uses for its after-hours partial proxy.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Materially incomplete proxy.</strong> This reconstruction covers notes + orders timestamps only. It has no visibility into inbox message handling, results review, or general chart review time &mdash; all of which Epic Signal/UAL would include in a true total-EHR-time figure. Do not report this as equivalent to <code>avg_total_time_min</code>; label it explicitly as a partial, EHI-only lower bound.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Partial EHR Minutes (Notes + Orders)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211;(HNO_INFO note-timestamp activity) + &#x2211;(ORDER_PROC order-timestamp activity)</span><span class="formula-den">COUNT(completed encounters), grouped by provider &amp; month</span></span>
+<div class="formula-note">Excludes inbox management and results/chart-review time entirely — not comparable
+to a Signal/UAL-sourced avg_total_time_min figure without a large, unverified undercount
+Cross-check against the Generic tab's Suki-side documentation-only signal where both are available</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed, partial)</summary>
+        <div class="pseudo">-- Notes component
+SELECT h.ENTRY_USER_ID AS provider_id, h.PAT_ENC_CSN_ID,
+       h.CREATE_INSTANT_DTTM, h.LST_FILED_INST_DTTM
+FROM HNO_INFO h;
+
+-- Orders component
+SELECT o.ORD_CREATR_USER_ID AS provider_id, o.PAT_ENC_CSN_ID,
+       o.ORDER_TIME, o.RESULT_TIME, o.CHRG_DROPPED_TIME
+FROM ORDER_PROC o;
+
+-- ⚠ No Epic Signal/UAL equivalent found in the EHI schema pass. Combine both sets, dedupe
+--   overlapping activity windows, group by provider & month. Result is a notes+orders-only
+--   floor on total EHR time — inbox and results-review time are entirely unaccounted for.</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
 
   <div class="chart-wrap">
     <div class="chart-title">Expected Trend &mdash; Total EHR Min / Encounter / Month</div>
@@ -641,25 +766,25 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
         <td>Avg total EHR time per encounter (min)</td>
         <td>Per-provider total EHR activity time from audit-log, covering all activity types. The primary data element for this measure.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: avg_total_time_min &nbsp;|&nbsp; Cerner: telemetry varies by version. Confirm whether field includes inbox and orders or documentation only.</td>
+        <td>Epic: avg_total_time_min &mdash; a Suki crosswalk abstraction, not a literal Epic column; no equivalent all-activity field was found in the EHI schema (<code>epic-ehi-kg</code>). Traces to Epic Signal/UAL, a separate proprietary product outside the standard EHI export. See the Epic tab for a partial, EHI-only notes+orders reconstruction. Cerner: telemetry varies by version.</td>
       </tr>
       <tr>
         <td>Business-hours EHR time per provider/month (min)</td>
         <td>Total EHR activity during scheduled working hours, per provider per month.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: business_hours_min &nbsp;|&nbsp; Athena: business_hours_numerator. Used to split in-hours vs. after-hours components.</td>
+        <td>Epic: business_hours_min &mdash; crosswalk abstraction; no equivalent field found in the EHI schema pass. Would need to be derived by bucketing <code>HNO_INFO</code>/<code>ORDER_PROC</code> timestamps against scheduled hours (see the Epic tab), which is still a notes+orders-only partial signal. Athena: business_hours_numerator, not yet researched.</td>
       </tr>
       <tr>
         <td>After-hours EHR time per provider/month (min)</td>
         <td>Total EHR activity outside scheduled working hours, per provider per month. Overlaps with CM-05 (After-Hours Documentation) if scoped to documentation tasks.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: after_hours_min &nbsp;|&nbsp; Cerner: after_hours_min.</td>
+        <td>Epic: after_hours_min &mdash; same Signal/UAL gap as CM-05's after-hours minutes; see CM-05's Epic tab for the <code>HNO_INFO</code>-based partial proxy this measure would share. Cerner: after_hours_min, not yet researched.</td>
       </tr>
       <tr>
         <td>Total inbox time per provider/month (hrs)</td>
         <td>Time spent managing the EHR inbox (messages, results, referrals). May be a significant share of total EHR time independent of Suki adoption.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic: inbox_time_hrs &nbsp;|&nbsp; Athena: total_inbox_time_hours. Report separately to isolate Suki's documentation-specific effect.</td>
+        <td>Epic: inbox_time_hrs &mdash; no inbox-message-handling table was found among the tables read in this schema pass (<code>HNO_INFO</code>, <code>ORDER_PROC</code>, <code>PAT_ENC</code>, <code>ARPB_TRANSACTIONS</code>, <code>ARPB_CHG_ENTRY_DX</code>). Flagged as an open gap in the EHI-only reconstruction &mdash; not covered by the Epic tab. Athena: total_inbox_time_hours, not yet researched.</td>
       </tr>
       <tr>
         <td>Provider identifiers</td>
@@ -704,6 +829,12 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
       that report only Suki session duration for this measure will systematically understate total
       EHR time and the true magnitude of any change.
     </p>
+    <p>
+      Where full Epic Signal/UAL audit-log access is unavailable, the Epic tab's <code>ORDER_PROC</code>
+      + <code>HNO_INFO</code> reconstruction is the best fallback confirmed against the verified EHI
+      schema (<code>epic-ehi-kg</code>) &mdash; but it must be reported explicitly as a notes+orders-only
+      partial signal, materially incomplete relative to true total EHR time.
+    </p>
   </div>
 
   <hr class="divider">
@@ -720,5 +851,26 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
   </footer>
 
 </div>
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    // Activate the first tab on load
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+</script>
 </body>
 </html>

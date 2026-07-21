@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Suki AI — CM Algorithm Cards</title>
   <style>
-
-    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
-    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
     :root {
       --ink:        #323c43;
       --muted:      #636363;
@@ -29,93 +28,563 @@
       --radius:     5px;
       --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
-    * { box-sizing: border-box; }
-    .ri-logo{height:26px;display:block;margin-bottom:10px}
-    body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
-    a { color: var(--teal); }
-    .page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
-    @media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
-    @media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
-    .masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
-    .eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
-    .masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
-    .masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
-    .masthead-meta strong { color: var(--ink); }
-    .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
-    .badge-nb  { background: var(--teal-light); color: var(--teal); }
-    .badge-eff { background: var(--blue-light); color: var(--blue); }
-    .badge-us  { background: #f0f5f9; color: #49545d; }
-    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
-    .unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
-    .unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
-    .unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
-    .unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
-    .direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
-    .unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
-    .unit-def p { margin: 0 0 8px; } .unit-def p:last-child { margin: 0; }
-    .unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
-    .unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
-    .unit-method:first-child { border-right: 1px solid #b2ced8; }
-    .unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
-    .unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
-    .unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
-    .unit-ambig ul { margin: 0; padding-left: 18px; }
-    .unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
-    .unit-ambig li:last-child { margin-bottom: 0; }
-    .unit-ambig li strong { color: #2e1700; }
+* { box-sizing: border-box; }
+.ri-logo{height:26px;display:block;margin-bottom:10px}
+body { margin: 0; font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif; font-size: 14px; line-height: 1.55; color: var(--ink); background: var(--paper); }
+a { color: var(--teal); }
+.page { max-width: 880px; margin: 0 auto; padding: 48px 32px 80px; }
+@media print { body { background: #fff; font-size: 12px; } .page { padding: 24px 0; max-width: 100%; } }
+@media (max-width: 620px) { .page { padding: 24px 16px 56px; } .unit-methods { grid-template-columns: 1fr !important; } }
+.masthead { border-bottom: 2px solid var(--teal); padding-bottom: 20px; margin-bottom: 28px; }
+.eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin: 0 0 6px; }
+.masthead h1 { margin: 0 0 8px; font-size: 22px; line-height: 1.15; letter-spacing: -0.01em; }
+.masthead-meta { display: flex; flex-wrap: wrap; gap: 12px 20px; font-size: 12.5px; color: var(--muted); }
+.masthead-meta strong { color: var(--ink); }
+.badge { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; }
+.badge-nb  { background: var(--teal-light); color: var(--teal); }
+.badge-eff { background: var(--blue-light); color: var(--blue); }
+.badge-us  { background: #f0f5f9; color: #49545d; }
+.section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 8px; }
+.unit-card { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+.unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #b2ced8; flex-wrap: wrap; }
+.unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal); margin-bottom: 4px; }
+.unit-value { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; flex-shrink: 0; }
+.unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1a2d33; line-height: 1.55; border-bottom: 1px solid #b2ced8; }
+.unit-def p { margin: 0 0 8px; }
+.unit-def p:last-child { margin: 0; }
+.unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #b2ced8; }
+.unit-method { padding: 12px 18px; font-size: 13px; color: #1a2d33; line-height: 1.5; }
+.unit-method:first-child { border-right: 1px solid #b2ced8; }
+.unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 5px; }
+.unit-ambig { padding: 12px 18px; background: #fef5ed; border-top: 1px solid #e8b07a; }
+.unit-ambig-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--amber); margin-bottom: 8px; }
+.unit-ambig ul { margin: 0; padding-left: 18px; }
+.unit-ambig li { font-size: 13px; color: #4a2400; margin-bottom: 5px; line-height: 1.45; }
+.unit-ambig li:last-child { margin-bottom: 0; }
+.unit-ambig li strong { color: #2e1700; }
+.algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
+.algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
+.algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.algo-title { font-weight: 700; font-size: 13.5px; }
+.algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
+.algo-body { padding: 16px 18px; }
+.algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
+.formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
+.formula-lhs { font-weight: 700; color: var(--blue); }
+.formula-eq { color: var(--muted); padding: 0 6px; }
+.formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
+.formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
+.formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
+.formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
+.algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
+.algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+.unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
+.unit-ref-item:last-child { border-bottom: 0; }
+.unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+.tag-primary   { background: var(--teal-light); color: var(--teal); }
+.tag-secondary { background: var(--blue-light); color: var(--blue); }
+.unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
+.unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+details { margin-top: 8px; }
+details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
+details[open] summary::before { content: "▼ "; }
+details[open] summary { margin-bottom: 8px; }
+.pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+.chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
+.chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
+.chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+.chart-svg-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
+.data-table thead tr { background: #eef3f7; }
+.data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
+.data-table tr:last-child td { border-bottom: 0; }
+.source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+.tag-ehr    { background: var(--blue-light); color: var(--blue); }
+.tag-suki   { background: var(--teal-light); color: var(--teal); }
+.tag-survey { background: var(--violet-light); color: var(--violet); }
+.scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
+.scope-box .section-label { color: #49545d; }
+.scope-box p { margin: 0 0 8px; }
+.scope-box p:last-child { margin: 0; }
+.scope-box strong { color: var(--ink); }
+.sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
+.divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+.report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+.pipeline-note { font-size: 12px; color: #5a161a; margin-top: 6px; padding: 6px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
+.badge-warn { background: var(--amber-light); color: var(--amber); }
+/* ── Page shell ── */
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+@media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .page-break { page-break-before: always; }
+    }
+/* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+/* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+/* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5c9d6;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+.unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2ced8;
+    }
+.unit-def p { margin: 0; }
+/* ── ALGORITHM BLOCK ── */
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+.algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+/* Formula display */
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce5ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: 'JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+/* ── ALGO UNITS SUBSECTION ── */
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce5ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+/* Collapsible pseudocode */
+    details {
+      margin-top: 8px;
+    }
+/* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+.algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+.algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 9px 20px 8px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+.algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
+.algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+.algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+.algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+.algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+.algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
+.algo-panel[hidden] { display: none; }
+/* ── TREND CHART ── */
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+/* ── DATA TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+/* ── SUKI SCOPE BOX ── */
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fabc2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a454e;
+      line-height: 1.5;
+    }
+/* ── SOURCES ── */
+    .sources-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+/* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 28px 0;
+    }
+/* ── Inline code ── */
+    code {
+      font-family: 'JetBrains Mono','Courier New',monospace;
+      font-size: 0.91em;
+      color: inherit;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+/* ── Footer ── */
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+/* ── KEY FINDING ── */
+    .key-finding {
+      background: var(--red-light);
+      border: 1px solid #f2b5b9;
+      border-left: 4px solid var(--red);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #5a161a;
+      line-height: 1.5;
+    }
+.key-finding strong { color: #3c0e11; }
+.masthead { border-bottom: 2px solid var(--blue); padding-bottom: 20px; margin-bottom: 28px; }
+.eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); margin: 0 0 6px; }
+.unit-card { background: var(--blue-light); border: 1px solid #c2d5e6; border-left: 4px solid var(--blue); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+.unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #cddeec; flex-wrap: wrap; }
+.unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue); margin-bottom: 4px; }
+.direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #c2d5e6; font-size: 12px; font-weight: 700; color: var(--blue); white-space: nowrap; flex-shrink: 0; }
+.unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #1c2e3d; line-height: 1.55; border-bottom: 1px solid #cddeec; }
+.unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #cddeec; }
+.unit-method { padding: 12px 18px; font-size: 13px; color: #1c2e3d; line-height: 1.5; }
+.unit-method:first-child { border-right: 1px solid #cddeec; }
+.unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); margin-bottom: 5px; }
+.pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+.pipeline-note strong { color: #5c0c11; }
+.masthead { border-bottom: 2px solid var(--violet); padding-bottom: 20px; margin-bottom: 28px; }
+.eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin: 0 0 6px; }
+.badge-iq  { background: var(--violet-light); color: var(--violet); }
+.unit-card { background: var(--violet-light); border: 1px solid #cac5e6; border-left: 4px solid var(--violet); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+.unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d1cdec; flex-wrap: wrap; }
+.unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet); margin-bottom: 4px; }
+.direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cac5e6; font-size: 12px; font-weight: 700; color: var(--violet); white-space: nowrap; flex-shrink: 0; }
+.unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #262240; line-height: 1.55; border-bottom: 1px solid #d1cdec; }
+.unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #d1cdec; }
+.unit-method { padding: 12px 18px; font-size: 13px; color: #262240; line-height: 1.5; }
+.unit-method:first-child { border-right: 1px solid #d1cdec; }
+.unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); margin-bottom: 5px; }
+.algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--violet); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.formula-lhs { font-weight: 700; color: var(--violet); }
+.algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--violet); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--violet); padding: 4px 0; user-select: none; list-style: none; }
+.pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--violet); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+a { color: var(--amber); }
+/* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--amber);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+.eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      margin: 0 0 6px;
+    }
+.badge-u   { background: var(--amber-light); color: var(--amber); }
+.badge-cat { background: var(--blue-light); color: var(--blue); }
+.badge-conf { background: var(--teal-light); color: var(--teal); }
+/* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--amber-light);
+      border: 1px solid #e8c9a3;
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+.unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #edd2ab;
+    }
+.unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--amber);
+      margin-bottom: 4px;
+    }
+.direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #e8c9a3;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--amber);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+.unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #402700;
+      line-height: 1.55;
+      border-bottom: 1px solid #edd2ab;
+    }
+.unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #edd2ab;
+    }
+.unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #402700;
+      line-height: 1.5;
+    }
+.unit-method:first-child { border-right: 1px solid #edd2ab; }
+.unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 5px;
+    }
+.algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--amber);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+.formula-lhs { font-weight: 700; color: var(--amber); }
+.algo-units-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+      color: var(--amber); background: #f9f1e8; padding: 7px 12px; border-bottom: 1px solid #dce5ec;
+    }
+.conf-note {
+      font-size: 12.5px; color: #0c4030; margin-top: 8px; padding: 8px 10px; background: var(--teal-light);
+      border-left: 3px solid var(--teal); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45;
+    }
+.conf-note strong { color: #05271d; }
+details summary {
+      cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--amber); padding: 4px 0; user-select: none; list-style: none;
+    }
+.pseudo {
+      background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--amber); border-radius: var(--radius);
+      padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6;
+      white-space: pre-wrap; color: #2d3740; overflow-x: auto;
+    }
+.badge-oi  { background: var(--teal-light); color: var(--teal); }
+.direction-pills { display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; }
+.direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #a5c9d6; font-size: 12px; font-weight: 700; color: var(--teal); white-space: nowrap; }
+.direction-pill.lower-pill { color: var(--violet); border-color: #cac5e6; }
+.unit-reprs { padding: 12px 18px; border-bottom: 1px solid #b2ced8; }
+.unit-reprs-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--teal); margin-bottom: 8px; }
+.unit-repr-row { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 13px; color: #1a2d33; }
+.unit-repr-num { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 1px solid #a5c9d6; font-size: 10px; font-weight: 800; color: var(--teal); flex-shrink: 0; }
+.direction-mini { font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 999px; flex-shrink: 0; }
+.direction-mini.dir-higher { background: var(--teal-light); color: var(--teal); }
+.direction-mini.dir-lower  { background: var(--violet-light); color: var(--violet); }
+.direction-mini.dir-context { background: #f0f5f9; color: #49545d; }
+.suki-native-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--teal-light); color: var(--teal); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.data-table tr.group-row td { background: #f0f5f9; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #49545d; padding: 6px 12px; }
+.masthead { border-bottom: 2px solid var(--red); padding-bottom: 20px; margin-bottom: 28px; }
+.eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--red); margin: 0 0 6px; }
+.badge-crit { background: var(--red-light); color: var(--red); }
+.unit-card { background: var(--red-light); border: 1px solid #f0c0c3; border-left: 4px solid var(--red); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+.unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #f3cfd1; flex-wrap: wrap; }
+.unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--red); margin-bottom: 4px; }
+.direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #f0c0c3; font-size: 12px; font-weight: 700; color: var(--red); white-space: nowrap; flex-shrink: 0; }
+.unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #3a1013; line-height: 1.55; border-bottom: 1px solid #f3cfd1; }
+.unit-methods { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #f3cfd1; }
+.unit-method { padding: 12px 18px; font-size: 13px; color: #3a1013; line-height: 1.5; }
+.unit-method:first-child { border-right: 1px solid #f3cfd1; }
+.unit-method-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--red); margin-bottom: 5px; }
+.unit-reprs-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--teal); margin-bottom: 8px; }
+.unit-repr-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; font-size: 13px; color: #1a2d33; }
+.unit-repr-num { font-weight: 800; color: var(--blue); min-width: 16px; }
+.data-table .group-row td { background: #f7f9fb; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 6px 12px; border-bottom: 1px solid var(--line); }
+.tag-rcm    { background: var(--violet-light); color: var(--violet); }
+.caution-box { background: var(--amber-light); border: 1px solid #e8b07a; border-left: 4px solid var(--amber); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #4a2400; line-height: 1.5; }
+.caution-box strong { color: #2e1700; }
+@media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+    }
+.direction-pills { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+.direction-pill.lower-pill { color: var(--blue); border-color: #b0cbe2; }
+/* Algo blocks */
     .algo-block { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 20px; overflow: hidden; }
-    .algo-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: #f7f9fb; flex-wrap: wrap; }
-    .algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
-    .algo-title { font-weight: 700; font-size: 13.5px; }
-    .algo-subtitle { font-size: 12px; color: var(--muted); margin-left: auto; }
-    .algo-body { padding: 16px 18px; }
-    .algo-purpose { font-size: 13px; color: #3a454e; margin: 0 0 14px; line-height: 1.5; }
-    .formula-wrap { background: #f4f7fa; border: 1px solid #dce5ec; border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 13px; overflow-x: auto; }
-    .formula-lhs { font-weight: 700; color: var(--blue); }
-    .formula-eq { color: var(--muted); padding: 0 6px; }
-    .formula-fraction { display: inline-block; text-align: center; vertical-align: middle; }
-    .formula-num { display: block; border-bottom: 1.5px solid var(--ink); padding: 0 4px 3px; white-space: nowrap; }
-    .formula-den { display: block; padding: 3px 4px 0; white-space: nowrap; }
-    .formula-note { font-size: 12px; color: var(--muted); font-family: inherit; margin-top: 8px; white-space: pre; }
-    .algo-units { margin-bottom: 14px; border: 1px solid #dce5ec; border-radius: var(--radius); overflow: hidden; }
-    .algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
-    .unit-ref-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #edf1f4; }
-    .unit-ref-item:last-child { border-bottom: 0; }
-    .unit-ref-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
-    .tag-primary   { background: var(--teal-light); color: var(--teal); }
-    .tag-secondary { background: var(--blue-light); color: var(--blue); }
-    .unit-ref-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
-    .unit-ref-def { font-size: 12.5px; color: #3a454e; line-height: 1.45; }
-    .unit-ref-ambig { font-size: 12px; color: #4a2400; margin-top: 6px; padding: 5px 8px; background: #fef5ed; border-left: 3px solid #e8b07a; border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
-    details { margin-top: 8px; }
-    details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--blue); padding: 4px 0; user-select: none; list-style: none; }
-    details summary::-webkit-details-marker { display: none; }
-    details summary::before { content: "▶ "; font-size: 9px; vertical-align: middle; }
-    details[open] summary::before { content: "▼ "; }
-    details[open] summary { margin-bottom: 8px; }
-    .pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
+.direction-mini { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+.dir-higher { background: var(--teal-light); color: var(--teal); }
+.dir-lower  { background: var(--blue-light); color: var(--blue); }
+/* Native Suki data badge (on algo header for Alg 2) */
+    .suki-native-badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--teal-light); border: 1px solid #a5c9d6; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--teal); white-space: nowrap; }
+/* Dual chart */
     .chart-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 14px; margin-bottom: 20px; }
-    .chart-title { font-weight: 700; font-size: 13.5px; margin-bottom: 4px; }
-    .chart-caption { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
-    .chart-svg-wrap { overflow-x: auto; }
-    .data-table { width: 100%; border-collapse: collapse; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; box-shadow: var(--shadow); margin-bottom: 8px; }
-    .data-table thead tr { background: #eef3f7; }
-    .data-table th { padding: 8px 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #424c55; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    .data-table td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid #edf1f4; vertical-align: top; }
-    .data-table tr:last-child td { border-bottom: 0; }
-    .source-tag { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
-    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
-    .tag-suki   { background: var(--teal-light); color: var(--teal); }
-    .tag-survey { background: var(--violet-light); color: var(--violet); }
-    .scope-box { background: var(--soft); border: 1px solid var(--line); border-left: 4px solid #8fabc2; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 20px; font-size: 13px; color: #3a454e; line-height: 1.5; }
-    .scope-box .section-label { color: #49545d; }
-    .scope-box p { margin: 0 0 8px; } .scope-box p:last-child { margin: 0; }
-    .scope-box strong { color: var(--ink); }
-    .sources-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
-    .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
-    .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
-  
+.scope-native { background: var(--teal-light); border: 1px solid #a5c9d6; border-left: 4px solid var(--teal); border-radius: var(--radius); padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #1a2d33; }
+/* Caution note for "higher is better" measures */
+    .caution-box {
+      background: var(--amber-light);
+      border: 1px solid #e8b07a;
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #4a2400;
+      line-height: 1.5;
+    }
+.badge-serq  { background: var(--violet-light); color: var(--violet); }
+a { color: var(--violet); }
+.badge-sq  { background: var(--violet-light); color: var(--violet); }
+code { font-family: 'JetBrains Mono','Courier New',monospace; font-size: 0.91em; color: inherit; background: rgba(0, 0, 0, 0.06); border-radius: 3px; padding: 1px 4px; }
+.no-data-badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--amber-light); color: var(--amber); font-size: 11px; font-weight: 700; }
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #0e5088;
+      --teal-light: #e1ebf3;
+      --blue:       #596290;
+      --blue-light: #e9eaf3;
+      --amber:      #a8641a;
+      --amber-light:#fbf0e0;
+      --red:        #a3272f;
+      --red-light:  #fbe9ea;
+      --violet:     #574e8e;
+      --violet-light:#ede9f5;
+      --slate:      #49545d;
+      --slate-light:#f0f5f9;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+a { color: var(--slate); }
+.masthead { border-bottom: 2px solid var(--slate); padding-bottom: 20px; margin-bottom: 28px; }
+.eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin: 0 0 6px; }
+.badge-us  { background: var(--slate-light); color: var(--slate); }
+.unit-card { background: var(--slate-light); border: 1px solid #cdd7de; border-left: 4px solid var(--slate); border-radius: var(--radius); margin-bottom: 28px; overflow: hidden; }
+.unit-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px 14px; border-bottom: 1px solid #d6e0e6; flex-wrap: wrap; }
+.unit-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate); margin-bottom: 4px; }
+.direction-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: #fff; border: 1px solid #cdd7de; font-size: 12px; font-weight: 700; color: var(--slate); white-space: nowrap; flex-shrink: 0; }
+.unit-def { padding: 14px 18px 12px; font-size: 13.5px; color: #263138; line-height: 1.55; border-bottom: 1px solid #d6e0e6; }
+.removal-flag {
+      padding: 12px 18px; background: #fbe9ea; border-top: 1px solid #e3aeb2;
+      font-size: 13px; color: #5c0c11; line-height: 1.5;
+    }
+.removal-flag-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--red); margin-bottom: 6px; }
+.removal-flag strong { color: #430509; }
+.algo-number { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--slate); color: #fff; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.formula-lhs { font-weight: 700; color: var(--slate); }
+.algo-units-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--slate); background: #f0f5f9; padding: 7px 12px; border-bottom: 1px solid #dce5ec; }
+details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--slate); padding: 4px 0; user-select: none; list-style: none; }
+.pseudo { background: #f4f7fa; border: 1px solid #dce5ec; border-left: 3px solid var(--slate); border-radius: var(--radius); padding: 12px 14px; font-family: 'JetBrains Mono','Courier New',monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; color: #2d3740; overflow-x: auto; }
 
     /* ── Combined-document nav ── */
     body { margin: 0; }
@@ -691,7 +1160,7 @@ Secondary (corroboration, per encounter):
 <td>In-encounter EHR active time</td>
 <td>Keystrokes/clicks during the visit window — objective proxy for in-visit task load, the mechanism NASA-TLX is meant to capture.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic Signal "Time in Notes" filtered to the encounter window, or vendor equivalent.</td>
+<td>Epic Signal "Time in Notes" filtered to the encounter window, or vendor equivalent. <strong>Caveat:</strong> Signal is a separate proprietary reporting product, not present in the standard EHI export (per <code>epic-ehi-kg</code> schema exploration) — confirm Signal access separately from EHI/Clarity access before relying on this field.</td>
 </tr>
 <tr>
 <td>Order-entry / chart-navigation events during encounter</td>
@@ -1071,18 +1540,18 @@ dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
 <p class="section-label">Algorithm</p>
 <div class="algo-switcher">
 <div class="algo-tabs" role="tablist">
-<button aria-controls="algo-panel-generic" aria-selected="true" class="algo-tab" data-panel="algo-panel-generic" role="tab">
+<button aria-controls="algo-panel-generic-cm-04" aria-selected="true" class="algo-tab" data-panel="algo-panel-generic-cm-04" role="tab">
 <span class="algo-tab-name">Generic</span>
 <span class="algo-tab-sub">Suki admin console</span>
 </button>
-<button aria-controls="algo-panel-epic" aria-selected="false" class="algo-tab" data-panel="algo-panel-epic" role="tab">
+<button aria-controls="algo-panel-epic-cm-04" aria-selected="false" class="algo-tab" data-panel="algo-panel-epic-cm-04" role="tab">
 <span class="algo-tab-name">Epic</span>
 <span class="algo-tab-sub">EHI knowledge graph</span>
 </button>
 <!-- Future tabs: add a <button> here and a matching <div id="algo-panel-*"> below -->
 </div>
 <!-- ── Panel: Generic ── -->
-<div class="algo-panel algo-body" id="algo-panel-generic" role="tabpanel">
+<div class="algo-panel algo-body" id="algo-panel-generic-cm-04" role="tabpanel">
 <p class="algo-purpose">
         Produces the average documentation minutes per encounter per provider in the cohort for a
         given month. This number is expected to decrease after Suki adoption as note creation
@@ -1126,7 +1595,7 @@ Data source: EHR audit-log telemetry preferred; Suki session duration as fallbac
 </details>
 </div>
 <!-- ── Panel: Epic ── -->
-<div class="algo-panel algo-body" hidden="" id="algo-panel-epic" role="tabpanel">
+<div class="algo-panel algo-body" hidden="" id="algo-panel-epic-cm-04" role="tabpanel">
 <p class="algo-purpose">
         When Epic Signal/UAL telemetry is unavailable, per-note authoring time can be approximated
         from Clarity’s note edit-event log. This is a <strong>within-provider proxy</strong>
@@ -1474,13 +1943,19 @@ GROUP BY h.ENTRY_USER_ID;
 </div>
 <!-- ── ALGORITHM: DASHBOARD METRIC ── -->
 <p class="section-label">Algorithm</p>
-<div class="algo-block">
-<div class="algo-header">
-<span class="algo-number">1</span>
-<span class="algo-title">Dashboard Metric — Cohort Average</span>
-<span class="algo-subtitle">For the Suki admin console</span>
+<div class="algo-switcher">
+<div class="algo-tabs" role="tablist">
+<button aria-controls="algo-panel-generic-cm-05" aria-selected="true" class="algo-tab" data-panel="algo-panel-generic-cm-05" role="tab">
+<span class="algo-tab-name">Generic</span>
+<span class="algo-tab-sub">Suki admin console</span>
+</button>
+<button aria-controls="algo-panel-epic-cm-05" aria-selected="false" class="algo-tab" data-panel="algo-panel-epic-cm-05" role="tab">
+<span class="algo-tab-name">Epic</span>
+<span class="algo-tab-sub">EHI knowledge graph</span>
+</button>
 </div>
-<div class="algo-body">
+<!-- ── Panel: Generic ── -->
+<div class="algo-panel algo-body" id="algo-panel-generic-cm-05" role="tabpanel">
 <p class="algo-purpose">
         Produces the single number shown on the administrative dashboard: the average
         after-hours documentation minutes per provider in the cohort for a given month.
@@ -1523,7 +1998,56 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
   dashboard_value[M] = MEAN( after_hours_min[p] for p in active_providers )</div>
 </details>
 </div>
+<!-- ── Panel: Epic ── -->
+<div class="algo-panel algo-body" hidden="" id="algo-panel-epic-cm-05" role="tabpanel">
+<p class="algo-purpose">
+        Epic Signal/UAL — the true all-activity audit-log source behind after-hours
+        documentation minutes — is a separate, proprietary reporting product and is
+        <strong>not present in the standard EHI export</strong> documented by the Epic EHI
+        knowledge graph (<code>epic-ehi-kg</code>). No equivalent all-activity timestamp table
+        was found in this schema pass. The closest EHI-only reconstruction uses note-authoring
+        timestamps from <code>HNO_INFO</code>, filtered to outside a defined scheduled-hours
+        window — but this captures only when notes were created or last edited, not the
+        full range of EHR activity (inbox messaging, order entry, chart review) that Signal/UAL
+        would count.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Epic Clarity/EHI Tables — Verified Present in Schema</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Required</span>
+<div>
+<div class="unit-ref-name">HNO_INFO</div>
+<div class="unit-ref-def"><code>CREATE_INSTANT_DTTM</code> (note create instant) and <code>LST_FILED_INST_DTTM</code> (last-filed instant), both UTC datetimes, keyed by <code>ENTRY_USER_ID</code>. Flag each note event as after-hours if it falls outside a defined scheduled-hours window, then sum per provider per month.</div>
+<div class="unit-ref-ambig">⚠ <strong>Weak/partial proxy, not equivalent to the canonical measure.</strong> This only captures note-authoring timestamps — it misses after-hours inbox activity, order entry, and chart/results review entirely, all of which Signal/UAL would include. Treat any rate computed this way as a documentation-only lower bound on true after-hours EHR time, not a substitute for it.</div>
 </div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">After-Hours Note Minutes (Partial)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(HNO_INFO events where CREATE_INSTANT_DTTM or LST_FILED_INST_DTTM falls outside scheduled-hours window)</span><span class="formula-den">grouped by ENTRY_USER_ID, per month</span></span>
+<div class="formula-note">Documentation-only proxy — excludes inbox, orders, and results-review activity entirely
+Not a substitute for Signal/UAL; use only when true EHR audit-log access is unavailable</div>
+</div>
+<details>
+<summary>Pseudocode — Epic (proposed, partial)</summary>
+<div class="pseudo">SELECT h.ENTRY_USER_ID,
+       h.NOTE_ID,
+       h.CREATE_INSTANT_DTTM,
+       h.LST_FILED_INST_DTTM
+FROM HNO_INFO h
+WHERE IS_OUTSIDE_SCHEDULED_HOURS(h.CREATE_INSTANT_DTTM, provider_schedule)
+   OR IS_OUTSIDE_SCHEDULED_HOURS(h.LST_FILED_INST_DTTM, provider_schedule)
+-- ⚠ No Epic Signal/UAL equivalent found in the EHI schema pass — this only reconstructs
+--   the note-authoring slice of after-hours time, not inbox/orders/chart-review activity</div>
+</details>
+</div>
+</div><!-- /.algo-switcher -->
+<div class="key-finding">
+<strong>Key gap:</strong> Epic Signal/UAL, the source of true all-activity audit-log time
+    behind after-hours documentation minutes, is a separate proprietary reporting product and is
+    not part of the standard EHI export explored in this schema pass. The Epic tab's
+    <code>HNO_INFO</code>-based reconstruction is the closest EHI-only proxy available, but it is
+    a partial, documentation-only signal — not a verified equivalent to Signal/UAL.
+  </div>
 <!-- ── EXPECTED TREND ── -->
 <div class="chart-wrap">
 <div class="chart-title">Expected Trend — After-Hours Min / Provider / Month</div>
@@ -1596,7 +2120,7 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
 <td>EHR audit log (timestamped)</td>
 <td>Per-user, per-event activity log showing when each provider interacted with the EHR and for how long. The primary data source for computing documentation minutes.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic Signal / UAL; equivalent in Cerner, Athena. Must include provider ID, timestamp, event type, and duration.</td>
+<td>Epic Signal / UAL — a separate, proprietary reporting product, <strong>not present in the standard EHI export</strong> documented in <code>epic-ehi-kg</code>. It cannot be reconstructed from EHI tables alone. Equivalent in Cerner, Athena (not yet researched). See the Epic tab for the closest EHI-only proxy (partial, note-timestamps only). Must include provider ID, timestamp, event type, and duration.</td>
 </tr>
 <tr>
 <td>Provider scheduled working hours</td>
@@ -1608,7 +2132,7 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
 <td>Note signature timestamp</td>
 <td>Date and time of initial note closure/signature and any subsequent addenda, per encounter per provider.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Needed to bound documentation scope (encounter open → final signature).</td>
+<td>Needed to bound documentation scope (encounter open → final signature). Verified EHI proxy (epic-ehi-kg): <code>HNO_INFO.CREATE_INSTANT_DTTM</code> (note create instant) and <code>LST_FILED_INST_DTTM</code> (last-filed instant) — see the Epic tab. Captures note-authoring timestamps only, not the full EHR activity (inbox, orders) Signal/UAL would count.</td>
 </tr>
 <tr>
 <td>Provider identifiers</td>
@@ -1737,13 +2261,19 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
 </div>
 <!-- ── ALGORITHM ── -->
 <p class="section-label">Algorithm</p>
-<div class="algo-block">
-<div class="algo-header">
-<span class="algo-number">1</span>
-<span class="algo-title">Dashboard Metric — Closure-Delay Bucket Distribution (Cohort Average)</span>
-<span class="algo-subtitle">Draft-availability proxy, mirrors crosswalk buckets</span>
+<div class="algo-switcher">
+<div class="algo-tabs" role="tablist">
+<button aria-controls="algo-panel-generic-cm-06" aria-selected="true" class="algo-tab" data-panel="algo-panel-generic-cm-06" role="tab">
+<span class="algo-tab-name">Generic</span>
+<span class="algo-tab-sub">Suki admin console</span>
+</button>
+<button aria-controls="algo-panel-epic-cm-06" aria-selected="false" class="algo-tab" data-panel="algo-panel-epic-cm-06" role="tab">
+<span class="algo-tab-name">Epic</span>
+<span class="algo-tab-sub">EHI knowledge graph</span>
+</button>
 </div>
-<div class="algo-body">
+<!-- ── Panel: Generic ── -->
+<div class="algo-panel algo-body" id="algo-panel-generic-cm-06" role="tabpanel">
 <p class="algo-purpose">
         For each completed session, computes the elapsed time between the encounter-end
         timestamp and the session-completion timestamp, assigns it to a closure-delay bucket
@@ -1819,7 +2349,51 @@ dashboard_value = {
 # linkage is confirmed (see Pipeline gap above)</div>
 </details>
 </div>
+<!-- ── Panel: Epic ── -->
+<div class="algo-panel algo-body" hidden="" id="algo-panel-epic-cm-06" role="tabpanel">
+<p class="algo-purpose">
+        A first-attempt Epic-side algorithm that would replace the Generic tab's draft-availability proxy
+        with the true signed-chart closure event, if EHR access is available. Per the Epic EHI schema
+        (<code>epic-ehi-kg</code>), <code>PAT_ENC</code> carries both the visit date and an encounter-close
+        date as direct, verified fields — a much stronger candidate than a fabricated note-signature
+        table name.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Epic Clarity/EHI Tables — Verified Present in Schema</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Required</span>
+<div>
+<div class="unit-ref-name">PAT_ENC</div>
+<div class="unit-ref-def"><code>CONTACT_DATE</code> (visit date) and <code>ENC_CLOSE_DATE</code> (date the encounter was closed) — a direct field pairing for this measure's closure interval.</div>
+<div class="unit-ref-ambig">⚠ <strong>Unconfirmed:</strong> whether <code>ENC_CLOSE_DATE</code> reflects note signature specifically, or a broader encounter closure that includes coding/billing review completing after documentation. This needs validation against a live instance before trusting it as a pure “note signed” proxy.</div>
 </div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Cross-check</span>
+<div>
+<div class="unit-ref-name">HNO_INFO</div>
+<div class="unit-ref-def"><code>LST_FILED_INST_DTTM</code> (last-filed instant) and <code>UNSIGNED_YN</code> (signature flag). If <code>ENC_CLOSE_DATE</code> proves too broad (includes non-documentation closure activity), fall back to this note-level pair instead.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">EHR 24-Hour Closure Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(encounters where ENC_CLOSE_DATE − CONTACT_DATE ≤ 24h)</span><span class="formula-den">COUNT(closed encounters)</span></span> × 100
+<div class="formula-note">Prefer this over the Generic tab wherever EHR access exists — it measures actual chart closure,
+not draft availability. The Generic tab remains the fallback for Suki-only deployments.</div>
+</div>
+<details>
+<summary>Pseudocode — Epic (proposed)</summary>
+<div class="pseudo">SELECT e.PAT_ENC_CSN_ID,
+       DATEDIFF(hour, e.CONTACT_DATE, e.ENC_CLOSE_DATE) AS closure_delay_hours
+FROM PAT_ENC e
+WHERE e.ENC_CLOSE_DATE IS NOT NULL
+  AND e.ENC_TYPE_C NOT IN (1, 31)          -- exclude telephone/proxy types, per CM-04's convention
+-- Bucket closure_delay_hours using the same thresholds as the Generic tab
+-- ⚠ Validate ENC_CLOSE_DATE against HNO_INFO.LST_FILED_INST_DTTM on a
+--   provider-period sample before trusting this as a signature-date proxy</div>
+</details>
+</div>
+</div><!-- /.algo-switcher -->
 <!-- ── EXPECTED TREND ── -->
 <div class="chart-wrap">
 <div class="chart-title">Expected Trend — Closure-Delay Bucket Shift, Pre- vs. Post-Adoption</div>
@@ -1912,13 +2486,13 @@ dashboard_value = {
 <td>Note signature timestamp</td>
 <td>Ground-truth event CM-06 measures — when the note moved from draft to signed/final.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: <code>HNO_NOTE</code> signature instant; Cerner/Athena: equivalent note-status field.</td>
+<td>Epic: <code>PAT_ENC.ENC_CLOSE_DATE</code> (verified in EHI schema) as a first-attempt proxy — see the Epic tab above. <strong>Unconfirmed</strong> whether this reflects note signature specifically or broader encounter closure (coding/billing review); cross-check against <code>HNO_INFO.LST_FILED_INST_DTTM</code>/<code>UNSIGNED_YN</code> if too broad. Cerner/Athena: equivalent note-status field, not yet researched.</td>
 </tr>
 <tr>
-<td>Encounter end timestamp (EHR-side)</td>
+<td>Encounter/visit date (EHR-side)</td>
 <td>Cross-check / alternative anchor where Suki and EHR scheduling data diverge.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Standard encounter/appointment record.</td>
+<td>Epic: <code>PAT_ENC.CONTACT_DATE</code> (verified in EHI schema).</td>
 </tr>
 <tr>
 <td>Provider's daily encounter sequence (schedule)</td>
@@ -2046,13 +2620,19 @@ dashboard_value = {
 </div>
 </div>
 <p class="section-label">Algorithm</p>
-<div class="algo-block">
-<div class="algo-header">
-<span class="algo-number">1</span>
-<span class="algo-title">Dashboard Metric — Cohort Average</span>
-<span class="algo-subtitle">For the Suki admin console</span>
+<div class="algo-switcher">
+<div class="algo-tabs" role="tablist">
+<button aria-controls="algo-panel-generic-cm-07" aria-selected="true" class="algo-tab" data-panel="algo-panel-generic-cm-07" role="tab">
+<span class="algo-tab-name">Generic</span>
+<span class="algo-tab-sub">Suki admin console</span>
+</button>
+<button aria-controls="algo-panel-epic-cm-07" aria-selected="false" class="algo-tab" data-panel="algo-panel-epic-cm-07" role="tab">
+<span class="algo-tab-name">Epic</span>
+<span class="algo-tab-sub">EHI knowledge graph</span>
+</button>
 </div>
-<div class="algo-body">
+<!-- ── Panel: Generic ── -->
+<div class="algo-panel algo-body" id="algo-panel-generic-cm-07" role="tabpanel">
 <p class="algo-purpose">
         Produces the average total EHR minutes per encounter per provider in the cohort for a given
         month. This is the broadest efficiency indicator in the CM suite: it captures all EHR time,
@@ -2098,7 +2678,63 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
   dashboard_value[M] = MEAN( ehr_per_enc[p] for p in active_providers )</div>
 </details>
 </div>
+<!-- ── Panel: Epic ── -->
+<div class="algo-panel algo-body" hidden="" id="algo-panel-epic-cm-07" role="tabpanel">
+<p class="algo-purpose">
+        The Generic tab's <code>avg_total_time_min</code>, <code>business_hours_min</code>,
+        <code>after_hours_min</code>, and <code>inbox_time_hrs</code> fields are Suki crosswalk
+        abstractions, not literal Epic column names, and they trace back to Epic Signal/UAL —
+        a separate, proprietary reporting product <strong>not present in the standard EHI
+        export</strong> documented by the Epic EHI knowledge graph (<code>epic-ehi-kg</code>).
+        No equivalent all-activity audit-log table was found in this schema pass. Two verified EHI
+        tables can partially reconstruct total EHR time from first principles: <code>ORDER_PROC</code>
+        for the orders component and <code>HNO_INFO</code> for the notes component — the same
+        table CM-05's Epic tab uses. Combined, they cover only two of at least four activity
+        types that make up "total EHR time"; inbox management and results/chart review are entirely
+        absent from this reconstruction.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Epic Clarity/EHI Tables — Verified Present in Schema</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Required</span>
+<div>
+<div class="unit-ref-name">ORDER_PROC</div>
+<div class="unit-ref-def"><code>ORDER_TIME</code> (order placed), <code>RESULT_TIME</code> (most recent result), <code>PROC_BGN_TIME</code>/<code>PROC_ENDING_TIME</code> (procedure start/end), <code>CHRG_DROPPED_TIME</code> (charge generated), and <code>INSTANTIATED_TIME</code>. Joinable to encounter via <code>PAT_ENC_CSN_ID</code>. Reconstructs the "orders" component — order-entry activity per provider per encounter.</div>
 </div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Required</span>
+<div>
+<div class="unit-ref-name">HNO_INFO</div>
+<div class="unit-ref-def"><code>CREATE_INSTANT_DTTM</code> and <code>LST_FILED_INST_DTTM</code>, keyed by <code>ENTRY_USER_ID</code> and joinable to encounter via <code>PAT_ENC_CSN_ID</code>. Reconstructs the "notes" component — the same fields CM-05's Epic tab uses for its after-hours partial proxy.</div>
+<div class="unit-ref-ambig">⚠ <strong>Materially incomplete proxy.</strong> This reconstruction covers notes + orders timestamps only. It has no visibility into inbox message handling, results review, or general chart review time — all of which Epic Signal/UAL would include in a true total-EHR-time figure. Do not report this as equivalent to <code>avg_total_time_min</code>; label it explicitly as a partial, EHI-only lower bound.</div>
+</div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Partial EHR Minutes (Notes + Orders)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑(HNO_INFO note-timestamp activity) + ∑(ORDER_PROC order-timestamp activity)</span><span class="formula-den">COUNT(completed encounters), grouped by provider &amp; month</span></span>
+<div class="formula-note">Excludes inbox management and results/chart-review time entirely — not comparable
+to a Signal/UAL-sourced avg_total_time_min figure without a large, unverified undercount
+Cross-check against the Generic tab's Suki-side documentation-only signal where both are available</div>
+</div>
+<details>
+<summary>Pseudocode — Epic (proposed, partial)</summary>
+<div class="pseudo">-- Notes component
+SELECT h.ENTRY_USER_ID AS provider_id, h.PAT_ENC_CSN_ID,
+       h.CREATE_INSTANT_DTTM, h.LST_FILED_INST_DTTM
+FROM HNO_INFO h;
+
+-- Orders component
+SELECT o.ORD_CREATR_USER_ID AS provider_id, o.PAT_ENC_CSN_ID,
+       o.ORDER_TIME, o.RESULT_TIME, o.CHRG_DROPPED_TIME
+FROM ORDER_PROC o;
+
+-- ⚠ No Epic Signal/UAL equivalent found in the EHI schema pass. Combine both sets, dedupe
+--   overlapping activity windows, group by provider &amp; month. Result is a notes+orders-only
+--   floor on total EHR time — inbox and results-review time are entirely unaccounted for.</div>
+</details>
+</div>
+</div><!-- /.algo-switcher -->
 <div class="chart-wrap">
 <div class="chart-title">Expected Trend — Total EHR Min / Encounter / Month</div>
 <p class="chart-caption">
@@ -2160,25 +2796,25 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
 <td>Avg total EHR time per encounter (min)</td>
 <td>Per-provider total EHR activity time from audit-log, covering all activity types. The primary data element for this measure.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: avg_total_time_min  |  Cerner: telemetry varies by version. Confirm whether field includes inbox and orders or documentation only.</td>
+<td>Epic: avg_total_time_min — a Suki crosswalk abstraction, not a literal Epic column; no equivalent all-activity field was found in the EHI schema (<code>epic-ehi-kg</code>). Traces to Epic Signal/UAL, a separate proprietary product outside the standard EHI export. See the Epic tab for a partial, EHI-only notes+orders reconstruction. Cerner: telemetry varies by version.</td>
 </tr>
 <tr>
 <td>Business-hours EHR time per provider/month (min)</td>
 <td>Total EHR activity during scheduled working hours, per provider per month.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: business_hours_min  |  Athena: business_hours_numerator. Used to split in-hours vs. after-hours components.</td>
+<td>Epic: business_hours_min — crosswalk abstraction; no equivalent field found in the EHI schema pass. Would need to be derived by bucketing <code>HNO_INFO</code>/<code>ORDER_PROC</code> timestamps against scheduled hours (see the Epic tab), which is still a notes+orders-only partial signal. Athena: business_hours_numerator, not yet researched.</td>
 </tr>
 <tr>
 <td>After-hours EHR time per provider/month (min)</td>
 <td>Total EHR activity outside scheduled working hours, per provider per month. Overlaps with CM-05 (After-Hours Documentation) if scoped to documentation tasks.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: after_hours_min  |  Cerner: after_hours_min.</td>
+<td>Epic: after_hours_min — same Signal/UAL gap as CM-05's after-hours minutes; see CM-05's Epic tab for the <code>HNO_INFO</code>-based partial proxy this measure would share. Cerner: after_hours_min, not yet researched.</td>
 </tr>
 <tr>
 <td>Total inbox time per provider/month (hrs)</td>
 <td>Time spent managing the EHR inbox (messages, results, referrals). May be a significant share of total EHR time independent of Suki adoption.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: inbox_time_hrs  |  Athena: total_inbox_time_hours. Report separately to isolate Suki's documentation-specific effect.</td>
+<td>Epic: inbox_time_hrs — no inbox-message-handling table was found among the tables read in this schema pass (<code>HNO_INFO</code>, <code>ORDER_PROC</code>, <code>PAT_ENC</code>, <code>ARPB_TRANSACTIONS</code>, <code>ARPB_CHG_ENTRY_DX</code>). Flagged as an open gap in the EHI-only reconstruction — not covered by the Epic tab. Athena: total_inbox_time_hours, not yet researched.</td>
 </tr>
 <tr>
 <td>Provider identifiers</td>
@@ -2221,6 +2857,12 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
       outcome signal itself, the EHR full audit-log is the authoritative source. Organizations
       that report only Suki session duration for this measure will systematically understate total
       EHR time and the true magnitude of any change.
+    </p>
+<p>
+      Where full Epic Signal/UAL audit-log access is unavailable, the Epic tab's <code>ORDER_PROC</code>
+      + <code>HNO_INFO</code> reconstruction is the best fallback confirmed against the verified EHI
+      schema (<code>epic-ehi-kg</code>) — but it must be reported explicitly as a notes+orders-only
+      partial signal, materially incomplete relative to true total EHR time.
     </p>
 </div>
 <hr class="divider"/>
@@ -2289,7 +2931,7 @@ Scope: all EHR activity types (documentation + inbox + orders + results review)<
 <div class="unit-ambig">
 <div class="unit-ambig-label">⚠ Ambiguities to Resolve</div>
 <ul>
-<li><strong>The Missing Feedback Loop (shared with CM-09).</strong> Suki never sees the physician's post-generation edits. Without the EHR's final signed note and edit/version history, CM-08 can only be measured against the <em>transcript</em>, not the clinician's final accepted note, and only via one-off rater exercises rather than continuous monitoring.</li>
+<li><strong>The Missing Feedback Loop (shared with CM-09).</strong> Suki never sees the physician's post-generation edits. Without the EHR's final signed note and edit/version history, CM-08 can only be measured against the <em>transcript</em>, not the clinician's final accepted note, and only via one-off rater exercises rather than continuous monitoring. Verified against Epic's real schema (<code>epic-ehi-kg</code>): <code>HNO_INFO</code> gives note metadata (author, create/last-filed timestamps, signed/unsigned flag) and <code>NOTES_HISTORY_LOG</code> gives an edit-event stream (action type + timestamp) — but <strong>no verified Epic table stores full-text version snapshots or a diff of the note against Suki's draft</strong>. The gap is real, not just unexplored.</li>
 <li><strong>Wide published omission rates (71–86%).</strong> Kernberg 2023 (86%), Arko 2025 (71%) — rates vary with the reference standard used (transcript-based vs. physician-authored-note-based) and with how "clinically relevant element" is operationalized. The element checklist and reference standard must be fixed before a rate is reported or compared across sources.</li>
 <li><strong><code>amendment_count</code> is a weak, indirect telemetry proxy.</strong> The vendor metrics mapping links an "amended or addendum note count" field to CM-08 as an indirect proxy. It conflates omission-driven re-opens with accuracy corrections (CM-09) and unrelated edits (formatting, dictation fixes, coding changes) — it should not be used as a standalone completeness signal, only as a low-cost screening input pending validation against rater scores.</li>
 <li><strong>Note Amendment Rate (CM-08/CM-09 boundary).</strong> The corpus flags an unresolved "row-13 amendment rate" item — post-signature re-opens that <em>add</em> missing content belong to CM-08; re-opens that <em>correct</em> wrong content belong to CM-09. Clarify with Suki whether their amendment-rate concept distinguishes these, or covers any pre-signature edit.</li>
@@ -2476,19 +3118,19 @@ dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(o
 <td>Final signed note text</td>
 <td>Gold standard to diff against the Suki draft — closes the Missing Feedback Loop.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+<td>⚠ No verified Epic table contains full physician-edited/final-signed note text with reliable coverage. <code>HNO_NOTE_TEXT</code> is referenced in Epic's own schema docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>; <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but its own documentation says it only contains notes stored in <em>plain</em> text and explicitly excludes rich-text notes — coverage is likely incomplete. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
 </tr>
 <tr>
 <td>Note version history / edit audit trail</td>
 <td>Reconstructs physician edits between Suki output and the final note, including additions the physician made to restore omitted content.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic NoteActivity; EHR audit log table.</td>
+<td>⚠ No table named "NoteActivity" was found in this schema — treat the prior citation as unconfirmed. The verified table is <code>NOTES_HISTORY_LOG</code> (PK <code>NOTE_CSN_ID</code>+<code>LINE</code>; columns <code>NOTE_ID</code>, <code>EDIT_HX_INSTANT</code>, <code>EDIT_HX_ACTION_C_NAME</code> — examples given are Activate/Inactivate/Edit, full value set incl. whether "Sign" is a distinct action is unconfirmed). It is an edit-<em>event</em> stream (action type + timestamp only) — it does <strong>not</strong> contain full-text version snapshots or a diff of Suki's draft vs. the signed note. No verified Epic table provides that.</td>
 </tr>
 <tr>
 <td>Note signature timestamp + signatory</td>
 <td>Confirms the physician reviewed and accepted the note.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE.SIGN_INST</code>.</td>
+<td>⚠ <code>HNO_NOTE.SIGN_INST</code> does not match any real table/column found in this schema — treat as unconfirmed. Verified fields on <code>HNO_INFO</code> (PK <code>NOTE_ID</code>): <code>UNSIGNED_YN</code> (signed/unsigned flag), <code>CURRENT_AUTHOR_ID</code> (current author), and <code>LST_FILED_INST_DTTM</code> (instant the note was last edited/filed — the closest available timestamp; no explicit "signature instant" column was found).</td>
 </tr>
 <tr>
 <td>Encounter-to-note linkage</td>
@@ -2517,6 +3159,14 @@ dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(o
       the transcript</em>, not relative to the clinician's final signed note — closing that
       gap requires either an EHR integration exposing note version history, or a contractual
       data-sharing provision for note edit logs / final note text.
+    </p>
+<p>
+      ⚠ Verified against Epic's real EHI schema (not the vendor-metrics-catalog guesses this
+      card previously relied on): <code>HNO_INFO</code> and <code>NOTES_HISTORY_LOG</code> exist
+      and give note metadata and edit-event timestamps, but no verified Epic table in this schema
+      stores full-text note version snapshots or a Suki-draft-vs-final diff — closing the
+      Missing Feedback Loop for CM-08 would require a table type not found here, not just access
+      to one that already exists.
     </p>
 </div>
 <!-- ── SOURCES ── -->
@@ -2592,7 +3242,7 @@ dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(o
 <div class="unit-ambig">
 <div class="unit-ambig-label">⚠ Ambiguities to Resolve</div>
 <ul>
-<li><strong>The Missing Feedback Loop.</strong> Suki generates a note; the physician reviews, edits, and signs it in the EHR. The physician's edits are the most direct signal of where Suki was wrong — but Suki never sees those edits. Without the EHR's final note text and edit/version history, CM-09 can only be measured against the <em>transcript</em>, not the clinician's final intent, and only via one-off rater exercises rather than continuous monitoring.</li>
+<li><strong>The Missing Feedback Loop.</strong> Suki generates a note; the physician reviews, edits, and signs it in the EHR. The physician's edits are the most direct signal of where Suki was wrong — but Suki never sees those edits. Without the EHR's final note text and edit/version history, CM-09 can only be measured against the <em>transcript</em>, not the clinician's final intent, and only via one-off rater exercises rather than continuous monitoring. Verified against Epic's real schema (<code>epic-ehi-kg</code>): <code>HNO_INFO</code> gives note metadata (author, create/last-filed timestamps, signed/unsigned flag) and <code>NOTES_HISTORY_LOG</code> gives an edit-event stream (action type + timestamp) — but <strong>no verified Epic table stores full-text version snapshots or a diff of the note against Suki's draft</strong>. The gap is real, not just unexplored.</li>
 <li><strong>Wide published-rate range (3–36%).</strong> Baker 2023 (36%), Palm 2025 (31%), Kernberg 2023 (3.2% incorrect facts but 86% omissions) — rates vary enormously by error definition (hallucination vs. incorrect-fact vs. negation-reversal vs. any flagged sentence). The error taxonomy must be fixed before any rate is reported or compared across sources.</li>
 <li><strong>Reproducibility / cross-replicate consistency.</strong> Kernberg 2023 found only 53% of data elements consistent across 3 model runs of the same case — different errors appear on each run, so a single-pass audit may not represent the model's typical behavior. Consider whether a pilot should sample multiple generations per encounter.</li>
 <li><strong>Note Amendment Rate (CM-08/CM-09 boundary).</strong> The corpus flags an unresolved "row-13 amendment rate" item — post-signature re-opens that <em>correct</em> wrong content belong to CM-09; re-opens that <em>add</em> missing content belong to CM-08. Clarify with Suki whether their amendment-rate concept distinguishes these, or covers any pre-signature edit.</li>
@@ -2787,19 +3437,19 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
 <td>Final signed note text</td>
 <td>Gold standard to diff against the Suki draft — closes the Missing Feedback Loop.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+<td>⚠ No verified Epic table contains full physician-edited/final-signed note text with reliable coverage. <code>HNO_NOTE_TEXT</code> is referenced in Epic's own schema docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>; <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but its own documentation says it only contains notes stored in <em>plain</em> text and explicitly excludes rich-text notes — coverage is likely incomplete. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
 </tr>
 <tr>
 <td>Note version history / edit audit trail</td>
 <td>Reconstructs physician edits between Suki output and the final note — the most direct signal of where Suki was wrong.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic NoteActivity; EHR audit log table.</td>
+<td>⚠ No table named "NoteActivity" was found in this schema — treat the prior citation as unconfirmed. The verified table is <code>NOTES_HISTORY_LOG</code> (PK <code>NOTE_CSN_ID</code>+<code>LINE</code>; columns <code>NOTE_ID</code>, <code>EDIT_HX_INSTANT</code>, <code>EDIT_HX_ACTION_C_NAME</code> — examples given are Activate/Inactivate/Edit, full value set incl. whether "Sign" is a distinct action is unconfirmed). It is an edit-<em>event</em> stream (action type + timestamp only) — it does <strong>not</strong> contain full-text version snapshots or a diff of Suki's draft vs. the signed note. No verified Epic table provides that.</td>
 </tr>
 <tr>
 <td>Note signature timestamp + signatory</td>
 <td>Confirms the physician reviewed and accepted the note.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE.SIGN_INST</code>.</td>
+<td>⚠ <code>HNO_NOTE.SIGN_INST</code> does not match any real table/column found in this schema — treat as unconfirmed. Verified fields on <code>HNO_INFO</code> (PK <code>NOTE_ID</code>): <code>UNSIGNED_YN</code> (signed/unsigned flag), <code>CURRENT_AUTHOR_ID</code> (current author), and <code>LST_FILED_INST_DTTM</code> (instant the note was last edited/filed — the closest available timestamp; no explicit "signature instant" column was found).</td>
 </tr>
 <tr>
 <td>Encounter-to-note linkage</td>
@@ -2827,6 +3477,14 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
       clinician's final signed note — closing that gap requires either an EHR integration
       exposing note version history, or a contractual data-sharing provision for note edit logs
       / final note text.
+    </p>
+<p>
+      ⚠ Verified against Epic's real EHI schema (not the vendor-metrics-catalog guesses this
+      card previously relied on): <code>HNO_INFO</code> and <code>NOTES_HISTORY_LOG</code> exist
+      and give note metadata and edit-event timestamps, but no verified Epic table in this schema
+      stores full-text note version snapshots or a Suki-draft-vs-final diff — closing the
+      Missing Feedback Loop for CM-09 would require a table type not found here, not just access
+      to one that already exists.
     </p>
 </div>
 <!-- ── SOURCES ── -->
@@ -3107,13 +3765,13 @@ dashboard_value = { "composite_score": composite_score, "domain_scores": domain_
 <td>Final signed note text</td>
 <td>Gold standard to diff against the Suki draft — closes the Missing Feedback Loop.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+<td>⚠ No verified Epic table contains full physician-edited/final-signed note text with reliable coverage. <code>HNO_NOTE_TEXT</code> is referenced in Epic's own schema docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>; <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but its own documentation says it only contains notes stored in <em>plain</em> text and explicitly excludes rich-text notes — coverage is likely incomplete. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
 </tr>
 <tr>
 <td>Note version history / edit audit trail</td>
 <td>Reconstructs physician edits between Suki output and the final note.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic NoteActivity; EHR audit log table.</td>
+<td>⚠ No table named "NoteActivity" was found in this schema — treat the prior citation as unconfirmed. The verified table is <code>NOTES_HISTORY_LOG</code> (PK <code>NOTE_CSN_ID</code>+<code>LINE</code>; columns <code>NOTE_ID</code>, <code>EDIT_HX_INSTANT</code>, <code>EDIT_HX_ACTION_C_NAME</code> — examples given are Activate/Inactivate/Edit, full value set incl. whether "Sign" is a distinct action is unconfirmed). It is an edit-<em>event</em> stream (action type + timestamp only) — it does <strong>not</strong> contain full-text version snapshots or a diff of Suki's draft vs. the signed note. No verified Epic table provides that.</td>
 </tr>
 <tr>
 <td>Encounter-to-note linkage</td>
@@ -3139,6 +3797,14 @@ dashboard_value = { "composite_score": composite_score, "domain_scores": domain_
       measures, the <strong>Missing Feedback Loop</strong> means every composite score in this
       card is computed relative to the transcript, not the clinician's final signed note, until an
       EHR integration or data-sharing provision closes that gap.
+    </p>
+<p>
+      ⚠ Verified against Epic's real EHI schema (not the vendor-metrics-catalog guesses this
+      card previously relied on): <code>HNO_INFO</code> and <code>NOTES_HISTORY_LOG</code> exist
+      and give note metadata and edit-event timestamps, but no verified Epic table in this schema
+      stores full-text note version snapshots or a Suki-draft-vs-final diff — closing the
+      Missing Feedback Loop for CM-10 (as for CM-08/CM-09) would require a table type not found
+      here, not just access to one that already exists.
     </p>
 </div>
 <!-- ── SOURCES ── -->
@@ -3406,7 +4072,7 @@ dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribu
 <td>Final signed note text</td>
 <td>Length/diversity computed on the physician-accepted version, not just the Suki draft, once available.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE_TEXT</code> / <code>HNO_PLAIN_TEXT</code> (unconfirmed/exploratory — field availability and text format not yet verified against a live Epic EHI extract).</td>
+<td>Verified against Epic's real EHI schema: <code>HNO_NOTE_TEXT</code> is referenced in Epic's own docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>. <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but only covers notes stored in plain text (excludes rich-text notes) — coverage is likely incomplete.</td>
 </tr>
 <tr>
 <td>Documentation length telemetry (chars/week)</td>
@@ -3432,11 +4098,15 @@ dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribu
       <code>GET /session/{id}/content</code>.
     </p>
 <p>
-      EHR-side note text (Epic <code>HNO_NOTE_TEXT</code> / <code>HNO_PLAIN_TEXT</code>, unconfirmed
-      exploratory field names) would extend this measure to the physician-accepted final note
-      rather than just the Suki draft, and would support the note-length-ratio variant against a
-      human-authored reference note where one exists. Neither addition is required to compute the
-      primary unit today; they refine the reference point, not the computability of the measure.
+      EHR-side note text would extend this measure to the physician-accepted final note rather
+      than just the Suki draft, and would support the note-length-ratio variant against a
+      human-authored reference note where one exists. Verified against Epic's real EHI schema:
+      <code>HNO_NOTE_TEXT</code> (the reporting-grade table per Epic's own docs) is not present in
+      this EHI export snapshot; <code>HNO_PLAIN_TEXT</code> is the closest table actually
+      available but only covers plain-text notes (excludes rich-text notes), so length/diversity
+      computed from it would understate coverage for any org with meaningful rich-text note volume.
+      Neither addition is required to compute the primary unit today; they refine the reference
+      point, not the computability of the measure.
     </p>
 </div>
 <!-- ── SOURCES ── -->
@@ -3683,7 +4353,7 @@ dashboard_value = { "agreement_r_by_metric": agreement_r, "approved_metrics": ap
 <td>Final signed note text</td>
 <td>Preferred reference source once available — closes the same Missing Feedback Loop noted for CM-08/09.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic <code>HNO_NOTE_TEXT</code>; Cerner <code>clinical_event.RESULT_VAL</code>.</td>
+<td>⚠ Note text sourcing is secondary to this measure's purpose (validating the rating pipeline, not the EHR integration). If EHR-sourced reference text is needed: <code>HNO_NOTE_TEXT</code> is referenced in Epic's own docs as the reporting-grade table but is not present in this EHI export snapshot; <code>HNO_PLAIN_TEXT</code> is the closest verified candidate, but plain-text-only coverage (excludes rich-text notes) means it may understate metric performance on notes it can't see. Cerner <code>clinical_event.RESULT_VAL</code> is unverified (outside this schema effort).</td>
 </tr>
 <tr>
 <td>Encounter-to-note linkage</td>
@@ -3820,18 +4490,18 @@ dashboard_value = { "agreement_r_by_metric": agreement_r, "approved_metrics": ap
 <p class="section-label">Algorithm</p>
 <div class="algo-switcher">
 <div class="algo-tabs" role="tablist">
-<button aria-controls="algo-panel-util" aria-selected="true" class="algo-tab" data-panel="algo-panel-util" role="tab">
+<button aria-controls="algo-panel-util-cm-13" aria-selected="true" class="algo-tab" data-panel="algo-panel-util-cm-13" role="tab">
 <span class="algo-tab-name">Utilization</span>
 <span class="algo-tab-sub">Primary CM-13 metric</span>
 </button>
-<button aria-controls="algo-panel-adopt" aria-selected="false" class="algo-tab" data-panel="algo-panel-adopt" role="tab">
+<button aria-controls="algo-panel-adopt-cm-13" aria-selected="false" class="algo-tab" data-panel="algo-panel-adopt-cm-13" role="tab">
 <span class="algo-tab-name">Adoption &amp; Engagement</span>
 <span class="algo-tab-sub">Suki-native secondary metrics</span>
 </button>
 <!-- No Epic tab: EHR Appointments Scheduled is itself a Suki-ingested field, not a raw Epic query. -->
 </div>
 <!-- ── Panel: Utilization ── -->
-<div class="algo-panel algo-body" id="algo-panel-util" role="tabpanel">
+<div class="algo-panel algo-body" id="algo-panel-util-cm-13" role="tabpanel">
 <p class="algo-purpose">
         Produces the % of scheduled EHR appointments in a period for which an ambient note was created, at
         cohort, specialty, or provider grain. This is Suki’s own production Admin Center metric —
@@ -3918,7 +4588,7 @@ ORDER BY utilization DESC;</div>
 </details>
 </div>
 <!-- ── Panel: Adoption & Engagement ── -->
-<div class="algo-panel algo-body" hidden="" id="algo-panel-adopt" role="tabpanel">
+<div class="algo-panel algo-body" hidden="" id="algo-panel-adopt-cm-13" role="tabpanel">
 <p class="algo-purpose">
         Two related Suki-native metrics that other CM-13 literature aliases actually map to. <strong>Adoption
         Rate</strong> is a trial-to-paid conversion definition (did a newly onboarded user go on to actually
@@ -5544,7 +6214,7 @@ hypothesis-generating signal only. Do not present as equivalent to observed atte
 <td>In-encounter EHR active time (clicks/keystrokes during the visit window)</td>
 <td>Directly operationalizes "Time searching for information" — the one CM-18 method Suki cannot touch at all.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic Signal "Time in Notes" filtered to the encounter window; same audit-log ask as CM-02 — request once, use for both.</td>
+<td>Epic Signal "Time in Notes" filtered to the encounter window; same audit-log ask as CM-02 — request once, use for both. <strong>Caveat:</strong> Signal is a separate proprietary reporting product, not present in the standard EHI export (per <code>epic-ehi-kg</code> schema exploration) — confirm Signal access separately from EHI/Clarity access before relying on this field.</td>
 </tr>
 <tr>
 <td>Order-entry / chart-navigation events during the encounter</td>
@@ -5684,7 +6354,7 @@ hypothesis-generating signal only. Do not present as equivalent to observed atte
 <span class="unit-ref-tag tag-secondary">Secondary (the missing link)</span>
 <div>
 <div class="unit-ref-name">EHR order/intervention rate for the same encounters</div>
-<div class="unit-ref-def">E.g., psychiatric referral, medication order, follow-up scheduling — the clinical-action half of the design. Requires encounter-level linkage between Suki <code>session_id</code> and EHR order data.</div>
+<div class="unit-ref-def">E.g., psychiatric referral, medication order, follow-up scheduling — the clinical-action half of the design. Requires encounter-level linkage between Suki <code>session_id</code> and EHR order data. <strong>Proposed Epic table (unconfirmed):</strong> <code>ORDER_PROC</code>, verified present in the EHI schema, carries per-order <code>ORDER_TIME</code>, <code>RESULT_TIME</code>, and a procedure/order-type code, joinable to the encounter via <code>PAT_ENC_CSN_ID</code> — a plausible source for "was an order placed following this documented symptom," pending confirmation that referral/medication order types are distinguishable in the order-type code set.</div>
 <div class="pipeline-note"><strong>⚠ Pipeline gap (the single biggest structural gap for CM-19):</strong> without encounter-level linkage to EHR orders/interventions, no Suki-native documentation signal can be tested against a clinical-action outcome — which is the only thing that makes a finding "CM-19" rather than "CM-08/CM-09." H8's order-staging audit trail (staged vs. manual, accepted/edited/rejected) is the future hook most likely to close this, once it ships.</div>
 </div>
 </div>
@@ -5829,7 +6499,7 @@ dashboard_value = {
 <td>EHR order / intervention data, linked to encounter</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
 <td>Missing</td>
-<td>The single biggest structural gap for CM-19. Without this, documentation-completeness findings remain CM-08/CM-09.</td>
+<td>The single biggest structural gap for CM-19. Without this, documentation-completeness findings remain CM-08/CM-09. Proposed source: <code>ORDER_PROC</code> (verified present in EHI schema) — unconfirmed whether order-type granularity supports referral/medication-order classification.</td>
 </tr>
 <tr>
 <td>Encounter covariates (visit type, provider specialty, patient demographics)</td>
@@ -5842,7 +6512,7 @@ dashboard_value = {
 <td>AHRQ Harm Score / formal incident reports</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
 <td>Out of reach</td>
-<td>Typically held in separate risk-management / patient-safety systems, not the EHR proper</td>
+<td>Typically held in separate risk-management / patient-safety systems, not the EHR proper. Partial exception: <code>HSP_QI_PATIENT_SAFETY</code> is verified present in the EHI schema — a per-hospital-account patient-safety-indicator category flag. Far short of a structured AHRQ Harm Score (one categorical field, not an event-level record), but worth checking as a coarse, real, already-populated signal rather than assuming zero EHR-side safety data exists.</td>
 </tr>
 <tr>
 <td>PHQ-9 / structured screening documentation</td>
@@ -6028,6 +6698,14 @@ dashboard_value = {
 <div class="unit-ref-ambig">⚠ Use the same prior-year period as the pre-adoption window to control for seasonal variation in encounter mix and wRVU output.</div>
 </div>
 </div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Epic Reconstruction (Proposed)</span>
+<div>
+<div class="unit-ref-name">ARPB_TRANSACTIONS.PROC_ID</div>
+<div class="unit-ref-def">Real, verified professional-billing charge-line table (<code>epic-ehi-kg</code>). <code>PROC_ID</code> (billed CPT/procedure code) and <code>PROC_ID_PROC_NAME</code> are present and joinable to encounter via <code>PAT_ENC_CSN_ID</code>. No pre-computed wRVU field exists in this table — wRVU totals must be derived by joining <code>PROC_ID</code> to an <strong>external CMS wRVU-weight reference table</strong>, which is not itself part of the EHI schema and must be sourced separately (e.g., the CMS Physician Fee Schedule Relative Value File for the applicable year).</div>
+<div class="unit-ref-ambig">⚠ The crosswalk's <code>wrvu_total</code> field implies a single pre-computed column; no such column was found in this schema pass. This is a from-scratch reconstruction requiring an external weight-table join, not a verified single-field Epic export.</div>
+</div>
+</div>
 </div>
 <div class="formula-wrap">
 <span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg wRVUs / provider / week, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
@@ -6065,6 +6743,19 @@ Exclude: onboarding ramp (default 30 days); use same-period prior year as pre wi
         wRVU output (Algorithm 1) to distinguish a revenue change driven by coding improvement
         from one driven by payer mix or contract changes.
       </p>
+<div class="caution-box">
+<strong>Open data gap:</strong> No paid/collected-revenue amount was found in this schema
+        pass. <code>ARPB_TRANSACTIONS</code> (professional billing, real and verified in
+        <code>epic-ehi-kg</code>) contains charge-line procedure/diagnosis fields (<code>PROC_ID</code>,
+        <code>PRIMARY_DX_ID_DX_NAME</code>) plus transaction-level dollar fields (<code>AMOUNT</code>,
+        <code>INSURANCE_AMT</code>, <code>PATIENT_AMT</code>, <code>TOTAL_MATCH_AMT</code>) —
+        but no single pre-computed "net collected revenue" column. <code>TX_TYPE_C_NAME</code>
+        distinguishes charge/payment/adjustment rows and <code>DEBIT_CREDIT_FLAG_NAME</code>
+        distinguishes debits from credits; a net-collected figure would have to be derived by
+        summing payment-type credit transactions net of adjustments per provider/encounter —
+        an unconfirmed derivation, not a verified equivalent to <code>revenue_paid</code>. Treat
+        this as an open gap rather than assuming charge amounts equal collected revenue.
+      </div>
 <div class="algo-units">
 <div class="algo-units-label">Units in this Algorithm</div>
 <div class="unit-ref-item">
@@ -6134,6 +6825,14 @@ Exclude: onboarding ramp (default 30 days)</div>
 <div class="unit-ref-name">New vs. established patient split</div>
 <div class="unit-ref-def">E/M level distributions differ between new and established patient visit types. Track both series and report separately to avoid confounding from panel composition changes.</div>
 <div class="unit-ref-ambig">⚠ A shift toward more complex patients raises E/M levels independently of Suki. A stable new/established split with rising Level 4–5 share is a cleaner signal.</div>
+</div>
+</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Epic Reconstruction (Proposed)</span>
+<div>
+<div class="unit-ref-name">ARPB_TRANSACTIONS.PROC_ID</div>
+<div class="unit-ref-def">Real, verified charge-line table (<code>epic-ehi-kg</code>). E/M CPT codes (99201–99215, etc.) would appear as <code>PROC_ID</code> values on charge transactions, joinable to encounter via <code>PAT_ENC_CSN_ID</code>.</div>
+<div class="unit-ref-ambig">⚠ <strong>Unconfirmed:</strong> filtering/classifying which <code>PROC_ID</code> values correspond to which E/M level requires a CPT-code-to-level mapping step not confirmed in this schema pass — treat as a needed mapping, not a ready-made field.</div>
 </div>
 </div>
 </div>
@@ -6224,39 +6923,39 @@ Exclude: onboarding ramp (default 30 days); track new/established separately</di
 <td>Total work RVUs by provider/month</td>
 <td>Sum of wRVU weights for all billed CPT codes per provider per month.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: wrvu_total  |  Cerner: wrvu_total. Requires CMS wRVU fee schedule for the applicable year.</td>
+<td>Epic: wrvu_total — Suki crosswalk field; no such pre-computed column was found in the EHI schema. Verified reconstruction path: <code>ARPB_TRANSACTIONS.PROC_ID</code> (billed procedure code, <code>epic-ehi-kg</code>) joined to an external CMS wRVU-weight reference table (not part of the EHI schema). Cerner: wrvu_total, not yet researched. Requires CMS wRVU fee schedule for the applicable year.</td>
 </tr>
 <tr class="group-row"><td colspan="4">Algorithm 2 — Paid Revenue per Provider per Month</td></tr>
 <tr>
 <td>Total paid revenue by provider/month ($)</td>
 <td>Adjusted net revenue collected from payers, attributed to provider and encounter month.</td>
 <td><span class="source-tag tag-rcm">RCM</span></td>
-<td>Epic: revenue_paid  |  Cerner: revenue_paid. Use net (collected) not gross (charged) figures.</td>
+<td>Epic: revenue_paid — no single pre-computed field was found in the EHI schema pass; see the open-gap caution in Algorithm 2. <code>ARPB_TRANSACTIONS</code> (verified, <code>epic-ehi-kg</code>) has charge-line and transaction dollar fields but not a ready net-collected total. Cerner: revenue_paid, not yet researched. Use net (collected) not gross (charged) figures.</td>
 </tr>
 <tr class="group-row"><td colspan="4">Algorithm 3 — E/M Level Improvement</td></tr>
 <tr>
 <td>E/M new patient level counts (CPT 99201–99205)</td>
 <td>Per-provider, per-month count of new patient E/M encounters at each complexity level.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: em_new_level1_count – em_new_level5_count  |  Cerner: em_level1_count – em_level5_count.</td>
+<td>Epic: em_new_level1_count – em_new_level5_count — Suki crosswalk fields. Verified reconstruction path: <code>ARPB_TRANSACTIONS.PROC_ID</code> (<code>epic-ehi-kg</code>) filtered to CPT 99201–99205; the CPT-to-level classification step is unconfirmed (see Algorithm 3). Cerner: em_level1_count – em_level5_count, not yet researched.</td>
 </tr>
 <tr>
 <td>E/M established patient level counts (CPT 99211–99215)</td>
 <td>Per-provider, per-month count of established patient E/M encounters at each complexity level.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: em_est_level1_count – em_est_level5_count  |  Cerner: em_level1_count – em_level5_count.</td>
+<td>Epic: em_est_level1_count – em_est_level5_count — Suki crosswalk fields. Same <code>ARPB_TRANSACTIONS.PROC_ID</code> reconstruction path as above, filtered to CPT 99211–99215; classification unconfirmed. Cerner: em_level1_count – em_level5_count, not yet researched.</td>
 </tr>
 <tr>
 <td>Total E/M visits by provider/month</td>
 <td>Denominator for the Level 4–5 share calculation.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: em_total_count  |  Cerner: em_total_count.</td>
+<td>Epic: em_total_count  |  Cerner: em_total_count. Suki crosswalk field; derivable as the total count of classified E/M <code>PROC_ID</code> values from the Algorithm 3 reconstruction above.</td>
 </tr>
 <tr>
 <td>Avg ICD-10 codes per encounter</td>
 <td>Proxy indicator for documentation completeness when E/M level data are unavailable.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: icd10_codes_per_enc  |  Cerner: icd10_codes_per_enc. Supplemental to E/M level data, not a replacement.</td>
+<td>Epic: icd10_codes_per_enc  |  Cerner: icd10_codes_per_enc. Verified reconstruction path: <code>ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</code> (<code>epic-ehi-kg</code>) — see CM-21 Algorithm 1. Supplemental to E/M level data, not a replacement.</td>
 </tr>
 <tr class="group-row"><td colspan="4">Shared — All Three Algorithms</td></tr>
 <tr>
@@ -6425,13 +7124,23 @@ Exclude: onboarding ramp (default 30 days); track new/established separately</di
 <div class="unit-ref-ambig">⚠ This is a completeness measure only. Do not use it as a standalone accuracy measure. A provider with 6 codes/encounter and a 0% denial rate is a stronger signal than one with 8 codes and a rising denial rate.</div>
 </div>
 </div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-secondary">Epic Reconstruction (Proposed)</span>
+<div>
+<div class="unit-ref-name">ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</div>
+<div class="unit-ref-def">Real, verified table (<code>epic-ehi-kg</code>) — lists all diagnoses on a charge-entry session in which the charge was posted, one row per diagnosis line (<code>TX_ID</code> + <code>LINE</code>). Count of distinct diagnosis lines per charge is a direct, verified proxy for ICD-10 coding depth. Join to encounter via <code>ARPB_TRANSACTIONS.TX_ID</code> → <code>PAT_ENC_CSN_ID</code>, since <code>ARPB_CHG_ENTRY_DX</code> itself carries only <code>TX_ID</code>/<code>LINE</code>, not the encounter CSN directly.</div>
+<div class="unit-ref-ambig">⚠ This counts diagnosis lines per <em>charge</em>, not necessarily per <em>encounter</em>, if a single encounter generates multiple charge transactions — aggregate across all <code>TX_ID</code>s for a given <code>PAT_ENC_CSN_ID</code> before comparing to the encounter-level <code>icd10_codes_per_enc</code> crosswalk field.</div>
+</div>
+</div>
 </div>
 <div class="formula-wrap">
 <span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">∑ (avg ICD-10 codes / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
 <div class="formula-note">Reporting grain: one value per cohort per calendar month
 Pre / post boundary: each provider's Suki adoption date (first completed session)
 Exclude: onboarding ramp (default 30 days)
-Data source: EHR — icd10_codes_per_enc (Epic / Cerner)</div>
+Data source: EHR — icd10_codes_per_enc (Epic / Cerner)
+Verified Epic reconstruction: COUNT(DISTINCT DX_ID_DX_NAME) from ARPB_CHG_ENTRY_DX,
+grouped by TX_ID → PAT_ENC_CSN_ID (via ARPB_TRANSACTIONS)</div>
 </div>
 <details>
 <summary>Pseudocode</summary>
@@ -6530,6 +7239,7 @@ IMO → ICD-10 mapping step required if Suki returns IMO codes</div>
 <div>
 <div class="unit-ref-name">% of Level 4–5 claims denied</div>
 <div class="unit-ref-def">Denied Level 4–5 claims divided by total Level 4–5 claims submitted in the period. Focus on high-complexity claims because documentation quality most influences coding accuracy and denial risk at these levels.</div>
+<div class="pipeline-note">⚠ <strong>No denial/remittance table found:</strong> this schema pass (<code>epic-ehi-kg</code>) surfaced no claim-denial or remittance-advice table. <code>ARPB_TRANSACTIONS</code> is charge/payment/adjustment transaction data, not payer remittance/denial-reason data. Denial data likely lives in a separate claims-clearinghouse or payer-side system, not the standard EHI export — this sub-algorithm cannot currently be reconstructed from EHI alone.</div>
 <div class="unit-ref-ambig">⚠ Distinguish coding-related denials from authorization and eligibility denials using denial reason codes. Only coding-related denials are relevant to this measure.</div>
 </div>
 </div>
@@ -6660,7 +7370,7 @@ Exclude: onboarding ramp (default 30 days)</div>
 <td>Avg ICD-10 diagnosis codes per encounter</td>
 <td>Average distinct ICD-10 codes assigned per completed encounter, per provider per month.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: icd10_codes_per_enc  |  Cerner: icd10_codes_per_enc.</td>
+<td>Epic: icd10_codes_per_enc — Suki crosswalk field. Verified reconstruction path: <code>ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</code> (<code>epic-ehi-kg</code>), joined via <code>ARPB_TRANSACTIONS.TX_ID</code> → <code>PAT_ENC_CSN_ID</code> (see Algorithm 1). Cerner: icd10_codes_per_enc, not yet researched.</td>
 </tr>
 <tr class="group-row"><td colspan="4">Algorithm 2 — ICD-10 Suggestion Match Rate</td></tr>
 <tr>
@@ -6686,13 +7396,13 @@ Exclude: onboarding ramp (default 30 days)</div>
 <td>Denied Level 4–5 claim count</td>
 <td>Count of Level 4–5 claims denied for coding-related reasons per provider per period.</td>
 <td><span class="source-tag tag-rcm">RCM</span></td>
-<td>Epic: denial_l45_count  |  Cerner / Athena: claims system (varies). Must be filtered to coding-related denial reason codes.</td>
+<td>Epic: denial_l45_count — Suki crosswalk field. No claim-denial or remittance-advice table was found in this EHI schema pass (see Algorithm 3); likely lives in a separate claims-clearinghouse or payer-side system, not the standard EHI export. Cerner / Athena: claims system (varies, not yet researched). Must be filtered to coding-related denial reason codes.</td>
 </tr>
 <tr>
 <td>Total Level 4–5 claims submitted</td>
 <td>Denominator for the denial rate calculation.</td>
 <td><span class="source-tag tag-rcm">RCM</span></td>
-<td>Epic: total_l45_submitted  |  Cerner / Athena: claims system (varies).</td>
+<td>Epic: total_l45_submitted — same gap as above; not found in this EHI schema pass. Cerner / Athena: claims system (varies, not yet researched).</td>
 </tr>
 <tr>
 <td>E/M level counts (new and established)</td>
@@ -6743,6 +7453,13 @@ Exclude: onboarding ramp (default 30 days)</div>
       <strong>adoption boundary</strong> (pre/post split) and the
       <strong>active usage flag</strong> (cohort denominator).
       ICD-10 coding depth and claim denial data reside entirely in the EHR and RCM system.
+    </p>
+<p style="margin-top:10px">
+      Against the verified EHI schema (<code>epic-ehi-kg</code>), Algorithm 1’s ICD-10 depth
+      reconstruction is solid — <code>ARPB_CHG_ENTRY_DX.DX_ID_DX_NAME</code> is a real, confirmed
+      table. Algorithm 3 is not: no denial/remittance table was found in this schema pass, so
+      denial-rate reconstruction likely requires a claims-clearinghouse or payer-side data source
+      outside the EHI export, not just deeper EHI exploration.
     </p>
 </div>
 <hr class="divider"/>
@@ -6833,13 +7550,19 @@ Exclude: onboarding ramp (default 30 days)</div>
     (CM-04) warrants investigation.
   </div>
 <p class="section-label">Algorithm</p>
-<div class="algo-block">
-<div class="algo-header">
-<span class="algo-number">1</span>
-<span class="algo-title">Dashboard Metric — Cohort Average</span>
-<span class="algo-subtitle">For the Suki admin console</span>
+<div class="algo-switcher">
+<div class="algo-tabs" role="tablist">
+<button aria-controls="algo-panel-generic-cm-22" aria-selected="true" class="algo-tab" data-panel="algo-panel-generic-cm-22" role="tab">
+<span class="algo-tab-name">Generic</span>
+<span class="algo-tab-sub">Suki admin console</span>
+</button>
+<button aria-controls="algo-panel-epic-cm-22" aria-selected="false" class="algo-tab" data-panel="algo-panel-epic-cm-22" role="tab">
+<span class="algo-tab-name">Epic</span>
+<span class="algo-tab-sub">EHI knowledge graph</span>
+</button>
 </div>
-<div class="algo-body">
+<!-- ── Panel: Generic ── -->
+<div class="algo-panel algo-body" id="algo-panel-generic-cm-22" role="tabpanel">
 <p class="algo-purpose">
         Produces the average completed encounters per provider per week in the cohort for a given
         month. This number is expected to increase after Suki adoption as time freed from
@@ -6885,7 +7608,45 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
   dashboard_value[M] = MEAN( enc_per_week[p] for p in active_providers )</div>
 </details>
 </div>
+<!-- ── Panel: Epic ── -->
+<div class="algo-panel algo-body" hidden="" id="algo-panel-epic-cm-22" role="tabpanel">
+<p class="algo-purpose">
+        The Generic tab's <code>total_encounters</code>/<code>encounters_per_day</code> fields are Suki
+        crosswalk abstractions, not literal Epic column names. Per the Epic EHI schema
+        (<code>epic-ehi-kg</code>), <code>PAT_ENC</code> is the top join-hub table in the entire
+        schema (highest inbound reference count of any table) and directly supports reconstructing
+        a completed-encounter count without needing a crosswalk abstraction layer.
+      </p>
+<div class="algo-units">
+<div class="algo-units-label">Epic Clarity/EHI Tables — Verified Present in Schema</div>
+<div class="unit-ref-item">
+<span class="unit-ref-tag tag-primary">Required</span>
+<div>
+<div class="unit-ref-name">PAT_ENC</div>
+<div class="unit-ref-def"><code>CONTACT_DATE</code> (visit date, for weekly bucketing) and <code>ENC_CLOSE_DATE</code> (encounter close date — the same field CM-06 uses as a closure-timing proxy). A completed/closed encounter count per provider per week can be reconstructed by filtering to <code>ENC_CLOSE_DATE IS NOT NULL</code>, grouped by provider and week.</div>
+<div class="unit-ref-ambig">⚠ <strong>Unconfirmed:</strong> the exact provider-attribution column (visit provider vs. billing provider vs. note author can differ), and whether a populated <code>ENC_CLOSE_DATE</code> is a reliable proxy for “signed” vs. broader encounter closure — same open question as CM-06's Epic tab.</div>
 </div>
+</div>
+</div>
+<div class="formula-wrap">
+<span class="formula-lhs">Weekly Completed Encounters</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(PAT_ENC WHERE ENC_CLOSE_DATE IS NOT NULL, grouped by provider &amp; week)</span><span class="formula-den">1 (raw count, not a ratio)</span></span>
+<div class="formula-note">Exclude encounter types not eligible for documentation credit (e.g. telephone/proxy, per CM-04's ENC_TYPE_C convention)
+Cross-check against the Generic tab's Suki-side count where both are available, before trusting either alone</div>
+</div>
+<details>
+<summary>Pseudocode — Epic (proposed)</summary>
+<div class="pseudo">SELECT provider_id,                              -- ⚠ attribution column unconfirmed
+       DATE_TRUNC('week', CONTACT_DATE) AS wk,
+       COUNT(*) AS completed_encounters
+FROM PAT_ENC
+WHERE ENC_CLOSE_DATE IS NOT NULL
+  AND ENC_TYPE_C NOT IN (1, 31)              -- exclude telephone/proxy types
+GROUP BY provider_id, wk;
+-- ⚠ Validate ENC_CLOSE_DATE population rate and provider-attribution column
+--   against a live instance before using this in place of the Generic tab</div>
+</details>
+</div>
+</div><!-- /.algo-switcher -->
 <div class="chart-wrap">
 <div class="chart-title">Expected Trend — Completed Encounters / Provider / Week / Month</div>
 <p class="chart-caption">
@@ -6950,13 +7711,13 @@ Exclude: providers still within their onboarding ramp period (default 30 days)</
 <td>Total completed encounters per provider/month</td>
 <td>Count of signed, completed encounters per provider per calendar month. The primary numerator for this measure.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: total_encounters  |  Cerner: total_encounters. Include only encounters with a signed note. Exclude no-shows and cancellations.</td>
+<td>Suki crosswalk field. Epic-side reconstruction: <code>PAT_ENC</code> count filtered to <code>ENC_CLOSE_DATE IS NOT NULL</code> (verified table/field, see the Epic tab) — provider-attribution column unconfirmed. Cerner: not yet researched.</td>
 </tr>
 <tr>
 <td>Avg completed encounters per working day</td>
 <td>An alternative denominator-normalized form. Use when scheduled hours data are unavailable.</td>
 <td><span class="source-tag tag-ehr">EHR</span></td>
-<td>Epic: encounters_per_day  |  Cerner: encounters_per_day. Consistent with per-week normalization when multiplied by 5.</td>
+<td>Suki crosswalk field. Derivable from the same <code>PAT_ENC</code> query in the Epic tab by grouping on day instead of week. Consistent with per-week normalization when multiplied by 5.</td>
 </tr>
 <tr>
 <td>Scheduled clinical hours</td>

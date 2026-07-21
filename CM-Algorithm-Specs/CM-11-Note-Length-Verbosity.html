@@ -383,7 +383,7 @@ dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribu
         <td>Final signed note text</td>
         <td>Length/diversity computed on the physician-accepted version, not just the Suki draft, once available.</td>
         <td><span class="source-tag tag-ehr">EHR</span></td>
-        <td>Epic <code>HNO_NOTE_TEXT</code> / <code>HNO_PLAIN_TEXT</code> (unconfirmed/exploratory &mdash; field availability and text format not yet verified against a live Epic EHI extract).</td>
+        <td>Verified against Epic's real EHI schema: <code>HNO_NOTE_TEXT</code> is referenced in Epic's own docs as the reporting-grade note-text table but is <strong>not present in this EHI export snapshot</strong>. <code>HNO_PLAIN_TEXT</code> (<code>NOTE_ID</code>, <code>NOTE_TEXT</code>) is the closest table actually available, but only covers notes stored in plain text (excludes rich-text notes) &mdash; coverage is likely incomplete.</td>
       </tr>
       <tr>
         <td>Documentation length telemetry (chars/week)</td>
@@ -410,11 +410,15 @@ dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribu
       <code>GET /session/{id}/content</code>.
     </p>
     <p>
-      EHR-side note text (Epic <code>HNO_NOTE_TEXT</code> / <code>HNO_PLAIN_TEXT</code>, unconfirmed
-      exploratory field names) would extend this measure to the physician-accepted final note
-      rather than just the Suki draft, and would support the note-length-ratio variant against a
-      human-authored reference note where one exists. Neither addition is required to compute the
-      primary unit today; they refine the reference point, not the computability of the measure.
+      EHR-side note text would extend this measure to the physician-accepted final note rather
+      than just the Suki draft, and would support the note-length-ratio variant against a
+      human-authored reference note where one exists. Verified against Epic's real EHI schema:
+      <code>HNO_NOTE_TEXT</code> (the reporting-grade table per Epic's own docs) is not present in
+      this EHI export snapshot; <code>HNO_PLAIN_TEXT</code> is the closest table actually
+      available but only covers plain-text notes (excludes rich-text notes), so length/diversity
+      computed from it would understate coverage for any org with meaningful rich-text note volume.
+      Neither addition is required to compute the primary unit today; they refine the reference
+      point, not the computability of the measure.
     </p>
   </div>
 
