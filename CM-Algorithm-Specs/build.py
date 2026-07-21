@@ -200,6 +200,21 @@ def extract_page_div(soup, filename):
     return str(tag)
 
 
+def extract_switcher_script(soup):
+    """Return the inner text of the algo-switcher tab script, if present.
+
+    This <script> lives as a sibling after </div class="page"> in source
+    files, so extract_page_div() never captures it. Cards that use the
+    tabbed Generic/Epic algorithm layout (algo-switcher) are inert without
+    it — the tabs render but clicking does nothing and no tab shows as
+    active on load.
+    """
+    for tag in soup.find_all("script"):
+        if tag.string and "algo-switcher" in tag.string:
+            return tag.string
+    return None
+
+
 def build_nav(files):
     items = ['  <span class="cm-nav-logo">Algorithm Cards</span>']
     for fname in files:
@@ -259,11 +274,18 @@ def main():
 
     # Build section HTML for each CM
     sections = []
+    switcher_script = None
     for fname, _ in found:
         page_html = extract_page_div(soups[fname], fname)
         if page_html:
             sections.append(build_section(page_html, anchor_id(fname)))
+        if switcher_script is None:
+            switcher_script = extract_switcher_script(soups[fname])
     sections_html = "\n\n".join(sections)
+
+    switcher_script_html = (
+        f"<script>\n{switcher_script}\n</script>\n" if switcher_script else ""
+    )
 
     # Assemble combined document
     out_parts = [
@@ -283,6 +305,7 @@ def main():
         nav_html, '\n',
         '</nav>\n\n',
         sections_html, '\n\n',
+        switcher_script_html,
         SCROLL_SPY_JS,
         '\n</body>\n',
         '</html>\n',
@@ -294,6 +317,7 @@ def main():
 
     size_kb = output_path.stat().st_size / 1024
     print(f"Built: {output_path.name}  ({size_kb:.0f} KB)")
+    print(f"  algo-switcher tab script: {'included' if switcher_script else 'NOT FOUND (no card uses tabs?)'}")
     print(f"  {len(sections)} sections:")
     for fname, p in found:
         print(f"  + {fname}  ({p.stat().st_size:,} bytes)")

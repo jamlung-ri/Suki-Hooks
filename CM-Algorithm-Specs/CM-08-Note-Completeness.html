@@ -15,16 +15,16 @@
       --paper:      #f7f9f9;
       --panel:      #ffffff;
       --soft:       #ededed;
-      --teal:       #005a79;
-      --teal-light: #e0edf2;
-      --blue:       #31628c;
-      --blue-light: #eaf2f8;
-      --amber:      #b25700;
-      --amber-light:#ffefdf;
-      --red:        #b31e28;
-      --red-light:  #fdeaeb;
-      --violet:     #554c8d;
-      --violet-light:#f0eef9;
+      --teal:       #0e5088;
+      --teal-light: #e1ebf3;
+      --blue:       #596290;
+      --blue-light: #e9eaf3;
+      --amber:      #a8641a;
+      --amber-light:#fbf0e0;
+      --red:        #a3272f;
+      --red-light:  #fbe9ea;
+      --violet:     #574e8e;
+      --violet-light:#ede9f5;
       --radius:     5px;
       --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
@@ -308,18 +308,18 @@ dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(o
         <text x="604" y="66" font-size="10" fill="#a35d1a">r = 0.7</text>
 
         <!-- Agreement line (rising, teal) -->
-        <polyline points="100,152 240,110 380,74 520,50" fill="none" stroke="#005a79" stroke-width="2.5" stroke-linejoin="round"/>
-        <circle cx="100" cy="152" r="4" fill="#005a79"/>
-        <circle cx="240" cy="110" r="4" fill="#005a79"/>
-        <circle cx="380" cy="74"  r="4" fill="#005a79"/>
-        <circle cx="520" cy="50"  r="4" fill="#005a79"/>
+        <polyline points="100,152 240,110 380,74 520,50" fill="none" stroke="#0e5088" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="100" cy="152" r="4" fill="#0e5088"/>
+        <circle cx="240" cy="110" r="4" fill="#0e5088"/>
+        <circle cx="380" cy="74"  r="4" fill="#0e5088"/>
+        <circle cx="520" cy="50"  r="4" fill="#0e5088"/>
 
         <!-- Omission rate line (declining, violet, dashed) -->
-        <polyline points="100,44 240,68 380,96 520,128" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
-        <circle cx="100" cy="44"  r="4" fill="#554c8d"/>
-        <circle cx="240" cy="68"  r="4" fill="#554c8d"/>
-        <circle cx="380" cy="96"  r="4" fill="#554c8d"/>
-        <circle cx="520" cy="128" r="4" fill="#554c8d"/>
+        <polyline points="100,44 240,68 380,96 520,128" fill="none" stroke="#574e8e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <circle cx="100" cy="44"  r="4" fill="#574e8e"/>
+        <circle cx="240" cy="68"  r="4" fill="#574e8e"/>
+        <circle cx="380" cy="96"  r="4" fill="#574e8e"/>
+        <circle cx="520" cy="128" r="4" fill="#574e8e"/>
 
         <!-- X-axis labels -->
         <text x="100" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 1</text>
@@ -328,9 +328,9 @@ dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(o
         <text x="520" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Wave 4 (scaled)</text>
 
         <!-- Legend -->
-        <circle cx="64" cy="220" r="4" fill="#005a79"/>
+        <circle cx="64" cy="220" r="4" fill="#0e5088"/>
         <text   x="72" y="224" font-size="10" fill="#014157">Human-LLM agreement (r)</text>
-        <circle cx="260" cy="220" r="4" fill="#554c8d"/>
+        <circle cx="260" cy="220" r="4" fill="#574e8e"/>
         <text   x="268" y="224" font-size="10" fill="#3f3a5c">Flagged omission rate</text>
       </svg>
     </div>

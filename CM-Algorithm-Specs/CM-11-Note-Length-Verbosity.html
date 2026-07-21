@@ -15,16 +15,16 @@
       --paper:      #f7f9f9;
       --panel:      #ffffff;
       --soft:       #ededed;
-      --teal:       #005a79;
-      --teal-light: #e0edf2;
-      --blue:       #31628c;
-      --blue-light: #eaf2f8;
-      --amber:      #b25700;
-      --amber-light:#ffefdf;
-      --red:        #b31e28;
-      --red-light:  #fdeaeb;
-      --violet:     #554c8d;
-      --violet-light:#f0eef9;
+      --teal:       #0e5088;
+      --teal-light: #e1ebf3;
+      --blue:       #596290;
+      --blue-light: #e9eaf3;
+      --amber:      #a8641a;
+      --amber-light:#fbf0e0;
+      --red:        #a3272f;
+      --red-light:  #fbe9ea;
+      --violet:     #574e8e;
+      --violet-light:#ede9f5;
       --radius:     5px;
       --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
@@ -312,38 +312,38 @@ dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribu
         <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;6 mo</text>
         <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;4 mo</text>
         <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">&minus;2 mo</text>
-        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#31628c">Adoption</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#596290">Adoption</text>
         <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
         <!-- Adoption marker line -->
-        <line x1="335" y1="22" x2="335" y2="198" stroke="#31628c" stroke-width="1.5" stroke-dasharray="5,3"/>
-        <text x="339" y="38" font-size="10" fill="#31628c">Suki adopted</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#596290" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#596290">Suki adopted</text>
         <!-- Pre-adoption dots (flat baseline, neutral gray) -->
         <circle cx="120" cy="114" r="4" fill="#8a929d"/>
         <circle cx="190" cy="112" r="4" fill="#8a929d"/>
         <circle cx="260" cy="115" r="4" fill="#8a929d"/>
         <polyline points="120,114 190,112 260,115" fill="none" stroke="#8a929d" stroke-width="2" stroke-linejoin="round"/>
         <!-- Scenario A: rising (blue) -->
-        <circle cx="335" cy="112" r="4" fill="#31628c"/>
-        <circle cx="410" cy="88"  r="4" fill="#31628c"/>
-        <circle cx="495" cy="64"  r="4" fill="#31628c"/>
-        <circle cx="580" cy="46"  r="4" fill="#31628c"/>
-        <polyline points="335,112 410,88 495,64 580,46" fill="none" stroke="#31628c" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
+        <circle cx="335" cy="112" r="4" fill="#596290"/>
+        <circle cx="410" cy="88"  r="4" fill="#596290"/>
+        <circle cx="495" cy="64"  r="4" fill="#596290"/>
+        <circle cx="580" cy="46"  r="4" fill="#596290"/>
+        <polyline points="335,112 410,88 495,64 580,46" fill="none" stroke="#596290" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
         <!-- Scenario B: falling (violet) -->
-        <circle cx="335" cy="116" r="4" fill="#554c8d"/>
-        <circle cx="410" cy="136" r="4" fill="#554c8d"/>
-        <circle cx="495" cy="156" r="4" fill="#554c8d"/>
-        <circle cx="580" cy="170" r="4" fill="#554c8d"/>
-        <polyline points="335,116 410,136 495,156 580,170" fill="none" stroke="#554c8d" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
+        <circle cx="335" cy="116" r="4" fill="#574e8e"/>
+        <circle cx="410" cy="136" r="4" fill="#574e8e"/>
+        <circle cx="495" cy="156" r="4" fill="#574e8e"/>
+        <circle cx="580" cy="170" r="4" fill="#574e8e"/>
+        <polyline points="335,116 410,136 495,156 580,170" fill="none" stroke="#574e8e" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="6,3"/>
         <!-- Connector at adoption boundary -->
         <line x1="260" y1="115" x2="335" y2="114" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
         <!-- Legend -->
         <circle cx="84"  cy="170" r="4" fill="#8a929d"/>
         <text   x="92"  y="174" font-size="11" fill="#4a4a4a">Pre-adoption baseline</text>
-        <circle cx="84"  cy="186" r="4" fill="#31628c"/>
+        <circle cx="84"  cy="186" r="4" fill="#596290"/>
         <text   x="92"  y="190" font-size="11" fill="#1c3a54">Scenario A &mdash; longer (pair with CM-08)</text>
-        <circle cx="340" cy="186" r="4" fill="#554c8d"/>
+        <circle cx="340" cy="186" r="4" fill="#574e8e"/>
         <text   x="348" y="190" font-size="11" fill="#3f3a5c">Scenario B &mdash; shorter (pair with CM-10)</text>
       </svg>
     </div>

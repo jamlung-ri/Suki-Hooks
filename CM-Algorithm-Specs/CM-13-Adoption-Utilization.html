@@ -15,16 +15,16 @@
       --paper:      #f7f9f9;
       --panel:      #ffffff;
       --soft:       #ededed;
-      --teal:       #005a79;
-      --teal-light: #e0edf2;
-      --blue:       #31628c;
-      --blue-light: #eaf2f8;
-      --amber:      #b25700;
-      --amber-light:#ffefdf;
-      --red:        #b31e28;
-      --red-light:  #fdeaeb;
-      --violet:     #554c8d;
-      --violet-light:#f0eef9;
+      --teal:       #0e5088;
+      --teal-light: #e1ebf3;
+      --blue:       #596290;
+      --blue-light: #e9eaf3;
+      --amber:      #a8641a;
+      --amber-light:#fbf0e0;
+      --red:        #a3272f;
+      --red-light:  #fbe9ea;
+      --violet:     #574e8e;
+      --violet-light:#ede9f5;
       --radius:     5px;
       --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
@@ -676,27 +676,27 @@ pending_users   = COUNT(DISTINCT user_id) WHERE status IN ('No License')
         <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
         <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">0%</text>
         <!-- X-axis labels: no pre-adoption phase for this measure -->
-        <text x="120" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#b25700">Go-live</text>
+        <text x="120" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#a8641a">Go-live</text>
         <text x="220" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+1 mo</text>
         <text x="320" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
         <text x="420" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+3 mo</text>
         <text x="520" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
         <text x="600" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
         <!-- Go-live marker -->
-        <line x1="120" y1="22" x2="120" y2="198" stroke="#b25700" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="120" y1="22" x2="120" y2="198" stroke="#a8641a" stroke-width="1.5" stroke-dasharray="5,3"/>
         <!-- Ramp (rising, amber) -->
-        <circle cx="120" cy="196" r="4" fill="#b25700"/>
-        <circle cx="220" cy="150" r="4" fill="#b25700"/>
-        <circle cx="320" cy="112" r="4" fill="#b25700"/>
-        <circle cx="420" cy="90"  r="4" fill="#b25700"/>
-        <circle cx="520" cy="76"  r="4" fill="#b25700"/>
-        <circle cx="600" cy="68"  r="4" fill="#b25700"/>
-        <polyline points="120,196 220,150 320,112 420,90 520,76 600,68" fill="none" stroke="#b25700" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="120" cy="196" r="4" fill="#a8641a"/>
+        <circle cx="220" cy="150" r="4" fill="#a8641a"/>
+        <circle cx="320" cy="112" r="4" fill="#a8641a"/>
+        <circle cx="420" cy="90"  r="4" fill="#a8641a"/>
+        <circle cx="520" cy="76"  r="4" fill="#a8641a"/>
+        <circle cx="600" cy="68"  r="4" fill="#a8641a"/>
+        <polyline points="120,196 220,150 320,112 420,90 520,76 600,68" fill="none" stroke="#a8641a" stroke-width="2.5" stroke-linejoin="round"/>
         <!-- Steady-state benchmark band -->
-        <line x1="70" y1="66" x2="650" y2="66" stroke="#31628c" stroke-width="1.5" stroke-dasharray="4,3"/>
-        <text x="604" y="62" font-size="10" fill="#31628c">~55-65% (published)</text>
+        <line x1="70" y1="66" x2="650" y2="66" stroke="#596290" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="604" y="62" font-size="10" fill="#596290">~55-65% (published)</text>
         <!-- Legend -->
-        <circle cx="84" cy="180" r="4" fill="#b25700"/>
+        <circle cx="84" cy="180" r="4" fill="#a8641a"/>
         <text   x="92" y="184" font-size="11" fill="#4a2400">Cohort mean utilization (post go-live)</text>
       </svg>
     </div>

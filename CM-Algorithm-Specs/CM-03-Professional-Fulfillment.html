@@ -15,16 +15,16 @@
       --paper:      #f7f9f9;
       --panel:      #ffffff;
       --soft:       #ededed;
-      --teal:       #005a79;
-      --teal-light: #e0edf2;
-      --blue:       #31628c;
-      --blue-light: #eaf2f8;
-      --amber:      #b25700;
-      --amber-light:#ffefdf;
-      --red:        #b31e28;
-      --red-light:  #fdeaeb;
-      --violet:     #554c8d;
-      --violet-light:#f0eef9;
+      --teal:       #0e5088;
+      --teal-light: #e1ebf3;
+      --blue:       #596290;
+      --blue-light: #e9eaf3;
+      --amber:      #a8641a;
+      --amber-light:#fbf0e0;
+      --red:        #a3272f;
+      --red-light:  #fbe9ea;
+      --violet:     #574e8e;
+      --violet-light:#ede9f5;
       --radius:     5px;
       --shadow:     0 2px 8px rgba(50,60,67,0.07);
     }
@@ -282,11 +282,11 @@ dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
         <text x="63" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="63" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="63" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
-        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 0</text>
-        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 3</text>
-        <circle cx="120" cy="70"  r="3.5" fill="#b25700"/>
-        <circle cx="250" cy="140" r="3.5" fill="#005a79"/>
-        <polyline points="120,70 250,140" fill="none" stroke="#005a79" stroke-width="2" stroke-linejoin="round"/>
+        <text x="120" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#596290">Phase 0</text>
+        <text x="250" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#596290">Phase 3</text>
+        <circle cx="120" cy="70"  r="3.5" fill="#a8641a"/>
+        <circle cx="250" cy="140" r="3.5" fill="#0e5088"/>
+        <polyline points="120,70 250,140" fill="none" stroke="#0e5088" stroke-width="2" stroke-linejoin="round"/>
 
         <!-- Right panel: CM-03 Professional Fulfillment (flat = expected) -->
         <rect x="360" y="10" width="280" height="210" fill="#f9fafb" rx="4" stroke="#dce5ec"/>
@@ -300,19 +300,19 @@ dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
         <text x="383" y="34"  text-anchor="end" font-size="9" fill="#8a929d">High</text>
         <text x="383" y="118" text-anchor="end" font-size="9" fill="#8a929d">Med</text>
         <text x="383" y="200" text-anchor="end" font-size="9" fill="#8a929d">Low</text>
-        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 0</text>
-        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#31628c">Phase 3</text>
-        <circle cx="440" cy="110" r="3.5" fill="#b25700"/>
-        <circle cx="570" cy="106" r="3.5" fill="#554c8d"/>
-        <polyline points="440,110 570,106" fill="none" stroke="#554c8d" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"/>
+        <text x="440" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#596290">Phase 0</text>
+        <text x="570" y="215" text-anchor="middle" font-size="9.5" font-weight="700" fill="#596290">Phase 3</text>
+        <circle cx="440" cy="110" r="3.5" fill="#a8641a"/>
+        <circle cx="570" cy="106" r="3.5" fill="#574e8e"/>
+        <polyline points="440,110 570,106" fill="none" stroke="#574e8e" stroke-width="2" stroke-linejoin="round" stroke-dasharray="5,3"/>
         <text x="570" y="92" text-anchor="middle" font-size="9" fill="#3f3a5c">Flat = expected (dissociation)</text>
 
         <!-- Shared legend -->
-        <circle cx="44"  cy="242" r="4" fill="#b25700"/>
+        <circle cx="44"  cy="242" r="4" fill="#a8641a"/>
         <text   x="52"  y="246" font-size="10" fill="#4a2400">Phase 0 baseline</text>
-        <circle cx="170" cy="242" r="4" fill="#005a79"/>
+        <circle cx="170" cy="242" r="4" fill="#0e5088"/>
         <text   x="178" y="246" font-size="10" fill="#014157">Phase 3 &mdash; improvement</text>
-        <circle cx="330" cy="242" r="4" fill="#554c8d"/>
+        <circle cx="330" cy="242" r="4" fill="#574e8e"/>
         <text   x="338" y="246" font-size="10" fill="#3f3a5c">Phase 3 &mdash; no change (expected)</text>
       </svg>
     </div>
