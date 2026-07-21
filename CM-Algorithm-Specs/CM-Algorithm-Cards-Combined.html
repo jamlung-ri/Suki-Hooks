@@ -116,6 +116,32 @@ details[open] summary { margin-bottom: 8px; }
 .source-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 11.5px; color: var(--ink); }
 .divider { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
 .report-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 11.5px; }
+/* ── Draft / Not-Validated Banner ── */
+    .draft-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #fbe9ea;
+      border: 1px solid #eab7ba;
+      border-left: 5px solid #a3272f;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #5c1015;
+    }
+.draft-banner-icon {
+      font-size: 18px;
+      line-height: 1.3;
+      flex-shrink: 0;
+    }
+.draft-banner strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 13.5px;
+      color: #a3272f;
+    }
 .pipeline-note { font-size: 12px; color: #5a161a; margin-top: 6px; padding: 6px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.4; }
 .badge-warn { background: var(--amber-light); color: var(--amber); }
 /* ── Page shell ── */
@@ -687,6 +713,16 @@ details summary { cursor: pointer; font-size: 12px; font-weight: 700; text-trans
 
 <section class="cm-section" id="cm-01">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -947,6 +983,16 @@ dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
 
 <section class="cm-section" id="cm-02">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -1214,6 +1260,16 @@ Secondary (corroboration, per encounter):
 
 <section class="cm-section" id="cm-03">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -1466,6 +1522,16 @@ dashboard_value = (fulfillment_delta[T], exhaustion_delta[T]) for T = HEAVY
 
 <section class="cm-section" id="cm-04">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <!-- ── Masthead ── -->
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
@@ -1875,6 +1941,16 @@ GROUP BY h.ENTRY_USER_ID;
 
 <section class="cm-section" id="cm-05">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <!-- ── Masthead ── -->
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
@@ -2202,6 +2278,16 @@ WHERE IS_OUTSIDE_SCHEDULED_HOURS(h.CREATE_INSTANT_DTTM, provider_schedule)
 
 <section class="cm-section" id="cm-06">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -2552,6 +2638,16 @@ WHERE e.ENC_CLOSE_DATE IS NOT NULL
 
 <section class="cm-section" id="cm-07">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -2881,6 +2977,16 @@ FROM ORDER_PROC o;
 
 <section class="cm-section" id="cm-08">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -3192,6 +3298,16 @@ dashboard_value = { "omission_rate": omission_rate, "omission_flag_rate": MEAN(o
 
 <section class="cm-section" id="cm-09">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -3510,6 +3626,16 @@ dashboard_value = { "inaccuracy_rate": inaccuracy_rate, "flag_rate": MEAN(flag_r
 
 <section class="cm-section" id="cm-10">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -3830,6 +3956,16 @@ dashboard_value = { "composite_score": composite_score, "domain_scores": domain_
 
 <section class="cm-section" id="cm-11">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -4132,6 +4268,16 @@ dashboard_value = { "mean_word_count": mean_word_count, "distribution": distribu
 
 <section class="cm-section" id="cm-12">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -4401,6 +4547,16 @@ dashboard_value = { "agreement_r_by_metric": agreement_r, "approved_metrics": ap
 
 <section class="cm-section" id="cm-13">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <!-- ── Masthead ── -->
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
@@ -4834,6 +4990,16 @@ pending_users   = COUNT(DISTINCT user_id) WHERE status IN ('No License')
 
 <section class="cm-section" id="cm-14">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -5093,6 +5259,16 @@ dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
 
 <section class="cm-section" id="cm-15">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -5359,6 +5535,16 @@ dashboard_value = cohort_score[T, W2] vs industry benchmark (68)
 
 <section class="cm-section" id="cm-16">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -5616,6 +5802,16 @@ dashboard_value = dose_response_delta[HEAVY] vs dose_response_delta[LIGHT]
 
 <section class="cm-section" id="cm-17">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -5885,6 +6081,16 @@ for cohort_name in {"multilingual", "english_only"}:
 
 <section class="cm-section" id="cm-18">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -6263,6 +6469,16 @@ hypothesis-generating signal only. Do not present as equivalent to observed atte
 
 <section class="cm-section" id="cm-19">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -6595,6 +6811,16 @@ dashboard_value = {
 
 <section class="cm-section" id="cm-20">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -7018,6 +7244,16 @@ Exclude: onboarding ramp (default 30 days); track new/established separately</di
 
 <section class="cm-section" id="cm-21">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -7478,6 +7714,16 @@ Exclude: onboarding ramp (default 30 days)</div>
 
 <section class="cm-section" id="cm-22">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -7782,6 +8028,16 @@ GROUP BY provider_id, wk;
 
 <section class="cm-section" id="cm-23">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -8105,6 +8361,16 @@ dashboard_value = theme_frequency[NON_ADOPTER, *] ranked descending
 
 <section class="cm-section" id="cm-24">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
@@ -8386,6 +8652,16 @@ dashboard_value = {
 
 <section class="cm-section" id="cm-25">
 <div class="page">
+<div class="draft-banner">
+<span class="draft-banner-icon">⚠</span>
+<div>
+<strong>Draft — Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+</div>
 <header class="masthead">
 <img alt="Regenstrief Institute" class="ri-logo" src="assets/ri-mark.png"/>
 <p class="eyebrow">Canonical Measure Algorithm Card</p>
