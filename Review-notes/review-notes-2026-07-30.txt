@@ -1,0 +1,644 @@
+[8:01:11 AM] Unknown user: If it's gonna turn into a really effective.
+[8:01:13 AM] Vest, Joshua Ryan: Pain set up.
+[8:01:15 AM] Vest, Joshua Ryan: They don't.
+[8:01:18 AM] Vest, Joshua Ryan: They don't have a product we would like.
+[8:01:38 AM] Vest, Joshua Ryan: Evaluate your test right like they they're selling information and so there's possible for things for like collaboration, stuff like that. But it's much more like it's easier to envision somebody paying for us to work together, not like, you know, like a grant or something, not like them paying.
+[8:01:40 AM] Vest, Joshua Ryan: Like Sookie does.
+[8:01:42 AM] Unknown user: Yeah, yeah.
+[8:01:44 AM] Vest, Joshua Ryan: So, well, we'll see.
+[8:01:48 AM] Vest, Joshua Ryan: Gotta kiss a lot of eggs.
+[8:01:51 AM] Biondich, Paul G: Who's who's gonna?
+[8:01:53 AM] Biondich, Paul G: Who's gonna manage that relationship going forward?
+[8:01:56 AM] Vest, Joshua Ryan: I'm gonna check.
+[8:02:03 AM] Vest, Joshua Ryan: We gotta get an NDA going through MILAZ was on the call with me yesterday and so was David.
+[8:02:07 AM] Vest, Joshua Ryan: And there was a lot of overlap in that interest area.
+[8:02:08 AM] Vest, Joshua Ryan: So we'll just first the 1st.
+[8:02:15 AM] Vest, Joshua Ryan: We can't really tell anything until the first thing we're gonna do is see what the overlap between their data set and the impc is.
+[8:02:20 AM] Vest, Joshua Ryan: And if it's low, there's really not much worth doing anything so.
+[8:02:23 AM] Vest, Joshua Ryan: Yeah, we'll see.
+[8:02:23 AM] Biondich, Paul G: Yeah.
+[8:02:26 AM] Biondich, Paul G: OK.
+[8:02:29 AM] Biondich, Paul G: Joe, Jamie, good morning.
+[8:02:30 AM] Amlung, Joseph Michael: Hey, good morning.
+[8:02:32 AM] Unknown user: Good morning.
+[8:02:35 AM] Thomas, Jamie: I apologize for my slight delay.
+[8:02:41 AM] Thomas, Jamie: I was looking at your time zone fun next week, Paul. So.
+[8:02:43 AM] Biondich, Paul G: Yeah.
+[8:02:49 AM] Thomas, Jamie: South Pacific could be like one of the worst places to travel to and then try to communicate with other people.
+[8:02:52 AM] Biondich, Paul G: That seems about right to me.
+[8:02:58 AM] Thomas, Jamie: I was like, well, it'll be. I mean, maybe it'll be better for Cape Town.
+[8:02:58 AM] Thomas, Jamie: So you can communicate.
+[8:03:00 AM] Thomas, Jamie: No, not really.
+[8:03:04 AM] Biondich, Paul G: Cape Town seems like we've got that one figured out right.
+[8:03:08 AM] Thomas, Jamie: Yeah, well, just Milani said.
+[8:03:10 AM] Thomas, Jamie: We could postpone until next week. Well, that's not.
+[8:03:15 AM] Thomas, Jamie: Yeah. So we'll see.
+[8:03:15 AM] Thomas, Jamie: We'll get it sorted.
+[8:03:16 AM] Thomas, Jamie: It'll all be OK.
+[8:03:16 AM] Biondich, Paul G: Yeah. OK.
+[8:03:18 AM] Biondich, Paul G: Okeydoke.
+[8:03:22 AM] Thomas, Jamie: Well, good morning to you all.
+[8:03:28 AM] Thomas, Jamie: I if y'all remember, we had talked about coming back together.
+[8:03:33 AM] Thomas, Jamie: And actually, I'm gonna just hit record in case anything that way.
+[8:03:37 AM] Thomas, Jamie: So we talked about coming back together to do kind of a final.
+[8:03:59 AM] Thomas, Jamie: sign off on all the measures before we kind of consider them finished product. And so that's what this call is focused on. If it doesn't take the whole time, I think you all would probably appreciate their time back. But if not, we have two hours on the calendar.
+[8:04:07 AM] Thomas, Jamie: I don't know if anybody got double booked in this time and needs to leave at another time. That'd probably be good to know as we start.
+[8:04:07 AM] Biondich, Paul G: Mhm.
+[8:04:12 AM] Vest, Joshua Ryan: Uh, I'm completely clear, I believe.
+[8:04:12 AM] Thomas, Jamie: Okay.
+[8:04:19 AM] Vest, Joshua Ryan: I assume your double booked question was largely targeted at me. I'm good until 10.
+[8:04:22 AM] Thomas, Jamie: You, Paul. Yeah. Okay.
+[8:04:26 AM] Biondich, Paul G: That being said, I feel like we've talked a lot about the deliverables. Will we take the two hours? I'm not sure.
+[8:04:41 AM] Thomas, Jamie: Yeah, and this is really focused on the measures. And I see Joe, thanks Joe, putting in, putting in links.
+[8:05:03 AM] Amlung, Joseph Michael: Yeah, yeah. And just to level set a little bit, there are some of these measures in here that have the kind of epic algorithm behind them. There's only five of them that have that, though. Many of them are just, you know, here is how we envision the measure being calculated. Some of them are going to be, you know,
+[8:05:23 AM] Amlung, Joseph Michael: survey base because it's asking about clinician well-being. Some of it is going to be other methods, maybe things that are more SIFI related, some that are less. And I think the other thing perhaps worth noting, and if I share my screen here, just keeping in mind, we do have this here as drafts.
+[8:05:43 AM] Amlung, Joseph Michael: Like, I think you should be seeing my screen now. These are draft, they're illustrative, they're not yet validated. So in my mind, we can take this as far or as not far as we want to. And Jamie, please help me out here if I'm misunderstanding. My idea is that I think we are turning in
+[8:06:07 AM] Amlung, Joseph Michael: this as a illustrative draft deliverable. And right now, today's goal is just to make sure that what we're turning in is something that is not perfect, it's not validated, but we've at least looked at it. That's kind of the thing with this. All of this has been generated. It's all been put together, but I don't think we've read through these and
+[8:06:18 AM] Amlung, Joseph Michael: actually fully understood, is this really what that canonical measure is asking for? So I think for the group, it's our decision to figure out what is good enough for today.
+[8:06:37 AM] Biondich, Paul G: Okay. So before we go down that route, can we resolve the, hey, have the canonical measures been updated with all of the feedback to date? And Jamie, if you'll remember, I did a session, I think it was last week, where I thought I reconciled all of those, but
+[8:06:52 AM] Biondich, Paul G: there was one that I flagged that was not done yet. And that was because it was ambiguous, which direction I should go. And I flagged that somewhere. Do you remember what I'm talking about, Jamie?
+[8:06:59 AM] Thomas, Jamie: Yes, but I have to go find it. I think you did it in the Suki channel.
+[8:07:00 AM] Biondich, Paul G: Yeah, I did.
+[8:07:09 AM] Biondich, Paul G: Oh, here we go. I need to just refresh my memory because I haven't I put this down for a little bit.
+[8:07:19 AM] Thomas, Jamie: All are done except with one exception on the CM14 versus the CM13 distinction as per above.
+[8:07:19 AM] Biondich, Paul G: Oh, right, right, right.
+[8:07:35 AM] Biondich, Paul G: Yeah. So, and Josh, it's going to be really difficult for your head to get at this time of the morning. It is for me at least. Just give me a second. Let me just refresh my memory here.
+[8:07:57 AM] Biondich, Paul G: There was some feedback that you gave when you looked at one of the indicators and the suggestion that you made would consolidate it basically with another one of the canonical measures. The distinction that you were looking to edit would have fundamentally merged it with another canonical measure.
+[8:07:58 AM] Biondich, Paul G: Let me just pull this up.
+[8:08:01 AM] Thomas, Jamie: Is it in the is it in the chat?
+[8:08:01 AM] Biondich, Paul G: Yes.
+[8:08:07 AM] Vest, Joshua Ryan: I'm trying to find, I'm trying to find my notes where I, I'm trying to find my notes where I would see it. Which one is it? It's C and what?
+[8:08:08 AM] Biondich, Paul G: It's 14 and 13.
+[8:08:08 AM] Amlung, Joseph Michael: Yes.
+[8:08:14 AM] Vest, Joshua Ryan: Let's see, do I put the space in there or do I not put the space in there? Ah.
+[8:08:24 AM] Biondich, Paul G: If you just go to the go to the website, you can just click on the canonical measures tab. Oh, it's CM dash 14, CM dash 13. That's what you're wondering.
+[8:08:32 AM] Amlung, Joseph Michael: And I can, oh, never mind. Actually, I think Jamie, you just posted the notes in the chat. Thank you.
+[8:08:37 AM] Amlung, Joseph Michael: So I think, Josh, that might be your intention, what you were writing in there.
+[8:08:51 AM] Vest, Joshua Ryan: Yeah, that's what I'm looking. I'm actually looking. Jamie pulled that from somewhere, but I don't know. Or Joe, you found it in Slack. I don't know where I started. It feels a little bit. Let's yeah, let me.
+[8:08:51 AM] Vest, Joshua Ryan: I've done it.
+[8:08:55 AM] Amlung, Joseph Michael: May 14th is when it was posted, if that helps. That's when you put it in your notes.
+[8:08:59 AM] Biondich, Paul G: It's not, it's not something that you should just be keeping in the back of your brain.
+[8:09:00 AM] Vest, Joshua Ryan: No, I don't think any of us have anything.
+[8:09:02 AM] Vest, Joshua Ryan: Okay.
+[8:09:04 AM] Vest, Joshua Ryan: Okay.
+[8:09:11 AM] Vest, Joshua Ryan: So my comment was, let's see here. So the original definition.
+[8:09:37 AM] Biondich, Paul G: The core comment that you made that I went and fixed all of them with, which I thought was really good, Josh, was this idea that the indicator and the definition of that indicator should not use similar words. There should be a fundamentally different way just in parlance of defining something that you should not
+[8:09:39 AM] Biondich, Paul G: use the comments, the words itself in the definition.
+[8:09:39 AM] Vest, Joshua Ryan: Sure, yeah.
+[8:10:00 AM] Biondich, Paul G: So there were a few where that was the case and I went and fixed all of those. But there was a specific comment around 13 where it would have essentially made it the same as 14. So I'm like, well, do we, are we saying that we don't want those to be distinguished? I think they might need to be.
+[8:10:00 AM] Vest, Joshua Ryan: So, I have...
+[8:10:15 AM] Vest, Joshua Ryan: Adoption, attention, let's see here. Adoption, attention and long-term use. Provider willingness to continue beyond the study, willingness to adopt.
+[8:10:17 AM] Vest, Joshua Ryan: Right, as provider reported.
+[8:10:23 AM] Vest, Joshua Ryan: Because I also see my comment I have something about 12 fitting under 8.
+[8:10:26 AM] Biondich, Paul G: M.
+[8:10:26 AM] Biondich, Paul G: Yeah.
+[8:10:39 AM] Vest, Joshua Ryan: 8 to 11. So I want to make sure we're on different, making sure we're on different cons on the right ones here. So we're talking about 13 and 12.
+[8:10:39 AM] Biondich, Paul G: Yes, no, 13 and 14.
+[8:10:42 AM] Vest, Joshua Ryan: Thirteen and 14, okay.
+[8:10:53 AM] Biondich, Paul G: So one is, I'm using it and another is, I like this so much I'm going to continue to use it.
+[8:11:16 AM] Amlung, Joseph Michael: Yeah, I will say with 14, there's kind of two things in here that seem to be getting bundled together, and I think that's probably okay. There is the intention to use, as in, I myself am open to using it, and then it almost seems like, well, maybe, maybe not.
+[8:11:36 AM] Amlung, Joseph Michael: The other thing I think of is the long term, like, all right, I have used it and now I will continue to use it, which is kind of what this first line of the definition entails. However, to some extent, I think this is also a before, like before the study period, how interested are you in just implement, in adopting it?
+[8:11:56 AM] Amlung, Joseph Michael: It's a little bit of an attitude towards AI just in the 1st place, but it's certainly possible that's veering too much into 16. 14, I guess, is like, is it proactive, like before this provider has started using it, or is it exclusively
+[8:12:03 AM] Amlung, Joseph Michael: after it they have used this AI scribe and now they are going to continue to use it. I hope that makes sense.
+[8:12:22 AM] Vest, Joshua Ryan: Yeah, yeah, I think this is where I'm having a little trouble. It's in the and, Joe, right? Because I think this is, you're articulating what I think I'm seeing, and the challenge is, in 14, intention always comes before behavior, which is 13.
+[8:12:36 AM] Vest, Joshua Ryan: Right? So like in the process, you have an intention to do something and then you have the actual behavior, right? But then long term use, like if you were to draw 13 and 14 out in a continuous chain.
+[8:12:49 AM] Vest, Joshua Ryan: It would actually be intention, behavior, utilization, and then long term use. Does that make sense? Like 13 shoves in the middle of those two ands as written.
+[8:13:06 AM] Biondich, Paul G: But the actual, Josh, the actual paper that uses the phrasing intention to use is it is intention to use as informed by previous use. That's the paper is a Galloway paper. So the one that uses the phrase intention to use is not
+[8:13:10 AM] Biondich, Paul G: I want to use it potentially. It's I've used it and I want to continue to use it.
+[8:13:14 AM] Biondich, Paul G: So if you click on that Galloway paper, you'll see the details.
+[8:13:37 AM] Vest, Joshua Ryan: Yeah, and I would argue that Galloway's probably using that term wrong then. Like, in the sense of like, if we're if we're using like, if we're trying to argue the kind of standard terms and come to consistent languaging, I understand what you say they're using. And so then I think it's.
+[8:13:40 AM] Biondich, Paul G: because they measured that post the implementation.
+[8:13:41 AM] Vest, Joshua Ryan: Yeah, so.
+[8:13:43 AM] Vest, Joshua Ryan: I mean.
+[8:13:56 AM] Amlung, Joseph Michael: Well, and Paul, I will say adoption predictors is also showing up in here under the tyranny paper, which in that certainly seems like a before. So that's the thing. There is.
+[8:14:03 AM] Biondich, Paul G: But again, adoption, adoption is a by, if you look at that tyranny paper, it's after they used the tool. It's 2 1/2 years later.
+[8:14:05 AM] Amlung, Joseph Michael: But isn't the...
+[8:14:26 AM] Amlung, Joseph Michael: Isn't the predictor itself a, like that is trying to predict who will want to adopt it? Even though, yes, the data came after, it's, well, okay, you know, I guess I kind of see, I can kind of see it. You are calculating it after the fact.
+[8:14:37 AM] Biondich, Paul G: Yeah, every one of these papers had an exposure to the ambient and they are trying to decide based upon that initial exposure whether they're excited enough to continue using it.
+[8:14:38 AM] Biondich, Paul G: Every single, every single one of these.
+[8:15:01 AM] Amlung, Joseph Michael: Could it be then, maybe we just need to change it to adoption intention for long-term use. And essentially, Josh, maybe what we're saying is the before, provider trust in AI, maybe, maybe is saying, are you interested in the 1st place of in adopting it? Then.
+[8:15:17 AM] Amlung, Joseph Michael: you actually do the adoption behavior, did you use it during the period? And then this is a post-study where it's adoption intention for long-term use. So this is reactive to the tool, almost.
+[8:15:32 AM] Vest, Joshua Ryan: I think you're right, Joe. I'm looking at the definition that's here online, Paul, and the definition I suggested, and it's very close because in the definition, I scratched out intention and you removed intention, right?
+[8:15:38 AM] Vest, Joshua Ryan: It's in, yeah, and I think it's the word intention, so I think you're right, like it's...
+[8:15:54 AM] Vest, Joshua Ryan: We can call it will intention for long-term use. I think that makes sense, right? I think Joe's like intention for long-term use. That's okay. That's slightly different, right?
+[8:15:59 AM] Biondich, Paul G: Ah, instead of and use the word for in the canonical measure. Okay. Okay.
+[8:16:10 AM] Vest, Joshua Ryan: Yes, yes, because that like and I would I would still get rid of adoption and just call it intention for long-term use. That's okay to me because I think it's that that word adoption.
+[8:16:30 AM] Vest, Joshua Ryan: Adoption for long term sounds kind of weird because you have to adopt it before you can have long term, right? Like in the process. But if I would scratch in, I would in 14, I would suggest scratching from the name adoption and as Joe suggests is replace the and with a four.
+[8:16:31 AM] Vest, Joshua Ryan: and then that would make sense.
+[8:16:35 AM] Biondich, Paul G: So just intention for long-term use.
+[8:16:39 AM] Biondich, Paul G: It and the same definition.
+[8:16:49 AM] Vest, Joshua Ryan: I think the same definition is okay, right? I mean, I would, I think I scratched including implementation readiness because that feels a little different.
+[8:16:49 AM] Biondich, Paul G: Mhm.
+[8:16:54 AM] Vest, Joshua Ryan: Um, I'm the implementation readiness, I'm not exactly sure what that.
+[8:16:58 AM] Vest, Joshua Ryan: Readiness is kind of a different concept, so I don't know if I would.
+[8:17:22 AM] Vest, Joshua Ryan: Again, like we're still running the problem of trying to use consistent language with all these folks who are using very highly variable, imprecise language, right? I would probably not include including implementation readiness. I'm not exactly sure.
+[8:17:27 AM] Vest, Joshua Ryan: That still feels attitudinal and before adoption, to be honest with you.
+[8:17:29 AM] Biondich, Paul G: Okay.
+[8:17:39 AM] Biondich, Paul G: All right, I'm going to change it to intention for long-term use and I will...
+[8:17:46 AM] Biondich, Paul G: I could even just remove comma including implementation readiness. I could just put that.
+[8:17:48 AM] Vest, Joshua Ryan: I think that would, that would, yeah, I think that would be tighter.
+[8:17:53 AM] Biondich, Paul G: Alright, I got it.
+[8:17:57 AM] Biondich, Paul G: And Jamie, that was the only one I think, right?
+[8:18:03 AM] Thomas, Jamie: That was the only one I saw. I'll go back and look again, but...
+[8:18:08 AM] Vest, Joshua Ryan: I would, I still, the one I would suggest though is the 25.
+[8:18:09 AM] Biondich, Paul G: Oh, remove the methodologic ones.
+[8:18:27 AM] Vest, Joshua Ryan: Yeah, I don't think that, I mean, those aren't specific to... Right. That's just, yeah, and it's just the methods they're using, and it would be completely variable depending on the study design of what they're doing. I mean, that's just...
+[8:18:28 AM] Vest, Joshua Ryan: Twelve.
+[8:18:29 AM] Biondich, Paul G: Agho.
+[8:18:33 AM] Amlung, Joseph Michael: 12 being automated NLP evaluation metrics.
+[8:18:36 AM] Vest, Joshua Ryan: Mm.
+[8:18:40 AM] Vest, Joshua Ryan: Oh, I think I had even suggested 12.
+[8:18:49 AM] Vest, Joshua Ryan: Let's see here. I had, I thought 12 kind of would fit somewhere under 8.
+[8:19:13 AM] Vest, Joshua Ryan: would be dispersed between 8, 9, 10 and 11, right? I agree with you, Paul, that, yeah, the automated metrics, like, Rouge is technically, golly, I don't remember all the, like, these are just automated metrics that I, yes, so first I agree, 25 is out.
+[8:19:21 AM] Vest, Joshua Ryan: Under the same logic, you could probably just get rid of 12 or it would disperse. It probably does it overlap in some of these.
+[8:19:42 AM] Biondich, Paul G: Not really. That's why we ended up landing in this place. Obviously, a lot of these things are referenced in a way of measuring quality of NLP, but the NLP is a service of a number of different things and it's not.
+[8:19:43 AM] Biondich, Paul G: they're not specific to a measure, you know what I mean?
+[8:19:45 AM] Vest, Joshua Ryan: Yeah, um...
+[8:19:54 AM] Vest, Joshua Ryan: I mean, I guess if you just, yeah, I mean...
+[8:19:57 AM] Vest, Joshua Ryan: Yeah, because you're right, they're not.
+[8:20:12 AM] Vest, Joshua Ryan: They're just, they're just measures like F1 is just overall classification accuracy, right? Which technically is kind of part of 9 or 10, but it's not exactly clear, right?
+[8:20:17 AM] Vest, Joshua Ryan: And Rouge is Rouge A verbosity score? I can't remember.
+[8:20:19 AM] Biondich, Paul G: I can't remember either. Joe, could you look that up real quick while I'm fixing 14?
+[8:20:27 AM] Amlung, Joseph Michael: Rouge score, lexical overlap between machine-generated and reference notes.
+[8:20:53 AM] Vest, Joshua Ryan: Yeah, so I don't know what Rouge tells us. I mean, I'm okay with, I think you're right. If you want to keep it, but with the caveat that I think it's just kind of more like a descriptive of this is what people have used, but it doesn't tell us what they're doing in terms of like the concept as a broader thing, but they can just be.
+[8:20:56 AM] Vest, Joshua Ryan: Or they could just be eliminated as a thing.
+[8:21:08 AM] Biondich, Paul G: Yeah, to me, it's kind of like information that is used for measurement, but it does not relate to the canonical measures per se. It's kind of like a bucket of measures.
+[8:21:11 AM] Biondich, Paul G: Yeah, but I'm going to prune 25.
+[8:21:18 AM] Amlung, Joseph Michael: Okay, and Paul, do you?
+[8:21:21 AM] Biondich, Paul G: It's number 25 for a reason because I thought we would prune it.
+[8:21:21 AM] Amlung, Joseph Michael: Yeah.
+[8:21:42 AM] Amlung, Joseph Michael: And Paul, is this, for what it's worth, I am set up to ingest the transcript and make a pull request directly on what we're talking about. Is it easier for you to use that or to just do what you're doing? I'm good either. Okay, fantastic. I'm not going to do any of that then. Thank you.
+[8:21:45 AM] Biondich, Paul G: Yeah, I've got this. I've got this so dialed right now.
+[8:21:53 AM] Amlung, Joseph Michael: Nice. Love to hear it.
+[8:21:53 AM] Biondich, Paul G: It.
+[8:21:59 AM] Biondich, Paul G: I spent a lot of time with this little session.
+[8:22:07 AM] Amlung, Joseph Michael: It's okay. Were those the only things in the measures repo that we needed to get into?
+[8:22:21 AM] Thomas, Jamie: I have a quick question. It's a little thing. So, Joe, just for information, you can use information quality, I think, well, or any of them, just click on one of them, I guess.
+[8:22:23 AM] Thomas, Jamie: Um, and just scroll up a little.
+[8:22:47 AM] Thomas, Jamie: Was there a comment about, this is just a format thing, right? So when you see the canonical measure, it says the definition, whether clinical, I can't, sorry, it's really, whether clinically relevant, right? You click on it and then there's the repetitive definition again.
+[8:22:51 AM] Thomas, Jamie: Is that something that was brought up as well? Or are we okay with that? Does it matter?
+[8:23:16 AM] Amlung, Joseph Michael: I actually had the same thought, but I think it's okay given that a decent number of them, not all of them, it's almost a headline. It's like, all right, let me look into it. And it's like, okay, I wouldn't want to see all of this in there. Like, especially, you know, this one for 12. I wouldn't.
+[8:23:20 AM] Amlung, Joseph Michael: Yeah, yeah, I had the same thought, but I'm like, eh, I think it's fine.
+[8:23:21 AM] Vest, Joshua Ryan: As long as they're consistent.
+[8:23:27 AM] Amlung, Joseph Michael: Yeah, and I would have everything I've seen, they have been.
+[8:23:30 AM] Thomas, Jamie: Okay.
+[8:23:46 AM] Biondich, Paul G: So obviously, removing 25 has a lot of downstream implications, so this one's going to take a little bit longer to show the implications of, because we're now 23 canonical measures, right?
+[8:24:04 AM] Biondich, Paul G: But what I can tell you is that I, with confidence that I'll be able to do this fairly quickly, because the whole system is designed to allow for changes to the repo, which results in changes in the web page.
+[8:24:15 AM] Amlung, Joseph Michael: And Paul, just real quick, we said we're possibly, if we take out a canonical measure, like if we were to take out 12, does that change the numbering?
+[8:24:21 AM] Biondich, Paul G: We're going to, no, we're going to retire it, which means that the labels will stay the same. I think that's the best way to do it.
+[8:24:42 AM] Amlung, Joseph Michael: Okay, fantastic. It's definitely helpful for me. Not that I couldn't react and change the CMs, but it's one of those things where it's like, all right, ideally this is our first release, so to speak, and you don't want retired stuff in your first release, but also it just means that we have to make sure we're consistent with everything.
+[8:24:54 AM] Amlung, Joseph Michael: especially if it was something that Sudha would have. Like if she knows CM04 or whatever, then letting her know is like, oh, it's no longer CM04. You know, it's that kind of stuff. But I like your approach. I think that's good.
+[8:25:01 AM] Thomas, Jamie: So in future presentations, do you make note of that or do you say, do you say 23 or do you say 25?
+[8:25:04 AM] Thomas, Jamie: with some retired or how do you...
+[8:25:07 AM] Amlung, Joseph Michael: Oh, like with how many we have?
+[8:25:08 AM] Thomas, Jamie: Yeah.
+[8:25:19 AM] Thomas, Jamie: I'm thinking, you know, when we do a webinar with Chai, right, and we probably have slides that say 25 or, you know.
+[8:25:42 AM] Amlung, Joseph Michael: I mean, does this feel like it is a true first release or is this still a little bit drafty? And I only ask because like, I think it's perfectly fine to say 25 and know that things are in flux, especially we have 12 draft measures here. It's like, I don't think anything is set in stone, so to speak.
+[8:25:58 AM] Amlung, Joseph Michael: I think this is a conversation starter, and in which case, 25 seems fine to me. I don't think we have to have everything perfectly polished, unless we are putting this out there as like, this is the polished product, but I don't think we're doing that quite yet.
+[8:26:04 AM] Thomas, Jamie: No, and I think even when doing the CHI webinar, right, the idea is that input will probably be given, right?
+[8:26:06 AM] Thomas, Jamie: So, OK.
+[8:26:07 AM] Amlung, Joseph Michael: Anything else on this?
+[8:26:10 AM] Thomas, Jamie: So then we are done with this and move back to the hooks.
+[8:26:20 AM] Vest, Joshua Ryan: I think, well, the last one, I think this came out of the conversation. It's the level of rigor.
+[8:26:27 AM] Biondich, Paul G: Say, say more, ohh.
+[8:26:32 AM] Vest, Joshua Ryan: Well, that was that was AJ's that was AJ's comment in like he was
+[8:26:34 AM] Vest, Joshua Ryan: He was coming down.
+[8:26:41 AM] Biondich, Paul G: Was that my fault in being loose with my words, or do you think that was something he interpreted?
+[8:27:03 AM] Vest, Joshua Ryan: I think what, I think maybe it's rigor, maybe the stuff, I mean, because I think his comment, like he's a econometrics guy, right? So they're never, he's never going to do RCTs, right? He was going to be like, some, I think his point was, you know, some quasi-experimental stuff is,
+[8:27:23 AM] Vest, Joshua Ryan: of very, very high quality, but it might be classified as observational here, right? And therefore discounted. I think that was kind of his, his, his, he was wanting a, not wanting, but he was advocating for a much more nuanced view of.
+[8:27:23 AM] Vest, Joshua Ryan: Evidence quality.
+[8:27:29 AM] Biondich, Paul G: Right, so how would you, how would you address that?
+[8:27:39 AM] Vest, Joshua Ryan: Well, I think I don't know because I don't know how this one how the how you set it up in the back end to pull the quality.
+[8:27:47 AM] Vest, Joshua Ryan: and make those assessments. Because when Katie and I read them, we didn't do a quality score, right?
+[8:27:47 AM] Amlung, Joseph Michael: Mhm.
+[8:27:49 AM] Vest, Joshua Ryan: Um...
+[8:27:52 AM] Vest, Joshua Ryan: We didn't do that now, like.
+[8:27:54 AM] Vest, Joshua Ryan: Um...
+[8:28:02 AM] Vest, Joshua Ryan: We didn't do that because I do see that. I mean, what I'm looking at, it seems to be a combination of.
+[8:28:05 AM] Vest, Joshua Ryan: Number of RCTs.
+[8:28:16 AM] Biondich, Paul G: Oh, you're talking, you're talking about the front, the headliner that is like the descriptive of the entire corpus.
+[8:28:21 AM] Vest, Joshua Ryan: Eight, whatever's under level of rigor there, right? Yes, that.
+[8:28:37 AM] Amlung, Joseph Michael: Yeah, it's like, how did it end up in here? Is it that it had to have one RCT and so many other studies? Like, is it the groupings? Is it how did it end up in best relative quality versus moderate?
+[8:28:57 AM] Vest, Joshua Ryan: That, yeah, like he might be like, if you go down to moderate documentation time, right? 17 observational studies, I think his point was like 17 of those. We don't dive into it. Half of them may be like super strong studies that are just as good as the RCTs.
+[8:29:08 AM] Vest, Joshua Ryan: And then yeah, but it's just his kind of is just he was too not fine-grained enough for his feel. Does that make sense?
+[8:29:09 AM] Biondich, Paul G: Yeah, yeah. Should we just remove that tab altogether?
+[8:29:12 AM] Vest, Joshua Ryan: It would avoid anybody commenting on it.
+[8:29:19 AM] Biondich, Paul G: Yeah, unless we want to spend some time and think through that a little bit.
+[8:29:21 AM] Vest, Joshua Ryan: I mean, and or we re...
+[8:29:24 AM] Vest, Joshua Ryan: Evident or we we.
+[8:29:29 AM] Vest, Joshua Ryan: We we just label it, right?
+[8:29:32 AM] Vest, Joshua Ryan: So, sounding less like...
+[8:29:45 AM] Vest, Joshua Ryan: Instead of putting qualifiers like using terms like rigor or best or relative, we find something out like extensive, right? Like it looks like.
+[8:29:46 AM] Vest, Joshua Ryan: Well, that's not.
+[8:30:15 AM] Vest, Joshua Ryan: Yeah, I don't know. I would have to think about how we, so the simplest answer is just to simply remove it because that's the easiest thing. The more stuff we talk about, the more things for people to discuss. The other one is just to potentially highlight the areas that have RCTs. Now the RCTs may be bad, that doesn't mean they're good.
+[8:30:16 AM] Vest, Joshua Ryan: Um...
+[8:30:17 AM] Vest, Joshua Ryan: But.
+[8:30:18 AM] Vest, Joshua Ryan: Yeah.
+[8:30:24 AM] Vest, Joshua Ryan: Because I also don't know the convergence if they're in.
+[8:30:28 AM] Vest, Joshua Ryan: how the convergence came across.
+[8:30:55 AM] Amlung, Joseph Michael: Yeah. So there's two things here. There's the convergence itself, and then it seems like there's the number of studies and study design. So I think that the groupings currently are probably based on study designs, like how much of it is there? How much evidence do we see?
+[8:31:15 AM] Amlung, Joseph Michael: And then there's also this findings, mixed signals, findings diverge kind of thing, which is interesting. I really like that, actually. But yeah, I think it's just unclear of how anything landed in one group. And personally, I do find these flags as something that's helpful. It almost makes me just wonder, do we need a...
+[8:31:36 AM] Amlung, Joseph Michael: Is it the groupings that's the thing? Is it just that maybe there's a point system, so to speak, just to say, you know, this many randomized controlled trials? I don't know. I'm not exactly sure how to classify it. I like this idea. I think it is just, maybe we just need to not call it best relative quality.
+[8:31:43 AM] Amlung, Joseph Michael: Maybe it's just, I mean, maybe these groupings are just illustrative. Like it's for visual thing, not something that's prescriptive.
+[8:32:05 AM] Vest, Joshua Ryan: I could see like, and not to like make things complicated, I could see a table that just says no quality, RCTs, observational review, qualitative, and like gives the counts, right? Or some kind of like tree graph or something that shows like what the study designs around them are, if that makes sense.
+[8:32:11 AM] Vest, Joshua Ryan: Or the cards are fine too. I think the assessment of is it quality?
+[8:32:32 AM] Vest, Joshua Ryan: based on, it's more than just the design, right? Like really diving down into, you know, did this RCT really do everything that it needs to do and everything that's appropriate to call it good or not is just something that's really kind of difficult. I think.
+[8:32:53 AM] Vest, Joshua Ryan: peeling back the convergence, like, was it a positive finding? What was the direction of the finding? Because I see the mixed signals one, right? Like in the clinician burnout and exhaustion, RCT phies are smaller than QI studies. Okay, but they're in the same, I could see somebody make an argument, well, they're in the same direction.
+[8:32:56 AM] Vest, Joshua Ryan: Right? So that's not a mixed signal. It's not like they're going in opposite directions.
+[8:33:03 AM] Vest, Joshua Ryan: So I think that's the, I don't know if I would trust.
+[8:33:16 AM] Vest, Joshua Ryan: the models to have done enough really detailed scoring on all the studies to make some of these labeling.
+[8:33:19 AM] Vest, Joshua Ryan: of relative quality.
+[8:33:40 AM] Biondich, Paul G: Joe, I think when you made the before, I think there's some integration issues that I might need to work offline with you on.
+[8:33:48 AM] Amlung, Joseph Michael: Okay, yeah, sounds good. I don't know what those are, but absolutely.
+[8:33:50 AM] Biondich, Paul G: I'm resolving it now.
+[8:33:55 AM] Amlung, Joseph Michael: Okay, thanks. Yeah, I definitely will want to get those resolved, whatever it is.
+[8:34:08 AM] Biondich, Paul G: Obviously the website looks great, but the integration, like when I make a change to the measures, it's not updating V4 properly. So I'm going to work on that.
+[8:34:24 AM] Amlung, Joseph Michael: Okay, yeah, definitely should be. They're supposed to be reactive to the changes that you're making to the measures, as long as, of course, you've run the whatever the script is, the like rebuild script.
+[8:34:25 AM] Biondich, Paul G: If that's a that's a that's a GitHub action, or at least it should be.
+[8:34:26 AM] Amlung, Joseph Michael: Gotcha.
+[8:34:29 AM] Biondich, Paul G: It should, it should be doing it based upon a push to the repo.
+[8:34:41 AM] Amlung, Joseph Michael: Yes, yeah, that's right. Okay, yeah, we can work on that. If it doesn't get resolved quickly, like if it's not clear why it's not working quickly, let's work on that.
+[8:34:52 AM] Biondich, Paul G: Oh, it updated. So can you guys refresh and look at the canonical measures? Never mind, I think I fixed it.
+[8:35:00 AM] Amlung, Joseph Michael: Nice. Uh, let's see. Oh, in connection for a long time. Yep, it is updating.
+[8:35:01 AM] Biondich, Paul G: Here we go.
+[8:35:08 AM] Biondich, Paul G: Okay, I was getting nervous there. I'm like, uh-oh, what did I break?
+[8:35:16 AM] Amlung, Joseph Michael: I know, I was afraid I broke it under your nose. Okay, so yes, that has come in there and yeah.
+[8:35:38 AM] Amlung, Joseph Michael: I don't know. I like, Josh, would it, could we maybe, I mean, it says work in progress. It reflects editorial judgment. I mean, it's not, it's in development. Part of me just thinks, is this enough? Maybe this needs to be bolder. Like this is a, these are electorative groupings, not prescriptive groupings. Maybe
+[8:35:56 AM] Amlung, Joseph Michael: We just need to make this clearer because I think this has a lot of value. I think people see this and they're like, wow, that is helpful to see. And there just needs to be more methodological rigor in how we do this. And I think that's fine. I just wonder, is it just that we need to be clear that
+[8:35:57 AM] Amlung, Joseph Michael: This isn't perfect, but it's a work in progress with this particular section.
+[8:36:21 AM] Vest, Joshua Ryan: So I just, I'm just putting my mind on somebody who sees this, like people love to point out and criticize in academics and level of quality. There are extensive, like if you're going to do a Cochrane review or if you're going to do a quality assessment of articles for a systematic review, there are
+[8:36:38 AM] Vest, Joshua Ryan: guidelines and checklists and well-defined methodologies about how you would do this. And if it's not done in those ways, it's going to invite somebody to complain about it. That's just my comment. Like, that's it. It's just like, if you put it up there,
+[8:37:00 AM] Vest, Joshua Ryan: somebody will complain and say, I don't like that. And that's just it. That's what's going to, to the extent of they will not explore the rest, right? Like that's going to be the, that would be my concern that it comes up there. Also too, because we can't explain the rankings and how it comes through necessarily, that's.
+[8:37:10 AM] Vest, Joshua Ryan: problematic too. I mean, I'm thinking something that could come out in a future rollout, but I would suggest it's just going to invite.
+[8:37:34 AM] Biondich, Paul G: Right. Well, there's really 4 inputs into this, Josh. One is the number of the designs and the diversity of the designs, right? So if you have a cross-section of multiple different study designs, that is better than only having observational studies.
+[8:37:53 AM] Biondich, Paul G: So they're suggesting that the study designs are one. The second is whether the findings converge or diverge, right? So obviously findings that converge are reproducible, right?
+[8:38:13 AM] Biondich, Paul G: Whereas the something that they diverge that implies that the there might be something to say about the measurements quality, right? It's if or maybe maybe that's not actually not true. So.
+[8:38:22 AM] Biondich, Paul G: But then there's also the, let me think, what's, there were four things, I'm just trying to refresh my memory.
+[8:38:47 AM] Biondich, Paul G: the tally of the number of studies as well. Like if you have, you know, obviously documentation time having 31 papers helps it, but what you see in practice with documentation time is that it has mixed signals, which I think hurt it some. Yeah, I agree. This is a little bit futsy because then you would ask yourself,
+[8:38:57 AM] Biondich, Paul G: Well, why is clinician burnout and exhaustion a better relative quality than documentation time that has more studies? It just like, it's not predictable whether something is best versus moderate.
+[8:39:11 AM] Vest, Joshua Ryan: Yeah, and I mean, I think if we want to be descriptive, right, I think that's perfectly fine. If you want to say like, what is the nature of the evidence, right? Like, and have it categorized of.
+[8:39:24 AM] Vest, Joshua Ryan: Large number of studies, multiplicity of design, like very clear, like this bucket instead of best, right? Is exactly what you said. Instead of having that highlight being the best, right?
+[8:39:26 AM] Vest, Joshua Ryan: Multiple study designs, numerous studies.
+[8:39:30 AM] Biondich, Paul G: That's what the buckets are called.
+[8:39:42 AM] Vest, Joshua Ryan: That's what it's called. Maybe reproducible being like more like consistent, consistent findings. That's it. Moderate.
+[8:39:42 AM] Vest, Joshua Ryan: NOT.
+[8:39:47 AM] Biondich, Paul G: How about how about we just remove those headlines and just use those the phrases underneath?
+[8:39:53 AM] Vest, Joshua Ryan: That feels better, right? That feels better. I would still avoid terms that are like...
+[8:40:04 AM] Vest, Joshua Ryan: evaluated like best or stronger or weaker or something like that and just keep it descriptive like
+[8:40:25 AM] Vest, Joshua Ryan: keep it like, keep it more things about like inconsistency and things like that, or lack of convergence or limited number of designs, something like that. I think that's helpful, right? Yeah, like the bottom one needs work, fewer studies, okay, smaller.
+[8:40:44 AM] Vest, Joshua Ryan: which is hard to tell because like 21 actually has bigger numbers, like provider satisfaction usability actually has bigger numbers than all of them, but one in the moderate and all of them in the best quality. So I, it is kind of like a type, it's like a kind of like.
+[8:40:52 AM] Biondich, Paul G: We need to, we need to have a hierarchy of for each of those commas what.
+[8:40:56 AM] Biondich, Paul G: which one's most important, right? So like, yeah.
+[8:41:14 AM] Vest, Joshua Ryan: Kind of, yeah. Yeah. Yeah, and as long as we avoid words like weak or poor or stuff like that, that, yeah, that as long as we're not making judgments on it, but just saying, yeah, so it's like, okay, AJ, yeah, this domain.
+[8:41:37 AM] Vest, Joshua Ryan: has a lot of different study designs, has a lot of different studies, and they tend to say the same thing. This group has fewer study designs, fewer studies, but they're in the same kind of direction. This group has very few studies, not many different designs to look at it, and it's inconsistent, right? Like that kind of, it just being more descriptive.
+[8:41:37 AM] Biondich, Paul G: the tally of the number of studies as well. Like if you have, you know, obviously documentation time having 31 papers helps it, but what you see in practice with documentation time is that it has mixed signals, which I think hurt it some. Yeah, I agree. This is a little bit futsy because then you would ask yourself,
+[8:41:43 AM] Vest, Joshua Ryan: than just saying, we think this is better or worse, right? That is what would rankle people.
+[8:41:43 AM] Biondich, Paul G: Yeah, yep.
+[8:41:48 AM] Biondich, Paul G: Well, how about this? What do you think, Joe?
+[8:41:59 AM] Amlung, Joseph Michael: I like that. I think overall it's just slight language tweaks and I do think that seems like it'll get people's get people off our case for things that we don't care about that much is honestly what it is.
+[8:42:03 AM] Vest, Joshua Ryan: That's exactly what it is. That's exactly what it is.
+[8:42:07 AM] Biondich, Paul G: Um...
+[8:42:29 AM] Biondich, Paul G: I'm going to make a change for now that removes the buckets best moderate needs work and methodological. I'm going to, well, ultimately, I think CM12 is going to completely be gone. So that.
+[8:42:48 AM] Biondich, Paul G: bottom category is not necessary. But I'll remove the best, moderate and needs work. I'll use the phrasing underneath as the headline. And I will do some work to.
+[8:43:08 AM] Biondich, Paul G: get in a narrative form the actual way in which each of these was put into these buckets. And I'll share that quote un quote methodology with you all with the intention of getting feedback such that we can in this
+[8:43:27 AM] Biondich, Paul G: tab describe that quote un quote methodology with all of the appropriate caveats. Like I think that's the other criticism that is appropriate, Josh, which is someone needs to be able to look at our quote un quote methodology as loose as it is and understand it.
+[8:43:28 AM] Biondich, Paul G: It can't be hidden, it has to be explicit.
+[8:43:29 AM] Vest, Joshua Ryan: Yep.
+[8:43:31 AM] Amlung, Joseph Michael: Yeah, Ellen.
+[8:43:34 AM] Biondich, Paul G: So, I do you like that, Joe?
+[8:43:49 AM] Amlung, Joseph Michael: Yeah. I think overall it makes sense. We're building trust. That is what this needs to do is build trust and this is kind of just a point where I don't think we've as a group have spent as much time and that's OK. We just need to build the trust and make sure people aren't turned off by this. So I think that's good.
+[8:43:54 AM] Biondich, Paul G: Okay.
+[8:44:01 AM] Biondich, Paul G: I'm going to give you the mic, Joe, while I fix some of these other things here really quick.
+[8:44:24 AM] Amlung, Joseph Michael: Okay, well, so looking at, if we're going back to looking at these, this again, just like level setting, because I don't know necessarily what level of detail we need to get into with these. Like, I don't think we should.
+[8:44:43 AM] Amlung, Joseph Michael: all be reading these one by one by one in this. I think we need to know what our endpoint is. There, again, are a few of these that have epic info in them. Every one of them has a generic one, just a here is how we would generically talk about it.
+[8:45:05 AM] Amlung, Joseph Michael: And again, there's different groupings in here. Some of these are, you know, human rating versus LLM as judge. Some of these are surveys. Some of them are related to claims and codes. So the thing that, you know, we just gave the ACI repo just now a bit of rigor. This has had almost
+[8:45:23 AM] Amlung, Joseph Michael: zero rigor, it's kind of just been generated and it's there. Again, it's an illustrative thing that is helpful and we've done some testing, for example, on documentation time. We worked with Evgenya to do, to at least validate some of these things in here. I think before we...
+[8:45:43 AM] Amlung, Joseph Michael: read through any of these, I just try to think, what do we need this, what do we need this to end up being? What boxes do we need to make sure we have checked to turn this in as a, again, draft, illustrative, deliverable? Are we comfortable turning this in as a,
+[8:45:59 AM] Amlung, Joseph Michael: you know, here's something directional we want to do and want to give more validation, or is it something that we should be reading through and signing off on, so to speak? That's kind of where I think it would be helpful to start.
+[8:46:01 AM] Biondich, Paul G: Joe, I don't necessarily think...
+[8:46:21 AM] Biondich, Paul G: that what Sudha is most enthusiastic to receive as a deliverable is this website. I think what I think what she wants is the the floss across the chasm with South Carolina.
+[8:46:38 AM] Biondich, Paul G: So, and I think that what she was describing in an e-mail earlier this week was more about what she as an organization wants more than what we need to deliver for Sprint One.
+[8:46:59 AM] Biondich, Paul G: That being said, we internally should have a way of tracking our fingers or our engagement in the iteration of these algorithms based upon our experience, right? So like,
+[8:47:15 AM] Biondich, Paul G: The things that you did with Evgenia, that's a different level of scrutiny than most of these. And so we should find a way to distinguish those from the other ones.
+[8:47:22 AM] Biondich, Paul G: So to me, so to me, the levels would be draft.
+[8:47:32 AM] Biondich, Paul G: human review and prototype implementation and real world implementation.
+[8:47:48 AM] Amlung, Joseph Michael: And those groups that you just said, are those like how much rigor each of these has gone through? Like essentially a status of it? Or is that, am I misunderstanding? Is it?
+[8:48:06 AM] Biondich, Paul G: Yeah, it's like a life cycle. Like, if you look at this page, know that it's purely computationally developed in draft versus Joe and technical people looked at this and it has face validity versus...
+[8:48:17 AM] Biondich, Paul G: We have prototyped it in a real setting and have gotten results to, you know, it's been implemented. You see what I'm saying? It's like a maturity of the of the of the algorithm.
+[8:48:37 AM] Amlung, Joseph Michael: Yeah, exactly. And currently, currently, documentation time is the only example where this is informed and has actually been updated based on the conversations with Evgenia. There is real world information that informs this past just epics field list. So
+[8:48:59 AM] Amlung, Joseph Michael: this one is the most mature out of those Epic ones. Now, keeping in mind, there are quite a few that are related to, you know, things that are entirely separate from Epic. Provider satisfaction, good example of that. It's like, it's a score. It is a, it's survey-based. It's not something that we need to validate against Epic.
+[8:49:06 AM] Amlung, Joseph Michael: And so that's another example. Like, I don't know, where do we start putting that as far as maturity? Are we more competent?
+[8:49:31 AM] Vest, Joshua Ryan: My guess on that, Joe, is they want, and I will be deferred to be corrected, they want to know what they can measure out of Epic. And so my thought is if the canonical measures can't be measured out of Epic, we don't even need to bother with it. Right? Like that would be my guess is because it's not, I'm also trying to make sure we don't overwork, right? Because we still owe them.
+[8:49:44 AM] Vest, Joshua Ryan: white papers and thoughts like this on it that I would only limit to the ones that actually are like, okay, if we were to connect to an Epic instance, this is how it would be done, right? So a whole bunch of these things.
+[8:49:52 AM] Vest, Joshua Ryan: Like, everything that can't be measured through that connection is just not worth pursuing at this point, would be my thought.
+[8:49:54 AM] Amlung, Joseph Michael: Cool, that is totally good with me.
+[8:49:58 AM] Vest, Joshua Ryan: I mean, I mean that I don't know if you feel the same way, Paul.
+[8:50:18 AM] Biondich, Paul G: Yeah, I do, but I, but, but Joe, having these other ones as a starting point for a sprint two or other things that we do is good, right? So, like, like what you've done is great. It is something that we can internally use, but...
+[8:50:25 AM] Biondich, Paul G: I don't want anyone to make assumptions about the quality of one of these versus the other unless we've specified it, right?
+[8:50:27 AM] Amlung, Joseph Michael: Sure, and...
+[8:50:27 AM] Vest, Joshua Ryan: Ohh yeah.
+[8:50:27 AM] Biondich, Paul G: And and go ahead.
+[8:50:37 AM] Vest, Joshua Ryan: No, I was just gonna say I agree. It's awesome, Joe, and I like it too, and I think it's internal, but I would prioritize the ones that are the epic ones would be my thought.
+[8:50:38 AM] Amlung, Joseph Michael: Okay, cool.
+[8:50:38 AM] Biondich, Paul G: One 100%.
+[8:50:48 AM] Amlung, Joseph Michael: And it might help to just say the ones that currently are listed as they have an epic thing are four through 7.
+[8:51:10 AM] Amlung, Joseph Michael: which are documentation time, after hours documentation, chart closure timeliness, total EHR time. Then the only other one is 22, patient volume and throughput. And just to say, those are the only ones that are currently, they have something in Epic. So financial productivity, coding accuracy, neither of those
+[8:51:14 AM] Amlung, Joseph Michael: have an epic thing. Are there any others that look like they could?
+[8:51:37 AM] Amlung, Joseph Michael: I don't see anything unless we were to count anything in information quality. But so yeah, is that does that seem right to everyone? Are we hitting all the ones that should be sourced from Epic? Like I'll take coding accuracy. There is.
+[8:51:56 AM] Amlung, Joseph Michael: a bit of sourcing from Epic in this, I would imagine. I don't know that for sure, but there might be a bit of sourcing. So maybe just to say those five that I mentioned, patient volume and then four through seven, is that all the Epic stuff that is our focus? Because I agree. That's what
+[8:52:04 AM] Amlung, Joseph Michael: suit of once. The rest of this is really not as important as far as making an algorithm, but putting forth these I think makes sense.
+[8:52:24 AM] Vest, Joshua Ryan: So the ones you mentioned is yes, I would completely occur. Those make sense, right? And then all the ones you've skipped so far, I agree with. Going down, the questions are technically patient volume should be capturable through Epic, right? That's just counts of things. Productivity and impact.
+[8:52:33 AM] Vest, Joshua Ryan: Yes, but I don't think any of that is exposed in APIs that we have access to, so it's probably out, right?
+[8:52:43 AM] Vest, Joshua Ryan: Because that all requires financial stuff and like RVUs and things like that that we will not, that they will never expose on an API.
+[8:52:45 AM] Biondich, Paul G: And and I don't even think clarity would have it, Joe.
+[8:52:54 AM] Vest, Joshua Ryan: Yeah, it's probably, it may not be registered in clarity period. It would probably be in some other parallel database. The coding accuracy.
+[8:52:54 AM] Vest, Joshua Ryan: Technically.
+[8:53:01 AM] Vest, Joshua Ryan: Um, then like the EML EM EM code levels, right?
+[8:53:02 AM] Vest, Joshua Ryan: Um...
+[8:53:25 AM] Vest, Joshua Ryan: you could expose, but that required like the EMO coding levels, yes, but there does this one here particular kind of assumes some information back from Suki too, right? Like what did the Suki suggest the code was, right? Or what did Suki suggest the evaluation level was?
+[8:53:39 AM] Vest, Joshua Ryan: I think a simple measure that's saying this is where you would pull EMN levels and HCC codes, if those are exposed, I don't know if they're exposed. I mean, they would be in clarity somewhere, I'm sure. Well, maybe, I don't know.
+[8:53:39 AM] Vest, Joshua Ryan: I don't know if they're in clarity.
+[8:53:44 AM] Vest, Joshua Ryan: They, those two might be in clarity, right?
+[8:53:47 AM] Vest, Joshua Ryan: Those might be included.
+[8:54:09 AM] Amlung, Joseph Michael: It's probably worth looking then. It probably worth at least trying to propose, seeing if they are, you know, if there's something in epic that we can use in it, just based on the fields, if nothing else. I think that's easy enough to ask for at this moment. And maybe just those as the quote un quote epic measures,
+[8:54:27 AM] Amlung, Joseph Michael: And because I think that this kind of split is probably very, very useful. Like, it's almost the split is what is the primary source of the information. And for most of the, for the epic ones, the primary source is epic. For some of these, the primary source is going to be
+[8:54:44 AM] Amlung, Joseph Michael: survey. It's going to be, do you want to use this? And some of the primary source, it might be a mixture of Suki, you know, Suki and Epic, it might just be Suki, like for adoption.
+[8:55:04 AM] Amlung, Joseph Michael: behavior, like did you actually use it? That's the thing. Maybe these just need to be grouped by primary source and then really the epic ones are the ones that we're highlighting. Those are the ones that Sudha and Crow would want to see the most of.
+[8:55:16 AM] Amlung, Joseph Michael: That is where we get started, I think, for a sprint two or for future work is that's the epic stuff because they can launch surveys, but I don't think they want to. I don't think that's their interest at the moment.
+[8:55:37 AM] Amlung, Joseph Michael: Yeah, so, okay. I think that's giving me good direction on where they should land, at least. So I feel comfortable with that. We could move on to something like looking at these in a little more scrutiny. How do people feel about where that idea is landing?
+[8:55:39 AM] Amlung, Joseph Michael: as far as what we want to put forth.
+[8:55:48 AM] Biondich, Paul G: I just want to make sure Josh or Joe, does that include the different stages of our of how we've engaged with these?
+[8:56:09 AM] Amlung, Joseph Michael: Yes, I agree. Like, I think there's the status, there's the grouping of what is the measure, what by its source, its primary info source, and then the status of how much rigor have we put into this, which for the epic ones, they're all nascent except for documentation time, which we have some
+[8:56:31 AM] Amlung, Joseph Michael: initial validation that has been started with. And then the rest of them that are, you know, survey based, we haven't, they're probably all nascent. We haven't really done any real world validation that this is going to work. We're just, this is a synthesis of information at this point, not anything that's been tested. Documentation time is the only one that
+[8:56:53 AM] Amlung, Joseph Michael: has a little bit of testing based on actual field numbers returned from Eskinazi. So there's something, something, some valuable info to say, we kind of get this one. So is that good for everyone? We are covering the grouping by data source and noting the status as far as how much work we
+[8:56:53 AM] Amlung, Joseph Michael: Have done into it.
+[8:56:58 AM] Biondich, Paul G: Say that will that last a little bit there one more time, Joe.
+[8:57:15 AM] Amlung, Joseph Michael: I think it's the status by our, how rigorously not evaluated, it's like, have we as a team put a fine-tooth comb on it? And most of them are.
+[8:57:33 AM] Biondich, Paul G: Yeah, like I wouldn't, I wouldn't stand by any of the ones that were auto-generated. I would start, I would begin to stand by the ones that you and Evgenia have worked on, but I would need to see it used in a setting before I felt more comfortable with it. Like, I think if there is a way in which...
+[8:57:52 AM] Biondich, Paul G: you briefly described the stages and I don't know if it would help for me to just rattle that off really quickly and you can have it in the recording. But to me, like draft means generated but not reviewed by humans.
+[8:58:13 AM] Biondich, Paul G: So I think there's most of them meet that criteria, right? So they're truly draft, which means that there's been no human review. And then I would say, you know, I would say health or informatics review or
+[8:58:33 AM] Biondich, Paul G: practitioner reviewed, or there's some human review, I think would be the next stage. Like someone has looked at it and they think that they've made some adjustments based upon what they understand about EMRs, ambient, and the technology, right? So that would be the next layer.
+[8:58:43 AM] Biondich, Paul G: And the layer after that would be that there has been an attempt to prototype and test the queries within one or more EHRs.
+[8:58:53 AM] Biondich, Paul G: And then and then the level above that would be that it's actually been been used, like it's truly been implemented somewhere.
+[8:58:57 AM] Amlung, Joseph Michael: Yeah, yep, 100%. I think that's.
+[8:59:04 AM] Biondich, Paul G: And then and then you could even go a step further, which is so far away from where we're at, is that it's been reproducible. It's been put in multiple sites.
+[8:59:11 AM] Biondich, Paul G: I don't think that anyone's going to care about this until we reach the reproducible stage.
+[8:59:33 AM] Amlung, Joseph Michael: Agreed. Yeah, that is kind of, that's kind of the thing we're going to be grappling with is, and it's just like the other thing. We're building trust by being clear about what we've done, what we, where these are at. So I think that, I think that makes sense. I think that we should be able to work with that. And I can take those stages and
+[8:59:34 AM] Amlung, Joseph Michael: very easily apply them given that almost all of them are the same thing.
+[8:59:43 AM] Vest, Joshua Ryan: Okay, so question, what are we turning over to Sudha as the deliverable here? Is it?
+[9:00:02 AM] Biondich, Paul G: It's more our effort with the South Carolina team. So Josh, here's what she's wanting. She's wanting to get to a place where we have a new scope of work potentially for this aspect of it. And we need to validate
+[9:00:25 AM] Biondich, Paul G: that this proof of concept that we've done around algorithms has some legs in terms of something that could be internally useful to Suki. And so in order for us to do that, we want to basically present South Carolina with one or more of these algorithms so that they can run and get some kind of result.
+[9:00:49 AM] Biondich, Paul G: And so what Joe has done is worked with Evgenia with the Wishard version of Epic, and he has started to understand where the data density actually lives, almost to a point where he feels like one or two of these algorithms could potentially be handed over to the South Carolina team to see if
+[9:00:55 AM] Biondich, Paul G: they have the same data density in theirs, then we could look at those results and that's literally all she wants.
+[9:00:57 AM] Vest, Joshua Ryan: Yeah, how are we doing on budget?
+[9:01:03 AM] Biondich, Paul G: I don't think that this is a high effort activity. I think we're mostly there, right, Joe?
+[9:01:17 AM] Amlung, Joseph Michael: Yes, I don't expect to be putting much more effort into this. Most things that we've talked about should be pretty quick to implement. And yeah, go ahead, Jamie.
+[9:01:21 AM] Thomas, Jamie: Yeah, I was just going to say I expected we would be done with the deliverables, you know.
+[9:01:23 AM] Thomas, Jamie: This week, I guess.
+[9:01:36 AM] Biondich, Paul G: There's not additional effort here outside of an e-mail where we're passing this information over to the South Carolina folks and they say yay or nay. That's it.
+[9:01:40 AM] Vest, Joshua Ryan: Okay, so I my recommendation would be
+[9:01:42 AM] Vest, Joshua Ryan: Unless it's a...
+[9:02:06 AM] Vest, Joshua Ryan: And I'm using the word card here, right? Unless it's a card for Epic and that passing over to South Carolina, I wouldn't share any of the other stuff. I wouldn't put time in it. Like there's no reason to, I am a very firm believer in if you give somebody something that you don't, that you don't want them to talk about,
+[9:02:25 AM] Vest, Joshua Ryan: they will talk about it, or that just extra knowledge is a burden on humans and we should not burden them with it. So I would just simply say, Joe, here, we say, there's like 5 or 6. These are the five or six. These are the specifications. Here you go. Deliverable done. We have given it to you all. Can you run it or not?
+[9:02:26 AM] Vest, Joshua Ryan: That's and we've met that we've met that expectation.
+[9:02:49 AM] Biondich, Paul G: That's what I was getting at initially, Joe. The website really isn't the deliverable. The deliver, that's something that we internally want to keep track of because we could potentially do something with it for sprint two. That's a little bit of what I was keying up, but I don't think that you need to deliver this as is.
+[9:02:55 AM] Biondich, Paul G: I don't think there's any harm in sharing it with Sudha and she can think whatever she wants to think about it, but I don't think she expects anything more than what I just described.
+[9:03:16 AM] Amlung, Joseph Michael: Yeah, that's what I was looking for. That was the clarity that I needed, was just what is being delivered. And I think that's exactly right, Josh. Like, this is a helpful artifact, but it shouldn't be what gets shared out yet, because why would you share out so much that is so drafty?
+[9:03:21 AM] Amlung, Joseph Michael: Instead, let's put forth the things that we want their focus to be on and drown out the noise.
+[9:03:34 AM] Amlung, Joseph Michael: And Jamie, maybe just to make sure that meets the deliverable criteria, right? That we've got the high priority stuff and then the rest is informational for us. Okay.
+[9:03:35 AM] Amlung, Joseph Michael: Fantastic.
+[9:04:01 AM] Amlung, Joseph Michael: So with that, then do we need to put a fine-tooth comb into any of these? Like, again, documentation time is the best defined one at this point because these fields have been changed based on Epic clarity tables, like actually information that we got.
+[9:04:01 AM] Amlung, Joseph Michael: From again.
+[9:04:23 AM] Amlung, Joseph Michael: 5, 6, 7, 22 have not. They are just a say of here is what we think we are looking for and any kind of other information. So, you know, proposed, partial, it's like all of this stuff is like, okay, we've never delivered this to a person to.
+[9:04:43 AM] Amlung, Joseph Michael: say, is there actual information to back this up? We have all of these things like, here's our expected trend, here's what data elements we're looking for. So I think it's just a question for the crew here. Do we need to go through any of this
+[9:05:02 AM] Amlung, Joseph Michael: or is what we just talked about enough to put this forth as a deliverable that we're happy with, you know, being transparent about which ones have and have not been informed. But no one, including myself, has read through these to say, hey, that actually makes sense that we would get
+[9:05:09 AM] Amlung, Joseph Michael: the this information and combine it together to measure whatever we're looking for after hours documentation. So that's the warrant.
+[9:05:13 AM] Biondich, Paul G: I think, I think what you're just what you're describing, Joe, is sprint to work.
+[9:05:33 AM] Amlung, Joseph Michael: Fantastic. That's kind of what I'm hoping to hear. That's what, like, I just didn't know, did people feel uncomfortable putting this forth as a deliverable without us actually having read any of this, putting it all forth as machine generated?
+[9:05:39 AM] Biondich, Paul G: No one expects this as a deliverable, but it is a wonderful foundation for us when we start Sprint 2.
+[9:06:01 AM] Amlung, Joseph Michael: Great. If that is good for everyone else too, then we probably don't need to spend more time into this. Everything we've talked about, I can get implemented and get updated in here with relatively little effort, and then we should be able to have our actual deliverable links ready to go.
+[9:06:02 AM] Amlung, Joseph Michael: M.
+[9:06:17 AM] Biondich, Paul G: How about how about how about this, Joe? What about what we are taking to the South Carolina team as our proof of concept? Blake, let's be clear about what the scope of that is. Is it one or two or three or four and which ones?
+[9:06:18 AM] Amlung, Joseph Michael: Yeah, yeah, I like that. I think that makes sense and yeah.
+[9:06:37 AM] Thomas, Jamie: So is that, Paul, to kind of put a nice bow on it, is that an e-mail from you with the links then of the, yeah, sorry, go ahead, you were going to speak.
+[9:06:48 AM] Biondich, Paul G: I think it probably is going to need to be an e-mail with a brief conversation, but I want to talk through this with Joe. Can I just have a couple of minutes to unpack what I just said, Jamie?
+[9:07:08 AM] Biondich, Paul G: Okay, so you, Joe, worked with Edgenia. So Josh, I'm going to get you up to speed here. What we did was built a knowledge graph of Epic's clarity database and related it to the canonical measures and asked
+[9:07:29 AM] Biondich, Paul G: the agent to guess what related fields and tables would have the source data to drive an algorithm. And there were a number of questions that we needed to like make the box less black.
+[9:07:49 AM] Biondich, Paul G: And the first was, is the database version that we have in our knowledge graph, does it coincide with what a real world implementation actually has? So like, is what Epic is publishing as part of their legal requirement, does it relate?
+[9:08:08 AM] Biondich, Paul G: Is it the same color as what Wishard's Epic instance is, or the South Carolina organization's instance is? Well, the first level is Evgenia validated that she was able to find the tables and the...
+[9:08:14 AM] Biondich, Paul G: the fields that we've given to her. So they exist. So that was first level. So far so good, Josh.
+[9:08:16 AM] Vest, Joshua Ryan: Yeah, following you.
+[9:08:37 AM] Biondich, Paul G: Are you tracking me? Yeah, so like when we gave her these columns and table names, so like, you know, the dot notation and SQL, like when we said go to this table and this attribute, she was able to consistently find them all. But.
+[9:08:59 AM] Biondich, Paul G: what she was giving us back was that, well, some of these fields that you've asked for have no data inside Epic and or inside our implementation. And that's to be expected, right? Because there are a number of potential columns, there are a number of potential tables and fields
+[9:09:18 AM] Biondich, Paul G: that could potentially relate to the canonical measures. Some of those are going to be used, some of them are not going to be used. And so we know that our knowledge graph is correct, but the ability of the agent to find the correct ones is
+[9:09:38 AM] Biondich, Paul G: going to be an iterative process. And so then what Joe did is he worked with Evgenia to give a number of other potential fields that could have information. And when he went back to her the second time, some of the fields that he identified
+[9:09:57 AM] Biondich, Paul G: did have data in them within Wishard Eskenazi implementation. And in some cases, some of the values that he was getting results back from were a byproduct of data density over time. And so there's this human
+[9:10:09 AM] Biondich, Paul G: iterative review process, Josh, where you go from potential fields to fields that actually have data within them. Joe and Mike expressing all of this correct so far?
+[9:10:13 AM] Biondich, Paul G: Yeah, and so Josh, when I say draft.
+[9:10:35 AM] Biondich, Paul G: Draft to me means it's making some assertions about what potential fields are and then a human reviewed is when you call that list of potential elements down to the ones that at least in one implementation have some data density within them. Are you tracking?
+[9:10:37 AM] Biondich, Paul G: Still, Josh.
+[9:10:58 AM] Biondich, Paul G: Okay, so this is new science here, but like to me there is some, there is some, there's some reasonable rigor in this process so far, right? So we've taken a, the version that they, the core version of their database model, we make.
+[9:11:18 AM] Biondich, Paul G: a kind of a large list of potential fields, we then do a human review process with at least one live implementation. Not to say that when we use these, that it's going to lead to the measure itself, right? So to me, the next stage would be that you would have the implementation.
+[9:11:38 AM] Biondich, Paul G: actually do the pool, we would look at the results of that pool and see if it corresponds with the measure that we're trying to actually achieve. That would be the next phase, which is, I think, what we're trying to get the South Carolina team to do. So do you agree with that, Joe?
+[9:11:47 AM] Biondich, Paul G: Okay, so to me what that would be would be that the same queries are done from Evgenia.
+[9:12:00 AM] Biondich, Paul G: and from this group in South Carolina, and then maybe even before we do South Carolina, Joe, we would do it within Eskenazi, which is to say...
+[9:12:01 AM] Biondich, Paul G: Do the Paul.
+[9:12:14 AM] Biondich, Paul G: And does the data that we're getting back from that poll allow us to make a claim about documentation time or that measure, or is it nonsensical?
+[9:12:39 AM] Amlung, Joseph Michael: Yeah, this is all, for me, totally landing. Like, that's, we're prepping for what is going to be the next project. And I think that was always something that I was a little unclear about, just in general. My own lack of knowledge is, where does this sprint end? When does the next one begin? With respect to deliverables, you know,
+[9:12:44 AM] Amlung, Joseph Michael: What are we on the hook for as of today? And so, yeah, this is all set up for the next one.
+[9:12:49 AM] Biondich, Paul G: So, so, yeah, so, so, so to me, everything I'm describing, Joe, is kind of like the the...
+[9:13:11 AM] Biondich, Paul G: the pre-work to justify a contract, right? And we're using the previous project's effort to basically make the case for that. Like, we could ask Suki abstractly to support this idea, but I think they're going to be less inclined unless they can see that.
+[9:13:12 AM] Biondich, Paul G: there's evidence that there's some there there, right?
+[9:13:14 AM] Amlung, Joseph Michael: Yeah, and that's what I think.
+[9:13:15 AM] Biondich, Paul G: So this is like a proof of concept.
+[9:13:39 AM] Amlung, Joseph Michael: Yeah, and I think there's honestly two things that we're turning in with this. What is the reformatted version of what's here with only the epic measures that we care about? And then also a slight proposal. I think part of this deliverable, this link, should be a proposal for here is what we expect
+[9:13:52 AM] Amlung, Joseph Michael: to be done next and what we expect it to look like. So it's a tiny bit of a project proposal and the informational backing that we want to test. That's kind of what I envision is being turned in from this.
+[9:14:13 AM] Biondich, Paul G: Yes. So, Joe, what I'm saying is before we reach out to, I just kind of talked myself into this, Joe, and that I don't think, I think Amgenia has effort for OSI specifically to do this kind of due diligence stuff. And so
+[9:14:15 AM] Biondich, Paul G: We should say, well, Joe, out of.
+[9:14:30 AM] Vest, Joshua Ryan: Well, no, I'll qualify that. No, I don't know. Not necessarily. She would have to come out of Suki. Like, no, her hers is solely on her effort is solely on feasibility.
+[9:14:31 AM] Biondich, Paul G: Well, don't you think that this is...
+[9:14:45 AM] Vest, Joshua Ryan: Like feasibility, feasibility studies like ticket to go through and do data pulls and stuff like that. I, it's probably this sort of stuff which is actually like investigative and analysis probably would be.
+[9:14:48 AM] Vest, Joshua Ryan: would need to go to the Suki project.
+[9:15:09 AM] Amlung, Joseph Michael: Yeah, and maybe Paul, I just, I want to draw a pretty clear line for what needs to be done ASAP, like as in as a deliverable for this project versus setting ourselves up for success when we start taking on Sprint 2. Because I think much of this, like what I'm trying to do is a
+[9:15:30 AM] Amlung, Joseph Michael: put a pretty bow on it and then be able to hand it off. What you're talking about, I think we need to track as Sprint 2 what we expect to be done. And for me, it's just when do we when do we start tackling that? Because I'm like, I'm I think we all have this. I'm pretty slammed with other projects too. So my
+[9:15:42 AM] Amlung, Joseph Michael: Contracts that makes sense.
+[9:16:04 AM] Biondich, Paul G: All of it makes sense. I just reading, I'm just reading Suki and I think that Sprint 2 has a low likelihood of being supported unless we can show that for a very thin sliver of what we propose to do at scale,
+[9:16:24 AM] Biondich, Paul G: is technically viable with a real setting. And so what I'm saying is we might not be in a position to do anything more until we do Sprint 2, but the likelihood that they will fund that without some evidence that
+[9:16:34 AM] Biondich, Paul G: our conceptual approach actually like has a very thin example of success all the way through, then I think that they'll see that as maybe too risky to fund.
+[9:16:35 AM] Amlung, Joseph Michael: Okay.
+[9:16:49 AM] Biondich, Paul G: So what I'm just trying to get at is like, is there a way to do a very thin wedge of an example? So you've already said that Evgenia's done, she's gone and told you.
+[9:16:56 AM] Biondich, Paul G: how much data is within these queries, these updated queries, right, Joe? So she knows that, right?
+[9:17:13 AM] Amlung, Joseph Michael: Sure, yeah. Yeah, and theoretically, it actually, the H&O info is an example of something that probably there was some secondary info when we were asking about documentation time that might apply here. It also might apply.
+[9:17:33 AM] Amlung, Joseph Michael: here, like we actually might get, we might be able to apply some of her stuff that we already know to this. I haven't thought about that or tried that, but I understand what you're saying. I'm talking about timeliness. To be super clear, like I think everything you're talking about is super valuable. It's just when do we start tackling it and.
+[9:17:41 AM] Amlung, Joseph Michael: perhaps what account is that under? Is it under Suki's work right now, or is it under OSI feasibility stuff later?
+[9:18:08 AM] Biondich, Paul G: Yeah, so I don't think this needs to be done next week. Just to be clear, I think this needs to be work, some as narrowly scoped work as we could do to prove something to Suki and to ourselves, such that we would be willing to put a significant amount of effort into a new scope of work around doing this across
+[9:18:26 AM] Biondich, Paul G: across multiple measures, right? So I certainly don't know if I feel confident that what we've come up with methodologically will make it all the way across, but I know how to get there, and it's what I'm describing, right? It's us looking at what Evgenia pulls.
+[9:18:45 AM] Biondich, Paul G: She's already given you the counts. So to be able to give you the data is not a lot of extra effort on her side. She's already done most of all the intellectual work. We then as a team would need to spend a little bit of time and look at what the query actually returns.
+[9:18:52 AM] Biondich, Paul G: and whether we could actually use those data to infer documentation time. Like we do, we would need to actually look at it, right?
+[9:19:11 AM] Amlung, Joseph Michael: Yeah, exactly. And I think that's good. I think we're getting a clear dividing line that there is the thing that we do need to have done by a deliverable date. Jamie, I don't know when that is, but if you could put in the chat when we need to turn stuff in, that would actually help A lot. But, oh, yeah.
+[9:19:25 AM] Thomas, Jamie: I think we, so technically I think we're done. Now it was just kind of cleaning things up. So, you know, as soon as possible, I think we should be sending this over.
+[9:19:46 AM] Amlung, Joseph Michael: Okay, cool. I can do that. That's helpful to know. And then the feasibility sprint 2 aspect of it, it sounds like we have a couple of weeks, which again, it is, you know, I think that is us coming back together to probably review a few additional questions that we are
+[9:20:05 AM] Amlung, Joseph Michael: taking to Evgenia that aren't already answered by what she's provided. But I do think there is a thing to send to Suki, which is to do ASAP. Then there's the actual, let's start prepping for Sprint 2 and getting our feasibility justification ready.
+[9:20:06 AM] Amlung, Joseph Michael: which is has a little bit more time.
+[9:20:07 AM] Biondich, Paul G: I think so.
+[9:20:13 AM] Amlung, Joseph Michael: Cool, that's super actionable for me and clear.
+[9:20:14 AM] Biondich, Paul G: Yeah.
+[9:20:36 AM] Biondich, Paul G: Again, and we can decide that we don't want to do this, right? Like we could just stop this. But if we want this to be something that we move forward, we've got to do a little bit of feasibility. I certainly don't feel comfortable standing behind it until I see some floss across the chasm.
+[9:20:56 AM] Amlung, Joseph Michael: Yeah, there might be a, I think we should set up future time in a couple of weeks. That is, like, maybe we just need to put together a couple of tiny feasibility studies. And I say tiny as in something that shows the philosophy across the chasm, but it's like reasonably scoped.
+[9:21:16 AM] Amlung, Joseph Michael: That we can get it done quickly, and I'll just say, like, you know, we learned that they might have at Eskenazi might have only just started using those tables. Okay, let's put together one simple research question that, based on what we know, we expect it to work, and then, you know, just iteratively start putting...
+[9:21:29 AM] Amlung, Joseph Michael: getting our results so we can put that together. And I think that we got a couple of weeks before we need to put that together. But I think that that seems like the right direction to be going.
+[9:21:45 AM] Biondich, Paul G: Yeah, and just to be clear, Joe, documentation time is not something where you should be leveraging new fields to infer it. Documentation time should be inferable soon as the EHR is turned on.
+[9:21:53 AM] Biondich, Paul G: So it wouldn't like it the mere fact that it's not it's not fresh throughout the life of the EHR is a red flag.
+[9:22:14 AM] Amlung, Joseph Michael: Yes, totally. And I think there's a little bit of history research that we need to do also. Like, maybe we need to see, has Epic always been using these tables, or has it always been using this model? When did it start going, when, you know, like that could just be a limitation.
+[9:22:33 AM] Amlung, Joseph Michael: Maybe Eskenazi was just behind the 8 ball in updating to using this version of clarity. Or maybe there is something, but that is a risk. Like what we're noting now is like, oh, there's riskiness behind this because who's to say that your data has been populated? And if it for 2024 and earlier, well,
+[9:22:42 AM] Amlung, Joseph Michael: maybe you would have to have a workaround, which is not great. That's what we're trying to prevent is, oh, great. Now we have to get developers involved to find the workaround for our implementation.
+[9:23:00 AM] Biondich, Paul G: I don't want to talk to South Carolina until I feel like we've got something that we can reasonably trust has a decent likelihood of achieving some kind of result. I don't want to ask a third party to do a query. And so to me, the way to build that confidence is to
+[9:23:03 AM] Biondich, Paul G: for us to be able to do it internally before we ask South Carolina.
+[9:23:05 AM] Amlung, Joseph Michael: Cool.
+[9:23:15 AM] Biondich, Paul G: And again, Joe, like, they're not even announcing any of their Suki research stuff until like early September.
+[9:23:20 AM] Biondich, Paul G: So I don't think that there's any, they're not.
+[9:23:39 AM] Biondich, Paul G: I don't think that Suki is looking at like a timeline, looking at their watch, waiting for deliverables to be ready in a certain time period. We need to put our pencils down so that we can focus on other things, but we're going to keep a line of communication open with Suki because they're our partner, right?
+[9:24:03 AM] Biondich, Paul G: So to me, it's a little bit of that due diligence work that oftentimes happens between projects. And I think that she, us doing what we've done is more than she's asked for. So like, I think the one thing that she would like to see, and it's because she wants to support us further and get us involved with their technical team is to do a proof of concept.
+[9:24:06 AM] Amlung, Joseph Michael: So okay, I yeah.
+[9:24:10 AM] Biondich, Paul G: Jamie, does that resonate with you? Do you understand the distinction I'm making?
+[9:24:19 AM] Thomas, Jamie: Sorry, I was also doing something else. What do you what would be your question?
+[9:24:34 AM] Biondich, Paul G: When you have a partnership between organizations, there's the things that you deliver and then there's the things that you want to do going forward. And those don't all have to be in the form of a deliverable. They're just effort in between work activities.
+[9:24:41 AM] Thomas, Jamie: Yes, that that that makes sense and that's why I'm saying like the deliverables like.
+[9:24:50 AM] Biondich, Paul G: It's not, it's not like Josh keeps track of everything he does with Merck, all of the intermediate conversation. He, you know, all of Partners have this kind of flow to them.
+[9:25:11 AM] Thomas, Jamie: Yes, it's just as in relation to the budget and the agreement we had with the deliverables for this, you know, yeah, those, that's separate. I get what you're saying. Yeah, it's just you can't keep charging to the project for it, although there's that reinvestment fee. And so my question would be,
+[9:25:21 AM] Thomas, Jamie: you know, what actually do they consider to that and how do we, you know what I mean? Like if they built that in for us to use, or is it not for us?
+[9:25:43 AM] Biondich, Paul G: As the current person overseeing OSI, I just want to, and I'm not asking you to solve this, I'm just asking you to flag it in your brain that this is not atypical. Like all partners are going to have this flow to them. There's going to be work activities and preparing for subsequent work activities if we're doing it well.
+[9:26:03 AM] Vest, Joshua Ryan: Yeah, there's always activities preparatory to research and that's what Jamie is right. That's why we have a reinvestment fee. That's why OSI takes money. But there's, we just want to make sure that those don't turn into giveaways for free.
+[9:26:07 AM] Biondich, Paul G: Yeah, but I'm not suggesting that we would do anything other than proof of concept. Yeah.
+[9:26:08 AM] Biondich, Paul G: Yeah.
+[9:26:11 AM] Biondich, Paul G: So Joe, we're on the same page.
+[9:26:31 AM] Amlung, Joseph Michael: Yes, and I know exactly what needs to happen immediately. And then it sounds like we have a little more wiggle room for the concept idea. I that I don't have a super clear timeline on. I think maybe we've thrown out a couple of weeks, but I'm
+[9:26:33 AM] Amlung, Joseph Michael: flexible to whenever we want to kick that off.
+[9:26:43 AM] Biondich, Paul G: Joe, I think you're going to need someone like me working alongside you with that, and there's no way that I can do that while I'm in the Pacific Islands.
+[9:27:04 AM] Amlung, Joseph Michael: Exactly, yeah. Like that is a, that's actually a bit of a blessing that you're going to be away because that means that we can't work on this together and that gives us some time, you know, Jamie, for us to get our ducks in a row to say, all right, administratively, how do we take this work forward? Because we want to, and we just got to do it within the bounds that we know are.
+[9:27:14 AM] Vest, Joshua Ryan: So we are going to end up, I mean, I think stuff that we definitely can use the time for and what we need to be thinking about purportatory is pitching the next.
+[9:27:28 AM] Vest, Joshua Ryan: stuff to Sudha, right? Like we need to put down what phase two looks like and get that in front of her so she can start thinking about it.
+[9:27:50 AM] Biondich, Paul G: I think the two that she is most interested in are shopping some of the candidates trials to various organizations. And she mentioned that on the call that when you were out of town, Josh, and working with their technical team on building out some of these algorithms with them such that we would
+[9:28:08 AM] Biondich, Paul G: help them build that into a repeatable process. So like, for example, she felt as if the work that we've done around like making the black box of the EHR a little bit more transparent would be subject matter that their team would like to develop.
+[9:28:29 AM] Biondich, Paul G: and they could even see using some of these algorithmic approaches inside their web tool, their, I forget what they call it. What's the, Joe, what's the tool called that they, they have their admin, their admin interface or whatever they call it. So, so Josh, I think.
+[9:28:45 AM] Biondich, Paul G: She's already thinking about two potential areas that maybe we could even do both. She thinks that there are multiple organizations like Rush in Chicago that might want to pay for one of these evaluation studies. And she started seeding that with them. She mentioned last time we talked.
+[9:28:56 AM] Vest, Joshua Ryan: The other one, that's good. The other one that is that came in with the conversation with her and her broader leadership was the RI simulation.
+[9:29:06 AM] Vest, Joshua Ryan: So we'll put that one together as well. They don't, maybe they want all of them, which would be nice, but...
+[9:29:07 AM] Vest, Joshua Ryan: We'll see. Okay.
+[9:29:20 AM] Thomas, Jamie: And I've already started the budget based on our conversation a couple of weeks ago, Josh, with Adam on that, and then he's refining it based on the conversation we had yesterday with the bio stats people.
+[9:29:20 AM] Thomas, Jamie: So I'll circle back with you on that.
+[9:29:48 AM] Biondich, Paul G: And just remember, Josh, that she's going to go a little bit quiet for the next few weeks because they're about ready to launch this larger Suki Science Initiative. But then she's going to want to key up a number of kind of publicity announcements
+[9:30:05 AM] Biondich, Paul G: some being the white paper, some being kind of some pomp and circumstance around the canonical measures. So that'll come. She's going to want to do that, but she wants us to wait for this larger initiative to launch, and we're going to be featured within that.
+[9:30:22 AM] Vest, Joshua Ryan: That's fine. I mean, there's no, I mean, these things take time. That's not a problem. So, yeah, but that does come back to the, so it feels like there's a pin in this one enough. What is the,
+[9:30:22 AM] Vest, Joshua Ryan: The status of the white paperwork.
+[9:30:26 AM] Biondich, Paul G: Um...
+[9:30:27 AM] Amlung, Joseph Michael: Go ahead.
+[9:30:33 AM] Biondich, Paul G: I think, did I, you did a draft already, Joe, but I don't think anyone's looked at it.
+[9:30:33 AM] Vest, Joshua Ryan: I also.
+[9:30:34 AM] Amlung, Joseph Michael: I think that.
+[9:30:37 AM] Vest, Joshua Ryan: Go ahead, Jill.
+[9:30:58 AM] Amlung, Joseph Michael: I think that's right. There's, it's on the Slack channel. There is a one pager, but it's actually 2 pagers, but whatever, white paper level thing on the Slack channel that I agree. I haven't taken a look at it since I posted it and I'm not sure anyone else has too, which is fine. It's just there.
+[9:31:02 AM] Vest, Joshua Ryan: I, I also emailed you a draft one of 1 Paul a while ago.
+[9:31:13 AM] Biondich, Paul G: Oh, I'm sorry. I, Josh, if you, I've just got a lot of new projects. I only have so many hours. Yeah.
+[9:31:18 AM] Vest, Joshua Ryan: I'll look for it. Yeah, yeah. Well, yeah, that's, let's see here. I will.
+[9:31:21 AM] Vest, Joshua Ryan: Put it in Slack as well.
+[9:31:26 AM] Vest, Joshua Ryan: and post it in Suki.
+[9:31:36 AM] Biondich, Paul G: I think I have...
+[9:31:45 AM] Biondich, Paul G: made all of the changes to the website, including moving both of them to
+[9:31:49 AM] Biondich, Paul G: The.
+[9:31:51 AM] Biondich, Paul G: Retired.
+[9:31:56 AM] Biondich, Paul G: Uh.
+[9:31:59 AM] Biondich, Paul G: The 23 will show up here shortly.
+[9:32:01 AM] Vest, Joshua Ryan: M.
+[9:32:05 AM] Vest, Joshua Ryan: M.
+[9:32:09 AM] Biondich, Paul G: That's what I get for multitasking.
+[9:32:15 AM] Biondich, Paul G: Okay, yeah, it's updating that.
+[9:32:21 AM] Biondich, Paul G: The.
+[9:32:35 AM] Biondich, Paul G: I've given this, I think, Jamie, if I'm not mistaken, I think I'm on this project like 5% or something crazy like that. I've given it way more than that.
+[9:32:45 AM] Amlung, Joseph Michael: Just consider it Regan Street's strategic stuff. Sometimes that's what it is. You're investing through Regan Street's future strategies.
+[9:32:48 AM] Biondich, Paul G: Yeah, I had a lot.
+[9:32:48 AM] Thomas, Jamie: Are you a politician, Joe? What?
+[9:32:49 AM] Biondich, Paul G: I had a lot of fun.
+[9:32:51 AM] Amlung, Joseph Michael: No, I'm an optimist.
+[9:32:52 AM] Biondich, Paul G: I had a lot of fun working on this with you guys.
+[9:32:58 AM] Biondich, Paul G: So, yeah, it's all updated.
+[9:33:01 AM] Biondich, Paul G: Like, everything is...
+[9:33:16 AM] Thomas, Jamie: Paul, you had more time on this than Josh did. So if that makes you, that makes you feel better. So you had five. Yeah, Josh had five.
+[9:33:16 AM] Biondich, Paul G: And I had 10.
+[9:33:20 AM] Thomas, Jamie: I think 20 Ashley.
+[9:33:21 AM] Biondich, Paul G: Oh, great. Well, then that's a little bit more like it.
+[9:33:23 AM] Thomas, Jamie: Yeah.
+[9:33:26 AM] Biondich, Paul G: Okay, 20.
+[9:33:31 AM] Thomas, Jamie: So Josh, is this the only, is Slack the only place that your white paper is? Or did you?
+[9:33:42 AM] Vest, Joshua Ryan: No, I emailed it to Paul, but the e-mail I emailed it to him, but I just dropped it here in the Suki channel to what I had done, and it's just a draft. It's something to work off of.
+[9:33:51 AM] Biondich, Paul G: Take a look at the website now, guys. I got rid of the, I retired two of them now with 23 canonical measures.
+[9:33:56 AM] Biondich, Paul G: and then look at the rigor tab.
+[9:34:02 AM] Vest, Joshua Ryan: Mm.
+[9:34:05 AM] Vest, Joshua Ryan: Mine still says best relative quality.
+[9:34:08 AM] Biondich, Paul G: Refresh the page.
+[9:34:11 AM] Vest, Joshua Ryan: Yep, still, and I did it a couple of times.
+[9:34:14 AM] Biondich, Paul G: That's interesting. Mine, it looks correct.
+[9:34:20 AM] Biondich, Paul G: Are you using are you using V4? So is it does it say V4?
+[9:34:20 AM] Vest, Joshua Ryan: Nope, I am NOT.
+[9:34:22 AM] Vest, Joshua Ryan: It's going to be 4.
+[9:34:25 AM] Biondich, Paul G: Ah, go to V. You haven't seen the updated registry styling.
+[9:34:33 AM] Vest, Joshua Ryan: Work in progress. Yeah. I would still retitle it something different than rigor, but yeah.
+[9:34:35 AM] Vest, Joshua Ryan: This looks...
+[9:34:44 AM] Vest, Joshua Ryan: And again, the...
+[9:34:58 AM] Vest, Joshua Ryan: Again, the pull up headings are better than having it overall, but the headaches have strength, right?
+[9:35:00 AM] Vest, Joshua Ryan: Repeat the word strength and at the bottom it says like weak designs.
+[9:35:04 AM] Biondich, Paul G: Where is that?
+[9:35:06 AM] Vest, Joshua Ryan: The bottom one.
+[9:35:14 AM] Vest, Joshua Ryan: The bottom bucket says, view studies, weak designs.
+[9:35:17 AM] Vest, Joshua Ryan: Which again?
+[9:35:24 AM] Vest, Joshua Ryan: is a little bit of a difficulty. The things are better, but...
+[9:35:25 AM] Vest, Joshua Ryan: Like 21, it's got 21.
+[9:35:28 AM] Vest, Joshua Ryan: 21 papers.
+[9:35:39 AM] Vest, Joshua Ryan: That's what keeps it down. It doesn't have any RCTs, but 21 papers is the second most quantity of anything.
+[9:35:47 AM] Vest, Joshua Ryan: I think, again, those anything that sounds judgmental or space, I would still stick away from.
+[9:36:03 AM] Biondich, Paul G: I'm going to leave it here for today, but what I'm going to do is give you that the methodology for how we rate them, and then let's agree upon that and see if it changes how these are categorized. How's that? But I'm going to leave it here for now.
+[9:36:03 AM] Biondich, Paul G: Yeah.
+[9:36:06 AM] Biondich, Paul G: Joe, do you see the updates to the website?
+[9:36:11 AM] Amlung, Joseph Michael: No, but that's only because I'm not looking.
+[9:36:14 AM] Amlung, Joseph Michael: Let's see.
+[9:36:15 AM] Thomas, Jamie: Fair enough.
+[9:36:36 AM] Vest, Joshua Ryan: All right. I am not double booked, but I do have to run across to get to my other office before 10 o'clock, Jamie. So I'm going to step off y'all and come back. But I'll be back on at 10, unless there's something else particularly important.
+[9:36:43 AM] Thomas, Jamie: No, I think I was just gonna, I was just gonna run through the group with like, okay, what we've just talked about, what are, what are our action items? So.
+[9:36:53 AM] Vest, Joshua Ryan: I think the, I mean, I think the only action I think I have to do is you and I need to work more on.
+[9:37:08 AM] Vest, Joshua Ryan: It's a stronger, more fleshed out proposal for the RI study and ones that match for the other sprints.
+[9:37:08 AM] Thomas, Jamie: Mhm.
+[9:37:09 AM] Vest, Joshua Ryan: M.
+[9:37:12 AM] Thomas, Jamie: Yep.
+[9:37:34 AM] Thomas, Jamie: Okay, that sounds good. I guess I'll talk to you at 10, Josh. And then Paul and Joe, maybe we could talk about the action items that need to be taken starting this week and then
+[9:37:56 AM] Thomas, Jamie: Then, you know, over the next couple of weeks, and I'm going to be checking with Adam on that reinvestment fee and seeing, you know, how do we, given what I was told it was to be used for, you know, how are we able to use those funds for our proof of concept to help kind of sell that phase two, right?
+[9:38:10 AM] Thomas, Jamie: So, other action items, Joe, as far as the your link to the canonical measures and what we want to send or what we want to send Sudha as a
+[9:38:12 AM] Thomas, Jamie: Hey, we're done at this point.
+[9:38:20 AM] Thomas, Jamie: How do you guys want to handle that? Paul, is that a message from you, I guess?
+[9:38:21 AM] Thomas, Jamie: With the ambient.
+[9:38:24 AM] Thomas, Jamie: Ah.
+[9:38:32 AM] Thomas, Jamie: Sorry, I'm not sharing my screen, but with your version V4 plus what Joe has.
+[9:38:32 AM] Biondich, Paul G: Sure.
+[9:38:39 AM] Thomas, Jamie: This is one kind of put together thing. Would you want to send that out before you leave?
+[9:38:42 AM] Biondich, Paul G: Yeah, yeah, I got let me add that to my list. Yep.
+[9:38:45 AM] Biondich, Paul G: Yep.
+[9:38:48 AM] Thomas, Jamie: I guess, Joe, you were talking about making some final updates.
+[9:39:18 AM] Amlung, Joseph Michael: Yes. So that, I'm going to get that going. I'm going to get that in progress right now and hope to have something pretty quickly. So I think what I'm understanding is get that done ASAP, send it in Slack to Paul, like just the link. Let's put it on the Suki channel. Anybody's welcome to read it, make sure that it signs, it's doing what we need it to do.
+[9:39:30 AM] Amlung, Joseph Michael: And then also, and then Paul, once that's kind of approved, then I think there is this final e-mail that's going to Sudha, or this e-mail is going to Sudha with however you want to, you know, word it.
+[9:39:43 AM] Biondich, Paul G: Yeah, yeah. And also, probably is worthwhile to get a human review on the white paper drafts by everyone, right? And then I can send those over to her as well.
+[9:39:44 AM] Thomas, Jamie: Yes.
+[9:39:51 AM] Thomas, Jamie: Josh's was an e-mail and it's in Slack.
+[9:39:57 AM] Biondich, Paul G: So, if you if we could get Katie and everyone to kind of quickly look at those, that that would be great.
+[9:40:02 AM] Thomas, Jamie: Yeah, Katie is out, out of office this week.
+[9:40:17 AM] Thomas, Jamie: So it sounds like maybe to get her to review it, I'd need to put those two in front of her, maybe the team next week, early next week, and then send those over.
+[9:40:37 AM] Biondich, Paul G: To me, I would just want to send everything over all at once. So maybe if Josh could have a chance to look at Joe's and I will look at both Josh and Joe's, and if Joe could look at Josh's, then I think that would be sufficient. Do you see what I'm getting at?
+[9:40:52 AM] Biondich, Paul G: Yeah, I'm happy to review them both. I'm gonna need a little bit of time. I won't be able to do that today. But yeah, I think I'd like to send those over to her because that's what she asked for, right?
+[9:41:01 AM] Biondich, Paul G: And and they're just the one, right? Like, I'm sure that they'll be like iterated once I send them over, but to me, that would be, you know, wrapping it up.
+[9:41:19 AM] Biondich, Paul G: Simple little edits to a first draft. I think the first draft is the deliverable because they're going to want to like use it in different ways. We're going to want to use it in different ways. And so it's not like they're done, but we need to be all be comfortable that they're directionally correct.
+[9:41:22 AM] Thomas, Jamie: Yeah, I just put something to slack to Josh. Okay.
+[9:41:23 AM] Thomas, Jamie: That sounds good.
+[9:41:37 AM] Thomas, Jamie: And then yeah, that'll just be V1 and then she can respond while you're gone, review those and respond while you're gone, and then the team can take another stab at them. Okay.
+[9:41:38 AM] Biondich, Paul G: Yes.
+[9:41:43 AM] Biondich, Paul G: And then, then I, then I think we're good.
+[9:41:46 AM] Thomas, Jamie: RI.
+[9:41:51 AM] Thomas, Jamie: Um...
+[9:41:53 AM] Thomas, Jamie: And what else?
