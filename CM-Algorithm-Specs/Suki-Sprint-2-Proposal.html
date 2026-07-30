@@ -714,18 +714,13 @@
 
     /* ── Overview section ── */
     .status-table td, .status-table th { vertical-align: top; }
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      height: 20px;
-      padding: 0 8px;
-      border-radius: 999px;
-      font-size: 10.5px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .status-validated { background: var(--teal-light); color: var(--teal); }
-    .status-draft      { background: var(--soft); color: var(--muted); }
+
+    /* Source/status vocabulary shared with index.html's grouping view */
+    .tag-source-epic   { background: var(--teal-light); color: var(--teal); }
+    .tag-status-draft      { background: var(--soft); color: var(--muted); }
+    .tag-status-reviewed   { background: #e7f3ed; color: #2d6a4f; }
+    .tag-status-prototype  { background: #d7f0e3; color: #1b6b43; font-weight: 700; }
+    .tag-status-real-world { background: #c8ecd9; color: #0f5132; font-weight: 700; }
 
     .proposal-list {
       list-style: none;
@@ -828,51 +823,62 @@
   </div>
 
   <p class="section-label">Measure Status</p>
-  <table class="data-table" style="margin-bottom:28px" aria-label="Measure status">
+  <table class="data-table status-table" style="margin-bottom:28px" aria-label="Measure status">
     <thead>
       <tr>
         <th>Measure</th>
+        <th>Primary Data Source</th>
         <th>Epic Clarity Source</th>
-        <th>Status</th>
+        <th>Maturity Status</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td><a href="#cm-04">CM-04 &mdash; Documentation Time</a></td>
+        <td><span class="source-tag tag-source-epic">Epic / EHR</span></td>
         <td><code>NOTES_HISTORY_LOG</code>, <code>HNO_INFO</code></td>
         <td>
-          <span class="status-pill status-validated">Field-checked in a live instance</span><br>
-          <span style="font-size:12px;color:var(--muted)">Join paths and field names checked against a live Epic instance
-          (Eskenazi Health / Wishard, via Regenstrief&rsquo;s Epic EHI knowledge graph); candidate
-          fields narrowed to the ones with real data density. The most mature of the five.</span>
+          <span class="source-tag tag-status-prototype">Prototype Implementation</span><br>
+          <span style="font-size:12px;color:var(--muted)">Join paths and field names checked against a live Epic
+          instance; candidate fields narrowed to the ones with real data density. The most mature
+          of the five.</span>
         </td>
       </tr>
       <tr>
         <td><a href="#cm-05">CM-05 &mdash; After-Hours Documentation</a></td>
+        <td><span class="source-tag tag-source-epic">Epic / EHR</span></td>
         <td>Same note-event tables, time-of-day filter</td>
-        <td><span class="status-pill status-draft">Draft</span></td>
+        <td><span class="source-tag tag-status-draft">Draft</span></td>
       </tr>
       <tr>
         <td><a href="#cm-06">CM-06 &mdash; Chart Closure Timeliness</a></td>
+        <td><span class="source-tag tag-source-epic">Epic / EHR</span></td>
         <td>Signature / chart-close timestamps</td>
-        <td><span class="status-pill status-draft">Draft</span></td>
+        <td><span class="source-tag tag-status-draft">Draft</span></td>
       </tr>
       <tr>
         <td><a href="#cm-07">CM-07 &mdash; Total EHR Time</a></td>
+        <td><span class="source-tag tag-source-epic">Epic / EHR</span></td>
         <td>Clarity / Epic Signal</td>
-        <td><span class="status-pill status-draft">Draft</span></td>
+        <td><span class="source-tag tag-status-draft">Draft</span></td>
       </tr>
       <tr>
         <td><a href="#cm-22">CM-22 &mdash; Patient Volume &amp; Throughput</a></td>
+        <td><span class="source-tag tag-source-epic">Epic / EHR</span></td>
         <td>Encounter counts</td>
-        <td><span class="status-pill status-draft">Draft</span></td>
+        <td><span class="source-tag tag-status-draft">Draft</span></td>
       </tr>
     </tbody>
   </table>
   <p style="font-size:12px;color:var(--muted);margin:-16px 0 28px">
-    &ldquo;Draft&rdquo; means the field mapping follows the same knowledge-graph approach used for
-    Documentation Time, but has not yet been checked against a live Epic instance. See each
-    card&rsquo;s Algorithm section for the proposed join paths and open ambiguities.
+    All five measures share the same primary data source &mdash; Epic / EHR, per the grouping on
+    the working index &mdash; which is exactly what makes them the Epic-sourced subset in the
+    first place. Maturity status follows the same four-stage scale used there: Draft (generated,
+    not yet reviewed) &rarr; Human/Practitioner Reviewed &rarr; Prototype Implementation (checked
+    against a live instance) &rarr; Real-World Implementation. &ldquo;Draft&rdquo; here means the
+    field mapping follows the same approach used for Documentation Time, but hasn&rsquo;t yet been
+    checked against a live Epic instance. See each card&rsquo;s Algorithm section for the proposed
+    join paths and open ambiguities.
   </p>
 
   <p class="section-label">Pre-Work Already Underway</p>
