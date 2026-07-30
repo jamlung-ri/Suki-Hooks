@@ -1,0 +1,2936 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suki Sprint 2 Proposal — Epic-Sourced Canonical Measures</title>
+  <style>
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/averta-regular.woff') format('woff');font-weight:400;font-style:normal;font-display:swap}
+    @font-face{font-family:'Averta';src:url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff2') format('woff2'),url('https://www.regenstrief.org/wp-content/themes/regenstrief-institute/fonts/Averta-Bold.woff') format('woff');font-weight:700;font-style:normal;font-display:swap}
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink:        #323c43;
+      --muted:      #636363;
+      --line:       #dae2e3;
+      --paper:      #f7f9f9;
+      --panel:      #ffffff;
+      --soft:       #ededed;
+      --teal:       #0e5088;
+      --teal-light: #e1ebf3;
+      --blue:       #596290;
+      --blue-light: #e9eaf3;
+      --amber:      #a8641a;
+      --amber-light:#fbf0e0;
+      --red:        #a3272f;
+      --red-light:  #fbe9ea;
+      --violet:     #574e8e;
+      --violet-light:#ede9f5;
+      --radius:     5px;
+      --shadow:     0 2px 8px rgba(50,60,67,0.07);
+    }
+    * { box-sizing: border-box; }
+    .ri-logo{height:26px;display:block;margin-bottom:10px}
+    body {
+      margin: 0;
+      font-family: 'Averta','Plus Jakarta Sans',Arial,Helvetica,sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    a { color: var(--teal); }
+
+    /* ── Page shell ── */
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 24px 0; max-width: 100%; }
+      .page-break { page-break-before: always; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 24px 16px 56px; }
+      .unit-methods { grid-template-columns: 1fr !important; }
+    }
+
+    /* ── Masthead ── */
+    .masthead {
+      border-bottom: 2px solid var(--teal);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin: 0 0 6px;
+    }
+    .masthead h1 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+    }
+    .masthead-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .masthead-meta strong { color: var(--ink); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      white-space: nowrap;
+    }
+    .badge-nb  { background: var(--teal-light); color: var(--teal); }
+    .badge-eff { background: var(--blue-light); color: var(--blue); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    /* ── UNIT CARD ── */
+    .unit-card {
+      background: var(--teal-light);
+      border: 1px solid #a5c9d6;
+      border-left: 4px solid var(--teal);
+      border-radius: var(--radius);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .unit-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid #b2ced8;
+    }
+    .unit-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--teal);
+      margin-bottom: 4px;
+    }
+    .unit-value {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .direction-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #a5c9d6;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .unit-def {
+      padding: 14px 18px 12px;
+      font-size: 13.5px;
+      color: #1a2d33;
+      line-height: 1.55;
+      border-bottom: 1px solid #b2ced8;
+    }
+    .unit-def p { margin: 0; }
+    .unit-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #b2ced8;
+    }
+    .unit-method {
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #1a2d33;
+      line-height: 1.5;
+    }
+    .unit-method:first-child {
+      border-right: 1px solid #b2ced8;
+    }
+    .unit-method-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--teal);
+      margin-bottom: 5px;
+    }
+    .unit-ambig {
+      padding: 12px 18px;
+      background: #fef5ed;
+      border-top: 1px solid #e8b07a;
+    }
+    .unit-ambig-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--amber);
+      margin-bottom: 8px;
+    }
+    .unit-ambig ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .unit-ambig li {
+      font-size: 13px;
+      color: #4a2400;
+      margin-bottom: 5px;
+      line-height: 1.45;
+    }
+    .unit-ambig li:last-child { margin-bottom: 0; }
+    .unit-ambig li strong { color: #2e1700; }
+
+    /* ── ALGORITHM BLOCK ── */
+    .algo-block {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f7f9fb;
+    }
+    .algo-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .algo-title {
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+    .algo-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+    .algo-body {
+      padding: 16px 18px;
+    }
+    .algo-purpose {
+      font-size: 13px;
+      color: #3a454e;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+
+    /* Formula display */
+    .formula-wrap {
+      background: #f4f7fa;
+      border: 1px solid #dce5ec;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      font-family: 'JetBrains Mono','Courier New',monospace;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+    .formula-lhs {
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .formula-eq {
+      color: var(--muted);
+      padding: 0 6px;
+    }
+    .formula-fraction {
+      display: inline-block;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .formula-num {
+      display: block;
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0 4px 3px;
+      white-space: nowrap;
+    }
+    .formula-den {
+      display: block;
+      padding: 3px 4px 0;
+      white-space: nowrap;
+    }
+    .formula-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: inherit;
+      margin-top: 8px;
+      white-space: pre;
+    }
+
+    /* ── ALGO UNITS SUBSECTION ── */
+    .algo-units {
+      margin-bottom: 14px;
+      border: 1px solid #dce5ec;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .algo-units-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--blue);
+      background: #f0f5f9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #dce5ec;
+    }
+    .unit-ref-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border-bottom: 1px solid #edf1f4;
+    }
+    .unit-ref-item:last-child { border-bottom: 0; }
+    .unit-ref-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .tag-primary   { background: var(--teal-light); color: var(--teal); }
+    .tag-secondary { background: var(--blue-light); color: var(--blue); }
+    .unit-ref-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 3px;
+    }
+    .unit-ref-def {
+      font-size: 12.5px;
+      color: #3a454e;
+      line-height: 1.45;
+    }
+    .unit-ref-ambig {
+      font-size: 12px;
+      color: #4a2400;
+      margin-top: 6px;
+      padding: 5px 8px;
+      background: #fef5ed;
+      border-left: 3px solid #e8b07a;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      line-height: 1.4;
+    }
+
+    /* Collapsible pseudocode */
+    details {
+      margin-top: 8px;
+    }
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      padding: 4px 0;
+      user-select: none;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+      content: "▶ ";
+      font-size: 9px;
+      vertical-align: middle;
+    }
+    details[open] summary::before { content: "▼ "; }
+    details[open] summary { margin-bottom: 8px; }
+    .pseudo {
+      background: #f4f7fa;
+      border: 1px solid #dce5ec;
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-family: 'JetBrains Mono','Courier New',monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #2d3740;
+      overflow-x: auto;
+    }
+
+    /* ── Algorithm Switcher (tabs) ── */
+    .algo-switcher {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .algo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      background: var(--soft);
+      padding: 6px 6px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .algo-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 9px 20px 8px;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: inset 0 -3px 0 transparent;
+      transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+    }
+    .algo-tab:hover:not([aria-selected="true"]) {
+      background: rgba(255,255,255,0.6);
+    }
+    .algo-tab-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .algo-tab-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .algo-tab[aria-selected="true"] {
+      background: var(--panel);
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+    .algo-tab[aria-selected="true"] .algo-tab-name { color: var(--blue); }
+    .algo-tab[aria-selected="true"] .algo-tab-sub  { color: var(--blue); opacity: 0.75; }
+    .algo-panel[hidden] { display: none; }
+
+    /* ── TREND CHART ── */
+    .chart-wrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 14px;
+      margin-bottom: 20px;
+    }
+    .chart-title {
+      font-weight: 700;
+      font-size: 13.5px;
+      margin-bottom: 4px;
+    }
+    .chart-caption {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .chart-svg-wrap { overflow-x: auto; }
+
+    /* ── DATA TABLE ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+      margin-bottom: 8px;
+    }
+    .data-table thead tr { background: #eef3f7; }
+    .data-table th {
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #424c55;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    .data-table td {
+      padding: 9px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid #edf1f4;
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: 0; }
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 7px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ehr    { background: var(--blue-light); color: var(--blue); }
+    .tag-suki   { background: var(--teal-light); color: var(--teal); }
+
+    /* ── SUKI SCOPE BOX ── */
+    .scope-box {
+      background: var(--soft);
+      border: 1px solid var(--line);
+      border-left: 4px solid #8fabc2;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #3a454e;
+      line-height: 1.5;
+    }
+    .scope-box .section-label { color: #49545d; }
+    .scope-box p { margin: 0 0 8px; }
+    .scope-box p:last-child { margin: 0; }
+    .scope-box strong { color: var(--ink); }
+
+    /* ── SOURCES ── */
+    .sources-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .source-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-size: 11.5px;
+      color: var(--ink);
+    }
+
+    /* ── Divider ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 28px 0;
+    }
+
+    /* ── Inline code ── */
+    code {
+      font-family: 'JetBrains Mono','Courier New',monospace;
+      font-size: 0.91em;
+      color: inherit;
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+
+    /* ── Footer ── */
+    .report-footer {
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11.5px;
+    }
+  
+    /* ── Draft / Not-Validated Banner ── */
+    .draft-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: #fbe9ea;
+      border: 1px solid #eab7ba;
+      border-left: 5px solid #a3272f;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #5c1015;
+    }
+    .draft-banner-icon {
+      font-size: 18px;
+      line-height: 1.3;
+      flex-shrink: 0;
+    }
+    .draft-banner strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 13.5px;
+      color: #a3272f;
+    }
+
+    /* ── key-finding (from CM-05) ── */
+    .key-finding {
+      background: var(--red-light);
+      border: 1px solid #f2b5b9;
+      border-left: 4px solid var(--red);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #5a161a;
+      line-height: 1.5;
+    }
+    .key-finding strong { color: #3c0e11; }
+
+    /* ── badge-us / badge-warn / pipeline-note / tag-survey (from CM-06) ── */
+    .badge-us  { background: #f0f5f9; color: #49545d; }
+    .badge-warn { background: var(--amber-light); color: var(--amber); }
+    .pipeline-note { font-size: 12.5px; color: #7a1017; margin-top: 8px; padding: 8px 10px; background: var(--red-light); border-left: 3px solid var(--red); border-radius: 0 var(--radius) var(--radius) 0; line-height: 1.45; }
+    .pipeline-note strong { color: #5c0c11; }
+    .tag-survey { background: var(--violet-light); color: var(--violet); }
+
+    /* ── caution-box (from CM-22) ── */
+    .caution-box {
+      background: var(--amber-light);
+      border: 1px solid #e8b07a;
+      border-left: 4px solid var(--amber);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #4a2400;
+      line-height: 1.5;
+    }
+    .caution-box strong { color: #2e1700; }
+    /* ── Site nav ── */
+    body { margin: 0; }
+    .cm-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1e2d3d;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      padding: 0 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.22);
+    }
+    .cm-nav-logo {
+      display: flex;
+      align-items: center;
+      padding: 0 16px 0 8px;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      margin-right: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.35);
+      white-space: nowrap;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 7px 12px;
+      text-decoration: none;
+      border-bottom: 3px solid transparent;
+      transition: border-color 0.12s;
+      min-width: 80px;
+    }
+    .nav-item:hover { border-bottom-color: rgba(0,121,107,0.6); }
+    .nav-item.active { border-bottom-color: #00796b; }
+    .nav-code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #7fb8d0;
+      letter-spacing: 0.04em;
+    }
+    .nav-name {
+      font-size: 9.5px;
+      color: rgba(255,255,255,0.45);
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+    .cm-section {
+      border-bottom: 3px solid #d9dee6;
+      scroll-margin-top: 56px;
+    }
+    .cm-section:last-child { border-bottom: 0; }
+    @media (max-width: 620px) {
+      .nav-name { display: none; }
+      .nav-item { padding: 8px 8px; min-width: 52px; }
+    }
+    @media print {
+      .cm-nav { display: none; }
+      .cm-section { border: 0; page-break-before: always; }
+      .cm-section:first-child { page-break-before: auto; }
+    }
+
+    /* ── Overview section ── */
+    .status-table td, .status-table th { vertical-align: top; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-validated { background: var(--teal-light); color: var(--teal); }
+    .status-draft      { background: var(--soft); color: var(--muted); }
+
+    .proposal-list {
+      list-style: none;
+      margin: 0 0 20px;
+      padding: 0;
+      counter-reset: step;
+    }
+    .proposal-list > li {
+      position: relative;
+      padding: 4px 0 16px 40px;
+      border-left: 2px solid var(--line);
+      margin-left: 14px;
+    }
+    .proposal-list > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+    .proposal-list > li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: -15px;
+      top: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--teal);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .proposal-list h3 {
+      margin: 0 0 4px;
+      font-size: 14.5px;
+    }
+    .proposal-list p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .out-of-scope {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+  </style>
+</head>
+<body>
+
+<nav class="cm-nav" aria-label="Epic-Sourced Canonical Measures">
+  <span class="cm-nav-logo">Epic Measures</span>
+  <a class="nav-item" href="#overview"><span class="nav-code">&#9673;</span><span class="nav-name">Overview</span></a>
+  <a class="nav-item" href="#cm-04"><span class="nav-code">CM-04</span><span class="nav-name">Documentation Time</span></a>
+  <a class="nav-item" href="#cm-05"><span class="nav-code">CM-05</span><span class="nav-name">After-Hours Documentation</span></a>
+  <a class="nav-item" href="#cm-06"><span class="nav-code">CM-06</span><span class="nav-name">Chart Closure Timeliness</span></a>
+  <a class="nav-item" href="#cm-07"><span class="nav-code">CM-07</span><span class="nav-name">Total EHR Time</span></a>
+  <a class="nav-item" href="#cm-22"><span class="nav-code">CM-22</span><span class="nav-name">Patient Volume</span></a>
+</nav>
+
+<section class="cm-section" id="overview">
+<div class="page">
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Sprint 1 Deliverable &mdash; Suki AI Partnership</p>
+    <h1>Epic-Sourced Canonical Measures</h1>
+    <p>
+      Regenstrief Institute / Indiana University &mdash; algorithm specifications for the Suki AI
+      canonical measures that can be evaluated directly from a health system&rsquo;s own Epic
+      instance.
+    </p>
+  </header>
+
+  <p class="section-label">Scope of This Document</p>
+  <div class="scope-box" style="margin-bottom:20px">
+    <p>
+      Suki AI&rsquo;s canonical measure set spans clinician well-being, note quality, adoption,
+      financial productivity, and EHR-efficiency constructs. Of these, five &mdash;
+      <strong>Documentation Time (CM-04)</strong>, <strong>After-Hours Documentation (CM-05)</strong>,
+      <strong>Chart Closure Timeliness (CM-06)</strong>, <strong>Total EHR Time (CM-07)</strong>, and
+      <strong>Patient Volume &amp; Throughput (CM-22)</strong> &mdash; have a plausible data source in
+      Epic&rsquo;s Clarity data model. This document covers those five measures only.
+    </p>
+    <p>
+      The remaining canonical measures &mdash; survey-based well-being and satisfaction measures,
+      note-quality ratings, financial/productivity measures, and evaluation-methodology
+      measures &mdash; rely on survey instruments, human/LLM rating, or claims data rather than
+      Epic Clarity, and are out of scope for this deliverable.
+    </p>
+    <div class="out-of-scope">
+      <span class="source-tag" style="background:var(--soft);color:var(--muted)">Survey-based well-being &amp; satisfaction</span>
+      <span class="source-tag" style="background:var(--soft);color:var(--muted)">Note quality (human / LLM rating)</span>
+      <span class="source-tag" style="background:var(--soft);color:var(--muted)">Financial &amp; coding measures</span>
+      <span class="source-tag" style="background:var(--soft);color:var(--muted)">Evaluation-methodology measures</span>
+    </div>
+  </div>
+
+  <p class="section-label">Measure Status</p>
+  <table class="data-table" style="margin-bottom:28px" aria-label="Measure status">
+    <thead>
+      <tr>
+        <th>Measure</th>
+        <th>Epic Clarity Source</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="#cm-04">CM-04 &mdash; Documentation Time</a></td>
+        <td><code>NOTES_HISTORY_LOG</code>, <code>HNO_INFO</code></td>
+        <td>
+          <span class="status-pill status-validated">Field-checked in a live instance</span><br>
+          <span style="font-size:12px;color:var(--muted)">Join paths and field names checked against a live Epic instance
+          (Eskenazi Health / Wishard, via Regenstrief&rsquo;s Epic EHI knowledge graph); candidate
+          fields narrowed to the ones with real data density. The most mature of the five.</span>
+        </td>
+      </tr>
+      <tr>
+        <td><a href="#cm-05">CM-05 &mdash; After-Hours Documentation</a></td>
+        <td>Same note-event tables, time-of-day filter</td>
+        <td><span class="status-pill status-draft">Draft</span></td>
+      </tr>
+      <tr>
+        <td><a href="#cm-06">CM-06 &mdash; Chart Closure Timeliness</a></td>
+        <td>Signature / chart-close timestamps</td>
+        <td><span class="status-pill status-draft">Draft</span></td>
+      </tr>
+      <tr>
+        <td><a href="#cm-07">CM-07 &mdash; Total EHR Time</a></td>
+        <td>Clarity / Epic Signal</td>
+        <td><span class="status-pill status-draft">Draft</span></td>
+      </tr>
+      <tr>
+        <td><a href="#cm-22">CM-22 &mdash; Patient Volume &amp; Throughput</a></td>
+        <td>Encounter counts</td>
+        <td><span class="status-pill status-draft">Draft</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:var(--muted);margin:-16px 0 28px">
+    &ldquo;Draft&rdquo; means the field mapping follows the same knowledge-graph approach used for
+    Documentation Time, but has not yet been checked against a live Epic instance. See each
+    card&rsquo;s Algorithm section for the proposed join paths and open ambiguities.
+  </p>
+
+  <p class="section-label">Pre-Work Already Underway</p>
+  <div class="scope-box" style="margin-bottom:20px">
+    <p>
+      Ahead of formally kicking off Sprint 2, we&rsquo;re confirming feasibility across all five
+      of these measures &mdash; not just Documentation Time, which is furthest along &mdash; by
+      looking at what test queries against a live Epic instance actually return, and checking
+      whether the underlying Clarity tables have been populated consistently since go-live
+      (a gap there is a red flag, not an expected pattern). The goal is to catch weak-data risk
+      now, so Sprint 2 isn&rsquo;t the first place we discover it.
+    </p>
+  </div>
+
+  <p class="section-label">Proposed Next Stage &mdash; Sprint 2 / Phase Two</p>
+  <ol class="proposal-list">
+    <li>
+      <h3>Confirm feasibility at a second site</h3>
+      <p>
+        Once the pre-work above gives us confidence in the primary Epic instance, extend the
+        same validation to at least one additional Epic instance &mdash; e.g., the proposed
+        proof-of-concept with the South Carolina team &mdash; to check whether the same Clarity
+        tables and fields carry usable data outside a single implementation, before asking a
+        partner site to run anything themselves.
+      </p>
+    </li>
+    <li>
+      <h3>Shop candidate algorithms to other health systems</h3>
+      <p>
+        Package one or more of these Epic-sourced measure specifications so additional health
+        systems can evaluate feasibility against their own Epic instance &mdash; a narrow,
+        low-effort ask (run a query, share what came back) rather than a full study commitment.
+      </p>
+    </li>
+    <li>
+      <h3>Work with Suki&rsquo;s technical team on a repeatable process</h3>
+      <p>
+        Collaborate with Suki&rsquo;s engineering team to turn the field-mapping-and-validation
+        workflow into a documented, repeatable process &mdash; potentially built into Suki&rsquo;s
+        own tooling &mdash; so new measures or new health systems can be onboarded without a
+        bespoke one-off analysis each time.
+      </p>
+    </li>
+    <li>
+      <h3>Evaluate additional candidate measures</h3>
+      <p>
+        A few other canonical measures came up on the call as possibly having an Epic source but
+        weren&rsquo;t confirmed &mdash; for example, Coding Accuracy (CM-21), where E/M visit-level
+        and HCC diagnosis codes may or may not exist in Clarity. Worth a quick check alongside the
+        Sprint 2 field-mapping work before deciding whether to expand this set.
+      </p>
+    </li>
+  </ol>
+
+  <p style="font-size:12px;color:var(--muted)">
+    The full set of 25 draft canonical measures &mdash; including well-being, note-quality, and
+    financial measures &mdash; remains an internal working document and is not part of this
+    deliverable.
+  </p>
+
+</div>
+
+</section>
+
+<section class="cm-section" id="cm-04">
+<div class="page">
+
+  <div class="draft-banner">
+    <span class="draft-banner-icon">&#9888;</span>
+    <div>
+      <strong>Draft &mdash; Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+  </div>
+
+
+  <!-- ── Masthead ── -->
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-04 &mdash; Documentation Time</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Documentation Efficiency</span></span>
+      <span><strong>Also known as:</strong> Time in Notes &nbsp;·&nbsp; Note Completion Time &nbsp;·&nbsp; Documentation Duration</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Documentation minutes per encounter</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A documentation minute is any minute of activity attributable to note creation or editing
+        for a given encounter &mdash; counted from encounter open through final note signature,
+        including post-signature addenda. Measured via EHR audit-log telemetry (preferred) or
+        Suki session duration (fallback). Each minute is attributed to the encounter in which the
+        documentation occurred.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        EHR audit-log telemetry (e.g., Epic Signal / UAL) capturing time-stamped,
+        per-user documentation activity bounded to note creation and editing.
+        Preferred &mdash; objective and captures the full note-to-sign lifecycle
+        inside the EHR.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Suki session duration: start-to-end timestamp per dictation or ambient capture session.
+        Use when EHR audit-log data are unavailable. Captures in-app documentation time only;
+        misses editing and signing that occurs inside the EHR after the Suki session ends.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Per-encounter vs. per-note vs. per-day.</strong>
+          Documentation time is reported per encounter, per note, or per provider per day
+          across the literature. These units are not interchangeable. Choose one and apply it
+          consistently across the pre- and post-adoption windows.
+        </li>
+        <li>
+          <strong>Self-report vs. objective telemetry.</strong>
+          Self-reported documentation time overestimates improvement by 3&ndash;6&times; relative
+          to EHR audit-log data (Ma 2025; PHTI 2025). Do not mix self-report and objective
+          sources in the same analysis.
+        </li>
+        <li>
+          <strong>What counts as documentation time.</strong>
+          Some EHR telemetry fields include inbox, chart review, or order entry in their
+          &ldquo;documentation time&rdquo; metric. Confirm whether your EHR field is scoped to
+          note creation and editing only, or to broader EHR activity. The latter overlaps with
+          CM-07 (Total EHR Time).
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic-cm-04"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic-cm-04">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic-cm-04"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic-cm-04">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
+      <!-- Future tabs: add a <button> here and a matching <div id="algo-panel-*"> below -->
+    </div>
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic-cm-04" role="tabpanel">
+      <p class="algo-purpose">
+        Produces the average documentation minutes per encounter per provider in the cohort for a
+        given month. This number is expected to decrease after Suki adoption as note creation
+        becomes faster and requires less time per visit.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Documentation minutes per encounter</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Averaged per provider per reporting month to form the individual provider value.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; Providers still in the onboarding ramp should be excluded. Documentation time typically increases during the initial Suki learning period and would distort the cohort average if included.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg doc min / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)
+Data source: EHR audit-log telemetry preferred; Suki session duration as fallback</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    doc_min_per_enc[p] = avg_doc_time_min[p] across encounters in month M
+                         (from EHR audit-log or Suki session timestamps)
+
+  dashboard_value[M] = MEAN( doc_min_per_enc[p] for p in active_providers )</div>
+      </details>
+    </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic-cm-04" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        When Epic Signal/UAL telemetry is unavailable, per-note authoring time can be approximated
+        from Clarity&rsquo;s note edit-event log. This is a <strong>within-provider proxy</strong>
+        &mdash; directionally valid for pre/post Suki comparisons, but not a substitute for
+        Signal minutes. Two tiers are available, in priority order.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity Tables &mdash; Join path verified in EHI knowledge graph</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">NOTES_HISTORY_LOG</div>
+            <div class="unit-ref-def">Per-edit event stream: timestamps (<code>EDIT_HX_INSTANT</code>) for note creation, edits, and signature events. Drives the sessionization in Tier 1.</div>
+            <div class="unit-ref-ambig">&#x26A0; If this table only records create and sign events (not intermediate edits), Tier 1 degenerates to Tier 2 &mdash; verify event density against real data before choosing the tier.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def">Note master: <code>ENTRY_USER_ID</code> (note author), <code>PAT_ENC_CSN_ID</code> (encounter link), <code>CREATE_INSTANT_DTTM</code> and <code>LST_FILED_INST_DTTM</code> (create and sign timestamps), <code>UNSIGNED_YN</code> (signature status).</div>
+            <div class="unit-ref-ambig">&#x26A0; Attribute documentation time to <code>ENTRY_USER_ID</code> (note author), <em>not</em> <code>VISIT_PROV_ID</code> from PAT_ENC &mdash; they differ for scribe-entered notes and resident/attending co-sign workflows.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Filter</span>
+          <div>
+            <div class="unit-ref-name">PAT_ENC</div>
+            <div class="unit-ref-def">Encounter-level filters: <code>ENC_TYPE_C</code> (exclude telephone/proxy types), <code>EFFECTIVE_DATE_DTTM</code>, and the join to per-provider Suki adoption data.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="algo-purpose" style="margin-top:14px">
+        <strong>Tier 1 (Preferred) &mdash; Sessionized Active Authoring Time</strong><br>
+        Collapse a note&rsquo;s edit events into work sessions (gap threshold: 10 min default, tunable).
+        Sum only within-session durations; discard idle gaps.
+        Output: average <em>active</em> authoring minutes per note per provider.
+      </p>
+
+      <details>
+        <summary>Pseudocode &mdash; Tier 1 (sessionized)</summary>
+        <div class="pseudo">-- 1. per-note edit events attributed to the note author
+WITH ev AS (
+  SELECT h.NOTE_ID, h.ENTRY_USER_ID AS author_id, h.PAT_ENC_CSN_ID,
+         l.EDIT_HX_INSTANT AS ts
+  FROM HNO_INFO h
+  JOIN NOTES_HISTORY_LOG l ON l.NOTE_ID = h.NOTE_ID
+  WHERE h.UNSIGNED_YN = 'N'                          -- signed notes only
+),
+-- 2. gap to previous edit; gap &gt; 10 min = new session
+gaps AS (
+  SELECT *, DATEDIFF(minute,
+              LAG(ts) OVER (PARTITION BY NOTE_ID ORDER BY ts), ts) AS gap_min
+  FROM ev
+),
+seg AS (
+  SELECT NOTE_ID, author_id, PAT_ENC_CSN_ID,
+         SUM(CASE WHEN gap_min IS NULL OR gap_min &gt; 10 THEN 0
+                  ELSE gap_min END) AS active_min  -- ⚠ 10-min threshold is tunable
+  FROM gaps GROUP BY NOTE_ID, author_id, PAT_ENC_CSN_ID
+)
+SELECT s.author_id,
+       phase(e.EFFECTIVE_DATE_DTTM, k.suki_golive) AS phase,   -- ⚠ confirm Suki go-live
+       AVG(s.active_min) AS avg_active_doc_min_per_note
+FROM seg s
+JOIN PAT_ENC e   ON e.PAT_ENC_CSN_ID = s.PAT_ENC_CSN_ID
+JOIN suki_adoption k ON k.epic_prov_id = s.author_id
+WHERE e.ENC_CLOSED_YN = 'Y' AND e.ENC_TYPE_C NOT IN (1, 31)
+GROUP BY s.author_id, phase;</div>
+      </details>
+
+      <p class="algo-purpose" style="margin-top:14px">
+        <strong>Tier 2 (Fallback) &mdash; Create&rarr;Sign Elapsed Span</strong><br>
+        Single subtraction per note: wall-clock time from <code>CREATE_INSTANT_DTTM</code>
+        to <code>LST_FILED_INST_DTTM</code>. Simpler but includes idle periods &mdash; overstates active work.
+      </p>
+
+      <details>
+        <summary>Pseudocode &mdash; Tier 2 (elapsed span)</summary>
+        <div class="pseudo">SELECT h.ENTRY_USER_ID AS author_id,
+       AVG(DATEDIFF(minute,
+                   h.CREATE_INSTANT_DTTM,
+                   h.LST_FILED_INST_DTTM)) AS avg_span_min
+FROM HNO_INFO h
+WHERE h.UNSIGNED_YN = 'N'
+GROUP BY h.ENTRY_USER_ID;
+-- Wall-clock; includes idle time → overstates active authoring</div>
+      </details>
+
+      <div class="unit-ambig" style="margin-top:16px">
+        <div class="unit-ambig-label">&#x26A0; Proxy Caveats &amp; Guardrails</div>
+        <ul>
+          <li>
+            <strong>Event-gated, not keystroke-gated.</strong> This measures wall-clock <em>between</em>
+            logged edit events, not keystroke-active time. Tier 1 is less sensitive to long idle gaps than
+            Tier 2, but is still a proxy. Report it as &ldquo;note-authoring time,&rdquo; not &ldquo;documentation time.&rdquo;
+          </li>
+          <li>
+            <strong>Floor estimate, not full Signal.</strong> Signal/UAL captures note authoring, chart review,
+            inbox, and order entry. This proxy captures only note-authoring events &mdash; a subset.
+            Do not compare proxy minutes directly to Signal minutes without a correction factor.
+          </li>
+          <li>
+            <strong>Calibrate against Signal where possible.</strong> If any provider-period overlap between
+            Signal and Clarity data exists, compute a correction factor rather than presenting proxy minutes
+            as equivalent.
+          </li>
+          <li>
+            <strong>Multi-author notes.</strong> Attribution uses <code>ENTRY_USER_ID</code>. Resident or
+            scribe edits on an attending&rsquo;s note should not be charged to the attending.
+          </li>
+          <li>
+            <strong>Open questions before deployment:</strong>
+            (1) What is the actual event density in <code>NOTES_HISTORY_LOG</code> &mdash; does it log intermediate
+            edits or only create/sign endpoints?
+            (2) Is any Signal extract available for calibration on a provider subset?
+            (3) What session threshold (5, 10, or 15 min) best fits local workflows?
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Documentation Min / Encounter / Month</div>
+    <p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The pre-adoption window establishes the
+      baseline; improvement is expected to compound as Suki utilization matures beyond the
+      onboarding ramp. Literature benchmarks: &minus;12% to &minus;29% (EHR telemetry, Ma 2025;
+      Guo 2026); &minus;25% to &minus;72% (self-report, AAFP 2021 &mdash; objective preferred).
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: documentation minutes per encounter per month, declining after Suki adoption">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <!-- Y labels -->
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <!-- X-axis labels -->
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#596290">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Adoption line -->
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#596290" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#596290">Suki adopted</text>
+        <!-- Pre-adoption dots -->
+        <circle cx="120" cy="78"  r="4" fill="#a8641a"/>
+        <circle cx="190" cy="72"  r="4" fill="#a8641a"/>
+        <circle cx="260" cy="80"  r="4" fill="#a8641a"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#a8641a" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption dots (declining) -->
+        <circle cx="335" cy="82"  r="4" fill="#0e5088"/>
+        <circle cx="410" cy="110" r="4" fill="#0e5088"/>
+        <circle cx="495" cy="138" r="4" fill="#0e5088"/>
+        <circle cx="580" cy="155" r="4" fill="#0e5088"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#0e5088" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Connect pre → post -->
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#a8641a"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#0e5088"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#596290" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#596290">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:210px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Avg documentation time per encounter (min)</td>
+        <td>Per-provider, per-encounter documentation time from EHR audit-log telemetry. The primary data source for this measure.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: avg_doc_time_min (Epic Signal / UAL) &nbsp;|&nbsp; Cerner: avg_doc_time_min. Confirm field scope &mdash; some EHR telemetry fields include inbox or order entry alongside note editing.</td>
+      </tr>
+      <tr>
+        <td>Suki session timestamps (fallback)</td>
+        <td>Start and end timestamps for each Suki dictation or ambient capture session. Used as a proxy for documentation time when EHR audit-log data are unavailable.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Natively available from the Suki API. Captures in-app time only &mdash; does not include note editing inside the EHR after the Suki session closes.</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR audit records to Suki session records and encounter data.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between EHR and Suki systems before analysis begins.</td>
+      </tr>
+      <tr>
+        <td>Encounters by month</td>
+        <td>Count of completed encounters per provider per calendar month. Used to compute the per-encounter denominator.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Limit to eligible encounter types and settings. Exclude encounters from the onboarding ramp period.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary for the cohort comparison.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Suki's primary contribution to this measure. Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+      </tr>
+      <tr style="background:#f7fbf9">
+        <td><code>NOTES_HISTORY_LOG</code></td>
+        <td>Per-edit event stream for every clinical note. Each row is a timestamped edit action on a note. Used by the Clarity proxy algorithm (Algorithm 2, Tier 1) to sessionize authoring time.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Clarity table. Verify event density before choosing Tier 1 vs. Tier 2 &mdash; if only create/sign events are logged, Tier 1 degenerates to Tier 2.</td>
+      </tr>
+      <tr style="background:#f7fbf9">
+        <td><code>HNO_INFO</code></td>
+        <td>Note master record. Contains the note author (<code>ENTRY_USER_ID</code>), encounter link (<code>PAT_ENC_CSN_ID</code>), create timestamp (<code>CREATE_INSTANT_DTTM</code>), and sign timestamp (<code>LST_FILED_INST_DTTM</code>).</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Clarity table. Join anchor for the proxy algorithm. Attribute to <code>ENTRY_USER_ID</code>, not the visit provider.</td>
+      </tr>
+      <tr style="background:#f7fbf9">
+        <td><code>PAT_ENC</code></td>
+        <td>Encounter record. Provides encounter type (<code>ENC_TYPE_C</code>), effective date, and attending provider. Used for encounter-level filters in the proxy algorithm.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Clarity table. Exclude telephone (type 1) and MyChart proxy (type 31) encounter types from the proxy calculation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki session timestamps are the strongest Suki-native signal for this measure</strong>
+      &mdash; session start and end times are recorded for every dictation and ambient capture session
+      and are available directly from the Suki API. For organizations without EHR audit-log access,
+      Suki session duration is a usable fallback proxy for in-app documentation time.
+    </p>
+    <p>
+      However, Suki session time does not capture the full documentation lifecycle. Note editing,
+      formatting, and signing that occur inside the EHR after a Suki session closes are invisible to
+      Suki. For the most accurate measure of total documentation time per encounter, use
+      <strong>EHR audit-log telemetry</strong>; reserve Suki session duration as a fallback only.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (5)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">AAFP 2021</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">Holmgren 2026</span>
+    <span class="source-pill">Ma 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-04 Algorithm Card &nbsp;·&nbsp; Updated June 2026 &mdash; Epic EHI KG proxy added</span>
+  </footer>
+
+</div>
+
+</section>
+
+<section class="cm-section" id="cm-05">
+<div class="page">
+
+  <div class="draft-banner">
+    <span class="draft-banner-icon">&#9888;</span>
+    <div>
+      <strong>Draft &mdash; Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+  </div>
+
+
+  <!-- ── Masthead ── -->
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-05 &mdash; After-Hours Documentation</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Documentation Efficiency</span></span>
+      <span><strong>Also known as:</strong> Pajama Time &nbsp;·&nbsp; Work Outside Work &nbsp;·&nbsp; After-Hours EHR Time</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <!-- Name + direction -->
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">After-hours documentation minutes</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <!-- Definition sentence -->
+    <div class="unit-def">
+      <p>
+        A documentation minute is <strong>after-hours</strong> if it falls outside the provider's
+        working hours on that calendar day. Minutes are counted from encounter open through
+        final note signature, including any post-signature addenda and edits.
+      </p>
+    </div>
+
+    <!-- Gold Standard vs. Default -->
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Per-provider or per-specialty working hours, as configured by the care setting.
+        Preferred — avoids systematic misclassification across specialties with non-standard hours.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Before 09:00 or after 17:00 on weekdays; any time on Saturday or Sunday.
+        Use when per-provider scheduling data are unavailable.
+      </div>
+    </div>
+
+    <!-- Ambiguities -->
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Working hours vary by specialty.</strong>
+          Surgeons may work 09:00&ndash;21:00; a 9&ndash;5 default over-counts after-hours time for them
+          and cannot be compared across specialties without adjustment.
+        </li>
+        <li>
+          <strong>When does documentation end?</strong>
+          We recommend counting through final signature and all addenda; stopping at initial note
+          closure understates after-hours activity and is not directly comparable across implementations.
+        </li>
+        <li>
+          <strong>Pre-encounter prep vs. after-hours.</strong>
+          Early chart review (e.g., 06:00 before rounds) may be classified as after-hours under a
+          fixed window even within a provider's normal practice. Provider-level scheduling resolves this;
+          the 9&ndash;5 default does not.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM: DASHBOARD METRIC ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic-cm-05"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic-cm-05">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic-cm-05"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic-cm-05">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
+    </div>
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic-cm-05" role="tabpanel">
+      <p class="algo-purpose">
+        Produces the single number shown on the administrative dashboard: the average
+        after-hours documentation minutes per provider in the cohort for a given month.
+        This number is expected to decrease after Suki adoption.
+      </p>
+
+      <!-- Units in this algorithm -->
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">After-hours documentation minutes</div>
+            <div class="unit-ref-def">The canonical unit for this measure — defined in the Unit card above. Summed per provider per reporting month to form the numerator.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; "Active" is a threshold choice. A provider who used Suki once in a month counts the same as one who used it daily. Care settings may wish to set a minimum usage threshold; any choice should be applied consistently across reporting periods.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (after-hours documentation minutes per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    after_hours_min[p] = SUM of after-hours documentation minutes for provider p in month M
+                         (classified per the Unit definition above)
+
+  dashboard_value[M] = MEAN( after_hours_min[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic-cm-05" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        Epic Signal/UAL &mdash; the true all-activity audit-log source behind after-hours
+        documentation minutes &mdash; is a separate, proprietary reporting product and is
+        <strong>not present in the standard EHI export</strong> documented by the Epic EHI
+        knowledge graph (<code>epic-ehi-kg</code>). No equivalent all-activity timestamp table
+        was found in this schema pass. The closest EHI-only reconstruction uses note-authoring
+        timestamps from <code>HNO_INFO</code>, filtered to outside a defined scheduled-hours
+        window &mdash; but this captures only when notes were created or last edited, not the
+        full range of EHR activity (inbox messaging, order entry, chart review) that Signal/UAL
+        would count.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def"><code>CREATE_INSTANT_DTTM</code> (note create instant) and <code>LST_FILED_INST_DTTM</code> (last-filed instant), both UTC datetimes, keyed by <code>ENTRY_USER_ID</code>. Flag each note event as after-hours if it falls outside a defined scheduled-hours window, then sum per provider per month.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Weak/partial proxy, not equivalent to the canonical measure.</strong> This only captures note-authoring timestamps &mdash; it misses after-hours inbox activity, order entry, and chart/results review entirely, all of which Signal/UAL would include. Treat any rate computed this way as a documentation-only lower bound on true after-hours EHR time, not a substitute for it.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">After-Hours Note Minutes (Partial)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(HNO_INFO events where CREATE_INSTANT_DTTM or LST_FILED_INST_DTTM falls outside scheduled-hours window)</span><span class="formula-den">grouped by ENTRY_USER_ID, per month</span></span>
+<div class="formula-note">Documentation-only proxy — excludes inbox, orders, and results-review activity entirely
+Not a substitute for Signal/UAL; use only when true EHR audit-log access is unavailable</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed, partial)</summary>
+        <div class="pseudo">SELECT h.ENTRY_USER_ID,
+       h.NOTE_ID,
+       h.CREATE_INSTANT_DTTM,
+       h.LST_FILED_INST_DTTM
+FROM HNO_INFO h
+WHERE IS_OUTSIDE_SCHEDULED_HOURS(h.CREATE_INSTANT_DTTM, provider_schedule)
+   OR IS_OUTSIDE_SCHEDULED_HOURS(h.LST_FILED_INST_DTTM, provider_schedule)
+-- ⚠ No Epic Signal/UAL equivalent found in the EHI schema pass — this only reconstructs
+--   the note-authoring slice of after-hours time, not inbox/orders/chart-review activity</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <div class="key-finding">
+    <strong>Key gap:</strong> Epic Signal/UAL, the source of true all-activity audit-log time
+    behind after-hours documentation minutes, is a separate proprietary reporting product and is
+    not part of the standard EHI export explored in this schema pass. The Epic tab's
+    <code>HNO_INFO</code>-based reconstruction is the closest EHI-only proxy available, but it is
+    a partial, documentation-only signal &mdash; not a verified equivalent to Signal/UAL.
+  </div>
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; After-Hours Min / Provider / Month</div>
+    <p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The pre-adoption window establishes
+      the baseline; post-adoption trend is monitored monthly. Not all providers will show
+      immediate change &mdash; the effect is expected to compound as Suki utilization matures.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: after-hours minutes per provider per month over time, declining after Suki adoption">
+        <!-- Grid lines -->
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <!-- Y-axis -->
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <!-- Y labels -->
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <!-- X-axis labels -->
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#596290">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <!-- Adoption line -->
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#596290" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#596290">Suki adopted</text>
+        <!-- Pre-adoption dots -->
+        <circle cx="120" cy="78"  r="4" fill="#a8641a"/>
+        <circle cx="190" cy="72"  r="4" fill="#a8641a"/>
+        <circle cx="260" cy="80"  r="4" fill="#a8641a"/>
+        <polyline points="120,78 190,72 260,80" fill="none" stroke="#a8641a" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption dots (declining) -->
+        <circle cx="335" cy="82"  r="4" fill="#0e5088"/>
+        <circle cx="410" cy="110" r="4" fill="#0e5088"/>
+        <circle cx="495" cy="138" r="4" fill="#0e5088"/>
+        <circle cx="580" cy="155" r="4" fill="#0e5088"/>
+        <polyline points="335,82 410,110 495,138 580,155" fill="none" stroke="#0e5088" stroke-width="2.5" stroke-linejoin="round"/>
+        <!-- Connect pre → post -->
+        <line x1="260" y1="80" x2="335" y2="82" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <!-- Legend -->
+        <circle cx="84"  cy="170" r="4" fill="#a8641a"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#0e5088"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#596290" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#596290">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:200px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>EHR audit log (timestamped)</td>
+        <td>Per-user, per-event activity log showing when each provider interacted with the EHR and for how long. The primary data source for computing documentation minutes.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic Signal / UAL &mdash; a separate, proprietary reporting product, <strong>not present in the standard EHI export</strong> documented in <code>epic-ehi-kg</code>. It cannot be reconstructed from EHI tables alone. Equivalent in Cerner, Athena (not yet researched). See the Epic tab for the closest EHI-only proxy (partial, note-timestamps only). Must include provider ID, timestamp, event type, and duration.</td>
+      </tr>
+      <tr>
+        <td>Provider scheduled working hours</td>
+        <td>Each provider's expected working window per day of the week, by specialty or individual preference.</td>
+        <td><span class="source-tag tag-ehr">EHR / HR</span></td>
+        <td>Required for gold-standard implementation. If unavailable, fall back to 09:00&ndash;17:00 Mon&ndash;Fri default.</td>
+      </tr>
+      <tr>
+        <td>Note signature timestamp</td>
+        <td>Date and time of initial note closure/signature and any subsequent addenda, per encounter per provider.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Needed to bound documentation scope (encounter open → final signature). Verified EHI proxy (epic-ehi-kg): <code>HNO_INFO.CREATE_INSTANT_DTTM</code> (note create instant) and <code>LST_FILED_INST_DTTM</code> (last-filed instant) &mdash; see the Epic tab. Captures note-authoring timestamps only, not the full EHR activity (inbox, orders) Signal/UAL would count.</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR audit records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between EHR and Suki before analysis.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary for the cohort comparison.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Suki's primary contribution to this measure. Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator in the Algorithm.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki's contribution to this measure is the adoption boundary, not the documentation signal.</strong>
+      Suki session data indicates when a dictation or ambient capture session was initiated, but it
+      does not measure total EHR documentation time. Work within the EHR before or after a Suki
+      session is invisible to Suki; note signing happens in the EHR, not in Suki.
+    </p>
+    <p>
+      The authoritative data source is the <strong>EHR audit log</strong>. Using Suki session
+      timing as a proxy for after-hours documentation time would systematically undercount
+      documentation minutes and miss chart review, note editing, and order entry that occurs
+      outside any Suki session.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (17)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">AAFP 2021</span>
+    <span class="source-pill">Afshar 2025</span>
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">Billings 2025a</span>
+    <span class="source-pill">Boyter / KLAS 2025</span>
+    <span class="source-pill">Cao 2024</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Evans 2025</span>
+    <span class="source-pill">Haberle 2024</span>
+    <span class="source-pill">Karavassilis 2025</span>
+    <span class="source-pill">Liu 2024</span>
+    <span class="source-pill">Ma 2025</span>
+    <span class="source-pill">Pearlman 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+    <span class="source-pill">Stults 2025</span>
+    <span class="source-pill">Suhail 2026</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-05 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+
+</section>
+
+<section class="cm-section" id="cm-06">
+<div class="page">
+
+  <div class="draft-banner">
+    <span class="draft-banner-icon">&#9888;</span>
+    <div>
+      <strong>Draft &mdash; Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+  </div>
+
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-06 &mdash; Chart Closure Timeliness</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-eff">EFF &mdash; Documentation Efficiency</span></span>
+      <span><span class="badge badge-nb">Tier 1 &mdash; 10/12</span></span>
+      <span><strong>Also known as:</strong> Same-Day Encounter Closure &nbsp;&middot;&nbsp; Chart Closure Time &nbsp;&middot;&nbsp; 24-Hour Documentation Deficiency Rate &nbsp;&middot;&nbsp; Pre-Next-Visit Closure</span>
+    </div>
+  </header>
+
+  <!-- ── UNIT ── -->
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">% of encounters with notes closed within 24 hours</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        Whether and how quickly clinical notes are <strong>completed and signed</strong> &mdash;
+        a documentation-<em>completion-behavior</em> measure, distinct from how long the note
+        took to write (CM-04). A note can be drafted in 3 minutes (fast CM-04) and sit unsigned
+        for 2 days (poor CM-06), or take 15 minutes to draft but be signed immediately. The
+        canonical definition prefers the <strong>24-hour, duration-bounded window</strong> for
+        pre/post evaluation over the stricter calendar-bounded "same-day" convention.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        EHR-confirmed note-signature timestamp vs. encounter-end timestamp, reported as a
+        24-hour closure rate (%) or 24-hour deficiency rate (% &mdash; the complement). This is
+        the basis for Boyter 2025/KLAS's &minus;41% chart-closure-time finding (UAL data) and
+        FMOL's 84% improvement in notes closed within 7 days.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Suki <strong>draft-availability rate</strong> within 24 hours &mdash; using the elapsed
+        time between the session-completion timestamp (<code>status = completed</code>) and the
+        encounter-end timestamp, bucketed the same way as the EHR-confirmed measure. A leading
+        proxy, not the canonical measure itself (see ambiguity below).
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li><strong>Same-day vs. 24-hour window.</strong> "Same-day" is calendar-bounded &mdash; a 4:45 PM encounter closed at 7:00 AM the next day fails "same-day" despite closing in under 15 hours. "Within 24 hours" is duration-bounded and does not penalize late-day visits. The canonical definition recommends the 24-hour window for pre/post evaluation; document which convention any given site uses, since Suki's own bucket and an EHR-reported "same-day" rate will diverge for reasons unrelated to documentation behavior.</li>
+        <li><strong>Overlap with CM-04.</strong> The "time to chart" framing risks restating CM-04 (Documentation Time). CM-06's scope is held strictly to <strong>completion/signature behavior</strong>, not drafting duration &mdash; even though both measures draw on the same underlying Suki session-timestamp data.</li>
+        <li><strong>Draft-availability vs. signature.</strong> Suki's <code>status = completed</code> event marks the note <em>draft</em> as ready, not signed. The clinician still has to review and sign it in the EHR. Any Suki-only report of "closure" should be explicitly labeled draft-availability until EHR signature data is confirmed available.</li>
+        <li><strong>Bucket field source-of-truth unconfirmed.</strong> The Suki-EHR crosswalk already defines <code>same_day_count</code>, <code>next_day_count</code>, <code>two_three_day_count</code>, <code>four_five_day_count</code>, <code>six_plus_day_count</code> &mdash; but whether their "day signed" component is EHR-sourced (answers CM-06 directly) or derived from Suki's own completion timestamp (answers draft-availability) is unconfirmed.</li>
+        <li><strong>Pearlman 2025 benchmark unverified.</strong> Its "Time to Close Encounter" outcome is not yet confirmed to measure note signature vs. a broader workflow event (e.g., room turnover, discharge) &mdash; treat as a candidate, not confirmed, benchmark.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── ALGORITHM ── -->
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic-cm-06"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic-cm-06">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic-cm-06"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic-cm-06">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
+    </div>
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic-cm-06" role="tabpanel">
+      <p class="algo-purpose">
+        For each completed session, computes the elapsed time between the encounter-end
+        timestamp and the session-completion timestamp, assigns it to a closure-delay bucket
+        (same-day / next-day / 2&ndash;3 days / 4&ndash;5 days / 6+ days &mdash; mirroring the
+        bucket structure already defined in the Suki-EHR crosswalk), and reports the cohort-level
+        24-hour draft-availability rate plus the full bucket distribution.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">24-hour draft-availability rate (%)</div>
+            <div class="unit-ref-def">Share of completed sessions where (session-completion timestamp &minus; encounter-end timestamp) &le; 24 hours. The canonical-unit analog of the EHR-confirmed 24-hour closure rate, computed from Suki-native timestamps.</div>
+            <div class="pipeline-note"><strong>&#x26A0; Pipeline gap:</strong> this measures when the <em>draft</em> became available, not when the note was <em>signed</em>. Without an EHR signature-confirmation callback or export, this rate is a leading-indicator proxy, not the canonical measure &mdash; the single biggest structural gap for CM-06.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Closure-delay bucket distribution</div>
+            <div class="unit-ref-def">Same-day / next-day / 2&ndash;3 days / 4&ndash;5 days / 6+ days &mdash; the full distribution of draft-availability delay, reported as counts mirroring <code>same_day_count</code> ... <code>six_plus_day_count</code> in the crosswalk. Reported alongside the primary rate to show the shape of the tail, not just the 24-hour cutoff.</div>
+            <div class="unit-ref-ambig">&#x26A0; If/when these crosswalk fields are confirmed to be EHR-signature-sourced for a given site, they should be used directly in place of this Suki-derived bucketing &mdash; the formula below would then need no Suki-side timestamp math at all.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Session status distribution (denominator hygiene)</div>
+            <div class="unit-ref-def"><code>completed</code> vs. <code>skipped</code>/<code>failed</code>/<code>aborted</code> &mdash; defines the denominator correctly, excluding encounters where no Suki draft was ever produced rather than counting them as "never closed."</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">24-Hour Draft-Availability Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(sessions where delay_hours &le; 24)</span><span class="formula-den">COUNT(sessions where status = completed)</span></span> × 100
+<div class="formula-note">delay_hours = session_completion_timestamp − encounter_end_timestamp  (hours)
+Bucket assignment (mirrors crosswalk fields):
+  same_day_count        : delay_hours &le; 24 AND signed same calendar day as encounter
+  next_day_count        : delay_hours &le; 24 AND signed next calendar day  (or 24 &lt; delay_hours &le; 48)
+  two_three_day_count   : 48 &lt; delay_hours &le; 72
+  four_five_day_count   : 72 &lt; delay_hours &le; 120
+  six_plus_day_count    : delay_hours &gt; 120
+Denominator excludes skipped/failed/aborted sessions (no draft ever produced)
+Report: 24-hour rate (primary) + full bucket distribution (secondary), per cohort and pre/post adoption</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each session s where s.status == "completed":
+  encounter_end   = s.encounter_end_timestamp
+  draft_available = s.completion_timestamp
+  delay_hours      = HOURS(draft_available - encounter_end)
+
+  if delay_hours <= 24 and SAME_CALENDAR_DAY(encounter_end, draft_available):
+      bucket[s] = "same_day"
+  elif delay_hours <= 48:
+      bucket[s] = "next_day"
+  elif delay_hours <= 72:
+      bucket[s] = "two_three_day"
+  elif delay_hours <= 120:
+      bucket[s] = "four_five_day"
+  else:
+      bucket[s] = "six_plus_day"
+
+completed_sessions = COUNT(s where s.status == "completed")
+within_24h         = COUNT(s where delay_hours[s] <= 24)
+
+dashboard_value = {
+  "rate_24h"  : within_24h / completed_sessions * 100,
+  "buckets"   : { b: COUNT(s where bucket[s] == b) for b in BUCKET_NAMES }
+}
+# Report per cohort (heavy/moderate/light utilization tier) and pre/post adoption window
+# Label explicitly as "draft-availability," not "chart closure," until EHR signature
+# linkage is confirmed (see Pipeline gap above)</div>
+      </details>
+
+    </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic-cm-06" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        A first-attempt Epic-side algorithm that would replace the Generic tab's draft-availability proxy
+        with the true signed-chart closure event, if EHR access is available. Per the Epic EHI schema
+        (<code>epic-ehi-kg</code>), <code>PAT_ENC</code> carries both the visit date and an encounter-close
+        date as direct, verified fields &mdash; a much stronger candidate than a fabricated note-signature
+        table name.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">PAT_ENC</div>
+            <div class="unit-ref-def"><code>CONTACT_DATE</code> (visit date) and <code>ENC_CLOSE_DATE</code> (date the encounter was closed) &mdash; a direct field pairing for this measure's closure interval.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Unconfirmed:</strong> whether <code>ENC_CLOSE_DATE</code> reflects note signature specifically, or a broader encounter closure that includes coding/billing review completing after documentation. This needs validation against a live instance before trusting it as a pure &ldquo;note signed&rdquo; proxy.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Cross-check</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def"><code>LST_FILED_INST_DTTM</code> (last-filed instant) and <code>UNSIGNED_YN</code> (signature flag). If <code>ENC_CLOSE_DATE</code> proves too broad (includes non-documentation closure activity), fall back to this note-level pair instead.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">EHR 24-Hour Closure Rate</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(encounters where ENC_CLOSE_DATE &minus; CONTACT_DATE &le; 24h)</span><span class="formula-den">COUNT(closed encounters)</span></span> × 100
+<div class="formula-note">Prefer this over the Generic tab wherever EHR access exists — it measures actual chart closure,
+not draft availability. The Generic tab remains the fallback for Suki-only deployments.</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed)</summary>
+        <div class="pseudo">SELECT e.PAT_ENC_CSN_ID,
+       DATEDIFF(hour, e.CONTACT_DATE, e.ENC_CLOSE_DATE) AS closure_delay_hours
+FROM PAT_ENC e
+WHERE e.ENC_CLOSE_DATE IS NOT NULL
+  AND e.ENC_TYPE_C NOT IN (1, 31)          -- exclude telephone/proxy types, per CM-04's convention
+-- Bucket closure_delay_hours using the same thresholds as the Generic tab
+-- ⚠ Validate ENC_CLOSE_DATE against HNO_INFO.LST_FILED_INST_DTTM on a
+--   provider-period sample before trusting this as a signature-date proxy</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <!-- ── EXPECTED TREND ── -->
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Closure-Delay Bucket Shift, Pre- vs. Post-Adoption</div>
+    <p class="chart-caption">
+      Stacked distribution of completed sessions across closure-delay buckets, before and after
+      Suki adoption. The expected shift is a larger same-day / next-day share and a smaller
+      4&ndash;5 day / 6+ day tail &mdash; consistent with Boyter 2025/KLAS's &minus;41% chart-closure-time
+      and FMOL's 84% improvement in notes closed within 7 days, though both of those benchmarks
+      reflect EHR-confirmed signature events rather than Suki draft-availability.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 640 230" width="100%" aria-label="Stacked bar chart comparing closure-delay bucket distribution pre- and post-adoption, showing a shift toward same-day and next-day buckets post-adoption">
+        <!-- Axis -->
+        <line x1="60" y1="10" x2="60" y2="180" stroke="#c5ced6" stroke-width="1.5"/>
+        <line x1="60" y1="180" x2="600" y2="180" stroke="#dae2e3" stroke-width="1.5"/>
+        <text x="54" y="14"  text-anchor="end" font-size="9" fill="#8a929d">100%</text>
+        <text x="54" y="96"  text-anchor="end" font-size="9" fill="#8a929d">50%</text>
+        <text x="54" y="184" text-anchor="end" font-size="9" fill="#8a929d">0%</text>
+
+        <!-- Pre-adoption stacked bar: same-day 22%, next-day 23%, 2-3day 25%, 4-5day 15%, 6+day 15% -->
+        <g>
+          <rect x="160" y="159" width="110" height="21" fill="#0e5088"/>
+          <rect x="160" y="125" width="110" height="34" fill="#4f91a8"/>
+          <rect x="160" y="90"  width="110" height="35" fill="#9fc0cb"/>
+          <rect x="160" y="69"  width="110" height="21" fill="#f0ba87"/>
+          <rect x="160" y="48"  width="110" height="21" fill="#e07d83"/>
+        </g>
+        <text x="215" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Pre-Adoption</text>
+
+        <!-- Post-adoption: same-day 45%, next-day 30%, 2-3day 15%, 4-5day 6%, 6+day 4% -->
+        <g>
+          <rect x="370" y="115" width="110" height="65" fill="#0e5088"/>
+          <rect x="370" y="73"  width="110" height="42" fill="#4f91a8"/>
+          <rect x="370" y="52"  width="110" height="21" fill="#9fc0cb"/>
+          <rect x="370" y="44"  width="110" height="8"  fill="#f0ba87"/>
+          <rect x="370" y="38"  width="110" height="6"  fill="#e07d83"/>
+        </g>
+        <text x="425" y="200" text-anchor="middle" font-size="10.5" font-weight="700" fill="#3a454e">Post-Adoption</text>
+
+        <!-- Legend -->
+        <g font-size="10" fill="#3a454e">
+          <rect x="60"  y="206" width="11" height="11" fill="#0e5088"/>
+          <text x="76"  y="215">Same-day</text>
+          <rect x="160" y="206" width="11" height="11" fill="#4f91a8"/>
+          <text x="176" y="215">Next-day</text>
+          <rect x="255" y="206" width="11" height="11" fill="#9fc0cb"/>
+          <text x="271" y="215">2&ndash;3 days</text>
+          <rect x="355" y="206" width="11" height="11" fill="#f0ba87"/>
+          <text x="371" y="215">4&ndash;5 days</text>
+          <rect x="455" y="206" width="11" height="11" fill="#e07d83"/>
+          <text x="471" y="215">6+ days</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── DATA REQUIREMENTS ── -->
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:230px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Session completion timestamp (<code>status = completed</code>)</td>
+        <td>Marks when the Suki note draft became available &mdash; the anchor for the draft-availability rate and bucket assignment.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Draft-ready, not signed &mdash; see Pipeline gap.</td>
+      </tr>
+      <tr>
+        <td>Session creation / encounter-end timestamp</td>
+        <td>Start-of-clock for delay_hours.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Cross-checkable against transcript timestamps.</td>
+      </tr>
+      <tr>
+        <td>Session status distribution (<code>completed</code>/<code>skipped</code>/<code>failed</code>/<code>aborted</code>)</td>
+        <td>Denominator hygiene &mdash; excludes encounters with no Suki draft from the closure-rate denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>&mdash;</td>
+      </tr>
+      <tr>
+        <td>Closure-delay bucket fields (<code>same_day_count</code> ... <code>six_plus_day_count</code>)</td>
+        <td>Already defined in the Suki-EHR crosswalk; would directly answer CM-06 if EHR-signature-sourced.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Source-of-truth (EHR vs. Suki timestamp) unconfirmed &mdash; see Open Questions.</td>
+      </tr>
+      <tr>
+        <td>Note signature timestamp</td>
+        <td>Ground-truth event CM-06 measures &mdash; when the note moved from draft to signed/final.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: <code>PAT_ENC.ENC_CLOSE_DATE</code> (verified in EHI schema) as a first-attempt proxy &mdash; see the Epic tab above. <strong>Unconfirmed</strong> whether this reflects note signature specifically or broader encounter closure (coding/billing review); cross-check against <code>HNO_INFO.LST_FILED_INST_DTTM</code>/<code>UNSIGNED_YN</code> if too broad. Cerner/Athena: equivalent note-status field, not yet researched.</td>
+      </tr>
+      <tr>
+        <td>Encounter/visit date (EHR-side)</td>
+        <td>Cross-check / alternative anchor where Suki and EHR scheduling data diverge.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: <code>PAT_ENC.CONTACT_DATE</code> (verified in EHI schema).</td>
+      </tr>
+      <tr>
+        <td>Provider's daily encounter sequence (schedule)</td>
+        <td>Required for the "note completed before next patient" operationalization.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR scheduling export; no Suki-native concept of schedule sequence.</td>
+      </tr>
+      <tr>
+        <td>Note status transitions (draft &rarr; pended &rarr; signed)</td>
+        <td>Distinguishes "never closed" from "closed late" for accurate 24-hour deficiency rates.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>EHR audit log / note status history.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── SUKI DATA SCOPE ── -->
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      Suki's session lifecycle natively supports a <strong>draft-availability closure-delay
+      distribution</strong> &mdash; bucketing completed sessions into same-day / next-day /
+      2&ndash;3 / 4&ndash;5 / 6+ day buckets based on the gap between encounter-end and
+      session-completion timestamps, mirroring the structure already defined in the Suki-EHR
+      crosswalk. This is among the strongest Suki-native signals of any canonical measure
+      (Tier 1, 10/12).
+    </p>
+    <p>
+      The single biggest gap is that <code>status = completed</code> marks the note as
+      <strong>drafted, not signed</strong>. Without an EHR signature-confirmation callback or
+      export &mdash; or confirmation that the crosswalk's bucket fields are already
+      EHR-sourced &mdash; every Suki-only "closure" metric should be reported explicitly as a
+      <strong>draft-availability proxy</strong>, not the canonical chart-closure measure.
+      "Note completed before next patient" additionally requires provider schedule data Suki
+      does not hold natively.
+    </p>
+  </div>
+
+  <!-- ── SOURCES ── -->
+  <hr class="divider">
+  <p class="section-label">Source Papers (8)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Afshar 2025b</span>
+    <span class="source-pill">Albrecht 2025</span>
+    <span class="source-pill">Boyter 2025</span>
+    <span class="source-pill">Duggan 2025</span>
+    <span class="source-pill">Guo 2026</span>
+    <span class="source-pill">Haberle 2024</span>
+    <span class="source-pill">Pearlman 2025 (benchmark unverified)</span>
+    <span class="source-pill">Shuaib 2021</span>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-06 Algorithm Card &nbsp;&middot;&nbsp; June 2026</span>
+  </footer>
+
+</div>
+
+</section>
+
+<section class="cm-section" id="cm-07">
+<div class="page">
+
+  <div class="draft-banner">
+    <span class="draft-banner-icon">&#9888;</span>
+    <div>
+      <strong>Draft &mdash; Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+  </div>
+
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-07 &mdash; Total EHR Time</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">EHR Efficiency</span></span>
+      <span><strong>Also known as:</strong> Total EHR Time &nbsp;·&nbsp; Login Time &nbsp;·&nbsp; Active EHR Time &nbsp;·&nbsp; EHR Burden</span>
+    </div>
+  </header>
+
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Total EHR minutes per encounter</div>
+      </div>
+      <div class="direction-pill">&#x2193; Lower is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A total EHR minute is any minute of logged activity in the EHR system by a given provider,
+        across all task types &mdash; note creation, inbox management, order entry, results review,
+        and any other EHR interaction. Minutes are summed per provider per encounter-equivalent
+        period and normalized to completed encounters.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Full EHR audit-log telemetry capturing all activity types across all EHR modules
+        (documentation, inbox, orders, results, admin). Preferred &mdash; gives the broadest
+        and most complete view of EHR burden.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Documentation time + inbox time only, when full audit-log is unavailable.
+        These two components are the most reliably extracted from most EHR telemetry
+        systems and account for the largest share of total EHR time.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Scope of "EHR time."</strong>
+          Different EHR telemetry fields vary in which activities they include. Before using any
+          field, confirm whether it captures documentation only, documentation + inbox, or all EHR
+          activity. Mixing narrow and broad definitions across pre/post windows invalidates the
+          comparison. This measure is explicitly broader than CM-04 (Documentation Time).
+        </li>
+        <li>
+          <strong>Per-encounter vs. per-workday normalization.</strong>
+          Some studies report total EHR time per day (Ma 2025: &minus;19.95 min/day); others
+          normalize to encounters. Per-encounter normalization is preferred when encounter volume
+          itself may change after Suki adoption (see CM-22). Per-day is acceptable when encounter
+          volume is stable.
+        </li>
+        <li>
+          <strong>Inbox and orders may dilute the Suki signal.</strong>
+          Suki directly impacts documentation time; its effect on inbox and order entry is indirect
+          and smaller. A large inbox component in the denominator will attenuate the observed effect
+          size relative to a documentation-only measure. Report the component breakdown when possible.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic-cm-07"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic-cm-07">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic-cm-07"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic-cm-07">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
+    </div>
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic-cm-07" role="tabpanel">
+      <p class="algo-purpose">
+        Produces the average total EHR minutes per encounter per provider in the cohort for a given
+        month. This is the broadest efficiency indicator in the CM suite: it captures all EHR time,
+        not just documentation. Ma 2025 found a larger total-EHR-time reduction (&minus;19.95
+        min/day) than documentation-time-alone reduction (&minus;6.89 min/day) in the same cohort.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Total EHR minutes per encounter</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Averaged per provider per reporting month.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; Providers still in the onboarding ramp should be excluded. EHR time may temporarily increase during initial Suki learning as providers adapt their workflow.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg total EHR min / encounter per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)
+Scope: all EHR activity types (documentation + inbox + orders + results review)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    total_ehr_min[p]  = SUM of all EHR activity minutes for provider p in month M
+                        (documentation + inbox + orders + results review)
+    encounters[p]     = completed encounters for provider p in month M
+    ehr_per_enc[p]    = total_ehr_min[p] / encounters[p]
+
+  dashboard_value[M] = MEAN( ehr_per_enc[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic-cm-07" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        The Generic tab's <code>avg_total_time_min</code>, <code>business_hours_min</code>,
+        <code>after_hours_min</code>, and <code>inbox_time_hrs</code> fields are Suki crosswalk
+        abstractions, not literal Epic column names, and they trace back to Epic Signal/UAL &mdash;
+        a separate, proprietary reporting product <strong>not present in the standard EHI
+        export</strong> documented by the Epic EHI knowledge graph (<code>epic-ehi-kg</code>).
+        No equivalent all-activity audit-log table was found in this schema pass. Two verified EHI
+        tables can partially reconstruct total EHR time from first principles: <code>ORDER_PROC</code>
+        for the orders component and <code>HNO_INFO</code> for the notes component &mdash; the same
+        table CM-05's Epic tab uses. Combined, they cover only two of at least four activity
+        types that make up "total EHR time"; inbox management and results/chart review are entirely
+        absent from this reconstruction.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">ORDER_PROC</div>
+            <div class="unit-ref-def"><code>ORDER_TIME</code> (order placed), <code>RESULT_TIME</code> (most recent result), <code>PROC_BGN_TIME</code>/<code>PROC_ENDING_TIME</code> (procedure start/end), <code>CHRG_DROPPED_TIME</code> (charge generated), and <code>INSTANTIATED_TIME</code>. Joinable to encounter via <code>PAT_ENC_CSN_ID</code>. Reconstructs the "orders" component &mdash; order-entry activity per provider per encounter.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">HNO_INFO</div>
+            <div class="unit-ref-def"><code>CREATE_INSTANT_DTTM</code> and <code>LST_FILED_INST_DTTM</code>, keyed by <code>ENTRY_USER_ID</code> and joinable to encounter via <code>PAT_ENC_CSN_ID</code>. Reconstructs the "notes" component &mdash; the same fields CM-05's Epic tab uses for its after-hours partial proxy.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Materially incomplete proxy.</strong> This reconstruction covers notes + orders timestamps only. It has no visibility into inbox message handling, results review, or general chart review time &mdash; all of which Epic Signal/UAL would include in a true total-EHR-time figure. Do not report this as equivalent to <code>avg_total_time_min</code>; label it explicitly as a partial, EHI-only lower bound.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Partial EHR Minutes (Notes + Orders)</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211;(HNO_INFO note-timestamp activity) + &#x2211;(ORDER_PROC order-timestamp activity)</span><span class="formula-den">COUNT(completed encounters), grouped by provider &amp; month</span></span>
+<div class="formula-note">Excludes inbox management and results/chart-review time entirely — not comparable
+to a Signal/UAL-sourced avg_total_time_min figure without a large, unverified undercount
+Cross-check against the Generic tab's Suki-side documentation-only signal where both are available</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed, partial)</summary>
+        <div class="pseudo">-- Notes component
+SELECT h.ENTRY_USER_ID AS provider_id, h.PAT_ENC_CSN_ID,
+       h.CREATE_INSTANT_DTTM, h.LST_FILED_INST_DTTM
+FROM HNO_INFO h;
+
+-- Orders component
+SELECT o.ORD_CREATR_USER_ID AS provider_id, o.PAT_ENC_CSN_ID,
+       o.ORDER_TIME, o.RESULT_TIME, o.CHRG_DROPPED_TIME
+FROM ORDER_PROC o;
+
+-- ⚠ No Epic Signal/UAL equivalent found in the EHI schema pass. Combine both sets, dedupe
+--   overlapping activity windows, group by provider & month. Result is a notes+orders-only
+--   floor on total EHR time — inbox and results-review time are entirely unaccounted for.</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Total EHR Min / Encounter / Month</div>
+    <p class="chart-caption">
+      Cohort average should decrease after Suki adoption. The effect compounds as providers become
+      proficient with ambient documentation. Ma 2025 reports &minus;19.95 min/day total EHR time
+      reduction &mdash; larger than the documentation-time-alone effect in the same study.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: total EHR minutes per encounter per month, declining after Suki adoption">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#596290">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#596290" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#596290">Suki adopted</text>
+        <circle cx="120" cy="75"  r="4" fill="#a8641a"/>
+        <circle cx="190" cy="68"  r="4" fill="#a8641a"/>
+        <circle cx="260" cy="77"  r="4" fill="#a8641a"/>
+        <polyline points="120,75 190,68 260,77" fill="none" stroke="#a8641a" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="335" cy="79"  r="4" fill="#0e5088"/>
+        <circle cx="410" cy="105" r="4" fill="#0e5088"/>
+        <circle cx="495" cy="132" r="4" fill="#0e5088"/>
+        <circle cx="580" cy="150" r="4" fill="#0e5088"/>
+        <polyline points="335,79 410,105 495,132 580,150" fill="none" stroke="#0e5088" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="77" x2="335" y2="79" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#a8641a"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#0e5088"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#596290" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#596290">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:220px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Avg total EHR time per encounter (min)</td>
+        <td>Per-provider total EHR activity time from audit-log, covering all activity types. The primary data element for this measure.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: avg_total_time_min &mdash; a Suki crosswalk abstraction, not a literal Epic column; no equivalent all-activity field was found in the EHI schema (<code>epic-ehi-kg</code>). Traces to Epic Signal/UAL, a separate proprietary product outside the standard EHI export. See the Epic tab for a partial, EHI-only notes+orders reconstruction. Cerner: telemetry varies by version.</td>
+      </tr>
+      <tr>
+        <td>Business-hours EHR time per provider/month (min)</td>
+        <td>Total EHR activity during scheduled working hours, per provider per month.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: business_hours_min &mdash; crosswalk abstraction; no equivalent field found in the EHI schema pass. Would need to be derived by bucketing <code>HNO_INFO</code>/<code>ORDER_PROC</code> timestamps against scheduled hours (see the Epic tab), which is still a notes+orders-only partial signal. Athena: business_hours_numerator, not yet researched.</td>
+      </tr>
+      <tr>
+        <td>After-hours EHR time per provider/month (min)</td>
+        <td>Total EHR activity outside scheduled working hours, per provider per month. Overlaps with CM-05 (After-Hours Documentation) if scoped to documentation tasks.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: after_hours_min &mdash; same Signal/UAL gap as CM-05's after-hours minutes; see CM-05's Epic tab for the <code>HNO_INFO</code>-based partial proxy this measure would share. Cerner: after_hours_min, not yet researched.</td>
+      </tr>
+      <tr>
+        <td>Total inbox time per provider/month (hrs)</td>
+        <td>Time spent managing the EHR inbox (messages, results, referrals). May be a significant share of total EHR time independent of Suki adoption.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Epic: inbox_time_hrs &mdash; no inbox-message-handling table was found among the tables read in this schema pass (<code>HNO_INFO</code>, <code>ORDER_PROC</code>, <code>PAT_ENC</code>, <code>ARPB_TRANSACTIONS</code>, <code>ARPB_CHG_ENTRY_DX</code>). Flagged as an open gap in the EHI-only reconstruction &mdash; not covered by the Epic tab. Athena: total_inbox_time_hours, not yet researched.</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR audit records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between EHR and Suki systems before analysis.</td>
+      </tr>
+      <tr>
+        <td>Encounters by month</td>
+        <td>Completed encounters per provider per calendar month. Used to normalize total EHR time to a per-encounter rate.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Limit to eligible encounter types. Exclude encounters during the onboarding ramp period.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Prevents inactive or lapsed adopters from distorting the cohort average.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki provides a partial proxy for the documentation component of total EHR time,
+      but cannot observe inbox activity, order entry, or results review.</strong>
+      Session duration from the Suki API reflects in-app documentation time only. The majority of
+      total EHR time &mdash; inbox management, chart review, and orders &mdash; occurs entirely
+      within the EHR and is invisible to Suki.
+    </p>
+    <p>
+      Suki's primary contributions to this measure are the <strong>adoption date</strong> (pre/post
+      boundary) and the <strong>active usage flag</strong> (denominator definition). For the
+      outcome signal itself, the EHR full audit-log is the authoritative source. Organizations
+      that report only Suki session duration for this measure will systematically understate total
+      EHR time and the true magnitude of any change.
+    </p>
+    <p>
+      Where full Epic Signal/UAL audit-log access is unavailable, the Epic tab's <code>ORDER_PROC</code>
+      + <code>HNO_INFO</code> reconstruction is the best fallback confirmed against the verified EHI
+      schema (<code>epic-ehi-kg</code>) &mdash; but it must be reported explicitly as a notes+orders-only
+      partial signal, materially incomplete relative to true total EHR time.
+    </p>
+  </div>
+
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Holmgren 2026</span>
+    <span class="source-pill">Ma 2025</span>
+    <span class="source-pill">PHTI 2025</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-07 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+
+</section>
+
+<section class="cm-section" id="cm-22">
+<div class="page">
+
+  <div class="draft-banner">
+    <span class="draft-banner-icon">&#9888;</span>
+    <div>
+      <strong>Draft &mdash; Illustrative, Not Validated</strong>
+      Every algorithm, field name, formula, and expected trend on this card is a first-pass
+      sketch for team review. Nothing has been confirmed against a live EHR instance, run
+      against real data, or signed off by the team. Do not treat any number, join path, or
+      Epic field name here as production-ready.
+    </div>
+  </div>
+
+
+  <header class="masthead">
+    <img src="assets/ri-mark.png" alt="Regenstrief Institute" class="ri-logo">
+    <p class="eyebrow">Canonical Measure Algorithm Card</p>
+    <h1>CM-22 &mdash; Patient Volume &amp; Throughput</h1>
+    <div class="masthead-meta">
+      <span><span class="badge badge-nb">NB &mdash; Net Benefits</span></span>
+      <span><span class="badge badge-eff">Patient Volume</span></span>
+      <span><strong>Also known as:</strong> Encounters per Provider per Week &nbsp;·&nbsp; Patient Throughput &nbsp;·&nbsp; Volume Capacity</span>
+    </div>
+  </header>
+
+  <p class="section-label">Unit</p>
+  <div class="unit-card">
+
+    <div class="unit-top">
+      <div>
+        <div class="unit-label">Unit</div>
+        <div class="unit-value">Completed encounters per provider per week</div>
+      </div>
+      <div class="direction-pill">&#x2191; Higher is better</div>
+    </div>
+
+    <div class="unit-def">
+      <p>
+        A completed encounter is a patient visit that has a signed clinical note in the EHR.
+        Encounters are counted per provider per clinical week and normalized to each provider's
+        scheduled clinical hours to account for part-time work. The metric captures whether
+        providers can see more patients as documentation burden decreases after Suki adoption.
+      </p>
+    </div>
+
+    <div class="unit-methods">
+      <div class="unit-method">
+        <div class="unit-method-label">Gold Standard</div>
+        Completed, signed encounters from the EHR, normalized to scheduled clinical hours per week.
+        Preferred &mdash; captures realized patient throughput and controls for part-time schedules.
+      </div>
+      <div class="unit-method">
+        <div class="unit-method-label">Default / Practical</div>
+        Scheduled encounters per week (from the EHR schedule), when completion and signing status
+        are unavailable. Use with caution &mdash; scheduled volume does not equal completed volume
+        and may not reflect the documentation-driven capacity effect.
+      </div>
+    </div>
+
+    <div class="unit-ambig">
+      <div class="unit-ambig-label">&#x26A0; Ambiguities to Resolve</div>
+      <ul>
+        <li>
+          <strong>Normalize for scheduled clinical hours.</strong>
+          A provider who reduces from 5 to 4 clinical days will show a raw encounter drop
+          unrelated to Suki. Divide by scheduled hours or clinical days to compute a rate;
+          compare rates, not raw counts.
+        </li>
+        <li>
+          <strong>Exclude providers who changed practice context.</strong>
+          Providers who changed specialty, site, or panel size during the analysis window introduce
+          confounders that are unrelated to Suki adoption. Exclude these providers or analyze them
+          separately.
+        </li>
+        <li>
+          <strong>Only include completed, signed encounters.</strong>
+          Scheduled-but-not-completed visits (no-shows, cancellations) and encounters without a
+          signed note should be excluded. Mixing completion statuses inflates raw counts and
+          obscures the capacity signal.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="caution-box">
+    <strong>Interpretation caution:</strong> Increased encounter volume is not universally
+    desirable. Higher throughput achieved through documentation efficiency gains is a positive
+    signal, but it should be interpreted alongside workload indicators and care quality measures.
+    A provider seeing more patients without a corresponding reduction in documentation time
+    (CM-04) warrants investigation.
+  </div>
+
+  <p class="section-label">Algorithm</p>
+
+  <div class="algo-switcher">
+
+    <div class="algo-tabs" role="tablist">
+      <button class="algo-tab" data-panel="algo-panel-generic-cm-22"
+              role="tab" aria-selected="true" aria-controls="algo-panel-generic-cm-22">
+        <span class="algo-tab-name">Generic</span>
+        <span class="algo-tab-sub">Suki admin console</span>
+      </button>
+      <button class="algo-tab" data-panel="algo-panel-epic-cm-22"
+              role="tab" aria-selected="false" aria-controls="algo-panel-epic-cm-22">
+        <span class="algo-tab-name">Epic</span>
+        <span class="algo-tab-sub">EHI knowledge graph</span>
+      </button>
+    </div>
+
+    <!-- ── Panel: Generic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-generic-cm-22" role="tabpanel">
+      <p class="algo-purpose">
+        Produces the average completed encounters per provider per week in the cohort for a given
+        month. This number is expected to increase after Suki adoption as time freed from
+        documentation creates capacity for additional patient visits. Holmgren 2026 found
+        +0.80 completed encounters/week in ambulatory settings.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Units in this Algorithm</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Primary</span>
+          <div>
+            <div class="unit-ref-name">Completed encounters per provider per week</div>
+            <div class="unit-ref-def">The canonical unit for this measure &mdash; defined in the Unit card above. Computed per provider per calendar month, then averaged across the cohort.</div>
+          </div>
+        </div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-secondary">Secondary</span>
+          <div>
+            <div class="unit-ref-name">Active providers in the cohort</div>
+            <div class="unit-ref-def">The denominator. An active provider is one who has completed at least one Suki session in the reporting month and has passed their onboarding ramp period (default: 30 days post-adoption).</div>
+            <div class="unit-ref-ambig">&#x26A0; During the onboarding ramp, some providers may temporarily see fewer patients while adapting to Suki. Exclude the ramp period to avoid a false-negative signal in the early post-adoption months.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Cohort Average</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">&#x2211; (avg completed encounters / clinical week per provider, in the month)</span><span class="formula-den">Number of active providers in the cohort</span></span>
+<div class="formula-note">Per-provider weekly rate = total completed encounters in month M / clinical weeks in month M
+Clinical weeks should be normalized to scheduled clinical hours where available
+Reporting grain: one value per cohort per calendar month
+Pre / post boundary: each provider's Suki adoption date (first completed session)
+Exclude: providers still within their onboarding ramp period (default 30 days)</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode</summary>
+        <div class="pseudo">For each calendar month M:
+  active_providers = providers with ≥1 completed Suki session AND past ramp period
+
+  For each provider p in active_providers:
+    completed_enc[p] = completed, signed encounters for provider p in month M
+    clinical_weeks[p] = scheduled clinical weeks (or days/5) for provider p in month M
+    enc_per_week[p]  = completed_enc[p] / clinical_weeks[p]
+
+  dashboard_value[M] = MEAN( enc_per_week[p] for p in active_providers )</div>
+      </details>
+
+    </div>
+
+    <!-- ── Panel: Epic ── -->
+    <div class="algo-panel algo-body" id="algo-panel-epic-cm-22" role="tabpanel" hidden>
+      <p class="algo-purpose">
+        The Generic tab's <code>total_encounters</code>/<code>encounters_per_day</code> fields are Suki
+        crosswalk abstractions, not literal Epic column names. Per the Epic EHI schema
+        (<code>epic-ehi-kg</code>), <code>PAT_ENC</code> is the top join-hub table in the entire
+        schema (highest inbound reference count of any table) and directly supports reconstructing
+        a completed-encounter count without needing a crosswalk abstraction layer.
+      </p>
+
+      <div class="algo-units">
+        <div class="algo-units-label">Epic Clarity/EHI Tables &mdash; Verified Present in Schema</div>
+
+        <div class="unit-ref-item">
+          <span class="unit-ref-tag tag-primary">Required</span>
+          <div>
+            <div class="unit-ref-name">PAT_ENC</div>
+            <div class="unit-ref-def"><code>CONTACT_DATE</code> (visit date, for weekly bucketing) and <code>ENC_CLOSE_DATE</code> (encounter close date &mdash; the same field CM-06 uses as a closure-timing proxy). A completed/closed encounter count per provider per week can be reconstructed by filtering to <code>ENC_CLOSE_DATE IS NOT NULL</code>, grouped by provider and week.</div>
+            <div class="unit-ref-ambig">&#x26A0; <strong>Unconfirmed:</strong> the exact provider-attribution column (visit provider vs. billing provider vs. note author can differ), and whether a populated <code>ENC_CLOSE_DATE</code> is a reliable proxy for &ldquo;signed&rdquo; vs. broader encounter closure &mdash; same open question as CM-06's Epic tab.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula-wrap">
+<span class="formula-lhs">Weekly Completed Encounters</span><span class="formula-eq">=</span><span class="formula-fraction"><span class="formula-num">COUNT(PAT_ENC WHERE ENC_CLOSE_DATE IS NOT NULL, grouped by provider &amp; week)</span><span class="formula-den">1 (raw count, not a ratio)</span></span>
+<div class="formula-note">Exclude encounter types not eligible for documentation credit (e.g. telephone/proxy, per CM-04's ENC_TYPE_C convention)
+Cross-check against the Generic tab's Suki-side count where both are available, before trusting either alone</div>
+      </div>
+
+      <details>
+        <summary>Pseudocode &mdash; Epic (proposed)</summary>
+        <div class="pseudo">SELECT provider_id,                              -- ⚠ attribution column unconfirmed
+       DATE_TRUNC('week', CONTACT_DATE) AS wk,
+       COUNT(*) AS completed_encounters
+FROM PAT_ENC
+WHERE ENC_CLOSE_DATE IS NOT NULL
+  AND ENC_TYPE_C NOT IN (1, 31)              -- exclude telephone/proxy types
+GROUP BY provider_id, wk;
+-- ⚠ Validate ENC_CLOSE_DATE population rate and provider-attribution column
+--   against a live instance before using this in place of the Generic tab</div>
+      </details>
+    </div>
+
+  </div><!-- /.algo-switcher -->
+
+  <div class="chart-wrap">
+    <div class="chart-title">Expected Trend &mdash; Completed Encounters / Provider / Week / Month</div>
+    <p class="chart-caption">
+      Cohort average should increase after Suki adoption as documentation burden decreases and
+      capacity is released. Holmgren 2026: +0.80 encounters/week (ambulatory, statistically
+      significant). Shuaib 2021 reports +39% patients/hour with human scribes (ED) &mdash; an
+      upper-bound comparator from an adjacent intervention type.
+    </p>
+    <div class="chart-svg-wrap">
+      <svg viewBox="0 0 680 220" width="100%" aria-label="Schematic chart: completed encounters per provider per week, rising after Suki adoption">
+        <line x1="70" y1="30"  x2="650" y2="30"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="72"  x2="650" y2="72"  stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="114" x2="650" y2="114" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="156" x2="650" y2="156" stroke="#e4eaef" stroke-width="1"/>
+        <line x1="70" y1="198" x2="650" y2="198" stroke="#dae2e3" stroke-width="1.5"/>
+        <line x1="70" y1="20" x2="70" y2="198" stroke="#c5ced6" stroke-width="1.5"/>
+        <text x="62" y="34"  text-anchor="end" font-size="10" fill="#8a929d">High</text>
+        <text x="62" y="118" text-anchor="end" font-size="10" fill="#8a929d">Med</text>
+        <text x="62" y="200" text-anchor="end" font-size="10" fill="#8a929d">Low</text>
+        <text x="120" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−6 mo</text>
+        <text x="190" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−4 mo</text>
+        <text x="260" y="215" text-anchor="middle" font-size="10" fill="#8a929d">−2 mo</text>
+        <text x="335" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="#596290">Adoption</text>
+        <text x="410" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+2 mo</text>
+        <text x="495" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+4 mo</text>
+        <text x="580" y="215" text-anchor="middle" font-size="10" fill="#8a929d">+6 mo</text>
+        <line x1="335" y1="22" x2="335" y2="198" stroke="#596290" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <text x="339" y="38" font-size="10" fill="#596290">Suki adopted</text>
+        <!-- Pre-adoption: stable, mid-low (higher cy = lower on chart) -->
+        <circle cx="120" cy="130" r="4" fill="#a8641a"/>
+        <circle cx="190" cy="134" r="4" fill="#a8641a"/>
+        <circle cx="260" cy="128" r="4" fill="#a8641a"/>
+        <polyline points="120,130 190,134 260,128" fill="none" stroke="#a8641a" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Post-adoption: rising (lower cy = higher on chart) -->
+        <circle cx="335" cy="126" r="4" fill="#0e5088"/>
+        <circle cx="410" cy="102" r="4" fill="#0e5088"/>
+        <circle cx="495" cy="76"  r="4" fill="#0e5088"/>
+        <circle cx="580" cy="60"  r="4" fill="#0e5088"/>
+        <polyline points="335,126 410,102 495,76 580,60" fill="none" stroke="#0e5088" stroke-width="2.5" stroke-linejoin="round"/>
+        <line x1="260" y1="128" x2="335" y2="126" stroke="#aab5bf" stroke-width="1.5" stroke-dasharray="3,2"/>
+        <circle cx="84"  cy="170" r="4" fill="#a8641a"/>
+        <text   x="92"  y="174" font-size="11" fill="#4a2400">Pre-adoption baseline</text>
+        <circle cx="84"  cy="186" r="4" fill="#0e5088"/>
+        <text   x="92"  y="190" font-size="11" fill="#014157">Post-adoption trend</text>
+        <line   x1="376" y1="170" x2="392" y2="170" stroke="#596290" stroke-width="1.5" stroke-dasharray="4,2"/>
+        <text   x="396" y="174" font-size="11" fill="#596290">Adoption date</text>
+      </svg>
+    </div>
+  </div>
+
+  <p class="section-label">Data Requirements</p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:220px">Data Element</th>
+        <th>Description</th>
+        <th style="width:90px">Source</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Total completed encounters per provider/month</td>
+        <td>Count of signed, completed encounters per provider per calendar month. The primary numerator for this measure.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Suki crosswalk field. Epic-side reconstruction: <code>PAT_ENC</code> count filtered to <code>ENC_CLOSE_DATE IS NOT NULL</code> (verified table/field, see the Epic tab) &mdash; provider-attribution column unconfirmed. Cerner: not yet researched.</td>
+      </tr>
+      <tr>
+        <td>Avg completed encounters per working day</td>
+        <td>An alternative denominator-normalized form. Use when scheduled hours data are unavailable.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Suki crosswalk field. Derivable from the same <code>PAT_ENC</code> query in the Epic tab by grouping on day instead of week. Consistent with per-week normalization when multiplied by 5.</td>
+      </tr>
+      <tr>
+        <td>Scheduled clinical hours</td>
+        <td>Each provider's scheduled clinical time per week. Used to normalize encounter counts for part-time providers.</td>
+        <td><span class="source-tag tag-ehr">EHR / HR</span></td>
+        <td>Available from EHR scheduling module or HR system. Critical for fair comparison across full-time and part-time providers.</td>
+      </tr>
+      <tr>
+        <td>Provider specialty</td>
+        <td>Provider specialty code. Used to stratify results and exclude providers who changed specialty during the analysis window.</td>
+        <td><span class="source-tag tag-ehr">EHR</span></td>
+        <td>Encounter volume norms vary substantially by specialty. Report results by specialty when the cohort is mixed.</td>
+      </tr>
+      <tr>
+        <td>Provider identifiers</td>
+        <td>Consistent provider IDs linking EHR encounter records to Suki session records.</td>
+        <td><span class="source-tag tag-ehr">EHR</span> <span class="source-tag tag-suki">Suki</span></td>
+        <td>Critical join key. Must be reconciled between systems before analysis.</td>
+      </tr>
+      <tr>
+        <td>Suki adoption date</td>
+        <td>Date of each provider's first completed Suki session. Defines the pre/post boundary.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Without this, there is no pre/post split.</td>
+      </tr>
+      <tr>
+        <td>Active usage flag (monthly)</td>
+        <td>Confirmation that the provider had at least one completed Suki session in a given month. Defines the active-provider denominator.</td>
+        <td><span class="source-tag tag-suki">Suki</span></td>
+        <td>Session count per week can also serve to flag whether an individual week qualifies as an &ldquo;active Suki use&rdquo; week, enabling week-level rather than month-level pre/post splits.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="scope-box" style="margin-top:16px">
+    <p class="section-label">Suki Data &mdash; Scoped Role</p>
+    <p>
+      <strong>Suki identifies which weeks are active-use weeks, but encounter counts come entirely
+      from the EHR.</strong> The Suki session count per week provides a finer-grained signal than
+      the adoption date alone: a provider who used Suki in 3 out of 4 weeks in a month can be
+      analyzed at the week level, with the 3 Suki weeks as &ldquo;post-adoption&rdquo; and the
+      1 non-Suki week as a within-provider control.
+    </p>
+    <p>
+      This week-level design is stronger than a simple pre/post month comparison for short
+      analysis windows. It requires Suki session data at the weekly grain and matched encounter
+      data from the EHR at the same grain.
+    </p>
+  </div>
+
+  <hr class="divider">
+  <p class="section-label">Source Papers (3)</p>
+  <div class="sources-wrap">
+    <span class="source-pill">Holmgren 2026</span>
+    <span class="source-pill">PHTI 2025</span>
+    <span class="source-pill">Shuaib 2021</span>
+  </div>
+
+  <footer class="report-footer">
+    <span>Regenstrief Institute / Indiana University &mdash; Suki AI Partnership</span>
+    <span>CM-22 Algorithm Card &nbsp;·&nbsp; June 2026</span>
+  </footer>
+
+</div>
+
+</section>
+
+<script>
+  document.querySelectorAll('.algo-switcher').forEach(function(switcher) {
+    var tabs   = switcher.querySelectorAll('.algo-tab');
+    var panels = switcher.querySelectorAll('.algo-panel');
+
+    // Activate the first tab on load
+    tabs[0].setAttribute('aria-selected', 'true');
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var targetId = this.getAttribute('data-panel');
+
+        tabs.forEach(function(t) { t.setAttribute('aria-selected', 'false'); });
+        panels.forEach(function(p) { p.hidden = true; });
+
+        this.setAttribute('aria-selected', 'true');
+        document.getElementById(targetId).hidden = false;
+      });
+    });
+  });
+
+</script>
+<script>
+(function () {
+  var sections = document.querySelectorAll('.cm-section');
+  var links    = document.querySelectorAll('.nav-item');
+  var nav      = document.querySelector('.cm-nav');
+
+  function update() {
+    var offset = nav ? nav.offsetHeight + 24 : 60;
+    var active = sections[0] && sections[0].id;
+    sections.forEach(function (s) {
+      if (s.getBoundingClientRect().top <= offset) active = s.id;
+    });
+    links.forEach(function (a) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + active);
+    });
+  }
+
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+
+</body>
+</html>

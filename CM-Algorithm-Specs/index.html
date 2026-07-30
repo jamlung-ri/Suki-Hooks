@@ -153,6 +153,67 @@
     .tag-warn { background: #fbf0e0; color: var(--amber); }
     .tag-tool { background: var(--soft); color: var(--muted); }
 
+    /* ── Data-source tags ── */
+    .tag-source-epic   { background: var(--teal-light); color: var(--teal); }
+    .tag-source-suki   { background: var(--blue-light); color: var(--blue); }
+    .tag-source-survey { background: #f1ecf9; color: #6b46a3; }
+    .tag-source-mixed  { background: #eef0f2; color: #5b6770; }
+
+    /* ── Maturity-status tags ── */
+    .tag-status-draft      { background: var(--soft); color: var(--muted); }
+    .tag-status-reviewed   { background: #e7f3ed; color: #2d6a4f; }
+    .tag-status-prototype  { background: #d7f0e3; color: #1b6b43; font-weight: 700; }
+    .tag-status-real-world { background: #c8ecd9; color: #0f5132; font-weight: 700; }
+
+    /* ── View switcher ── */
+    .view-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .view-tab {
+      appearance: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--muted);
+      padding: 8px 14px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .view-tab:hover { color: var(--ink); }
+    .view-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+    /* ── Group headers (shown when grouped by source/status) ── */
+    .group-header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 18px 0 2px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .group-header:first-child { margin-top: 0; }
+    .group-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .group-count {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .group-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
     /* ── Primary / featured card ── */
     .card-primary {
       border-left-color: var(--blue);
@@ -287,29 +348,40 @@
 
   <!-- ── Individual cards ── -->
   <p class="section-label">Individual Algorithm Cards</p>
-  <div class="card-grid">
 
-    <a href="CM-01-Clinician-Burnout.html" class="card">
+  <div class="view-tabs" role="tablist" aria-label="Group cards by">
+    <button class="view-tab active" data-view="number" role="tab" aria-selected="true">By Measure #</button>
+    <button class="view-tab" data-view="source" role="tab" aria-selected="false">By Primary Data Source</button>
+    <button class="view-tab" data-view="status" role="tab" aria-selected="false">By Maturity Status</button>
+  </div>
+
+  <div class="card-grid" id="card-grid">
+
+    <a href="CM-01-Clinician-Burnout.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-01</div>
       <div class="card-title">Clinician Burnout</div>
       <div class="card-desc">PFI Work Exhaustion subscale (1&ndash;5), lower is better. Survey-based, dose-response design across Suki utilization tiers.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-us">Provider Wellbeing</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-02-Cognitive-Task-Load.html" class="card">
+    <a href="CM-02-Cognitive-Task-Load.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-02</div>
       <div class="card-title">Cognitive Task Load</div>
       <div class="card-desc">NASA-TLX / Physician Task Load (PTL) survey score. Pre/post-deployment waves, bundled engagement item with CM-18.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-us">Provider Wellbeing</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-03-Professional-Fulfillment.html" class="card">
+    <a href="CM-03-Professional-Fulfillment.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-03</div>
       <div class="card-title">Professional Fulfillment</div>
       <div class="card-desc">PFI Professional Fulfillment subscale. Secondary/exploratory, bundled with CM-01 &mdash; expected null (dissociation finding).</div>
@@ -317,50 +389,60 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-us">Provider Wellbeing</span>
         <span class="tag tag-warn">Secondary / Exploratory</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-04-Documentation-Time.html" class="card">
+    <a href="CM-04-Documentation-Time.html" class="card" data-source="epic" data-status="prototype">
       <div class="card-code">CM-04</div>
       <div class="card-title">Documentation Time</div>
       <div class="card-desc">Minutes per encounter. EHR audit-log gold standard; Suki session timestamps as native fallback.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Documentation Efficiency</span>
+        <span class="tag tag-source-epic">Epic / EHR</span>
+        <span class="tag tag-status-prototype" title="Reviewed and adjusted with Evgenia; queries tested against EHR data">Prototype Implementation</span>
       </div>
     </a>
 
-    <a href="CM-05-After-Hours-Documentation.html" class="card">
+    <a href="CM-05-After-Hours-Documentation.html" class="card" data-source="epic" data-status="draft">
       <div class="card-code">CM-05</div>
       <div class="card-title">After-Hours Documentation</div>
       <div class="card-desc">After-hours minutes per provider per month (Pajama Time). EHR audit-log; per-provider scheduled hours.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Documentation Efficiency</span>
+        <span class="tag tag-source-epic">Epic / EHR</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-06-Chart-Closure-Timeliness.html" class="card">
+    <a href="CM-06-Chart-Closure-Timeliness.html" class="card" data-source="epic" data-status="draft">
       <div class="card-code">CM-06</div>
       <div class="card-title">Chart Closure Timeliness</div>
       <div class="card-desc">% of encounters with notes closed within 24 hours. Suki draft-availability rate vs. EHR signature-confirmed closure.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Documentation Efficiency</span>
+        <span class="tag tag-source-epic">Epic / EHR</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-07-Total-EHR-Time.html" class="card">
+    <a href="CM-07-Total-EHR-Time.html" class="card" data-source="epic" data-status="draft">
       <div class="card-code">CM-07</div>
       <div class="card-title">Total EHR Time</div>
       <div class="card-desc">Total EHR minutes per encounter across all task types — documentation, inbox, orders, results review.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">EHR Efficiency</span>
+        <span class="tag tag-source-epic">Epic / EHR</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-08-Note-Completeness.html" class="card">
+    <a href="CM-08-Note-Completeness.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-08</div>
       <div class="card-title">Note Completeness and Omission Rate</div>
       <div class="card-desc">PDQI-9/PDSQI-9 Thoroughness domain. Human rating + LLM-as-judge, mirrors CM-09's pilot design for the opposite error type.</div>
@@ -368,10 +450,12 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-iq">Information Quality</span>
         <span class="tag tag-warn">Pilot / Calibration</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Note Content + Human/LLM Review</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-09-Note-Inaccuracy.html" class="card">
+    <a href="CM-09-Note-Inaccuracy.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-09</div>
       <div class="card-title">Note Inaccuracy Rate</div>
       <div class="card-desc">% of notes with &ge;1 fabricated or incorrect element. PDQI-9/PDSQI-9 Accuracy pilot, human rating + LLM-as-judge.</div>
@@ -379,10 +463,12 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-iq">Information Quality</span>
         <span class="tag tag-warn">Pilot / Calibration</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Note Content + Human/LLM Review</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-10-Note-Quality-Overall.html" class="card">
+    <a href="CM-10-Note-Quality-Overall.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-10</div>
       <div class="card-title">Note Quality Overall</div>
       <div class="card-desc">Composite PDQI-9/PDSQI-9 rollup across all domains, including CM-08 Thoroughness and CM-09 Accuracy.</div>
@@ -390,20 +476,24 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-iq">Information Quality</span>
         <span class="tag tag-warn">Composite / Rollup</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Note Content + Human/LLM Review</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-11-Note-Length-Verbosity.html" class="card">
+    <a href="CM-11-Note-Length-Verbosity.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-11</div>
       <div class="card-title">Note Length and Verbosity</div>
       <div class="card-desc">Word/character count and lexical diversity, fully automated. Direction not asserted &mdash; read alongside CM-08/CM-10.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-iq">Information Quality</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Note Content, Automated</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-12-Automated-NLP-Metrics.html" class="card">
+    <a href="CM-12-Automated-NLP-Metrics.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-12</div>
       <div class="card-title">Automated NLP Evaluation Metrics</div>
       <div class="card-desc">ROUGE/BERTScore/F1 vs. reference text &mdash; a calibration tool for the rating pipeline, not a Suki-adoption outcome.</div>
@@ -411,47 +501,57 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-iq">Information Quality</span>
         <span class="tag tag-warn">Methodological Tool</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Note Content, Automated</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-13-Adoption-Utilization.html" class="card">
+    <a href="CM-13-Adoption-Utilization.html" class="card" data-source="suki" data-status="draft">
       <div class="card-code">CM-13</div>
       <div class="card-title">Adoption Behavior and Utilization Rate</div>
       <div class="card-desc">Ambient Notes Created &divide; EHR Appointments Scheduled. Real, validated Suki Admin Console BigQuery &mdash; not an Epic-derived measure.</div>
       <div class="card-meta">
         <span class="tag tag-u">U &mdash; Use</span>
+        <span class="tag tag-source-suki">Suki Product Usage</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-14-Adoption-Intention.html" class="card">
+    <a href="CM-14-Adoption-Intention.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-14</div>
       <div class="card-title">Adoption Intention and Long-Term Use</div>
       <div class="card-desc">TAM/UTAUT behavioral-intention score. Zero corpus papers measure this directly &mdash; theory-derived, not empirically grounded.</div>
       <div class="card-meta">
         <span class="tag tag-u">U &mdash; Use</span>
         <span class="tag tag-warn">Low Confidence</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-15-Provider-Satisfaction.html" class="card">
+    <a href="CM-15-Provider-Satisfaction.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-15</div>
       <div class="card-title">Provider Satisfaction and Usability</div>
       <div class="card-desc">System Usability Scale (SUS) score, 0&ndash;100. Early-experience vs. mature-use wave comparison, no true pre-exposure baseline.</div>
       <div class="card-meta">
         <span class="tag tag-us">US &mdash; User Satisfaction</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-16-Provider-Trust.html" class="card">
+    <a href="CM-16-Provider-Trust.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-16</div>
       <div class="card-title">Provider Trust in AI</div>
       <div class="card-desc">Trust/confidence Likert score plus qualitative verification-behavior coding. Only 3 papers measure this construct.</div>
       <div class="card-meta">
         <span class="tag tag-u">U &mdash; Use</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-17-Patient-Experience.html" class="card">
+    <a href="CM-17-Patient-Experience.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-17</div>
       <div class="card-title">Patient Experience</div>
       <div class="card-desc">PDRQ-9 relationship-quality score. Targeted multilingual-cohort design via transcript <code>lang_id</code> (H4 pathway).</div>
@@ -459,10 +559,12 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-oi">Organizational Impact</span>
         <span class="tag tag-warn">Tier 3 &mdash; 5/12</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-18-Physician-Patient-Interaction.html" class="card">
+    <a href="CM-18-Physician-Patient-Interaction.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-18</div>
       <div class="card-title">Physician-Patient Interaction</div>
       <div class="card-desc">Consultation duration (Suki-native) + post-encounter engagement Likert + exploratory talk-time/turn-taking.</div>
@@ -470,10 +572,12 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-oi">Organizational Impact</span>
         <span class="tag tag-warn">Tier 3 &mdash; 6/12</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Suki + Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-19-Clinical-Patient-Safety.html" class="card">
+    <a href="CM-19-Clinical-Patient-Safety.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-19</div>
       <div class="card-title">Clinical Patient Safety</div>
       <div class="card-desc">Documentation-completeness vs. clinical-action linkage (Castro 2025 replication). Scope-narrowing applies &mdash; see card.</div>
@@ -481,65 +585,79 @@
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-oi">Organizational Impact</span>
         <span class="tag tag-warn">Monitor &mdash; 6/12</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; EHR Chart Data + Clinical Review</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-20-Financial-Productivity.html" class="card">
+    <a href="CM-20-Financial-Productivity.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-20</div>
       <div class="card-title">Financial Productivity</div>
       <div class="card-desc">Three operationalizations: wRVUs per week, paid revenue per month, and E/M Level 4&ndash;5 share.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Financial Productivity</span>
+        <span class="tag tag-source-mixed" title="Billing/practice-management data — not confirmed available via Epic API">Mixed &mdash; Billing / Practice Mgmt</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-21-Coding-Accuracy.html" class="card">
+    <a href="CM-21-Coding-Accuracy.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-21</div>
       <div class="card-title">Coding Accuracy</div>
       <div class="card-desc">Three operationalizations: ICD-10 coding depth, Suki suggestion match rate (native data), and denial rate.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Coding Accuracy</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; EHR/Billing + Suki-Native</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-22-Patient-Volume.html" class="card">
+    <a href="CM-22-Patient-Volume.html" class="card" data-source="epic" data-status="draft">
       <div class="card-code">CM-22</div>
       <div class="card-title">Patient Volume &amp; Throughput</div>
       <div class="card-desc">Completed encounters per provider per week. Higher is better — volume freed by documentation efficiency.</div>
       <div class="card-meta">
         <span class="tag tag-nb">NB</span>
         <span class="tag tag-eff">Patient Volume</span>
+        <span class="tag tag-source-epic">Epic / EHR</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-23-Implementation-Barriers.html" class="card">
+    <a href="CM-23-Implementation-Barriers.html" class="card" data-source="survey" data-status="draft">
       <div class="card-code">CM-23</div>
       <div class="card-title">Implementation Barriers and Workflow Fit</div>
       <div class="card-desc">FIM/AIM/IAM composite score plus qualitative barrier-frequency coding. Retains a non-adopter cohort by design.</div>
       <div class="card-meta">
         <span class="tag tag-us">SerQ &mdash; Service Quality</span>
+        <span class="tag tag-source-survey">Survey</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-24-Transcription-ASR-Accuracy.html" class="card">
+    <a href="CM-24-Transcription-ASR-Accuracy.html" class="card" data-source="suki" data-status="draft">
       <div class="card-code">CM-24</div>
       <div class="card-title">Transcription and ASR Accuracy</div>
       <div class="card-desc">Word Error Rate / diarization accuracy formula given, but no vendor (including Suki) currently publishes this data.</div>
       <div class="card-meta">
         <span class="tag tag-sq">SQ &mdash; System Quality</span>
         <span class="tag tag-warn">No Data Available</span>
+        <span class="tag tag-source-suki">Suki Product Usage</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
-    <a href="CM-25-Evaluation-Methodology.html" class="card">
+    <a href="CM-25-Evaluation-Methodology.html" class="card" data-source="mixed" data-status="draft">
       <div class="card-code">CM-25</div>
       <div class="card-title">Evaluation Methodology Quality</div>
       <div class="card-desc">ICC/evidence-tiering for source-paper rigor. Meta-measure &mdash; flagged as a candidate for removal from the canonical set.</div>
       <div class="card-meta">
         <span class="tag tag-tool">Meta-Measure</span>
         <span class="tag tag-warn">Candidate for Removal</span>
+        <span class="tag tag-source-mixed">Mixed &mdash; Corpus Metadata</span>
+        <span class="tag tag-status-draft">Draft</span>
       </div>
     </a>
 
@@ -573,5 +691,90 @@
   </footer>
 
 </div>
+
+<script>
+(function () {
+  var grid = document.getElementById('card-grid');
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.card'));
+  var tabs = document.querySelectorAll('.view-tab');
+
+  var GROUPS = {
+    source: {
+      order: ['epic', 'suki', 'survey', 'mixed'],
+      labels: {
+        epic:   'Epic / EHR',
+        suki:   'Suki Product Usage / Adoption Signals',
+        survey: 'Survey',
+        mixed:  'Mixed / Multiple Sources'
+      },
+      notes: {
+        epic: 'Epic-focus-worthy for Sudha'
+      }
+    },
+    status: {
+      order: ['real-world', 'prototype', 'reviewed', 'draft', 'reproducible'],
+      labels: {
+        'real-world':  'Real-World Implementation',
+        'prototype':   'Prototype Implementation',
+        'reviewed':    'Human / Practitioner Reviewed',
+        'draft':       'Draft',
+        'reproducible': 'Reproducible (Multi-Site)'
+      },
+      notes: {
+        draft: 'Generated, not yet reviewed by a human'
+      }
+    }
+  };
+
+  function clearGroupHeaders() {
+    grid.querySelectorAll('.group-header').forEach(function (h) { h.remove(); });
+  }
+
+  function render(view) {
+    clearGroupHeaders();
+
+    if (view === 'number') {
+      cards.forEach(function (c) { grid.appendChild(c); });
+      return;
+    }
+
+    var attr = view === 'source' ? 'source' : 'status';
+    var config = GROUPS[view];
+    var buckets = {};
+    cards.forEach(function (c) {
+      var key = c.dataset[attr];
+      (buckets[key] = buckets[key] || []).push(c);
+    });
+
+    config.order.forEach(function (key) {
+      var bucket = buckets[key];
+      if (!bucket || !bucket.length) return;
+
+      var header = document.createElement('div');
+      header.className = 'group-header';
+      var note = config.notes[key] ? '<span class="group-note">' + config.notes[key] + '</span>' : '';
+      header.innerHTML =
+        '<span class="group-title">' + config.labels[key] + '</span>' +
+        '<span class="group-count">' + bucket.length + '</span>' +
+        note;
+      grid.appendChild(header);
+      bucket.forEach(function (c) { grid.appendChild(c); });
+    });
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      tabs.forEach(function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      render(tab.dataset.view);
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
