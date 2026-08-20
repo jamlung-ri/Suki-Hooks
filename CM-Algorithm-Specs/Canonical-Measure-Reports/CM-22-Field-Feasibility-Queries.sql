@@ -1,83 +1,101 @@
 -- CM-22 field feasibility / density queries
--- Auto-generated, one query per candidate table. See the companion
--- CM-XX-Field-Feasibility-Queries.md in this directory for how to run
--- and report these back.
+-- Auto-generated. See the companion CM-XX-Field-Feasibility-Queries.md
+-- and the shared Field-Feasibility-Queries-README.md in this directory
+-- for what this is, why it's safe to run, and how to report results back.
 --
--- Dialect note: written for SQL Server / SAS PROC SQL syntax
--- (YEAR(col), COUNT(col) excludes NULLs by standard SQL semantics).
--- On Oracle, replace YEAR(<col>) with EXTRACT(YEAR FROM <col>).
--- If any column name collides with a reserved word, quote it per
--- platform ([COL] on SQL Server, "COL" on Oracle).
+-- HOW TO RUN: execute this entire script top to bottom in one session.
+-- It produces exactly ONE result grid, at the very end. Export that grid
+-- to CSV and send it back -- that is the entire ask.
 --
--- For very large tables, consider adding a WHERE clause to sample a
--- recent date range first (e.g. WHERE <anchor> >= '2024-01-01') to get
--- a fast initial read before running the full unfiltered query.
+-- Written for SQL Server T-SQL. On Oracle or in SAS PROC SQL, two swaps:
+--   1. Replace `SELECT ... INTO #fc_NNN FROM ...` with
+--      `CREATE TABLE fc_NNN AS SELECT ... FROM ...`
+--   2. Replace `YEAR(<col>)` with `EXTRACT(YEAR FROM <col>)` (Oracle only --
+--      SAS PROC SQL supports YEAR() natively).
+-- SQL Server's #-prefixed temp tables are session-scoped and auto-dropped
+-- when your connection closes -- nothing persists. On Oracle/SAS, staging
+-- tables are ordinary tables and will need the cleanup block at the end of
+-- this file (or your own housekeeping) to remove them.
+--
+-- If any column name collides with a reserved word, quote it per platform
+-- ([COL] on SQL Server, "COL" on Oracle) in both Phase 1 and Phase 2.
+--
+-- For very large tables, consider adding a WHERE clause to the Phase 1
+-- block for that table to sample a recent date range first (e.g.
+-- WHERE <anchor> >= '2024-01-01') before running the unfiltered version.
+--
+-- To re-run this script in the same session, run the cleanup block at the
+-- end first (SQL Server temp tables from a prior run will otherwise still
+-- exist); or simply start a fresh connection.
 
--- ==========================================================
--- Table: APPT_CSN_COUNTS
+-- ============================== PHASE 1 ==============================
+-- One aggregate pass per candidate table into a session-scoped staging
+-- table. Every block below has the identical shape: COUNT(*) plus
+-- COUNT(<column>) for each candidate column (NULL-exclusive by standard
+-- SQL semantics), grouped by year where the table has a usable date
+-- column. No row-level data is read out anywhere in this script; only
+-- these aggregate counts. Skim the first two or three blocks and the
+-- rest follow the same pattern.
+
+-- ---- fc_001 <- APPT_CSN_COUNTS ----
 -- This table contains the appointment contact serial numbers (CSNs) linked to an authorization as well as the counts used for each CSN.
 -- Bucket(s): Appointment / scheduling status
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(AUTH_ID) AS AUTH_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(LINKED_APPT_CSNS) AS LINKED_APPT_CSNS_filled,
     COUNT(LINKED_APPT_COUNTS) AS LINKED_APPT_COUNTS_filled,
     COUNT(USR_OVR_VST_COUNT_YN) AS USR_OVR_VST_COUNT_YN_filled
+INTO #fc_001
 FROM APPT_CSN_COUNTS;
 
--- ==========================================================
--- Table: CANCELED_APPTS_EDI
--- This table contains the list of visit IDs of appointments that used to be linked to an order, but were cancelled due to the order being cancelled. This item is used by the incoming orders-to-cadence i
+-- ---- fc_002 <- CANCELED_APPTS_EDI ----
+-- This table contains the list of visit IDs of appointments that used to be linked to an order, but were cancelled due to the order being cancelled. This item is used by the incoming
 -- Bucket(s): Appointment / scheduling status
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ORDER_ID) AS ORDER_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CANCEL_APPTS_EDI) AS CANCEL_APPTS_EDI_filled,
     COUNT(CANC_APPT_PREV_STAT) AS CANC_APPT_PREV_STAT_filled
+INTO #fc_002
 FROM CANCELED_APPTS_EDI;
 
--- ==========================================================
--- Table: CLARITY_SER
+-- ---- fc_003 <- CLARITY_SER ----
 -- The CLARITY_SER table contains high-level information about your provider records. These records may be caregivers, resources, classes, devices, and modalities.
 -- Bucket(s): Provider record (FTE / schedule — exploratory)
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROV_ID_PROV_NAME) AS PROV_ID_PROV_NAME_filled,
     COUNT(PROV_NAME) AS PROV_NAME_filled,
     COUNT(EXTERNAL_NAME) AS EXTERNAL_NAME_filled
+INTO #fc_003
 FROM CLARITY_SER;
 
--- ==========================================================
--- Table: ORD_AUD_APPT_INFO
+-- ---- fc_004 <- ORD_AUD_APPT_INFO ----
 -- This table contains audit information about the appointment-level info for imaging studies.
 -- Bucket(s): Appointment / scheduling status
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ORDER_ID) AS ORDER_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(APPT_STUDY_STATUES) AS APPT_STUDY_STATUES_filled,
     COUNT(APPT_STUDY_STAUES_EXT_VALS) AS APPT_STUDY_STAUES_EXT_VALS_filled
+INTO #fc_004
 FROM ORD_AUD_APPT_INFO;
 
--- ==========================================================
--- Table: PAT_ENC
--- The patient encounter table contains one record for each patient encounter in your system. By default, this table does not contain Registration or PCP/Clinic Change contacts (encounter types 1 and 31)
+-- ---- fc_005 <- PAT_ENC ----
+-- The patient encounter table contains one record for each patient encounter in your system. By default, this table does not contain Registration or PCP/Clinic Change contacts (encou
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -153,15 +171,13 @@ SELECT
     COUNT(ENC_INSTANT) AS ENC_INSTANT_filled,
     COUNT(EFFECTIVE_DATE_DTTM) AS EFFECTIVE_DATE_DTTM_filled,
     COUNT(CALCULATED_ENC_STAT_C_NAME) AS CALCULATED_ENC_STAT_C_NAME_filled
+INTO #fc_005
 FROM PAT_ENC
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_2
+-- ---- fc_006 <- PAT_ENC_2 ----
 -- This table supplements the PAT_ENC table. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -242,15 +258,13 @@ SELECT
     COUNT(AVS_REFUSED_DTTM) AS AVS_REFUSED_DTTM_filled,
     COUNT(AVS_LAST_PRINT_DTTM) AS AVS_LAST_PRINT_DTTM_filled,
     COUNT(MED_LIST_UPDATE_DTTM) AS MED_LIST_UPDATE_DTTM_filled
+INTO #fc_006
 FROM PAT_ENC_2
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_3
+-- ---- fc_007 <- PAT_ENC_3 ----
 -- This table supplements the PAT_ENC and PAT_ENC_2 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(PREADMSN_TESTING_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -291,15 +305,13 @@ SELECT
     COUNT(EXTERNAL_REF_ID) AS EXTERNAL_REF_ID_filled,
     COUNT(OUTCOME_C_NAME) AS OUTCOME_C_NAME_filled,
     COUNT(HSPC_NO_ADM_C_NAME) AS HSPC_NO_ADM_C_NAME_filled
+INTO #fc_007
 FROM PAT_ENC_3
-GROUP BY YEAR(PREADMSN_TESTING_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(PREADMSN_TESTING_DT);
 
--- ==========================================================
--- Table: PAT_ENC_4
+-- ---- fc_008 <- PAT_ENC_4 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, and PAT_ENC_3 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(LB_ENC_START_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -361,15 +373,13 @@ SELECT
     COUNT(CR_RESP_RECVD_UTC_DTTM) AS CR_RESP_RECVD_UTC_DTTM_filled,
     COUNT(CR_QUERY_ERROR) AS CR_QUERY_ERROR_filled,
     COUNT(COPAY_REDUCTION_AMT) AS COPAY_REDUCTION_AMT_filled
+INTO #fc_008
 FROM PAT_ENC_4
-GROUP BY YEAR(LB_ENC_START_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(LB_ENC_START_DT);
 
--- ==========================================================
--- Table: PAT_ENC_5
+-- ---- fc_009 <- PAT_ENC_5 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, and PAT_ENC_4 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -407,15 +417,13 @@ SELECT
     COUNT(PREPAY_DISCNT_OVRIDE_CMT) AS PREPAY_DISCNT_OVRIDE_CMT_filled,
     COUNT(PREPAY_DISCNT_OVRIDE_DTTM) AS PREPAY_DISCNT_OVRIDE_DTTM_filled,
     COUNT(EVISIT_STATUS_C_NAME) AS EVISIT_STATUS_C_NAME_filled
+INTO #fc_009
 FROM PAT_ENC_5
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_6
+-- ---- fc_010 <- PAT_ENC_6 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, and PAT_ENC_5 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -473,15 +481,13 @@ SELECT
     COUNT(TLH_APRV_LOC_C_NAME) AS TLH_APRV_LOC_C_NAME_filled,
     COUNT(ENC_CLOSE_UTC_DTTM) AS ENC_CLOSE_UTC_DTTM_filled,
     COUNT(SPLIT_FILING_ORDER_YN) AS SPLIT_FILING_ORDER_YN_filled
+INTO #fc_010
 FROM PAT_ENC_6
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_7
--- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, PAT_ENC_5, and PAT_ENC_6 tables. It contains additional information related to patient encounters or appointments.
+-- ---- fc_011 <- PAT_ENC_7 ----
+-- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, PAT_ENC_5, and PAT_ENC_6 tables. It contains additional information related to patient encounters or appointmen
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -523,15 +529,13 @@ SELECT
     COUNT(EPISODE_UPD_CREAT_RSN_C_NAME) AS EPISODE_UPD_CREAT_RSN_C_NAME_filled,
     COUNT(VISIT_MSG_DECLINE_YN) AS VISIT_MSG_DECLINE_YN_filled,
     COUNT(BILL_FOR_DENIAL_YN) AS BILL_FOR_DENIAL_YN_filled
+INTO #fc_011
 FROM PAT_ENC_7
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_8
--- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, PAT_ENC_5, PAT_ENC_6, and PAT_ENC_7 tables. It contains additional information related to patient encounters or appointments.
+-- ---- fc_012 <- PAT_ENC_8 ----
+-- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, PAT_ENC_5, PAT_ENC_6, and PAT_ENC_7 tables. It contains additional information related to patient encounters or
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -562,15 +566,13 @@ SELECT
     COUNT(APPT_BED_POST_LEVEL_OF_CARE_C_NAME) AS APPT_BED_POST_LEVEL_OF_CARE_C_NAME_filled,
     COUNT(APPT_BED_CMT_S) AS APPT_BED_CMT_S_filled,
     COUNT(SEPARATED_GROUP_YN) AS SEPARATED_GROUP_YN_filled
+INTO #fc_012
 FROM PAT_ENC_8
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_APPT
--- The PAT_ENC_APPT table contains basic information about the appointment records in your system. Since one patient encounter can be an appointment with multiple providers and resources (joint appointme
+-- ---- fc_013 <- PAT_ENC_APPT ----
+-- The PAT_ENC_APPT table contains basic information about the appointment records in your system. Since one patient encounter can be an appointment with multiple providers and resour
 -- Bucket(s): Appointment / scheduling status
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -580,15 +582,13 @@ SELECT
     COUNT(DEPARTMENT_ID_EXTERNAL_NAME) AS DEPARTMENT_ID_EXTERNAL_NAME_filled,
     COUNT(PROV_START_TIME) AS PROV_START_TIME_filled,
     COUNT(APPT_PROV_PRIMARY_SPECIALTY_C_NAME) AS APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled
+INTO #fc_013
 FROM PAT_ENC_APPT
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_HSP
--- This table is the primary table for hospital encounter information. A hospital encounter is a contact in the patient record created through an ADT workflow such as preadmission, admission, ED Arrival,
+-- ---- fc_014 <- PAT_ENC_HSP ----
+-- This table is the primary table for hospital encounter information. A hospital encounter is a contact in the patient record created through an ADT workflow such as preadmission, ad
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(EXP_DISCHARGE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -681,15 +681,13 @@ SELECT
     COUNT(HOSPITAL_AREA_ID_LOC_NAME) AS HOSPITAL_AREA_ID_LOC_NAME_filled,
     COUNT(CHIEF_COMPLAINT_C_NAME) AS CHIEF_COMPLAINT_C_NAME_filled,
     COUNT(NEED_FIN_CLR_YN) AS NEED_FIN_CLR_YN_filled
+INTO #fc_014
 FROM PAT_ENC_HSP
-GROUP BY YEAR(EXP_DISCHARGE_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(EXP_DISCHARGE_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_HSP_2
--- The PAT_ENC_HSP_2 table is the subsequent table for the PAT_ENC_HSP table, which is the primary table for hospital encounter information. Each record in this table is based on a patient contact serial
+-- ---- fc_015 <- PAT_ENC_HSP_2 ----
+-- The PAT_ENC_HSP_2 table is the subsequent table for the PAT_ENC_HSP table, which is the primary table for hospital encounter information. Each record in this table is based on a pa
 -- Bucket(s): Encounter / visit record
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -747,21 +745,1184 @@ SELECT
     COUNT(EXP_DISCH_DISP_ENTRY_UTC_DTTM) AS EXP_DISCH_DISP_ENTRY_UTC_DTTM_filled,
     COUNT(PRIMARY_LINKED_PAT_ENC_CSN_ID) AS PRIMARY_LINKED_PAT_ENC_CSN_ID_filled,
     COUNT(TODO_ADM_DISCLAIMER_ACTIVE_YN) AS TODO_ADM_DISCLAIMER_ACTIVE_YN_filled
+INTO #fc_015
 FROM PAT_ENC_HSP_2
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_NO_SHOW
--- This table contains no-show documentation. When patients do not arrive for an appointment, they are marked as a no-show. Each no-show can have an associated action, outcome and comment. All of this do
+-- ---- fc_016 <- PAT_ENC_NO_SHOW ----
+-- This table contains no-show documentation. When patients do not arrive for an appointment, they are marked as a no-show. Each no-show can have an associated action, outcome and com
 -- Bucket(s): Appointment / scheduling status
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PAT_ID) AS PAT_ID_filled,
     COUNT(NO_SHOW_COMMENT) AS NO_SHOW_COMMENT_filled
+INTO #fc_016
 FROM PAT_ENC_NO_SHOW;
+
+-- ============================== PHASE 2 ==============================
+-- The one result set this script returns: every staging table's wide
+-- aggregate row, reshaped into long format (one row per table/column/
+-- year) and unioned together. Export this grid and send it back.
+
+SELECT table_name, column_name, activity_year, total_rows, filled_count
+FROM (
+    SELECT 'APPT_CSN_COUNTS' AS table_name, 'AUTH_ID' AS column_name, activity_year, total_rows, AUTH_ID_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'APPT_CSN_COUNTS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'APPT_CSN_COUNTS' AS table_name, 'LINKED_APPT_CSNS' AS column_name, activity_year, total_rows, LINKED_APPT_CSNS_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'APPT_CSN_COUNTS' AS table_name, 'LINKED_APPT_COUNTS' AS column_name, activity_year, total_rows, LINKED_APPT_COUNTS_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'APPT_CSN_COUNTS' AS table_name, 'USR_OVR_VST_COUNT_YN' AS column_name, activity_year, total_rows, USR_OVR_VST_COUNT_YN_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'CANCELED_APPTS_EDI' AS table_name, 'ORDER_ID' AS column_name, activity_year, total_rows, ORDER_ID_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'CANCELED_APPTS_EDI' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'CANCELED_APPTS_EDI' AS table_name, 'CANCEL_APPTS_EDI' AS column_name, activity_year, total_rows, CANCEL_APPTS_EDI_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'CANCELED_APPTS_EDI' AS table_name, 'CANC_APPT_PREV_STAT' AS column_name, activity_year, total_rows, CANC_APPT_PREV_STAT_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'CLARITY_SER' AS table_name, 'PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'CLARITY_SER' AS table_name, 'PROV_NAME' AS column_name, activity_year, total_rows, PROV_NAME_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'CLARITY_SER' AS table_name, 'EXTERNAL_NAME' AS column_name, activity_year, total_rows, EXTERNAL_NAME_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ORD_AUD_APPT_INFO' AS table_name, 'ORDER_ID' AS column_name, activity_year, total_rows, ORDER_ID_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ORD_AUD_APPT_INFO' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ORD_AUD_APPT_INFO' AS table_name, 'APPT_STUDY_STATUES' AS column_name, activity_year, total_rows, APPT_STUDY_STATUES_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ORD_AUD_APPT_INFO' AS table_name, 'APPT_STUDY_STAUES_EXT_VALS' AS column_name, activity_year, total_rows, APPT_STUDY_STAUES_EXT_VALS_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'PCP_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, PCP_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'FIN_CLASS_C_NAME' AS column_name, activity_year, total_rows, FIN_CLASS_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'VISIT_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, VISIT_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'VISIT_PROV_TITLE_NAME' AS column_name, activity_year, total_rows, VISIT_PROV_TITLE_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'DEPARTMENT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, DEPARTMENT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LMP_DATE' AS column_name, activity_year, total_rows, LMP_DATE_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_CLOSED_YN' AS column_name, activity_year, total_rows, ENC_CLOSED_YN_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_CLOSED_USER_ID' AS column_name, activity_year, total_rows, ENC_CLOSED_USER_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_CLOSED_USER_ID_NAME' AS column_name, activity_year, total_rows, ENC_CLOSED_USER_ID_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_CLOSE_DATE' AS column_name, activity_year, total_rows, ENC_CLOSE_DATE_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER1_ID' AS column_name, activity_year, total_rows, LOS_MODIFIER1_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER1_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, LOS_MODIFIER1_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER2_ID' AS column_name, activity_year, total_rows, LOS_MODIFIER2_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER2_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, LOS_MODIFIER2_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER3_ID' AS column_name, activity_year, total_rows, LOS_MODIFIER3_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER3_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, LOS_MODIFIER3_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER4_ID' AS column_name, activity_year, total_rows, LOS_MODIFIER4_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'LOS_MODIFIER4_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, LOS_MODIFIER4_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'APPT_STATUS_C_NAME' AS column_name, activity_year, total_rows, APPT_STATUS_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'APPT_CANC_USER_ID' AS column_name, activity_year, total_rows, APPT_CANC_USER_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'APPT_CANC_USER_ID_NAME' AS column_name, activity_year, total_rows, APPT_CANC_USER_ID_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CHECKIN_USER_ID' AS column_name, activity_year, total_rows, CHECKIN_USER_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CHECKIN_USER_ID_NAME' AS column_name, activity_year, total_rows, CHECKIN_USER_ID_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'HOSP_ADMSN_TIME' AS column_name, activity_year, total_rows, HOSP_ADMSN_TIME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'HOSP_DISCHRG_TIME' AS column_name, activity_year, total_rows, HOSP_DISCHRG_TIME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'HOSP_ADMSN_TYPE_C_NAME' AS column_name, activity_year, total_rows, HOSP_ADMSN_TYPE_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'NONCVRED_SERVICE_YN' AS column_name, activity_year, total_rows, NONCVRED_SERVICE_YN_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'REFERRAL_REQ_YN' AS column_name, activity_year, total_rows, REFERRAL_REQ_YN_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ACCOUNT_ID' AS column_name, activity_year, total_rows, ACCOUNT_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'COVERAGE_ID' AS column_name, activity_year, total_rows, COVERAGE_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'PRIMARY_LOC_ID_LOC_NAME' AS column_name, activity_year, total_rows, PRIMARY_LOC_ID_LOC_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CHARGE_SLIP_NUMBER' AS column_name, activity_year, total_rows, CHARGE_SLIP_NUMBER_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'COPAY_DUE' AS column_name, activity_year, total_rows, COPAY_DUE_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'UPDATE_DATE' AS column_name, activity_year, total_rows, UPDATE_DATE_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ADM_FOR_SURG_YN' AS column_name, activity_year, total_rows, ADM_FOR_SURG_YN_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'SURGICAL_SVC_C_NAME' AS column_name, activity_year, total_rows, SURGICAL_SVC_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'INPATIENT_DATA_ID' AS column_name, activity_year, total_rows, INPATIENT_DATA_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'IP_EPISODE_ID' AS column_name, activity_year, total_rows, IP_EPISODE_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'EXTERNAL_VISIT_ID' AS column_name, activity_year, total_rows, EXTERNAL_VISIT_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CONTACT_COMMENT' AS column_name, activity_year, total_rows, CONTACT_COMMENT_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'OUTGOING_CALL_YN' AS column_name, activity_year, total_rows, OUTGOING_CALL_YN_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'DATA_ENTRY_PERSON' AS column_name, activity_year, total_rows, DATA_ENTRY_PERSON_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'REFERRAL_SOURCE_ID' AS column_name, activity_year, total_rows, REFERRAL_SOURCE_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'REFERRAL_SOURCE_ID_REFERRING_PROV_NAM' AS column_name, activity_year, total_rows, REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'WC_TPL_VISIT_C_NAME' AS column_name, activity_year, total_rows, WC_TPL_VISIT_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CONSENT_TYPE_C_NAME' AS column_name, activity_year, total_rows, CONSENT_TYPE_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'BMI' AS column_name, activity_year, total_rows, BMI_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'BSA' AS column_name, activity_year, total_rows, BSA_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'AVS_PRINT_TM' AS column_name, activity_year, total_rows, AVS_PRINT_TM_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'AVS_FIRST_USER_ID' AS column_name, activity_year, total_rows, AVS_FIRST_USER_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'AVS_FIRST_USER_ID_NAME' AS column_name, activity_year, total_rows, AVS_FIRST_USER_ID_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_MED_FRZ_RSN_C_NAME' AS column_name, activity_year, total_rows, ENC_MED_FRZ_RSN_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'EFFECTIVE_DATE_DT' AS column_name, activity_year, total_rows, EFFECTIVE_DATE_DT_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'DISCHARGE_DATE_DT' AS column_name, activity_year, total_rows, DISCHARGE_DATE_DT_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'COPAY_PD_THRU_NAME' AS column_name, activity_year, total_rows, COPAY_PD_THRU_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'INTERPRETER_NEED_YN' AS column_name, activity_year, total_rows, INTERPRETER_NEED_YN_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'VST_SPECIAL_NEEDS_C_NAME' AS column_name, activity_year, total_rows, VST_SPECIAL_NEEDS_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'BEN_ENG_SP_AMT' AS column_name, activity_year, total_rows, BEN_ENG_SP_AMT_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'BEN_ADJ_COPAY_AMT' AS column_name, activity_year, total_rows, BEN_ADJ_COPAY_AMT_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'BEN_ADJ_METHOD_C_NAME' AS column_name, activity_year, total_rows, BEN_ADJ_METHOD_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_CREATE_USER_ID' AS column_name, activity_year, total_rows, ENC_CREATE_USER_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_CREATE_USER_ID_NAME' AS column_name, activity_year, total_rows, ENC_CREATE_USER_ID_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'ENC_INSTANT' AS column_name, activity_year, total_rows, ENC_INSTANT_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'EFFECTIVE_DATE_DTTM' AS column_name, activity_year, total_rows, EFFECTIVE_DATE_DTTM_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC' AS table_name, 'CALCULATED_ENC_STAT_C_NAME' AS column_name, activity_year, total_rows, CALCULATED_ENC_STAT_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'COPAY_COINS_FLAG' AS column_name, activity_year, total_rows, COPAY_COINS_FLAG_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CAN_LET_C_NAME' AS column_name, activity_year, total_rows, CAN_LET_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SUP_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, SUP_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SUP_PROV_C_NAME' AS column_name, activity_year, total_rows, SUP_PROV_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SUP_PROV_REV_TM' AS column_name, activity_year, total_rows, SUP_PROV_REV_TM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MEDS_REQUEST_PHR_ID' AS column_name, activity_year, total_rows, MEDS_REQUEST_PHR_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MEDS_REQUEST_PHR_ID_PHARMACY_NAME' AS column_name, activity_year, total_rows, MEDS_REQUEST_PHR_ID_PHARMACY_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MEDS_REQUEST_OP_C_NAME' AS column_name, activity_year, total_rows, MEDS_REQUEST_OP_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PHYS_BP' AS column_name, activity_year, total_rows, PHYS_BP_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VITALS_TAKEN_TM' AS column_name, activity_year, total_rows, VITALS_TAKEN_TM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PHYS_TEMP_SRC_C_NAME' AS column_name, activity_year, total_rows, PHYS_TEMP_SRC_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_PAIN_SCORE_C_NAME' AS column_name, activity_year, total_rows, PAT_PAIN_SCORE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_PAIN_LOC_C_NAME' AS column_name, activity_year, total_rows, PAT_PAIN_LOC_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_PAIN_EDU_YN' AS column_name, activity_year, total_rows, PAT_PAIN_EDU_YN_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_PAIN_CMT' AS column_name, activity_year, total_rows, PAT_PAIN_CMT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_PAIN_SCALE_CAT' AS column_name, activity_year, total_rows, PAT_PAIN_SCALE_CAT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SMOKING_STATUS_C_NAME' AS column_name, activity_year, total_rows, SMOKING_STATUS_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PHYS_SPO2' AS column_name, activity_year, total_rows, PHYS_SPO2_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SYS_GEN_LOS_ID_PROC_NAME' AS column_name, activity_year, total_rows, SYS_GEN_LOS_ID_PROC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'DOC_HX_SOURCE_C_NAME' AS column_name, activity_year, total_rows, DOC_HX_SOURCE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'APPT_LET_C_NAME' AS column_name, activity_year, total_rows, APPT_LET_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PARENT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PARENT_ENC_CSN_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SYNC_IP_DATA_C_NAME' AS column_name, activity_year, total_rows, SYNC_IP_DATA_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'APPTMT_LET_INST' AS column_name, activity_year, total_rows, APPTMT_LET_INST_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'RESULT_LET_INST' AS column_name, activity_year, total_rows, RESULT_LET_INST_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'RESCHED_LET_INST' AS column_name, activity_year, total_rows, RESCHED_LET_INST_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'FOLLOW_LET_INST' AS column_name, activity_year, total_rows, FOLLOW_LET_INST_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PHYS_PEAK_FLOW' AS column_name, activity_year, total_rows, PHYS_PEAK_FLOW_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'ENC_SPEC_C_NAME' AS column_name, activity_year, total_rows, ENC_SPEC_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'LD_STATUS_YN' AS column_name, activity_year, total_rows, LD_STATUS_YN_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'ADT_PAT_CLASS_C_NAME' AS column_name, activity_year, total_rows, ADT_PAT_CLASS_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'OTHER_BLOCK_ID' AS column_name, activity_year, total_rows, OTHER_BLOCK_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'OTHER_BLOCK_TYPE_C_NAME' AS column_name, activity_year, total_rows, OTHER_BLOCK_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'BILL_NUM' AS column_name, activity_year, total_rows, BILL_NUM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'IP_DOC_CONTACT_CSN' AS column_name, activity_year, total_rows, IP_DOC_CONTACT_CSN_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'TEMP_PT_HIS_C_NAME' AS column_name, activity_year, total_rows, TEMP_PT_HIS_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PRIMARY_PROCONT_ID_PROV_NAME' AS column_name, activity_year, total_rows, PRIMARY_PROCONT_ID_PROV_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PRIMARY_TEAM_ID' AS column_name, activity_year, total_rows, PRIMARY_TEAM_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PRIMARY_TEAM_ID_RECORD_NAME' AS column_name, activity_year, total_rows, PRIMARY_TEAM_ID_RECORD_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MCIR_VACCINE_CODE_C_NAME' AS column_name, activity_year, total_rows, MCIR_VACCINE_CODE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VISIT_POS_ID_LOC_NAME' AS column_name, activity_year, total_rows, VISIT_POS_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'NO_INTERP_RSN_C_NAME' AS column_name, activity_year, total_rows, NO_INTERP_RSN_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CVG_ADD_DT' AS column_name, activity_year, total_rows, CVG_ADD_DT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'FARM_WORKER_C_NAME' AS column_name, activity_year, total_rows, FARM_WORKER_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'KIOSK_HH_QUEST_ID' AS column_name, activity_year, total_rows, KIOSK_HH_QUEST_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'KIOSK_HH_QUEST_ID_RECORD_NAME' AS column_name, activity_year, total_rows, KIOSK_HH_QUEST_ID_RECORD_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'HSP_ACCT_ADV_DTTM' AS column_name, activity_year, total_rows, HSP_ACCT_ADV_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VISIT_VERIFIED_YN' AS column_name, activity_year, total_rows, VISIT_VERIFIED_YN_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VERIF_VISIT_DT' AS column_name, activity_year, total_rows, VERIF_VISIT_DT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VERIF_DATE_INIT_DT' AS column_name, activity_year, total_rows, VERIF_DATE_INIT_DT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VERIF_USER_ID' AS column_name, activity_year, total_rows, VERIF_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'ENC_LACT_STAT_C_NAME' AS column_name, activity_year, total_rows, ENC_LACT_STAT_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAT_LACT_CMNT' AS column_name, activity_year, total_rows, PAT_LACT_CMNT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'COSIGNER_USER_ID' AS column_name, activity_year, total_rows, COSIGNER_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'COSIGNER_USER_ID_NAME' AS column_name, activity_year, total_rows, COSIGNER_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'COSIGN_REV_INS_DTTM' AS column_name, activity_year, total_rows, COSIGN_REV_INS_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'PAR_DICT_COUNTER' AS column_name, activity_year, total_rows, PAR_DICT_COUNTER_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'IS_LOS_UPDATE_C_NAME' AS column_name, activity_year, total_rows, IS_LOS_UPDATE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'FORM_ID_COUNTER' AS column_name, activity_year, total_rows, FORM_ID_COUNTER_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CONSNT_REV_USER_ID' AS column_name, activity_year, total_rows, CONSNT_REV_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CONSNT_REV_USER_ID_NAME' AS column_name, activity_year, total_rows, CONSNT_REV_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VISIT_PAYOR_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, VISIT_PAYOR_ID_PAYOR_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'VISIT_PLAN_ID_BENEFIT_PLAN_NAME' AS column_name, activity_year, total_rows, VISIT_PLAN_ID_BENEFIT_PLAN_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'SOCIO_SRC_C_NAME' AS column_name, activity_year, total_rows, SOCIO_SRC_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'TEL_ENC_MSG_RGRDING' AS column_name, activity_year, total_rows, TEL_ENC_MSG_RGRDING_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MSG_PRIORITY_C_NAME' AS column_name, activity_year, total_rows, MSG_PRIORITY_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'RESEARCH_ENC_FLG_C_NAME' AS column_name, activity_year, total_rows, RESEARCH_ENC_FLG_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'FAM_SPOUSE_NAME' AS column_name, activity_year, total_rows, FAM_SPOUSE_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MSG_CALLER_NAME' AS column_name, activity_year, total_rows, MSG_CALLER_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CONSENT_EXP_DATE' AS column_name, activity_year, total_rows, CONSENT_EXP_DATE_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'CV_ACC4_PAT_RESP_YN' AS column_name, activity_year, total_rows, CV_ACC4_PAT_RESP_YN_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'FAMILY_MEM_PREFIX_C_NAME' AS column_name, activity_year, total_rows, FAMILY_MEM_PREFIX_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'AVS_REFUSED_DTTM' AS column_name, activity_year, total_rows, AVS_REFUSED_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'AVS_LAST_PRINT_DTTM' AS column_name, activity_year, total_rows, AVS_LAST_PRINT_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_2' AS table_name, 'MED_LIST_UPDATE_DTTM' AS column_name, activity_year, total_rows, MED_LIST_UPDATE_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'PAT_ENC_CSN' AS column_name, activity_year, total_rows, PAT_ENC_CSN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'CHKOUT_USER_ID' AS column_name, activity_year, total_rows, CHKOUT_USER_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'CHKOUT_USER_ID_NAME' AS column_name, activity_year, total_rows, CHKOUT_USER_ID_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'ENC_BILL_AREA_ID' AS column_name, activity_year, total_rows, ENC_BILL_AREA_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'ENC_BILL_AREA_ID_BILL_AREA_NAME' AS column_name, activity_year, total_rows, ENC_BILL_AREA_ID_BILL_AREA_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'RX_CHG_ADMIT_FLG_C_NAME' AS column_name, activity_year, total_rows, RX_CHG_ADMIT_FLG_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'DX_UNIQUE_COUNTER' AS column_name, activity_year, total_rows, DX_UNIQUE_COUNTER_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'HP_DEFAULTED_YN' AS column_name, activity_year, total_rows, HP_DEFAULTED_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'IP_CP_LAST_VAR_DTTM' AS column_name, activity_year, total_rows, IP_CP_LAST_VAR_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'READY_QUT_SMOKING_C_NAME' AS column_name, activity_year, total_rows, READY_QUT_SMOKING_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COUNSELING_GIVEN_C_NAME' AS column_name, activity_year, total_rows, COUNSELING_GIVEN_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COMMAUTO_SENDER_ID' AS column_name, activity_year, total_rows, COMMAUTO_SENDER_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COMMAUTO_SENDER_ID_NAME' AS column_name, activity_year, total_rows, COMMAUTO_SENDER_ID_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'BENEFIT_ID' AS column_name, activity_year, total_rows, BENEFIT_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'PREPAY_DUE_AMT' AS column_name, activity_year, total_rows, PREPAY_DUE_AMT_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'PREPAY_AMT_FROM_C_NAME' AS column_name, activity_year, total_rows, PREPAY_AMT_FROM_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'PREPAY_PAID_AMT' AS column_name, activity_year, total_rows, PREPAY_PAID_AMT_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'PREADMSN_TESTING_DT' AS column_name, activity_year, total_rows, PREADMSN_TESTING_DT_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'SMK_CESS_USER_ID' AS column_name, activity_year, total_rows, SMK_CESS_USER_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'SMK_CESS_USER_ID_NAME' AS column_name, activity_year, total_rows, SMK_CESS_USER_ID_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'SMK_CESS_DTTM' AS column_name, activity_year, total_rows, SMK_CESS_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'DO_NOT_BILL_INS_YN' AS column_name, activity_year, total_rows, DO_NOT_BILL_INS_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'SELF_PAY_VISIT_YN' AS column_name, activity_year, total_rows, SELF_PAY_VISIT_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'REFERRAL_TYPE_C_NAME' AS column_name, activity_year, total_rows, REFERRAL_TYPE_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'SCHOOL' AS column_name, activity_year, total_rows, SCHOOL_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COPAY_NUM_UNITS' AS column_name, activity_year, total_rows, COPAY_NUM_UNITS_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COPAY_AMT_PER_UNIT' AS column_name, activity_year, total_rows, COPAY_AMT_PER_UNIT_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COPAY_LASTCALC_DT' AS column_name, activity_year, total_rows, COPAY_LASTCALC_DT_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'COPAY_OVERRIDDEN_YN' AS column_name, activity_year, total_rows, COPAY_OVERRIDDEN_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'OB_TOTAL_WT_GAIN' AS column_name, activity_year, total_rows, OB_TOTAL_WT_GAIN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'MEDICAID_GROUP_NAME' AS column_name, activity_year, total_rows, MEDICAID_GROUP_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'STUDENT_STATUS_C_NAME' AS column_name, activity_year, total_rows, STUDENT_STATUS_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'MEDICAID_GROUP_ID' AS column_name, activity_year, total_rows, MEDICAID_GROUP_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'EXTERNAL_REF_ID' AS column_name, activity_year, total_rows, EXTERNAL_REF_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'OUTCOME_C_NAME' AS column_name, activity_year, total_rows, OUTCOME_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_3' AS table_name, 'HSPC_NO_ADM_C_NAME' AS column_name, activity_year, total_rows, HSPC_NO_ADM_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'FAMILY_SIZE' AS column_name, activity_year, total_rows, FAMILY_SIZE_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'VISIT_NUMBER' AS column_name, activity_year, total_rows, VISIT_NUMBER_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PAT_CNCT_IND_C_NAME' AS column_name, activity_year, total_rows, PAT_CNCT_IND_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'DENTAL_STUDENT_ID_PROV_NAME' AS column_name, activity_year, total_rows, DENTAL_STUDENT_ID_PROV_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'LOC_VISIT_ID_LOC_NAME' AS column_name, activity_year, total_rows, LOC_VISIT_ID_LOC_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_NOT_COVERED_C_NAME' AS column_name, activity_year, total_rows, COPAY_NOT_COVERED_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_COLL_FLAG_YN' AS column_name, activity_year, total_rows, COPAY_COLL_FLAG_YN_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_COLL_PERSON' AS column_name, activity_year, total_rows, COPAY_COLL_PERSON_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_WAIVE_RSN_C_NAME' AS column_name, activity_year, total_rows, COPAY_WAIVE_RSN_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_MIN_VALUE' AS column_name, activity_year, total_rows, COPAY_MIN_VALUE_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_RECEIPT_NUM' AS column_name, activity_year, total_rows, COPAY_RECEIPT_NUM_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BEN_ADJ_COINS_AMT' AS column_name, activity_year, total_rows, BEN_ADJ_COINS_AMT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BEN_ADJ_DEDUCT_AMT' AS column_name, activity_year, total_rows, BEN_ADJ_DEDUCT_AMT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PAT_HOMELESS_YN' AS column_name, activity_year, total_rows, PAT_HOMELESS_YN_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PAT_HOMELESS_TYP_C_NAME' AS column_name, activity_year, total_rows, PAT_HOMELESS_TYP_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PERCENTAGE_OF_FPL' AS column_name, activity_year, total_rows, PERCENTAGE_OF_FPL_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'MSG_RECEIVED_DTTM' AS column_name, activity_year, total_rows, MSG_RECEIVED_DTTM_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'TOBACCO_USE_VRFY_YN' AS column_name, activity_year, total_rows, TOBACCO_USE_VRFY_YN_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_TX_TYPE_C_NAME' AS column_name, activity_year, total_rows, CR_TX_TYPE_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'ORIG_ENC_CSN' AS column_name, activity_year, total_rows, ORIG_ENC_CSN_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_BP_COMMENTS' AS column_name, activity_year, total_rows, PHYS_BP_COMMENTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_TEMP_COMMENTS' AS column_name, activity_year, total_rows, PHYS_TEMP_COMMENTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_TEMPSRC_COMNTS' AS column_name, activity_year, total_rows, PHYS_TEMPSRC_COMNTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_PULSE_COMMENTS' AS column_name, activity_year, total_rows, PHYS_PULSE_COMMENTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_WEIGHT_COMNTS' AS column_name, activity_year, total_rows, PHYS_WEIGHT_COMNTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_HEIGHT_COMNTS' AS column_name, activity_year, total_rows, PHYS_HEIGHT_COMNTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_RESP_COMMENTS' AS column_name, activity_year, total_rows, PHYS_RESP_COMMENTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_SPO2_COMMENTS' AS column_name, activity_year, total_rows, PHYS_SPO2_COMMENTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PHYS_PF_COMMENTS' AS column_name, activity_year, total_rows, PHYS_PF_COMMENTS_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'INTERPRT_ASGN_CMT' AS column_name, activity_year, total_rows, INTERPRT_ASGN_CMT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PAT_HOUSING_STAT_C_NAME' AS column_name, activity_year, total_rows, PAT_HOUSING_STAT_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_AGE' AS column_name, activity_year, total_rows, BCRA_AGE_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_MENARCHE_AGE_C_NAME' AS column_name, activity_year, total_rows, BCRA_MENARCHE_AGE_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_FST_LIVBIRTH_C_NAME' AS column_name, activity_year, total_rows, BCRA_FST_LIVBIRTH_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_FST_DEG_REL_C_NAME' AS column_name, activity_year, total_rows, BCRA_FST_DEG_REL_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_NUM_BIOPSY_C_NAME' AS column_name, activity_year, total_rows, BCRA_NUM_BIOPSY_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_ATYP_HYPLSA_C_NAME' AS column_name, activity_year, total_rows, BCRA_ATYP_HYPLSA_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BCRA_RACE_C_NAME' AS column_name, activity_year, total_rows, BCRA_RACE_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'LB_ENC_START_DT' AS column_name, activity_year, total_rows, LB_ENC_START_DT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'LB_ENC_END_DT' AS column_name, activity_year, total_rows, LB_ENC_END_DT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'WAITING_LIST_ID' AS column_name, activity_year, total_rows, WAITING_LIST_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'SUBMITTER_ID' AS column_name, activity_year, total_rows, SUBMITTER_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'SUBMITTER_ID_RECORD_NAME' AS column_name, activity_year, total_rows, SUBMITTER_ID_RECORD_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'BILL_TO_SUBMITTER_C_NAME' AS column_name, activity_year, total_rows, BILL_TO_SUBMITTER_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'SUBMITTER_ACCT_ID' AS column_name, activity_year, total_rows, SUBMITTER_ACCT_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'LB_BLNG_ENC_SRVC_DT' AS column_name, activity_year, total_rows, LB_BLNG_ENC_SRVC_DT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'ECHKIN_STATUS_C_NAME' AS column_name, activity_year, total_rows, ECHKIN_STATUS_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'PB_VISIT_HAR_ID' AS column_name, activity_year, total_rows, PB_VISIT_HAR_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'TECHNICAL_REFERRAL_ID' AS column_name, activity_year, total_rows, TECHNICAL_REFERRAL_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_CLIENT_REF_IDNT' AS column_name, activity_year, total_rows, CR_CLIENT_REF_IDNT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_BENEFIT_REF_IDNT' AS column_name, activity_year, total_rows, CR_BENEFIT_REF_IDNT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_MESSAGE_ENGLISH' AS column_name, activity_year, total_rows, CR_MESSAGE_ENGLISH_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_MESSAGE_SPANISH' AS column_name, activity_year, total_rows, CR_MESSAGE_SPANISH_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_QUERY_SENT_UTC_DTTM' AS column_name, activity_year, total_rows, CR_QUERY_SENT_UTC_DTTM_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_RESP_RECVD_UTC_DTTM' AS column_name, activity_year, total_rows, CR_RESP_RECVD_UTC_DTTM_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'CR_QUERY_ERROR' AS column_name, activity_year, total_rows, CR_QUERY_ERROR_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_4' AS table_name, 'COPAY_REDUCTION_AMT' AS column_name, activity_year, total_rows, COPAY_REDUCTION_AMT_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PUBLIC_HOUSING_YN' AS column_name, activity_year, total_rows, PUBLIC_HOUSING_YN_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PVT_HOSP_ENC_C_NAME' AS column_name, activity_year, total_rows, PVT_HOSP_ENC_C_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'LINK_INS_TYPE_C_NAME' AS column_name, activity_year, total_rows, LINK_INS_TYPE_C_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PAT_VER_HCA_C_NAME' AS column_name, activity_year, total_rows, PAT_VER_HCA_C_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'EXT_GRP_IDNT' AS column_name, activity_year, total_rows, EXT_GRP_IDNT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'EXT_GRP_SRC_C_NAME' AS column_name, activity_year, total_rows, EXT_GRP_SRC_C_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_SET_BY_USER_YN' AS column_name, activity_year, total_rows, PREPAY_SET_BY_USER_YN_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_UPDATE_USER_ID' AS column_name, activity_year, total_rows, PREPAY_UPDATE_USER_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_UPDATE_USER_ID_NAME' AS column_name, activity_year, total_rows, PREPAY_UPDATE_USER_ID_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_UPDATE_INST_DTTM' AS column_name, activity_year, total_rows, PREPAY_UPDATE_INST_DTTM_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_CALC_SCENARIO' AS column_name, activity_year, total_rows, PREPAY_CALC_SCENARIO_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'AUTHCERT_ID' AS column_name, activity_year, total_rows, AUTHCERT_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'ED_REF_CALLBAK_YN' AS column_name, activity_year, total_rows, ED_REF_CALLBAK_YN_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'ED_REF_CALLBAK_P_ID_PROV_NAME' AS column_name, activity_year, total_rows, ED_REF_CALLBAK_P_ID_PROV_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'ED_REF_CALLBAK_C_ID_LOC_NAME' AS column_name, activity_year, total_rows, ED_REF_CALLBAK_C_ID_LOC_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'ED_REF_CALLBAK_NUM' AS column_name, activity_year, total_rows, ED_REF_CALLBAK_NUM_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'IS_ON_DEMAND_VV_YN' AS column_name, activity_year, total_rows, IS_ON_DEMAND_VV_YN_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'ATTR_DEPARTMENT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, ATTR_DEPARTMENT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PAT_DTREE_ANSWER_ID' AS column_name, activity_year, total_rows, PAT_DTREE_ANSWER_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_AMT' AS column_name, activity_year, total_rows, PREPAY_DISCNT_AMT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_PCT' AS column_name, activity_year, total_rows, PREPAY_DISCNT_PCT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_PROPOSED_DISCNT_AMT' AS column_name, activity_year, total_rows, PREPAY_PROPOSED_DISCNT_AMT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_CALC_RULE_ID' AS column_name, activity_year, total_rows, PREPAY_DISCNT_CALC_RULE_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_CALC_RULE_ID_RULE_NAME' AS column_name, activity_year, total_rows, PREPAY_DISCNT_CALC_RULE_ID_RULE_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_CALC_PCT' AS column_name, activity_year, total_rows, PREPAY_DISCNT_CALC_PCT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_OVRIDE_AMT' AS column_name, activity_year, total_rows, PREPAY_DISCNT_OVRIDE_AMT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_OVRIDE_PCT' AS column_name, activity_year, total_rows, PREPAY_DISCNT_OVRIDE_PCT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_OVRIDE_USER_ID' AS column_name, activity_year, total_rows, PREPAY_DISCNT_OVRIDE_USER_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_OVRIDE_USER_ID_NAME' AS column_name, activity_year, total_rows, PREPAY_DISCNT_OVRIDE_USER_ID_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_OVRIDE_CMT' AS column_name, activity_year, total_rows, PREPAY_DISCNT_OVRIDE_CMT_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'PREPAY_DISCNT_OVRIDE_DTTM' AS column_name, activity_year, total_rows, PREPAY_DISCNT_OVRIDE_DTTM_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_5' AS table_name, 'EVISIT_STATUS_C_NAME' AS column_name, activity_year, total_rows, EVISIT_STATUS_C_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'LINKED_ENC_CSN' AS column_name, activity_year, total_rows, LINKED_ENC_CSN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'LMP_PRECISION_C_NAME' AS column_name, activity_year, total_rows, LMP_PRECISION_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'PLANNED_BILL_AREA_ID' AS column_name, activity_year, total_rows, PLANNED_BILL_AREA_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'PLANNED_BILL_AREA_ID_BILL_AREA_NAME' AS column_name, activity_year, total_rows, PLANNED_BILL_AREA_ID_BILL_AREA_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'BCRA_BRCA_GENE_MUT_C_NAME' AS column_name, activity_year, total_rows, BCRA_BRCA_GENE_MUT_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SVC_TARGET_EFFORT_YN' AS column_name, activity_year, total_rows, SVC_TARGET_EFFORT_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'OUTPAT_VISIT_GRP_C_NAME' AS column_name, activity_year, total_rows, OUTPAT_VISIT_GRP_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'PSYCH_ARRIVAL_C_NAME' AS column_name, activity_year, total_rows, PSYCH_ARRIVAL_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'PLAN_RECUR_TREAT_YN' AS column_name, activity_year, total_rows, PLAN_RECUR_TREAT_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'HUS_VISIT_TYPE_C_NAME' AS column_name, activity_year, total_rows, HUS_VISIT_TYPE_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SOCIAL_SRVC_AREA_C_NAME' AS column_name, activity_year, total_rows, SOCIAL_SRVC_AREA_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EXT_LTC_PAT_YN' AS column_name, activity_year, total_rows, EXT_LTC_PAT_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'VETERAN_ENC_MED_CVG_C_NAME' AS column_name, activity_year, total_rows, VETERAN_ENC_MED_CVG_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'VETERAN_BILLING_CODE_C_NAME' AS column_name, activity_year, total_rows, VETERAN_BILLING_CODE_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'ED_REF_CALLBAK_D_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, ED_REF_CALLBAK_D_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'RFV_USED_TO_SCHED_C_NAME' AS column_name, activity_year, total_rows, RFV_USED_TO_SCHED_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'BMI_PERCENTILE' AS column_name, activity_year, total_rows, BMI_PERCENTILE_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'CREATION_ORD_ID' AS column_name, activity_year, total_rows, CREATION_ORD_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EXT_TX_STATUS_C_NAME' AS column_name, activity_year, total_rows, EXT_TX_STATUS_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EXT_TX_STATUS_CMT' AS column_name, activity_year, total_rows, EXT_TX_STATUS_CMT_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EXT_ACCM_STATUS_C_NAME' AS column_name, activity_year, total_rows, EXT_ACCM_STATUS_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EXT_ACCM_STATUS_CMT' AS column_name, activity_year, total_rows, EXT_ACCM_STATUS_CMT_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_AT_RISK_IND_C_NAME' AS column_name, activity_year, total_rows, SG_AT_RISK_IND_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_FC_STATUS_C_NAME' AS column_name, activity_year, total_rows, SG_FC_STATUS_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'ELIG_PLAN_SELECT_YN' AS column_name, activity_year, total_rows, ELIG_PLAN_SELECT_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_MOH_URGENCY_C_NAME' AS column_name, activity_year, total_rows, SG_MOH_URGENCY_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_NAMED_REFERRAL_YN' AS column_name, activity_year, total_rows, SG_NAMED_REFERRAL_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_PAT_REQUEST_YN' AS column_name, activity_year, total_rows, SG_PAT_REQUEST_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_TREATMENT_PROG_C_NAME' AS column_name, activity_year, total_rows, SG_TREATMENT_PROG_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SG_APPT_RATIONALE_C_NAME' AS column_name, activity_year, total_rows, SG_APPT_RATIONALE_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EVISIT_RFV_C_NAME' AS column_name, activity_year, total_rows, EVISIT_RFV_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EVISIT_YN' AS column_name, activity_year, total_rows, EVISIT_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EVISIT_TLH_ALLOWED_SUBLOC_C_NAME' AS column_name, activity_year, total_rows, EVISIT_TLH_ALLOWED_SUBLOC_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EVISIT_TLH_ALLOWED_LOC_C_NAME' AS column_name, activity_year, total_rows, EVISIT_TLH_ALLOWED_LOC_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'APPT_AUTH_STATUS_C_NAME' AS column_name, activity_year, total_rows, APPT_AUTH_STATUS_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EVISIT_NEW_STATUS_C_NAME' AS column_name, activity_year, total_rows, EVISIT_NEW_STATUS_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'LAB_RESP_USER_ID' AS column_name, activity_year, total_rows, LAB_RESP_USER_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'LAB_RESP_USER_ID_NAME' AS column_name, activity_year, total_rows, LAB_RESP_USER_ID_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'EXT_MEDS_UPD_INST_UTC_DTTM' AS column_name, activity_year, total_rows, EXT_MEDS_UPD_INST_UTC_DTTM_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'INTF_PRIMARY_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, INTF_PRIMARY_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'OVERRIDE_BCRA_NUM_BIOPSY_C_NAME' AS column_name, activity_year, total_rows, OVERRIDE_BCRA_NUM_BIOPSY_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'OVERRIDE_BCRA_RACE_C_NAME' AS column_name, activity_year, total_rows, OVERRIDE_BCRA_RACE_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'OVERRIDE_GAIL_FACTOR_USER_ID' AS column_name, activity_year, total_rows, OVERRIDE_GAIL_FACTOR_USER_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'OVERRIDE_GAIL_FACTOR_USER_ID_NAME' AS column_name, activity_year, total_rows, OVERRIDE_GAIL_FACTOR_USER_ID_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'OVERRIDE_GAIL_FACTOR_DTTM' AS column_name, activity_year, total_rows, OVERRIDE_GAIL_FACTOR_DTTM_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'VETERAN_COVERAGE_ENC_YN' AS column_name, activity_year, total_rows, VETERAN_COVERAGE_ENC_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'ADJUD_TO_PHARMACY_COVERAGE_YN' AS column_name, activity_year, total_rows, ADJUD_TO_PHARMACY_COVERAGE_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'TLH_APRV_SUBLOC_C_NAME' AS column_name, activity_year, total_rows, TLH_APRV_SUBLOC_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'TLH_APRV_LOC_C_NAME' AS column_name, activity_year, total_rows, TLH_APRV_LOC_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'ENC_CLOSE_UTC_DTTM' AS column_name, activity_year, total_rows, ENC_CLOSE_UTC_DTTM_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_6' AS table_name, 'SPLIT_FILING_ORDER_YN' AS column_name, activity_year, total_rows, SPLIT_FILING_ORDER_YN_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'NOTIFY_REP_ADMSN_C_NAME' AS column_name, activity_year, total_rows, NOTIFY_REP_ADMSN_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'REP_NOTIFIED_C_NAME' AS column_name, activity_year, total_rows, REP_NOTIFIED_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'NOTIFY_REP_COMMENTS' AS column_name, activity_year, total_rows, NOTIFY_REP_COMMENTS_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'NOTIFY_PCP_ADMSN_C_NAME' AS column_name, activity_year, total_rows, NOTIFY_PCP_ADMSN_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'PCP_NOTIFIED_C_NAME' AS column_name, activity_year, total_rows, PCP_NOTIFIED_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'NOTIFY_PCP_COMMENTS' AS column_name, activity_year, total_rows, NOTIFY_PCP_COMMENTS_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'ROC_PLANNING_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, ROC_PLANNING_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'NUM_PREV_EPSD_C_NAME' AS column_name, activity_year, total_rows, NUM_PREV_EPSD_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'SPEC_ORD_RSLT_NOT_AUTO_RLS_YN' AS column_name, activity_year, total_rows, SPEC_ORD_RSLT_NOT_AUTO_RLS_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'RECENTLY_AT_SCHOOL_C_NAME' AS column_name, activity_year, total_rows, RECENTLY_AT_SCHOOL_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'LMP_COMMENT' AS column_name, activity_year, total_rows, LMP_COMMENT_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'CONTACT_NUM' AS column_name, activity_year, total_rows, CONTACT_NUM_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'ABN_REQUIRED_YN' AS column_name, activity_year, total_rows, ABN_REQUIRED_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'IS_ABN_SIGNED_C_NAME' AS column_name, activity_year, total_rows, IS_ABN_SIGNED_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'MSP_IS_MEDICARE_HMO_C_NAME' AS column_name, activity_year, total_rows, MSP_IS_MEDICARE_HMO_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'REG_COMMENTS_DATE' AS column_name, activity_year, total_rows, REG_COMMENTS_DATE_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'AUTO_MSG_DISABLED_YN' AS column_name, activity_year, total_rows, AUTO_MSG_DISABLED_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'DONT_AUTO_LINK_YN' AS column_name, activity_year, total_rows, DONT_AUTO_LINK_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'RSN_FOR_NO_INC_MSG_C_NAME' AS column_name, activity_year, total_rows, RSN_FOR_NO_INC_MSG_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'HAS_HORMONE_DATA_YN' AS column_name, activity_year, total_rows, HAS_HORMONE_DATA_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'MEDS_REQUEST_LWS_ID_WORKSTATION_NAME' AS column_name, activity_year, total_rows, MEDS_REQUEST_LWS_ID_WORKSTATION_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'EVISIT_SUBMITTED_DTTM' AS column_name, activity_year, total_rows, EVISIT_SUBMITTED_DTTM_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'EVISIT_TURNAROUND_IN_MINUTES' AS column_name, activity_year, total_rows, EVISIT_TURNAROUND_IN_MINUTES_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'PREGNANCY_INTENTION_C_NAME' AS column_name, activity_year, total_rows, PREGNANCY_INTENTION_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'PREGNANCY_COUNSELED_YN' AS column_name, activity_year, total_rows, PREGNANCY_COUNSELED_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'BIRTH_CONTROL_COUNSELED_YN' AS column_name, activity_year, total_rows, BIRTH_CONTROL_COUNSELED_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'RSN_NO_BCM_COUNSELING_C_NAME' AS column_name, activity_year, total_rows, RSN_NO_BCM_COUNSELING_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'INTAKE_RSN_NO_CONTRACEPTIVE_C_NAME' AS column_name, activity_year, total_rows, INTAKE_RSN_NO_CONTRACEPTIVE_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'CONTRACEPTIVE_DELIVERY_C_NAME' AS column_name, activity_year, total_rows, CONTRACEPTIVE_DELIVERY_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'EXIT_RSN_NO_CONTRACEPTIVE_C_NAME' AS column_name, activity_year, total_rows, EXIT_RSN_NO_CONTRACEPTIVE_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'IS_VAP_DECLINED_YN' AS column_name, activity_year, total_rows, IS_VAP_DECLINED_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'EPISODE_UPDATE_EFF_DATE' AS column_name, activity_year, total_rows, EPISODE_UPDATE_EFF_DATE_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'EPISODE_UPD_CREAT_RSN_C_NAME' AS column_name, activity_year, total_rows, EPISODE_UPD_CREAT_RSN_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'VISIT_MSG_DECLINE_YN' AS column_name, activity_year, total_rows, VISIT_MSG_DECLINE_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_7' AS table_name, 'BILL_FOR_DENIAL_YN' AS column_name, activity_year, total_rows, BILL_FOR_DENIAL_YN_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'EST_PREPAY_CALC_PP_PROPOSED_YN' AS column_name, activity_year, total_rows, EST_PREPAY_CALC_PP_PROPOSED_YN_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'EST_PREPAY_CALC_ELIG_C_NAME' AS column_name, activity_year, total_rows, EST_PREPAY_CALC_ELIG_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'PMT_PLAN_AGRMT_SCHED_PMT_ID' AS column_name, activity_year, total_rows, PMT_PLAN_AGRMT_SCHED_PMT_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'RSLT_FOL_UP_CREAT_SRC_C_NAME' AS column_name, activity_year, total_rows, RSLT_FOL_UP_CREAT_SRC_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'BILL_DECIS_FIN_ASST_TRACKER_ID' AS column_name, activity_year, total_rows, BILL_DECIS_FIN_ASST_TRACKER_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'NO_FOLLOW_UP_YN' AS column_name, activity_year, total_rows, NO_FOLLOW_UP_YN_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'MCAID_INCARCERATION_BILL_CODE' AS column_name, activity_year, total_rows, MCAID_INCARCERATION_BILL_CODE_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'MCAID_INCAR_BILL_START_DATE' AS column_name, activity_year, total_rows, MCAID_INCAR_BILL_START_DATE_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'MEDICARE_CHANGE_C_NAME' AS column_name, activity_year, total_rows, MEDICARE_CHANGE_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'MSP_RTE_VERI_STAT_C_NAME' AS column_name, activity_year, total_rows, MSP_RTE_VERI_STAT_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'MSP_COMP_REALTIME_TX_CSN_ID' AS column_name, activity_year, total_rows, MSP_COMP_REALTIME_TX_CSN_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'MSP_RTE_COMP_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, MSP_RTE_COMP_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'TAKING_PULL_REJECTED_YN' AS column_name, activity_year, total_rows, TAKING_PULL_REJECTED_YN_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'HOSP_SERV_C_NAME' AS column_name, activity_year, total_rows, HOSP_SERV_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'LEVEL_OF_CARE_C_NAME' AS column_name, activity_year, total_rows, LEVEL_OF_CARE_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'ACCOMMODATION_C_NAME' AS column_name, activity_year, total_rows, ACCOMMODATION_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'ACCOM_REASON_C_NAME' AS column_name, activity_year, total_rows, ACCOM_REASON_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'APPT_NEEDS_BED_C_NAME' AS column_name, activity_year, total_rows, APPT_NEEDS_BED_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'APPT_BED_PREDEPT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, APPT_BED_PREDEPT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'APPT_BED_HOSP_SERV_C_NAME' AS column_name, activity_year, total_rows, APPT_BED_HOSP_SERV_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'APPT_BED_POST_LEVEL_OF_CARE_C_NAME' AS column_name, activity_year, total_rows, APPT_BED_POST_LEVEL_OF_CARE_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'APPT_BED_CMT_S' AS column_name, activity_year, total_rows, APPT_BED_CMT_S_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_8' AS table_name, 'SEPARATED_GROUP_YN' AS column_name, activity_year, total_rows, SEPARATED_GROUP_YN_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'PAT_ENC_APPT' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'PAT_ENC_APPT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'PAT_ENC_APPT' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'PAT_ENC_APPT' AS table_name, 'DEPARTMENT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, DEPARTMENT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'PAT_ENC_APPT' AS table_name, 'PROV_START_TIME' AS column_name, activity_year, total_rows, PROV_START_TIME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'PAT_ENC_APPT' AS table_name, 'APPT_PROV_PRIMARY_SPECIALTY_C_NAME' AS column_name, activity_year, total_rows, APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADT_PAT_CLASS_C_NAME' AS column_name, activity_year, total_rows, ADT_PAT_CLASS_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADT_PATIENT_STAT_C_NAME' AS column_name, activity_year, total_rows, ADT_PATIENT_STAT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'LEVEL_OF_CARE_C_NAME' AS column_name, activity_year, total_rows, LEVEL_OF_CARE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PENDING_DISCH_TIME' AS column_name, activity_year, total_rows, PENDING_DISCH_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'DISCH_CODE_C_NAME' AS column_name, activity_year, total_rows, DISCH_CODE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADT_ATHCRT_STAT_C_NAME' AS column_name, activity_year, total_rows, ADT_ATHCRT_STAT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PREADM_UNDO_RSN_C_NAME' AS column_name, activity_year, total_rows, PREADM_UNDO_RSN_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'EXP_ADMISSION_TIME' AS column_name, activity_year, total_rows, EXP_ADMISSION_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'EXP_LEN_OF_STAY' AS column_name, activity_year, total_rows, EXP_LEN_OF_STAY_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'EXP_DISCHARGE_DATE' AS column_name, activity_year, total_rows, EXP_DISCHARGE_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADMIT_CATEGORY_C_NAME' AS column_name, activity_year, total_rows, ADMIT_CATEGORY_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADMIT_SOURCE_C_NAME' AS column_name, activity_year, total_rows, ADMIT_SOURCE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TYPE_OF_ROOM_C_NAME' AS column_name, activity_year, total_rows, TYPE_OF_ROOM_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TYPE_OF_BED_C_NAME' AS column_name, activity_year, total_rows, TYPE_OF_BED_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'RSN_FOR_BED_C_NAME' AS column_name, activity_year, total_rows, RSN_FOR_BED_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'DELIVERY_TYPE_C_NAME' AS column_name, activity_year, total_rows, DELIVERY_TYPE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'LABOR_STATUS_C_NAME' AS column_name, activity_year, total_rows, LABOR_STATUS_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ER_INJURY' AS column_name, activity_year, total_rows, ER_INJURY_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADT_ARRIVAL_TIME' AS column_name, activity_year, total_rows, ADT_ARRIVAL_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADT_ARRIVAL_STS_C_NAME' AS column_name, activity_year, total_rows, ADT_ARRIVAL_STS_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOSP_ADMSN_TIME' AS column_name, activity_year, total_rows, HOSP_ADMSN_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADMIT_CONF_STAT_C_NAME' AS column_name, activity_year, total_rows, ADMIT_CONF_STAT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOSP_DISCH_TIME' AS column_name, activity_year, total_rows, HOSP_DISCH_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOSP_ADMSN_TYPE_C_NAME' AS column_name, activity_year, total_rows, HOSP_ADMSN_TYPE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ROOM_ID_ROOM_NAME' AS column_name, activity_year, total_rows, ROOM_ID_ROOM_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOSP_SERV_C_NAME' AS column_name, activity_year, total_rows, HOSP_SERV_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'MEANS_OF_DEPART_C_NAME' AS column_name, activity_year, total_rows, MEANS_OF_DEPART_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'DISCH_DISP_C_NAME' AS column_name, activity_year, total_rows, DISCH_DISP_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'DISCH_DEST_C_NAME' AS column_name, activity_year, total_rows, DISCH_DEST_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TRANSFER_FROM_C_NAME' AS column_name, activity_year, total_rows, TRANSFER_FROM_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'MEANS_OF_ARRV_C_NAME' AS column_name, activity_year, total_rows, MEANS_OF_ARRV_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ACUITY_LEVEL_C_NAME' AS column_name, activity_year, total_rows, ACUITY_LEVEL_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOSPIST_NEEDED_YN' AS column_name, activity_year, total_rows, HOSPIST_NEEDED_YN_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ACCOMMODATION_C_NAME' AS column_name, activity_year, total_rows, ACCOMMODATION_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ACCOM_REASON_C_NAME' AS column_name, activity_year, total_rows, ACCOM_REASON_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INPATIENT_DATA_ID' AS column_name, activity_year, total_rows, INPATIENT_DATA_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PVT_HSP_ENC_C_NAME' AS column_name, activity_year, total_rows, PVT_HSP_ENC_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ED_EPISODE_ID' AS column_name, activity_year, total_rows, ED_EPISODE_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ED_DISPOSITION_C_NAME' AS column_name, activity_year, total_rows, ED_DISPOSITION_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ED_DISP_TIME' AS column_name, activity_year, total_rows, ED_DISP_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'FOLLOWUP_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, FOLLOWUP_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PROV_CONT_INFO' AS column_name, activity_year, total_rows, PROV_CONT_INFO_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OSHPD_ADMSN_SRC_C_NAME' AS column_name, activity_year, total_rows, OSHPD_ADMSN_SRC_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OSHPD_LICENSURE_C_NAME' AS column_name, activity_year, total_rows, OSHPD_LICENSURE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OSHPD_ROUTE_C_NAME' AS column_name, activity_year, total_rows, OSHPD_ROUTE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INP_ADM_DATE' AS column_name, activity_year, total_rows, INP_ADM_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'COPY_TO_PCP_YN' AS column_name, activity_year, total_rows, COPY_TO_PCP_YN_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADOPTION_CASE_YN' AS column_name, activity_year, total_rows, ADOPTION_CASE_YN_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PREOP_TEACHING_C_NAME' AS column_name, activity_year, total_rows, PREOP_TEACHING_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PREOP_PRN_EVAL_C_NAME' AS column_name, activity_year, total_rows, PREOP_PRN_EVAL_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PREOP_PH_SCREEN_C_NAME' AS column_name, activity_year, total_rows, PREOP_PH_SCREEN_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'LABOR_ACT_BIRTH_C_NAME' AS column_name, activity_year, total_rows, LABOR_ACT_BIRTH_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'LABOR_FEED_TYPE_C_NAME' AS column_name, activity_year, total_rows, LABOR_FEED_TYPE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PROC_SERV_C_NAME' AS column_name, activity_year, total_rows, PROC_SERV_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ED_DEPARTURE_TIME' AS column_name, activity_year, total_rows, ED_DEPARTURE_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TRIAGE_DATETIME' AS column_name, activity_year, total_rows, TRIAGE_DATETIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TRIAGE_STATUS_C_NAME' AS column_name, activity_year, total_rows, TRIAGE_STATUS_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INP_ADM_EVENT_ID' AS column_name, activity_year, total_rows, INP_ADM_EVENT_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INP_ADM_EVENT_DATE' AS column_name, activity_year, total_rows, INP_ADM_EVENT_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INP_DWNGRD_EVNT_ID' AS column_name, activity_year, total_rows, INP_DWNGRD_EVNT_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INP_DWNGRD_DATE' AS column_name, activity_year, total_rows, INP_DWNGRD_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'INP_DWNGRD_EVNT_DT' AS column_name, activity_year, total_rows, INP_DWNGRD_EVNT_DT_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OP_ADM_DATE' AS column_name, activity_year, total_rows, OP_ADM_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'EMER_ADM_DATE' AS column_name, activity_year, total_rows, EMER_ADM_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OP_ADM_EVENT_ID' AS column_name, activity_year, total_rows, OP_ADM_EVENT_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'EMER_ADM_EVENT_ID' AS column_name, activity_year, total_rows, EMER_ADM_EVENT_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PREREG_SOURCE_C_NAME' AS column_name, activity_year, total_rows, PREREG_SOURCE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOV_CONF_STATUS_C_NAME' AS column_name, activity_year, total_rows, HOV_CONF_STATUS_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'RELIG_NEEDS_VISIT_C_NAME' AS column_name, activity_year, total_rows, RELIG_NEEDS_VISIT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'DISCHARGE_CAT_C_NAME' AS column_name, activity_year, total_rows, DISCHARGE_CAT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'EXP_DISCHARGE_TIME' AS column_name, activity_year, total_rows, EXP_DISCHARGE_TIME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'BILL_ATTEND_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, BILL_ATTEND_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OB_LD_LABORING_YN' AS column_name, activity_year, total_rows, OB_LD_LABORING_YN_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'OB_LD_LABOR_TM' AS column_name, activity_year, total_rows, OB_LD_LABOR_TM_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TRIAGE_ID_TAG' AS column_name, activity_year, total_rows, TRIAGE_ID_TAG_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TRIAGE_ID_TAG_CMT' AS column_name, activity_year, total_rows, TRIAGE_ID_TAG_CMT_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'TPLNT_BILL_STAT_C_NAME' AS column_name, activity_year, total_rows, TPLNT_BILL_STAT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ACTL_DELIVRY_METH_C_NAME' AS column_name, activity_year, total_rows, ACTL_DELIVRY_METH_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PRENATAL_CARE_C_NAME' AS column_name, activity_year, total_rows, PRENATAL_CARE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'AMBULANCE_CODE_C_NAME' AS column_name, activity_year, total_rows, AMBULANCE_CODE_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'MSE_DATE' AS column_name, activity_year, total_rows, MSE_DATE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ADMIT_PROV_TEXT' AS column_name, activity_year, total_rows, ADMIT_PROV_TEXT_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'ATTEND_PROV_TEXT' AS column_name, activity_year, total_rows, ATTEND_PROV_TEXT_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PROV_PRIM_TEXT' AS column_name, activity_year, total_rows, PROV_PRIM_TEXT_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'PROV_PRIM_TEXT_PHON' AS column_name, activity_year, total_rows, PROV_PRIM_TEXT_PHON_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'HOSPITAL_AREA_ID_LOC_NAME' AS column_name, activity_year, total_rows, HOSPITAL_AREA_ID_LOC_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'CHIEF_COMPLAINT_C_NAME' AS column_name, activity_year, total_rows, CHIEF_COMPLAINT_C_NAME_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP' AS table_name, 'NEED_FIN_CLR_YN' AS column_name, activity_year, total_rows, NEED_FIN_CLR_YN_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EX_DIS_DT_ENTR_DTTM' AS column_name, activity_year, total_rows, EX_DIS_DT_ENTR_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EX_DIS_TM_ENTR_DTTM' AS column_name, activity_year, total_rows, EX_DIS_TM_ENTR_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'CONTRACT_REG_FLAG' AS column_name, activity_year, total_rows, CONTRACT_REG_FLAG_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'CONTRACT_CODE_C_NAME' AS column_name, activity_year, total_rows, CONTRACT_CODE_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ACCEPTS_BLOOD_C_NAME' AS column_name, activity_year, total_rows, ACCEPTS_BLOOD_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ED_ARRIVAL_DETAILS' AS column_name, activity_year, total_rows, ED_ARRIVAL_DETAILS_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'CONS_SEDATION_C_NAME' AS column_name, activity_year, total_rows, CONS_SEDATION_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'RESTRAINT_SECLUS_C_NAME' AS column_name, activity_year, total_rows, RESTRAINT_SECLUS_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MULTI_PREG_YN' AS column_name, activity_year, total_rows, MULTI_PREG_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'DISASTER_NUM' AS column_name, activity_year, total_rows, DISASTER_NUM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'SRC_PATTERN_CSN_ID' AS column_name, activity_year, total_rows, SRC_PATTERN_CSN_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ENC_CLOSED_OR_COMPLETED_DATE' AS column_name, activity_year, total_rows, ENC_CLOSED_OR_COMPLETED_DATE_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ED_DISPO_PAT_COND_C_NAME' AS column_name, activity_year, total_rows, ED_DISPO_PAT_COND_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ADOPTION_TYPE_C_NAME' AS column_name, activity_year, total_rows, ADOPTION_TYPE_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'PRI_PROBLEM_ID' AS column_name, activity_year, total_rows, PRI_PROBLEM_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXPECTED_DISCHRG_APPROX_TIME_C_NAME' AS column_name, activity_year, total_rows, EXPECTED_DISCHRG_APPROX_TIME_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'DISCH_MILEST_KICKOFF_UTC_DTTM' AS column_name, activity_year, total_rows, DISCH_MILEST_KICKOFF_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'DISCH_MILEST_AUTO_MANAGED_YN' AS column_name, activity_year, total_rows, DISCH_MILEST_AUTO_MANAGED_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'PREDICTED_LOS' AS column_name, activity_year, total_rows, PREDICTED_LOS_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXP_LOS_UPD_SRC_C_NAME' AS column_name, activity_year, total_rows, EXP_LOS_UPD_SRC_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ED_ENC_SRC_C_NAME' AS column_name, activity_year, total_rows, ED_ENC_SRC_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ED_DEPART_UTC_DTTM' AS column_name, activity_year, total_rows, ED_DEPART_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ADT_ARRIVAL_UTC_DTTM' AS column_name, activity_year, total_rows, ADT_ARRIVAL_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'HOSP_DISCH_UTC_DTTM' AS column_name, activity_year, total_rows, HOSP_DISCH_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'HOSP_ADMSN_UTC_DTTM' AS column_name, activity_year, total_rows, HOSP_ADMSN_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'INP_ADMSN_UTC_DTTM' AS column_name, activity_year, total_rows, INP_ADMSN_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'ED_HISTORICAL_YN' AS column_name, activity_year, total_rows, ED_HISTORICAL_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'PATIENT_TASK_COMPLETION_RATE' AS column_name, activity_year, total_rows, PATIENT_TASK_COMPLETION_RATE_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'START_MED_REM_DISCHG_YN' AS column_name, activity_year, total_rows, START_MED_REM_DISCHG_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXPECTED_DISCHARGE_UNKNOWN_YN' AS column_name, activity_year, total_rows, EXPECTED_DISCHARGE_UNKNOWN_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'DUAL_ADMISSION_CSN' AS column_name, activity_year, total_rows, DUAL_ADMISSION_CSN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'LOA_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, LOA_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'INITIAL_ADT_PAT_STAT_C_NAME' AS column_name, activity_year, total_rows, INITIAL_ADT_PAT_STAT_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'NOTIFICATION_SENT_FIRST_IP_YN' AS column_name, activity_year, total_rows, NOTIFICATION_SENT_FIRST_IP_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'NOTIFICATION_SENT_OBS_ADMSN_YN' AS column_name, activity_year, total_rows, NOTIFICATION_SENT_OBS_ADMSN_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'IB_ALERT_LENGTH_OF_STAY_MSG_ID' AS column_name, activity_year, total_rows, IB_ALERT_LENGTH_OF_STAY_MSG_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'INITIAL_ADMIT_CONF_STAT_C_NAME' AS column_name, activity_year, total_rows, INITIAL_ADMIT_CONF_STAT_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'TRANSFER_COMMENTS' AS column_name, activity_year, total_rows, TRANSFER_COMMENTS_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_DTTM' AS column_name, activity_year, total_rows, MED_READINESS_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_TIMEFRAM_C_NAME' AS column_name, activity_year, total_rows, MED_READINESS_TIMEFRAM_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_YN' AS column_name, activity_year, total_rows, MED_READINESS_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_INST_ENTRY_DTTM' AS column_name, activity_year, total_rows, MED_READINESS_INST_ENTRY_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_USER_ID' AS column_name, activity_year, total_rows, MED_READINESS_USER_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_USER_ID_NAME' AS column_name, activity_year, total_rows, MED_READINESS_USER_ID_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'MED_READINESS_SOURCE_C_NAME' AS column_name, activity_year, total_rows, MED_READINESS_SOURCE_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXPECTED_DISCH_DISP_C_NAME' AS column_name, activity_year, total_rows, EXPECTED_DISCH_DISP_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXP_DISCH_DISP_USER_ID' AS column_name, activity_year, total_rows, EXP_DISCH_DISP_USER_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXP_DISCH_DISP_USER_ID_NAME' AS column_name, activity_year, total_rows, EXP_DISCH_DISP_USER_ID_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'EXP_DISCH_DISP_ENTRY_UTC_DTTM' AS column_name, activity_year, total_rows, EXP_DISCH_DISP_ENTRY_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'PRIMARY_LINKED_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PRIMARY_LINKED_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_HSP_2' AS table_name, 'TODO_ADM_DISCLAIMER_ACTIVE_YN' AS column_name, activity_year, total_rows, TODO_ADM_DISCLAIMER_ACTIVE_YN_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'PAT_ENC_NO_SHOW' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'PAT_ENC_NO_SHOW' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'PAT_ENC_NO_SHOW' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'PAT_ENC_NO_SHOW' AS table_name, 'NO_SHOW_COMMENT' AS column_name, activity_year, total_rows, NO_SHOW_COMMENT_filled AS filled_count FROM #fc_016
+) all_results
+ORDER BY table_name, column_name, activity_year;
+
+-- ============================== CLEANUP (optional) ==============================
+-- SQL Server: not required (temp tables auto-drop at session end), but safe
+-- to run if you want to remove them immediately. Oracle/SAS: uncomment and
+-- run this if you did NOT use true temp tables in Phase 1.
+/*
+DROP TABLE #fc_001;
+DROP TABLE #fc_002;
+DROP TABLE #fc_003;
+DROP TABLE #fc_004;
+DROP TABLE #fc_005;
+DROP TABLE #fc_006;
+DROP TABLE #fc_007;
+DROP TABLE #fc_008;
+DROP TABLE #fc_009;
+DROP TABLE #fc_010;
+DROP TABLE #fc_011;
+DROP TABLE #fc_012;
+DROP TABLE #fc_013;
+DROP TABLE #fc_014;
+DROP TABLE #fc_015;
+DROP TABLE #fc_016;
+*/

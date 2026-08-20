@@ -1,54 +1,74 @@
 -- CM-21 field feasibility / density queries
--- Auto-generated, one query per candidate table. See the companion
--- CM-XX-Field-Feasibility-Queries.md in this directory for how to run
--- and report these back.
+-- Auto-generated. See the companion CM-XX-Field-Feasibility-Queries.md
+-- and the shared Field-Feasibility-Queries-README.md in this directory
+-- for what this is, why it's safe to run, and how to report results back.
 --
--- Dialect note: written for SQL Server / SAS PROC SQL syntax
--- (YEAR(col), COUNT(col) excludes NULLs by standard SQL semantics).
--- On Oracle, replace YEAR(<col>) with EXTRACT(YEAR FROM <col>).
--- If any column name collides with a reserved word, quote it per
--- platform ([COL] on SQL Server, "COL" on Oracle).
+-- HOW TO RUN: execute this entire script top to bottom in one session.
+-- It produces exactly ONE result grid, at the very end. Export that grid
+-- to CSV and send it back -- that is the entire ask.
 --
--- For very large tables, consider adding a WHERE clause to sample a
--- recent date range first (e.g. WHERE <anchor> >= '2024-01-01') to get
--- a fast initial read before running the full unfiltered query.
+-- Written for SQL Server T-SQL. On Oracle or in SAS PROC SQL, two swaps:
+--   1. Replace `SELECT ... INTO #fc_NNN FROM ...` with
+--      `CREATE TABLE fc_NNN AS SELECT ... FROM ...`
+--   2. Replace `YEAR(<col>)` with `EXTRACT(YEAR FROM <col>)` (Oracle only --
+--      SAS PROC SQL supports YEAR() natively).
+-- SQL Server's #-prefixed temp tables are session-scoped and auto-dropped
+-- when your connection closes -- nothing persists. On Oracle/SAS, staging
+-- tables are ordinary tables and will need the cleanup block at the end of
+-- this file (or your own housekeeping) to remove them.
+--
+-- If any column name collides with a reserved word, quote it per platform
+-- ([COL] on SQL Server, "COL" on Oracle) in both Phase 1 and Phase 2.
+--
+-- For very large tables, consider adding a WHERE clause to the Phase 1
+-- block for that table to sample a recent date range first (e.g.
+-- WHERE <anchor> >= '2024-01-01') before running the unfiltered version.
+--
+-- To re-run this script in the same session, run the cleanup block at the
+-- end first (SQL Server temp tables from a prior run will otherwise still
+-- exist); or simply start a fresh connection.
 
--- ==========================================================
--- Table: ACCUM_CLAIM_DIAGNOSES
+-- ============================== PHASE 1 ==============================
+-- One aggregate pass per candidate table into a session-scoped staging
+-- table. Every block below has the identical shape: COUNT(*) plus
+-- COUNT(<column>) for each candidate column (NULL-exclusive by standard
+-- SQL semantics), grouped by year where the table has a usable date
+-- column. No row-level data is read out anywhere in this script; only
+-- these aggregate counts. Skim the first two or three blocks and the
+-- rest follow the same pattern.
+
+-- ---- fc_001 <- ACCUM_CLAIM_DIAGNOSES ----
 -- This table contains diagnoses attached to a claim when an accumulation occurred.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ACCUMULATION_ID) AS ACCUMULATION_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CLAIM_DX_ID_DX_NAME) AS CLAIM_DX_ID_DX_NAME_filled
+INTO #fc_001
 FROM ACCUM_CLAIM_DIAGNOSES;
 
--- ==========================================================
--- Table: ACCUM_SERVICE_DIAGNOSES
+-- ---- fc_002 <- ACCUM_SERVICE_DIAGNOSES ----
 -- This table contains diagnoses associated with a service at the time an accumulation occurred.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ACCUMULATION_ID) AS ACCUMULATION_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ASSOCIATED_DX_ID_DX_NAME) AS ASSOCIATED_DX_ID_DX_NAME_filled
+INTO #fc_002
 FROM ACCUM_SERVICE_DIAGNOSES;
 
--- ==========================================================
--- Table: ADDITIONAL_EM_CODE
+-- ---- fc_003 <- ADDITIONAL_EM_CODE ----
 -- This table holds all information related to additional evaluation and management (E/M) codes.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -58,13 +78,12 @@ SELECT
     COUNT(EM_CODE_UNIQUE_NUM) AS EM_CODE_UNIQUE_NUM_filled,
     COUNT(EM_NO_CHG_REASON_C_NAME) AS EM_NO_CHG_REASON_C_NAME_filled,
     COUNT(AR_EM_CODE_DX) AS AR_EM_CODE_DX_filled
+INTO #fc_003
 FROM ADDITIONAL_EM_CODE;
 
--- ==========================================================
--- Table: ALT_PRC_DIAGNOSES
+-- ---- fc_004 <- ALT_PRC_DIAGNOSES ----
 -- Diagnoses that are associated with Drug-Disease alerts.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -73,32 +92,29 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(PRC_DIAGNOSES_ID_DX_NAME) AS PRC_DIAGNOSES_ID_DX_NAME_filled
+INTO #fc_004
 FROM ALT_PRC_DIAGNOSES
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: ANTICOAG_TRTMNT_DX
+-- ---- fc_005 <- ANTICOAG_TRTMNT_DX ----
 -- This table tracks anticoagulation therapy medications taken prior to diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROBLEM_LIST_ID) AS PROBLEM_LIST_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ANTICOAG_PRE_DX_C_NAME) AS ANTICOAG_PRE_DX_C_NAME_filled
+INTO #fc_005
 FROM ANTICOAG_TRTMNT_DX;
 
--- ==========================================================
--- Table: APPEAL_GRV
+-- ---- fc_006 <- APPEAL_GRV ----
 -- This table contains information about an individual appeal or grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
@@ -203,16 +219,15 @@ SELECT
     COUNT(REGION_ID_LOC_NAME) AS REGION_ID_LOC_NAME_filled,
     COUNT(MEDICAL_GROUP_ID_LOC_NAME) AS MEDICAL_GROUP_ID_LOC_NAME_filled,
     COUNT(SUBJECT_FREE_TEXT) AS SUBJECT_FREE_TEXT_filled
+INTO #fc_006
 FROM APPEAL_GRV;
 
--- ==========================================================
--- Table: APPEAL_GRV_2
+-- ---- fc_007 <- APPEAL_GRV_2 ----
 -- This table contains information about an individual appeal or grievance as an extension of APPEAL_GRV.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(NEXT_OUTST_DECISION_UTC_DTTM) AS NEXT_OUTST_DECISION_UTC_DTTM_filled,
@@ -278,45 +293,42 @@ SELECT
     COUNT(INITIATING_POS_ID_LOC_NAME) AS INITIATING_POS_ID_LOC_NAME_filled,
     COUNT(REQUESTING_PROV_ADDRESSID) AS REQUESTING_PROV_ADDRESSID_filled,
     COUNT(SUBJECT_PROV_ADDRESSID) AS SUBJECT_PROV_ADDRESSID_filled
+INTO #fc_007
 FROM APPEAL_GRV_2;
 
--- ==========================================================
--- Table: APPEAL_GRV_APPEAL_REASONS
+-- ---- fc_008 <- APPEAL_GRV_APPEAL_REASONS ----
 -- The reasons for which an appeal was initiated.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(APPEAL_CREATE_REASONS_C_NAME) AS APPEAL_CREATE_REASONS_C_NAME_filled
+INTO #fc_008
 FROM APPEAL_GRV_APPEAL_REASONS;
 
--- ==========================================================
--- Table: APPEAL_GRV_AUDIT_TRAIL
+-- ---- fc_009 <- APPEAL_GRV_AUDIT_TRAIL ----
 -- This table contains the audit trail of item value changes for an appeal/grievance record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(AUDIT_TRAIL_TYPE_C_NAME) AS AUDIT_TRAIL_TYPE_C_NAME_filled,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled
+INTO #fc_009
 FROM APPEAL_GRV_AUDIT_TRAIL;
 
--- ==========================================================
--- Table: APPEAL_GRV_CHANGE_URGENCY
+-- ---- fc_010 <- APPEAL_GRV_CHANGE_URGENCY ----
 -- Stores the change urgency requests for an appeal/grievance. Each row represents a change urgency request.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -326,44 +338,41 @@ SELECT
     COUNT(INITIATED_BY_TYPE_C_NAME) AS INITIATED_BY_TYPE_C_NAME_filled,
     COUNT(URGENCY_COMMENTS) AS URGENCY_COMMENTS_filled,
     COUNT(URGENCY_DECISION_C_NAME) AS URGENCY_DECISION_C_NAME_filled
+INTO #fc_010
 FROM APPEAL_GRV_CHANGE_URGENCY;
 
--- ==========================================================
--- Table: APPEAL_GRV_DSMISS_REASONS
+-- ---- fc_011 <- APPEAL_GRV_DSMISS_REASONS ----
 -- Stores the reasons an appeal or grievance was dismissed.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DISMISS_REASON_C_NAME) AS DISMISS_REASON_C_NAME_filled
+INTO #fc_011
 FROM APPEAL_GRV_DSMISS_REASONS;
 
--- ==========================================================
--- Table: APPEAL_GRV_LATE_FILE_RSNS
+-- ---- fc_012 <- APPEAL_GRV_LATE_FILE_RSNS ----
 -- Stores the reasons for late filing for an appeal/grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(LATE_FILING_RSN_C_NAME) AS LATE_FILING_RSN_C_NAME_filled
+INTO #fc_012
 FROM APPEAL_GRV_LATE_FILE_RSNS;
 
--- ==========================================================
--- Table: APPEAL_GRV_LETTER
+-- ---- fc_013 <- APPEAL_GRV_LETTER ----
 -- Letters that were sent or were attempted to have been sent from an appeal or grievance record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -414,31 +423,29 @@ SELECT
     COUNT(COVER_SHEET_NOTE_ID) AS COVER_SHEET_NOTE_ID_filled,
     COUNT(BACK_NOTE_ID) AS BACK_NOTE_ID_filled,
     COUNT(FAX_FACE_SHEET_NOTE_ID) AS FAX_FACE_SHEET_NOTE_ID_filled
+INTO #fc_013
 FROM APPEAL_GRV_LETTER;
 
--- ==========================================================
--- Table: APPEAL_GRV_LETTER_ADDRESS
+-- ---- fc_014 <- APPEAL_GRV_LETTER_ADDRESS ----
 -- The address of this letter's recipient. An address may be recorded, even if the letter was not mailed.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(STREET_ADDRESS) AS STREET_ADDRESS_filled
+INTO #fc_014
 FROM APPEAL_GRV_LETTER_ADDRESS;
 
--- ==========================================================
--- Table: APPEAL_GRV_LETTER_GEN_HX
+-- ---- fc_015 <- APPEAL_GRV_LETTER_GEN_HX ----
 -- All successes, failures, and intermediate actions that occurred while generating letters.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -450,31 +457,29 @@ SELECT
     COUNT(COMMITTING_USER_ID) AS COMMITTING_USER_ID_filled,
     COUNT(COMMITTING_USER_ID_NAME) AS COMMITTING_USER_ID_NAME_filled,
     COUNT(LETTER_HX_COMMENT) AS LETTER_HX_COMMENT_filled
+INTO #fc_015
 FROM APPEAL_GRV_LETTER_GEN_HX;
 
--- ==========================================================
--- Table: APPEAL_GRV_MAX_EXTENSION
+-- ---- fc_016 <- APPEAL_GRV_MAX_EXTENSION ----
 -- This table contains information about the maximum extensions that can be taken for an appeal or grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(EXTENSION_TAT_TIME_STANDARD_C_NAME) AS EXTENSION_TAT_TIME_STANDARD_C_NAME_filled,
     COUNT(MAX_EXTENSION_DAYS) AS MAX_EXTENSION_DAYS_filled
+INTO #fc_016
 FROM APPEAL_GRV_MAX_EXTENSION;
 
--- ==========================================================
--- Table: APPEAL_GRV_NOTIF_TAT
--- This table holds information about notifications that complete required turnaround time events for appeals and grievances. Each row corresponds to an individual turnaround time requirement and the com
+-- ---- fc_017 <- APPEAL_GRV_NOTIF_TAT ----
+-- This table holds information about notifications that complete required turnaround time events for appeals and grievances. Each row corresponds to an individual turnaround time req
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -489,60 +494,56 @@ SELECT
     COUNT(NOTIF_CALL_COMM_ID) AS NOTIF_CALL_COMM_ID_filled,
     COUNT(NOTIF_TAT_DUE_LOCAL_DTTM) AS NOTIF_TAT_DUE_LOCAL_DTTM_filled,
     COUNT(NOTIF_TAT_OCCUR_LOCAL_DTTM) AS NOTIF_TAT_OCCUR_LOCAL_DTTM_filled
+INTO #fc_017
 FROM APPEAL_GRV_NOTIF_TAT;
 
--- ==========================================================
--- Table: APPEAL_GRV_OUTCOMES
+-- ---- fc_018 <- APPEAL_GRV_OUTCOMES ----
 -- This table stores the outcomes of a grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(GRIEVANCE_OUTCOME_C_NAME) AS GRIEVANCE_OUTCOME_C_NAME_filled
+INTO #fc_018
 FROM APPEAL_GRV_OUTCOMES;
 
--- ==========================================================
--- Table: APPEAL_GRV_OVRTRN_REASONS
+-- ---- fc_019 <- APPEAL_GRV_OVRTRN_REASONS ----
 -- Stores the reasons why the original decision was overturned for an appeal.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(OVERTURN_REASON_C_NAME) AS OVERTURN_REASON_C_NAME_filled
+INTO #fc_019
 FROM APPEAL_GRV_OVRTRN_REASONS;
 
--- ==========================================================
--- Table: APPEAL_GRV_POST_APL_UPD
+-- ---- fc_020 <- APPEAL_GRV_POST_APL_UPD ----
 -- This table stores the table of updates to authorizations that are the subject of an appeal that has not yet finalized its decision.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(UPDATE_INST_UTC_DTTM) AS UPDATE_INST_UTC_DTTM_filled,
     COUNT(UPDATE_REALTIME_TX_CSN_ID) AS UPDATE_REALTIME_TX_CSN_ID_filled,
     COUNT(UPDATE_ACK_YN) AS UPDATE_ACK_YN_filled
+INTO #fc_020
 FROM APPEAL_GRV_POST_APL_UPD;
 
--- ==========================================================
--- Table: APPEAL_GRV_REC_STAT_HX
--- This table contains information about changes to the Chronicles record status/soft-delete flag (SDFL item) of the appeal/grievance record. Only records that have had their record status changed will b
+-- ---- fc_021 <- APPEAL_GRV_REC_STAT_HX ----
+-- This table contains information about changes to the Chronicles record status/soft-delete flag (SDFL item) of the appeal/grievance record. Only records that have had their record s
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -551,30 +552,28 @@ SELECT
     COUNT(SDFL_EDIT_USER_ID) AS SDFL_EDIT_USER_ID_filled,
     COUNT(SDFL_EDIT_USER_ID_NAME) AS SDFL_EDIT_USER_ID_NAME_filled,
     COUNT(SDFL_EDIT_ACTI_C_NAME) AS SDFL_EDIT_ACTI_C_NAME_filled
+INTO #fc_021
 FROM APPEAL_GRV_REC_STAT_HX;
 
--- ==========================================================
--- Table: APPEAL_GRV_REOPEN_REASONS
+-- ---- fc_022 <- APPEAL_GRV_REOPEN_REASONS ----
 -- Stores the reasons for reopening an appeal.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REOPEN_REASON_C_NAME) AS REOPEN_REASON_C_NAME_filled
+INTO #fc_022
 FROM APPEAL_GRV_REOPEN_REASONS;
 
--- ==========================================================
--- Table: APPEAL_GRV_REQ_ATTACHMENT
--- This table holds information about documents that are required to be attached to appeals and grievances. Each row corresponds to an individual document requirement and the document that satisfied the 
+-- ---- fc_023 <- APPEAL_GRV_REQ_ATTACHMENT ----
+-- This table holds information about documents that are required to be attached to appeals and grievances. Each row corresponds to an individual document requirement and the document
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -584,30 +583,28 @@ SELECT
     COUNT(APPEAL_GRV_WKFL_STEP_C_NAME) AS APPEAL_GRV_WKFL_STEP_C_NAME_filled,
     COUNT(REQUIRED_FOR_TAT_YN) AS REQUIRED_FOR_TAT_YN_filled,
     COUNT(ATTACHMENT_SUBMIT_LOCAL_DTTM) AS ATTACHMENT_SUBMIT_LOCAL_DTTM_filled
+INTO #fc_023
 FROM APPEAL_GRV_REQ_ATTACHMENT;
 
--- ==========================================================
--- Table: APPEAL_GRV_ROOT_CAUSES
+-- ---- fc_024 <- APPEAL_GRV_ROOT_CAUSES ----
 -- This table stores the root causes of a grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(GRIEVANCE_ROOT_CAUSE_C_NAME) AS GRIEVANCE_ROOT_CAUSE_C_NAME_filled
+INTO #fc_024
 FROM APPEAL_GRV_ROOT_CAUSES;
 
--- ==========================================================
--- Table: APPEAL_GRV_STEP_COMPLETE
+-- ---- fc_025 <- APPEAL_GRV_STEP_COMPLETE ----
 -- This table contains information about when workflow steps were completed for a given appeal or grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -616,16 +613,15 @@ SELECT
     COUNT(COMPLETED_USER_ID_NAME) AS COMPLETED_USER_ID_NAME_filled,
     COUNT(COMPLETED_UTC_DTTM) AS COMPLETED_UTC_DTTM_filled,
     COUNT(COMPLETED_LOCAL_DTTM) AS COMPLETED_LOCAL_DTTM_filled
+INTO #fc_025
 FROM APPEAL_GRV_STEP_COMPLETE;
 
--- ==========================================================
--- Table: APPEAL_GRV_SUBJECT_RESULT
+-- ---- fc_026 <- APPEAL_GRV_SUBJECT_RESULT ----
 -- This table contains information about the subject and result of an appeal.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -640,16 +636,15 @@ SELECT
     COUNT(PAYMENT_AUTH_LOC_DTTM) AS PAYMENT_AUTH_LOC_DTTM_filled,
     COUNT(PAYMENT_RECIPIENT_C_NAME) AS PAYMENT_RECIPIENT_C_NAME_filled,
     COUNT(NO_PAYMENT_REQ_YN) AS NO_PAYMENT_REQ_YN_filled
+INTO #fc_026
 FROM APPEAL_GRV_SUBJECT_RESULT;
 
--- ==========================================================
--- Table: APPEAL_GRV_TAT_MILESTONES
--- This table holds information about turnaround time milestones for appeals and grievances. Each row corresponds to an individual milestone and the date and time associated with the milestone.
+-- ---- fc_027 <- APPEAL_GRV_TAT_MILESTONES ----
+-- This table holds information about turnaround time milestones for appeals and grievances. Each row corresponds to an individual milestone and the date and time associated with the 
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -657,41 +652,38 @@ SELECT
     COUNT(TAT_MILESTONE_C_NAME) AS TAT_MILESTONE_C_NAME_filled,
     COUNT(TAT_MILE_INST_UTC_DTTM) AS TAT_MILE_INST_UTC_DTTM_filled,
     COUNT(TAT_MILE_DUE_LOCAL_DTTM) AS TAT_MILE_DUE_LOCAL_DTTM_filled
+INTO #fc_027
 FROM APPEAL_GRV_TAT_MILESTONES;
 
--- ==========================================================
--- Table: APPEAL_GRV_UPHOLD_REASONS
+-- ---- fc_028 <- APPEAL_GRV_UPHOLD_REASONS ----
 -- Stores the reasons why the original decision was upheld for an appeal.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(UPHOLD_REASON_C_NAME) AS UPHOLD_REASON_C_NAME_filled
+INTO #fc_028
 FROM APPEAL_GRV_UPHOLD_REASONS;
 
--- ==========================================================
--- Table: APPEAL_GRV_VACATE_REASONS
+-- ---- fc_029 <- APPEAL_GRV_VACATE_REASONS ----
 -- Stores the reasons for reviewing the dismissal of an appeal or grievance.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(APPEAL_GRV_ID) AS APPEAL_GRV_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(VACATE_REASON_C_NAME) AS VACATE_REASON_C_NAME_filled
+INTO #fc_029
 FROM APPEAL_GRV_VACATE_REASONS;
 
--- ==========================================================
--- Table: AP_CLAIM
+-- ---- fc_030 <- AP_CLAIM ----
 -- The AP_CLAIM table contains one record for each claim in the managed care system's AP Claims module.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(DATE_RECEIVED) AS activity_year,
     COUNT(*) AS total_rows,
@@ -828,15 +820,13 @@ SELECT
     COUNT(PLAN_GROUP_ID) AS PLAN_GROUP_ID_filled,
     COUNT(PLAN_GROUP_ID_PLAN_GRP_NAME) AS PLAN_GROUP_ID_PLAN_GRP_NAME_filled,
     COUNT(ENTRY_INSTANT_DTTM) AS ENTRY_INSTANT_DTTM_filled
+INTO #fc_030
 FROM AP_CLAIM
-GROUP BY YEAR(DATE_RECEIVED)
-ORDER BY activity_year;
+GROUP BY YEAR(DATE_RECEIVED);
 
--- ==========================================================
--- Table: AP_CLAIM_2
+-- ---- fc_031 <- AP_CLAIM_2 ----
 -- The AP_CLAIM_2 table contains one record for each claim in Tapestry's Accounts Payable module.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(APPLIANCE_PLACE_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -906,15 +896,13 @@ SELECT
     COUNT(PAYOR_SEQ_NUMBER_C_NAME) AS PAYOR_SEQ_NUMBER_C_NAME_filled,
     COUNT(CLM_FREQ_CODE_C_NAME) AS CLM_FREQ_CODE_C_NAME_filled,
     COUNT(DENY_CLM_SRC_C_NAME) AS DENY_CLM_SRC_C_NAME_filled
+INTO #fc_031
 FROM AP_CLAIM_2
-GROUP BY YEAR(APPLIANCE_PLACE_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(APPLIANCE_PLACE_DT);
 
--- ==========================================================
--- Table: AP_CLAIM_3
+-- ---- fc_032 <- AP_CLAIM_3 ----
 -- The AP_CLAIM_3 table contains one record for each claim in Tapestry's Accounts Payable module.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(SUBMITTER_CREAT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -988,15 +976,13 @@ SELECT
     COUNT(OUT_NET_ADJUD_OV_C_NAME) AS OUT_NET_ADJUD_OV_C_NAME_filled,
     COUNT(RECV_CLAIM_RECON_ID) AS RECV_CLAIM_RECON_ID_filled,
     COUNT(CMS_NATURAL_KEY) AS CMS_NATURAL_KEY_filled
+INTO #fc_032
 FROM AP_CLAIM_3
-GROUP BY YEAR(SUBMITTER_CREAT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(SUBMITTER_CREAT_DATE);
 
--- ==========================================================
--- Table: AP_CLAIM_4
+-- ---- fc_033 <- AP_CLAIM_4 ----
 -- The AP_CLAIM_4 table contains one record for each claim in the managed care system's AP Claims module.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CLAIM_CHECK_MAIL_SENT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1018,18 +1004,16 @@ SELECT
     COUNT(CAPITAL_DSH_AMOUNT) AS CAPITAL_DSH_AMOUNT_filled,
     COUNT(UNCOMPENSATED_CARE_AMOUNT) AS UNCOMPENSATED_CARE_AMOUNT_filled,
     COUNT(OPERATING_DSH_AMOUNT) AS OPERATING_DSH_AMOUNT_filled
+INTO #fc_033
 FROM AP_CLAIM_4
-GROUP BY YEAR(CLAIM_CHECK_MAIL_SENT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CLAIM_CHECK_MAIL_SENT_DATE);
 
--- ==========================================================
--- Table: AP_CLAIM_CHANGE_HX
+-- ---- fc_034 <- AP_CLAIM_CHANGE_HX ----
 -- The AP_CLAIM_CHANGE_HX table contains the change history of an accounts payable claim.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -1042,16 +1026,15 @@ SELECT
     COUNT(CHANGE_HX_TX_ID) AS CHANGE_HX_TX_ID_filled,
     COUNT(CHANGE_HX_PREV_REC_OR_CAT) AS CHANGE_HX_PREV_REC_OR_CAT_filled,
     COUNT(CHANGE_HX_NEW_REC_OR_CAT) AS CHANGE_HX_NEW_REC_OR_CAT_filled
+INTO #fc_034
 FROM AP_CLAIM_CHANGE_HX;
 
--- ==========================================================
--- Table: AP_CLAIM_DX
+-- ---- fc_035 <- AP_CLAIM_DX ----
 -- The AP_CLAIM_DX table contains one record for each diagnosis on an accounts payable claim.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -1061,13 +1044,12 @@ SELECT
     COUNT(AP_DX_POA_C_NAME) AS AP_DX_POA_C_NAME_filled,
     COUNT(AP_DX_RANK) AS AP_DX_RANK_filled,
     COUNT(CLAIM_DX_FROM_HEADER_YN) AS CLAIM_DX_FROM_HEADER_YN_filled
+INTO #fc_035
 FROM AP_CLAIM_DX;
 
--- ==========================================================
--- Table: AP_CLAIM_ICD_PROC
+-- ---- fc_036 <- AP_CLAIM_ICD_PROC ----
 -- The AP_CLAIM_ICD_PROC table contains the ICD-9 Procedure information on an accounts payable claim.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(ICD_PX_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1077,243 +1059,226 @@ SELECT
     COUNT(ICD_PX_ID_ICD_PX_NAME) AS ICD_PX_ID_ICD_PX_NAME_filled,
     COUNT(ICD_PX_DT) AS ICD_PX_DT_filled,
     COUNT(ICD_PX_RANK) AS ICD_PX_RANK_filled
+INTO #fc_036
 FROM AP_CLAIM_ICD_PROC
-GROUP BY YEAR(ICD_PX_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(ICD_PX_DT);
 
--- ==========================================================
--- Table: AP_CLAIM_IF_ACE_DX_DISP
+-- ---- fc_037 <- AP_CLAIM_IF_ACE_DX_DISP ----
 -- This table contains Ambulatory Code Editor (ACE) DX Highest Diagnosis Disposition value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(HIGHEST_DX_DISP) AS HIGHEST_DX_DISP_filled
+INTO #fc_037
 FROM AP_CLAIM_IF_ACE_DX_DISP;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_ACE_DX_ERR
+-- ---- fc_038 <- AP_CLAIM_IF_ACE_DX_ERR ----
 -- This table contains the Ambulatory Code Editor (ACE) DX Diagnosis Errors value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ACE_DX_ERR) AS ACE_DX_ERR_filled
+INTO #fc_038
 FROM AP_CLAIM_IF_ACE_DX_ERR;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_ACE_DX_NERR
+-- ---- fc_039 <- AP_CLAIM_IF_ACE_DX_NERR ----
 -- This table contains Ambulatory Code Editor (ACE) DX Number of Errors for this Diagnosis value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(NUM_ERR_THIS_DX) AS NUM_ERR_THIS_DX_filled
+INTO #fc_039
 FROM AP_CLAIM_IF_ACE_DX_NERR;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_ADMIT_DX_EDIT
+-- ---- fc_040 <- AP_CLAIM_IF_ADMIT_DX_EDIT ----
 -- Admit diagnosis edits returned from the grouper/pricer.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ADMIT_DX_EDIT) AS ADMIT_DX_EDIT_filled
+INTO #fc_040
 FROM AP_CLAIM_IF_ADMIT_DX_EDIT;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_ADM_DX_ECODE
+-- ---- fc_041 <- AP_CLAIM_IF_ADM_DX_ECODE ----
 -- Admit Diagnosis Ecode/ Manifestation Code.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ADM_DX_ECODE) AS ADM_DX_ECODE_filled
+INTO #fc_041
 FROM AP_CLAIM_IF_ADM_DX_ECODE;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_AGE_SX_DX_FLG
+-- ---- fc_042 <- AP_CLAIM_IF_AGE_SX_DX_FLG ----
 -- Age/sex diagnosis error flag.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(AGE_SEX_DX_FLAG) AS AGE_SEX_DX_FLAG_filled
+INTO #fc_042
 FROM AP_CLAIM_IF_AGE_SX_DX_FLG;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DUP_DX_FLAG
+-- ---- fc_043 <- AP_CLAIM_IF_DUP_DX_FLAG ----
 -- Duplicate diagnosis error flag.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DUP_DX_FLAG) AS DUP_DX_FLAG_filled
+INTO #fc_043
 FROM AP_CLAIM_IF_DUP_DX_FLAG;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DUP_SEC_DX
+-- ---- fc_044 <- AP_CLAIM_IF_DUP_SEC_DX ----
 -- Duplicate secondary diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DUP_SEC_DX) AS DUP_SEC_DX_filled
+INTO #fc_044
 FROM AP_CLAIM_IF_DUP_SEC_DX;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_ADMIT_ROM
+-- ---- fc_045 <- AP_CLAIM_IF_DX_ADMIT_ROM ----
 -- This table stores diagnosis risk of mortality (ROM) at admission.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_ADMISSION_ROM) AS DX_ADMISSION_ROM_filled
+INTO #fc_045
 FROM AP_CLAIM_IF_DX_ADMIT_ROM;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_ADMIT_SOI
+-- ---- fc_046 <- AP_CLAIM_IF_DX_ADMIT_SOI ----
 -- This table stores the diagnosis severity of illness (SOI) at admission.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_ADMISSION_SOI) AS DX_ADMISSION_SOI_filled
+INTO #fc_046
 FROM AP_CLAIM_IF_DX_ADMIT_SOI;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_AF_DRG_FLG
+-- ---- fc_047 <- AP_CLAIM_IF_DX_AF_DRG_FLG ----
 -- Flags that indicate whether the diagnosis affects the Diagnosis Related Grouper (DRG) selection.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFFECT_DRG_FLAG) AS DX_AFFECT_DRG_FLAG_filled
+INTO #fc_047
 FROM AP_CLAIM_IF_DX_AF_DRG_FLG;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_AF_HAC_DRG
+-- ---- fc_048 <- AP_CLAIM_IF_DX_AF_HAC_DRG ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Adjust DRG Flg (I CLM 21846) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ADJ_DRG) AS DX_AFF_HAC_ADJ_DRG_filled
+INTO #fc_048
 FROM AP_CLAIM_IF_DX_AF_HAC_DRG;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_AF_HAC_ROM
+-- ---- fc_049 <- AP_CLAIM_IF_DX_AF_HAC_ROM ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Adjust ROM Flg (I CLM 21847) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ADJ_ROM) AS DX_AFF_HAC_ADJ_ROM_filled
+INTO #fc_049
 FROM AP_CLAIM_IF_DX_AF_HAC_ROM;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_AF_HAC_SOI
+-- ---- fc_050 <- AP_CLAIM_IF_DX_AF_HAC_SOI ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Adjust SOI Flg (I CLM 21848) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ADJ_SOI) AS DX_AFF_HAC_ADJ_SOI_filled
+INTO #fc_050
 FROM AP_CLAIM_IF_DX_AF_HAC_SOI;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_COMP_IND
+-- ---- fc_051 <- AP_CLAIM_IF_DX_COMP_IND ----
 -- This table contains a code which indicates if a diagnosis increased the complexity of the visit.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(COMPLEXITY_INDICATOR) AS COMPLEXITY_INDICATOR_filled
+INTO #fc_051
 FROM AP_CLAIM_IF_DX_COMP_IND;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_EDIT
+-- ---- fc_052 <- AP_CLAIM_IF_DX_EDIT ----
 -- Diagnosis edits returned by the grouper/pricer.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
@@ -1329,92 +1294,86 @@ SELECT
     COUNT(DX_EDIT_8) AS DX_EDIT_8_filled,
     COUNT(DX_EDIT_9) AS DX_EDIT_9_filled,
     COUNT(DX_EDIT_10) AS DX_EDIT_10_filled
+INTO #fc_052
 FROM AP_CLAIM_IF_DX_EDIT;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_EDIT_DESC
+-- ---- fc_053 <- AP_CLAIM_IF_DX_EDIT_DESC ----
 -- This table contains description of diagnosis edits returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
     COUNT(DX_EDIT_DESCRIPTION) AS DX_EDIT_DESCRIPTION_filled
+INTO #fc_053
 FROM AP_CLAIM_IF_DX_EDIT_DESC;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_EXCL_HAC
+-- ---- fc_054 <- AP_CLAIM_IF_DX_EXCL_HAC ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Excl Frm HAC Adj Grouping (I CLM 21852) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_EXCL_HAC_GRPING) AS DX_EXCL_HAC_GRPING_filled
+INTO #fc_054
 FROM AP_CLAIM_IF_DX_EXCL_HAC;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_AJ_ROM
+-- ---- fc_055 <- AP_CLAIM_IF_DX_HAC_AJ_ROM ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - HAC Adjusted ROM (I CLM 21853) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_ADJ_ROM) AS DX_HAC_ADJ_ROM_filled
+INTO #fc_055
 FROM AP_CLAIM_IF_DX_HAC_AJ_ROM;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_AJ_SOI
+-- ---- fc_056 <- AP_CLAIM_IF_DX_HAC_AJ_SOI ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - HAC Adjusted SOI Flag (I CLM 21854) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_ADJ_SOI) AS DX_HAC_ADJ_SOI_filled
+INTO #fc_056
 FROM AP_CLAIM_IF_DX_HAC_AJ_SOI;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_ASGN
+-- ---- fc_057 <- AP_CLAIM_IF_DX_HAC_ASGN ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Assignment (I CLM 21849) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ASGN) AS DX_AFF_HAC_ASGN_filled
+INTO #fc_057
 FROM AP_CLAIM_IF_DX_HAC_ASGN;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_CAT
+-- ---- fc_058 <- AP_CLAIM_IF_DX_HAC_CAT ----
 -- The diagnosis hospital-acquired condition (HAC) categories.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
@@ -1425,61 +1384,57 @@ SELECT
     COUNT(DX_HAC_CAT_3) AS DX_HAC_CAT_3_filled,
     COUNT(DX_HAC_CAT_4) AS DX_HAC_CAT_4_filled,
     COUNT(DX_HAC_CAT_5) AS DX_HAC_CAT_5_filled
+INTO #fc_058
 FROM AP_CLAIM_IF_DX_HAC_CAT;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_IND
+-- ---- fc_059 <- AP_CLAIM_IF_DX_HAC_IND ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - HAC Indicator (I CLM 21855) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_INDICATOR) AS DX_HAC_INDICATOR_filled
+INTO #fc_059
 FROM AP_CLAIM_IF_DX_HAC_IND;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_ROM_FL
+-- ---- fc_060 <- AP_CLAIM_IF_DX_HAC_ROM_FL ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect ROM Flag (I CLM 21850) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFFECT_ROM_FLAG) AS DX_AFFECT_ROM_FLAG_filled
+INTO #fc_060
 FROM AP_CLAIM_IF_DX_HAC_ROM_FL;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_SOI_FL
+-- ---- fc_061 <- AP_CLAIM_IF_DX_HAC_SOI_FL ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect SOI Flag (I CLM 21851) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFFECT_SOI_FLAG) AS DX_AFFECT_SOI_FLAG_filled
+INTO #fc_061
 FROM AP_CLAIM_IF_DX_HAC_SOI_FL;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_HAC_USAGE
+-- ---- fc_062 <- AP_CLAIM_IF_DX_HAC_USAGE ----
 -- Indicates if the diagnosis code and present on admission (POA) value combination were used in grouper processing.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
@@ -1490,106 +1445,99 @@ SELECT
     COUNT(DX_HAC_USAGE_3) AS DX_HAC_USAGE_3_filled,
     COUNT(DX_HAC_USAGE_4) AS DX_HAC_USAGE_4_filled,
     COUNT(DX_HAC_USAGE_5) AS DX_HAC_USAGE_5_filled
+INTO #fc_062
 FROM AP_CLAIM_IF_DX_HAC_USAGE;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_INVALID
+-- ---- fc_063 <- AP_CLAIM_IF_DX_INVALID ----
 -- This table returns an Optum-defined code indicating why a diagnosis code is considered invalid.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_INVALID) AS DX_INVALID_filled
+INTO #fc_063
 FROM AP_CLAIM_IF_DX_INVALID;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_POA_BYPASS
+-- ---- fc_064 <- AP_CLAIM_IF_DX_POA_BYPASS ----
 -- This table extracts data received from PPS pricer for a claim in DX 'Present on Admission Bypassed'.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_PRSNT_ADM_BYPASS) AS DX_PRSNT_ADM_BYPASS_filled
+INTO #fc_064
 FROM AP_CLAIM_IF_DX_POA_BYPASS;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_POA_ERR_CD
+-- ---- fc_065 <- AP_CLAIM_IF_DX_POA_ERR_CD ----
 -- Indicates how the Present On Admission (POA) values submitted impacted grouper logic.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_POA_ERROR_CODE) AS DX_POA_ERROR_CODE_filled
+INTO #fc_065
 FROM AP_CLAIM_IF_DX_POA_ERR_CD;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_POA_USED
+-- ---- fc_066 <- AP_CLAIM_IF_DX_POA_USED ----
 -- The present on admission (POA) value used during processing.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_POA_USED) AS DX_POA_USED_filled
+INTO #fc_066
 FROM AP_CLAIM_IF_DX_POA_USED;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_PSCA
+-- ---- fc_067 <- AP_CLAIM_IF_DX_PSCA ----
 -- This table contains the PSCA (Proportional Standard Cost Allocation) assigned to each diagnosis on the claim, taking into consideration the age and gender of the patient.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PSCA) AS PSCA_filled
+INTO #fc_067
 FROM AP_CLAIM_IF_DX_PSCA;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_SUG_SURG
+-- ---- fc_068 <- AP_CLAIM_IF_DX_SUG_SURG ----
 -- Diagnosis suggests surgery.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_SUGGST_SURG) AS DX_SUGGST_SURG_filled
+INTO #fc_068
 FROM AP_CLAIM_IF_DX_SUG_SURG;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_USED
+-- ---- fc_069 <- AP_CLAIM_IF_DX_USED ----
 -- The diagnosis code(s) that was used during processing; may be the entered or the mapped code.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
@@ -1600,32 +1548,30 @@ SELECT
     COUNT(DX_USED_3) AS DX_USED_3_filled,
     COUNT(DX_USED_4) AS DX_USED_4_filled,
     COUNT(DX_USED_5) AS DX_USED_5_filled
+INTO #fc_069
 FROM AP_CLAIM_IF_DX_USED;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_USED_DESC
+-- ---- fc_070 <- AP_CLAIM_IF_DX_USED_DESC ----
 -- This table contains description of the diagnosis used for pricing as returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
     COUNT(DX_USED_DESCRIPTION) AS DX_USED_DESCRIPTION_filled
+INTO #fc_070
 FROM AP_CLAIM_IF_DX_USED_DESC;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_DX_USED_HAC
+-- ---- fc_071 <- AP_CLAIM_IF_DX_USED_HAC ----
 -- This table extracts the related multiple response Interface Info - Grouper - Dx Used for HAC Processing (I CLM 21856) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
@@ -1636,122 +1582,114 @@ SELECT
     COUNT(DX_USED_HAC_PROCESS_3) AS DX_USED_HAC_PROCESS_3_filled,
     COUNT(DX_USED_HAC_PROCESS_4) AS DX_USED_HAC_PROCESS_4_filled,
     COUNT(DX_USED_HAC_PROCESS_5) AS DX_USED_HAC_PROCESS_5_filled
+INTO #fc_071
 FROM AP_CLAIM_IF_DX_USED_HAC;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_GRP_DX_HAC
+-- ---- fc_072 <- AP_CLAIM_IF_GRP_DX_HAC ----
 -- This table contains hospital-acquired condition diagnosis (DX HAC) Processing Description returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
     COUNT(DX_HAC_PROCESSING_DESC) AS DX_HAC_PROCESSING_DESC_filled
+INTO #fc_072
 FROM AP_CLAIM_IF_GRP_DX_HAC;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_OUT_DX
+-- ---- fc_073 <- AP_CLAIM_IF_OUT_DX ----
 -- This table contains diagnosis code of the claim the system sends out to the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(OUT_DX_CODE) AS OUT_DX_CODE_filled
+INTO #fc_073
 FROM AP_CLAIM_IF_OUT_DX;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_OUT_ICDPX_DT
+-- ---- fc_074 <- AP_CLAIM_IF_OUT_ICDPX_DT ----
 -- This table contains the ICD procedure date of the claim the system sends out to APC interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(OUT_ICDPX_DATE) AS OUT_ICDPX_DATE_filled
+INTO #fc_074
 FROM AP_CLAIM_IF_OUT_ICDPX_DT;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_OUT_RFV_DX
+-- ---- fc_075 <- AP_CLAIM_IF_OUT_RFV_DX ----
 -- This table contains reason for visit diagnosis code of the claim the system sends out to the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(OUT_RFV_DX_CODE) AS OUT_RFV_DX_CODE_filled
+INTO #fc_075
 FROM AP_CLAIM_IF_OUT_RFV_DX;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_PRC_AD_DX_EDT
+-- ---- fc_076 <- AP_CLAIM_IF_PRC_AD_DX_EDT ----
 -- This table contains the description of the admission diagnosis edit value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ADMIT_DX_EDIT_DESCRIPTION) AS ADMIT_DX_EDIT_DESCRIPTION_filled
+INTO #fc_076
 FROM AP_CLAIM_IF_PRC_AD_DX_EDT;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_PRIN_DX_ERRS
+-- ---- fc_077 <- AP_CLAIM_IF_PRIN_DX_ERRS ----
 -- Principal Diagnosis Errors.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PRIN_DX_ERRORS) AS PRIN_DX_ERRORS_filled
+INTO #fc_077
 FROM AP_CLAIM_IF_PRIN_DX_ERRS;
 
--- ==========================================================
--- Table: AP_CLAIM_IF_SEC_DX_SEQ
+-- ---- fc_078 <- AP_CLAIM_IF_SEC_DX_SEQ ----
 -- Numerical values representing the secondary diagnosis codes (submitted and/or mapped); not the actual diagnosis codes themselves.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(SEC_DX_SEQUENCE) AS SEC_DX_SEQUENCE_filled
+INTO #fc_078
 FROM AP_CLAIM_IF_SEC_DX_SEQ;
 
--- ==========================================================
--- Table: AP_CLAIM_REVIEW
+-- ---- fc_079 <- AP_CLAIM_REVIEW ----
 -- The AP_CLAIM_REVIEW table contains a row for each review on a claim.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -1764,90 +1702,84 @@ SELECT
     COUNT(REJECTION_EOB_CODE_ID_EOB_CODE_NAME) AS REJECTION_EOB_CODE_ID_EOB_CODE_NAME_filled,
     COUNT(ADDED_MANUALLY_YN) AS ADDED_MANUALLY_YN_filled,
     COUNT(REVIEW_STATUS_REASON_C_NAME) AS REVIEW_STATUS_REASON_C_NAME_filled
+INTO #fc_079
 FROM AP_CLAIM_REVIEW;
 
--- ==========================================================
--- Table: AP_CLM_IF_MOE_DX_CODE_TYP
--- Diagnosis code types received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM-22310.
+-- ---- fc_080 <- AP_CLM_IF_MOE_DX_CODE_TYP ----
+-- Diagnosis code types received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_DX_CODE_TYPE) AS MOE_DX_CODE_TYPE_filled
+INTO #fc_080
 FROM AP_CLM_IF_MOE_DX_CODE_TYP;
 
--- ==========================================================
--- Table: AP_CLM_IF_MOE_DX_ERRORS
--- Diagnosis errors received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM-22313.
+-- ---- fc_081 <- AP_CLM_IF_MOE_DX_ERRORS ----
+-- Diagnosis errors received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM-223
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_DX_ERRORS) AS MOE_DX_ERRORS_filled
+INTO #fc_081
 FROM AP_CLM_IF_MOE_DX_ERRORS;
 
--- ==========================================================
--- Table: AP_CLM_IF_MOE_DX_ERR_NUM
--- The number of diagnosis code errors received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM-2231
+-- ---- fc_082 <- AP_CLM_IF_MOE_DX_ERR_NUM ----
+-- The number of diagnosis code errors received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple re
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_PER_DX_ERR_NUM) AS MOE_PER_DX_ERR_NUM_filled
+INTO #fc_082
 FROM AP_CLM_IF_MOE_DX_ERR_NUM;
 
--- ==========================================================
--- Table: AP_CLM_IF_MOE_DX_HI_DISP
--- The highest diagnosis dispositions received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM-22311
+-- ---- fc_083 <- AP_CLM_IF_MOE_DX_HI_DISP ----
+-- The highest diagnosis dispositions received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple res
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_HIGH_DX_DISP) AS MOE_HIGH_DX_DISP_filled
+INTO #fc_083
 FROM AP_CLM_IF_MOE_DX_HI_DISP;
 
--- ==========================================================
--- Table: AP_CLM_VST_RSN_DX
+-- ---- fc_084 <- AP_CLM_VST_RSN_DX ----
 -- This table stores the diagnoses that formed the reason for the patient's visit.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(VST_RSN_DX_ID_DX_NAME) AS VST_RSN_DX_ID_DX_NAME_filled
+INTO #fc_084
 FROM AP_CLM_VST_RSN_DX;
 
--- ==========================================================
--- Table: AP_PROC_ASSOC_DX
--- This table summarizes diagnoses associated with AP claim service lines. To link this table’s service line information back to a claim header, join this table to AP_CLAIM_PROC_IDS on the TX_ID column. 
+-- ---- fc_085 <- AP_PROC_ASSOC_DX ----
+-- This table summarizes diagnoses associated with AP claim service lines. To link this table’s service line information back to a claim header, join this table to AP_CLAIM_PROC_IDS o
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ETR_ID) AS ETR_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -1855,60 +1787,56 @@ SELECT
     COUNT(DX_QUAL_C_NAME) AS DX_QUAL_C_NAME_filled,
     COUNT(DX_NUM) AS DX_NUM_filled,
     COUNT(DX_RANK) AS DX_RANK_filled
+INTO #fc_085
 FROM AP_PROC_ASSOC_DX;
 
--- ==========================================================
--- Table: ARPB_CHG_ENTRY_DX
+-- ---- fc_086 <- ARPB_CHG_ENTRY_DX ----
 -- The table lists all diagnoses on a charge entry session in which the charge was posted.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(TX_ID) AS TX_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUALIFIER_C_NAME) AS DX_QUALIFIER_C_NAME_filled
+INTO #fc_086
 FROM ARPB_CHG_ENTRY_DX;
 
--- ==========================================================
--- Table: ARPB_CHG_ENTRY_DX_ALT
+-- ---- fc_087 <- ARPB_CHG_ENTRY_DX_ALT ----
 -- The table lists all diagnoses entered in a charge entry, from the alternative diagnosis code set.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(TX_ID) AS TX_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUALIFIER_C_NAME) AS DX_QUALIFIER_C_NAME_filled
+INTO #fc_087
 FROM ARPB_CHG_ENTRY_DX_ALT;
 
--- ==========================================================
--- Table: ARPB_PMT_RELATED_DENIALS
+-- ---- fc_088 <- ARPB_PMT_RELATED_DENIALS ----
 -- Denial records associated with this payment for evaluating denial rate metrics.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(TX_ID) AS TX_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(RELATED_BDC_ID) AS RELATED_BDC_ID_filled
+INTO #fc_088
 FROM ARPB_PMT_RELATED_DENIALS;
 
--- ==========================================================
--- Table: ASSOCIATED_DX
+-- ---- fc_089 <- ASSOCIATED_DX ----
 -- Diagnoses associated with treatment plans.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(TREATMENT_PLAN_ID) AS TREATMENT_PLAN_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -1916,27 +1844,25 @@ SELECT
     COUNT(SPECIFIC_DX_ID_DX_NAME) AS SPECIFIC_DX_ID_DX_NAME_filled,
     COUNT(PROBLEM_LIST_ID) AS PROBLEM_LIST_ID_filled,
     COUNT(PROBLEM_LINKED_TO_PLAN_YN) AS PROBLEM_LINKED_TO_PLAN_YN_filled
+INTO #fc_089
 FROM ASSOCIATED_DX;
 
--- ==========================================================
--- Table: ATB_AUTH_DENIAL_RSNS
+-- ---- fc_090 <- ATB_AUTH_DENIAL_RSNS ----
 -- This table contains the reasons for denial when the authorization decision is denied.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(AUTH_BUNDLE_ID) AS AUTH_BUNDLE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(AUTH_PYR_DENIAL_REASON_C_NAME) AS AUTH_PYR_DENIAL_REASON_C_NAME_filled
+INTO #fc_090
 FROM ATB_AUTH_DENIAL_RSNS;
 
--- ==========================================================
--- Table: ATB_AUTH_DIAGNOSES
+-- ---- fc_091 <- ATB_AUTH_DIAGNOSES ----
 -- This table contains information pertaining to the diagnosis information for an Auth Bundle.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(AUTH_DX_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1946,15 +1872,13 @@ SELECT
     COUNT(AUTH_DX_ID_DX_NAME) AS AUTH_DX_ID_DX_NAME_filled,
     COUNT(AUTH_PA_DX_TYPE_C_NAME) AS AUTH_PA_DX_TYPE_C_NAME_filled,
     COUNT(AUTH_DX_DATE) AS AUTH_DX_DATE_filled
+INTO #fc_091
 FROM ATB_AUTH_DIAGNOSES
-GROUP BY YEAR(AUTH_DX_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(AUTH_DX_DATE);
 
--- ==========================================================
--- Table: AUTHORIZATIONS
+-- ---- fc_092 <- AUTHORIZATIONS ----
 -- This table contains information about authorization records. This includes links to the patient, referral, and coverage/payer.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(AUTH_FROM_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2055,74 +1979,68 @@ SELECT
     COUNT(UM_FINAL_STS_CHANGE_LOCAL_DTTM) AS UM_FINAL_STS_CHANGE_LOCAL_DTTM_filled,
     COUNT(UM_FINAL_STS_CHANGE_UTC_DTTM) AS UM_FINAL_STS_CHANGE_UTC_DTTM_filled,
     COUNT(UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME) AS UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled
+INTO #fc_092
 FROM AUTHORIZATIONS
-GROUP BY YEAR(AUTH_FROM_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(AUTH_FROM_DT);
 
--- ==========================================================
--- Table: AUTH_UM_CVG_GUIDANCE_DX
+-- ---- fc_093 <- AUTH_UM_CVG_GUIDANCE_DX ----
 -- This table contains diagnosis information associated with a coverage guidance request.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(AUTH_ID) AS AUTH_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(UM_CVG_GUIDANCE_DX_ID_DX_NAME) AS UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled
+INTO #fc_093
 FROM AUTH_UM_CVG_GUIDANCE_DX;
 
--- ==========================================================
--- Table: BDC_ADDL_CLAIM_STS_CSN
+-- ---- fc_094 <- BDC_ADDL_CLAIM_STS_CSN ----
 -- This table contains information of contributing claim status messages for a claim status follow-up record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ADDL_CLAIM_RECON_CSN_ID) AS ADDL_CLAIM_RECON_CSN_ID_filled
+INTO #fc_094
 FROM BDC_ADDL_CLAIM_STS_CSN;
 
--- ==========================================================
--- Table: BDC_ASSOC_REMARK_CODES
+-- ---- fc_095 <- BDC_ASSOC_REMARK_CODES ----
 -- This table lists the remark codes associated with a Denial/Correspondence (BDC) record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REMARK_CODE_ID) AS REMARK_CODE_ID_filled,
     COUNT(REMARK_CODE_ID_REMIT_CODE_NAME) AS REMARK_CODE_ID_REMIT_CODE_NAME_filled
+INTO #fc_095
 FROM BDC_ASSOC_REMARK_CODES;
 
--- ==========================================================
--- Table: BDC_CLAIM_STATUS
+-- ---- fc_096 <- BDC_CLAIM_STATUS ----
 -- This table contains information about the claim status for claim status follow-up (BDC) records, including claim status reason codes and claim status codes.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CLAIM_STAT_RSN_C_NAME) AS CLAIM_STAT_RSN_C_NAME_filled,
     COUNT(CLM_STATUS_CODE_C_NAME) AS CLM_STATUS_CODE_C_NAME_filled,
     COUNT(CLM_STATUS_DATA) AS CLM_STATUS_DATA_filled
+INTO #fc_096
 FROM BDC_CLAIM_STATUS;
 
--- ==========================================================
--- Table: BDC_INFO
--- This table contains Denial/Remark/Correspondence/Variance/Claim Status Follow-Up information from the Denial/Correspondence (BDC) master file. It includes information about the denial/remark code rece
+-- ---- fc_097 <- BDC_INFO ----
+-- This table contains Denial/Remark/Correspondence/Variance/Claim Status Follow-Up information from the Denial/Correspondence (BDC) master file. It includes information about the den
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(INV_END_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2177,89 +2095,82 @@ SELECT
     COUNT(CLAIM_RECON_CSN_ID) AS CLAIM_RECON_CSN_ID_filled,
     COUNT(FOLLOW_UP_CONTEXT_C_NAME) AS FOLLOW_UP_CONTEXT_C_NAME_filled,
     COUNT(APPEAL_LLM_TEXT_GENERATED_YN) AS APPEAL_LLM_TEXT_GENERATED_YN_filled
+INTO #fc_097
 FROM BDC_INFO
-GROUP BY YEAR(INV_END_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(INV_END_DATE);
 
--- ==========================================================
--- Table: BDC_LOINC_CODES
+-- ---- fc_098 <- BDC_LOINC_CODES ----
 -- This table contains LOINC code and mapping information that will help identify documentations needed from loading a 277 RF(A)I message.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(LOINC_CODE) AS LOINC_CODE_filled
+INTO #fc_098
 FROM BDC_LOINC_CODES;
 
--- ==========================================================
--- Table: BDC_PB_CHGS
+-- ---- fc_099 <- BDC_PB_CHGS ----
 -- This table stores PB Denial/Correspondence (BDC) denial records and the charge transactions that were denied by that denial record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(TX_ID) AS TX_ID_filled,
     COUNT(FOL_ID) AS FOL_ID_filled
+INTO #fc_099
 FROM BDC_PB_CHGS;
 
--- ==========================================================
--- Table: BUNDLE_CHARGE_DX
+-- ---- fc_100 <- BUNDLE_CHARGE_DX ----
 -- Clarity table for bundleable charge diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUAL_C_NAME) AS DX_QUAL_C_NAME_filled
+INTO #fc_100
 FROM BUNDLE_CHARGE_DX;
 
--- ==========================================================
--- Table: CANCER_RISK_SCORE_AGE
+-- ---- fc_101 <- CANCER_RISK_SCORE_AGE ----
 -- This table contains the age associated with a risk score.
 -- Bucket(s): HCC / Risk adjustment
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(SCORE_AGE) AS SCORE_AGE_filled
+INTO #fc_101
 FROM CANCER_RISK_SCORE_AGE;
 
--- ==========================================================
--- Table: CANCER_RISK_SCORE_DX
+-- ---- fc_102 <- CANCER_RISK_SCORE_DX ----
 -- This table contains the diagnoses associated with the risk scores saved to the patient encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding;HCC / Risk adjustment
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(SCORE_DX_ID_DX_NAME) AS SCORE_DX_ID_DX_NAME_filled
+INTO #fc_102
 FROM CANCER_RISK_SCORE_DX;
 
--- ==========================================================
--- Table: CANCER_RISK_SCORE_TYPE
+-- ---- fc_103 <- CANCER_RISK_SCORE_TYPE ----
 -- This table contains the types of risk scores saved to the patient encounter.
 -- Bucket(s): HCC / Risk adjustment
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2270,44 +2181,40 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(CANCER_RISK_TYPE_C_NAME) AS CANCER_RISK_TYPE_C_NAME_filled
+INTO #fc_103
 FROM CANCER_RISK_SCORE_TYPE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: CASE_DX
+-- ---- fc_104 <- CASE_DX ----
 -- The CASE_DX table allows you to report on diagnoses associated with case records.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CASE_ID) AS CASE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled
+INTO #fc_104
 FROM CASE_DX;
 
--- ==========================================================
--- Table: CASE_ICD_PROC
+-- ---- fc_105 <- CASE_ICD_PROC ----
 -- The CASE_ICD_PROC table contains information about ICD procedures associated with case records.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CASE_ID) AS CASE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ICD_PX_ID) AS ICD_PX_ID_filled,
     COUNT(ICD_PX_ID_ICD_PX_NAME) AS ICD_PX_ID_ICD_PX_NAME_filled
+INTO #fc_105
 FROM CASE_ICD_PROC;
 
--- ==========================================================
--- Table: CDI_WORKING_DX
+-- ---- fc_106 <- CDI_WORKING_DX ----
 -- The CDI_WORKING_DX table contains information related to working diagnoses for a Clinical Documentation Improvement (CDI) review.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2320,15 +2227,13 @@ SELECT
     COUNT(CONTACT_SERIAL_NUM) AS CONTACT_SERIAL_NUM_filled,
     COUNT(CDI_WKG_DX_CC_C_NAME) AS CDI_WKG_DX_CC_C_NAME_filled,
     COUNT(WKG_DX_HAC_YN) AS WKG_DX_HAC_YN_filled
+INTO #fc_106
 FROM CDI_WORKING_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: CDI_WORKING_DX_HACS
+-- ---- fc_107 <- CDI_WORKING_DX_HACS ----
 -- The Hospital Acquired Conditions (HACs) associated with working review diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2338,29 +2243,26 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(WKG_DX_HAC_CAT_C_NAME) AS WKG_DX_HAC_CAT_C_NAME_filled
+INTO #fc_107
 FROM CDI_WORKING_DX_HACS
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: CHG_REVIEW_DX
--- This table contains one row for each diagnosis entered on a temporary accounts receivable (TAR) record that is or has been in a charge review workqueue. This is not the diagnosis associated with indiv
+-- ---- fc_108 <- CHG_REVIEW_DX ----
+-- This table contains one row for each diagnosis entered on a temporary accounts receivable (TAR) record that is or has been in a charge review workqueue. This is not the diagnosis a
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(TAR_ID) AS TAR_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_QUAL_C_NAME) AS DX_QUAL_C_NAME_filled
+INTO #fc_108
 FROM CHG_REVIEW_DX;
 
--- ==========================================================
--- Table: CLAIM_INFO
+-- ---- fc_109 <- CLAIM_INFO ----
 -- This table contains information from claim info records for Hospital and Professional Billing.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(ENTRY_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2502,32 +2404,29 @@ SELECT
     COUNT(CLM_SENSITIVITY_C_NAME) AS CLM_SENSITIVITY_C_NAME_filled,
     COUNT(PLACE_OF_SERVICE_ID_LOC_NAME) AS PLACE_OF_SERVICE_ID_LOC_NAME_filled,
     COUNT(LOC_ID_LOC_NAME) AS LOC_ID_LOC_NAME_filled
+INTO #fc_109
 FROM CLAIM_INFO
-GROUP BY YEAR(ENTRY_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(ENTRY_DATE);
 
--- ==========================================================
--- Table: CLM_DIAGNOSIS
+-- ---- fc_110 <- CLM_DIAGNOSIS ----
 -- Claim Information (CLM) diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled
+INTO #fc_110
 FROM CLM_DIAGNOSIS;
 
--- ==========================================================
--- Table: CLM_DX
+-- ---- fc_111 <- CLM_DX ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_DX table holds the diagnoses for the claim.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -2542,13 +2441,12 @@ SELECT
     COUNT(DX_TYPE) AS DX_TYPE_filled,
     COUNT(DX_INFO_TYPE) AS DX_INFO_TYPE_filled,
     COUNT(CMS_DX_TYPE) AS CMS_DX_TYPE_filled
+INTO #fc_111
 FROM CLM_DX;
 
--- ==========================================================
--- Table: CLM_VALUES
--- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES table holds claim-level values set by the system during claims processing or by user edits.
+-- ---- fc_112 <- CLM_VALUES ----
+-- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES table holds claim-level values set by the system during claims processing or by use
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(PAT_BIRTH_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2621,15 +2519,13 @@ SELECT
     COUNT(BILL_TYP_FREQ_CD) AS BILL_TYP_FREQ_CD_filled,
     COUNT(MOMS_MRN) AS MOMS_MRN_filled,
     COUNT(PAYTO_ADDR_TYP_QUAL) AS PAYTO_ADDR_TYP_QUAL_filled
+INTO #fc_112
 FROM CLM_VALUES
-GROUP BY YEAR(PAT_BIRTH_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(PAT_BIRTH_DATE);
 
--- ==========================================================
--- Table: CLM_VALUES_2
--- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_2 table holds claim-level values set by the system during claims processing or by user edits.
+-- ---- fc_113 <- CLM_VALUES_2 ----
+-- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_2 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CLM_FROM_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2730,15 +2626,13 @@ SELECT
     COUNT(ASST_SURG_NAM_LAST) AS ASST_SURG_NAM_LAST_filled,
     COUNT(ASST_SURG_NAM_FIRST) AS ASST_SURG_NAM_FIRST_filled,
     COUNT(ASST_SURG_NAM_MID) AS ASST_SURG_NAM_MID_filled
+INTO #fc_113
 FROM CLM_VALUES_2
-GROUP BY YEAR(CLM_FROM_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(CLM_FROM_DT);
 
--- ==========================================================
--- Table: CLM_VALUES_3
--- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_3 table holds claim level values set by the system during claims processing or by user edits.
+-- ---- fc_114 <- CLM_VALUES_3 ----
+-- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_3 table holds claim level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CREATE_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2792,15 +2686,13 @@ SELECT
     COUNT(NCPDP_RECORD_TYPE) AS NCPDP_RECORD_TYPE_filled,
     COUNT(TXST_TRANSMISSION_ACTION) AS TXST_TRANSMISSION_ACTION_filled,
     COUNT(TXST_SUBMISSION_NUMBER) AS TXST_SUBMISSION_NUMBER_filled
+INTO #fc_114
 FROM CLM_VALUES_3
-GROUP BY YEAR(CREATE_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(CREATE_DT);
 
--- ==========================================================
--- Table: CLM_VALUES_4
--- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_4 table holds claim-level values set by the system during claims processing or by user edits.
+-- ---- fc_115 <- CLM_VALUES_4 ----
+-- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_4 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(FIRST_CNCT_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2870,15 +2762,13 @@ SELECT
     COUNT(IS_CLINICALLY_INVALID_IDENT) AS IS_CLINICALLY_INVALID_IDENT_filled,
     COUNT(DRG_CODE_SET_IDENT) AS DRG_CODE_SET_IDENT_filled,
     COUNT(DRG_CODE_VER_IDENT) AS DRG_CODE_VER_IDENT_filled
+INTO #fc_115
 FROM CLM_VALUES_4
-GROUP BY YEAR(FIRST_CNCT_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(FIRST_CNCT_DT);
 
--- ==========================================================
--- Table: CLM_VALUES_5
--- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_5 table holds claim-level values set by the system during claims processing or by user edits.
+-- ---- fc_116 <- CLM_VALUES_5 ----
+-- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_5 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(LAST_SRP_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2938,15 +2828,13 @@ SELECT
     COUNT(ENC_TYPE) AS ENC_TYPE_filled,
     COUNT(ENC_TRANSFER_SOURCE) AS ENC_TRANSFER_SOURCE_filled,
     COUNT(ENC_TRANSFER_DEST) AS ENC_TRANSFER_DEST_filled
+INTO #fc_116
 FROM CLM_VALUES_5
-GROUP BY YEAR(LAST_SRP_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(LAST_SRP_DATE);
 
--- ==========================================================
--- Table: CLM_VALUES_6
--- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_6 table holds claim-level values set by the system during claims processing or by user edits.
+-- ---- fc_117 <- CLM_VALUES_6 ----
+-- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_6 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(ENC_START_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2961,93 +2849,86 @@ SELECT
     COUNT(ENC_END_TYPE) AS ENC_END_TYPE_filled,
     COUNT(SVC_PROV_NAME) AS SVC_PROV_NAME_filled,
     COUNT(CONTRACT_NUMBER) AS CONTRACT_NUMBER_filled
+INTO #fc_117
 FROM CLM_VALUES_6
-GROUP BY YEAR(ENC_START_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(ENC_START_DATE);
 
--- ==========================================================
--- Table: CLM_VALUES_DENT_STAT
+-- ---- fc_118 <- CLM_VALUES_DENT_STAT ----
 -- This table contains information for dental-specific tooth statuses (Missing/To Be Extracted).
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(TOOTH_NUM) AS TOOTH_NUM_filled,
     COUNT(TOOTH_STAT_CODE) AS TOOTH_STAT_CODE_filled
+INTO #fc_118
 FROM CLM_VALUES_DENT_STAT;
 
--- ==========================================================
--- Table: CLM_VALUES_PAT_IDENT
+-- ---- fc_119 <- CLM_VALUES_PAT_IDENT ----
 -- This table contains information for patient identifiers.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PAT_IDENT_QUAL) AS PAT_IDENT_QUAL_filled,
     COUNT(PAT_IDENT) AS PAT_IDENT_filled
+INTO #fc_119
 FROM CLM_VALUES_PAT_IDENT;
 
--- ==========================================================
--- Table: CLM_VALUES_PRESC_PROV_ID
+-- ---- fc_120 <- CLM_VALUES_PRESC_PROV_ID ----
 -- This table contains information for prescribing provider identifiers.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PROV_IDENT_QUAL) AS PROV_IDENT_QUAL_filled,
     COUNT(PROV_IDENT) AS PROV_IDENT_filled
+INTO #fc_120
 FROM CLM_VALUES_PRESC_PROV_ID;
 
--- ==========================================================
--- Table: CLM_VALUES_REFERRAL_DX
+-- ---- fc_121 <- CLM_VALUES_REFERRAL_DX ----
 -- This table stores the referral diagnoses associated with the claim.
 -- Bucket(s): ICD-10 / Diagnosis coding;Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REFERRAL_DX) AS REFERRAL_DX_filled,
     COUNT(REFERRAL_DX_QUAL) AS REFERRAL_DX_QUAL_filled,
     COUNT(REFERRAL_DX_CODE_SET_OID) AS REFERRAL_DX_CODE_SET_OID_filled
+INTO #fc_121
 FROM CLM_VALUES_REFERRAL_DX;
 
--- ==========================================================
--- Table: CLM_VALUES_REJECT_CODE
+-- ---- fc_122 <- CLM_VALUES_REJECT_CODE ----
 -- This table contains information for pharmacy claim reject codes.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REJECT_CODE) AS REJECT_CODE_filled
+INTO #fc_122
 FROM CLM_VALUES_REJECT_CODE;
 
--- ==========================================================
--- Table: CLM_VALUES_SVC_PROV_ID
+-- ---- fc_123 <- CLM_VALUES_SVC_PROV_ID ----
 -- This table contains information for service provider identifiers
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -3055,41 +2936,38 @@ SELECT
     COUNT(SVC_PROV_IDENT) AS SVC_PROV_IDENT_filled,
     COUNT(SVC_PROV_TAXONOMY) AS SVC_PROV_TAXONOMY_filled,
     COUNT(SVC_PROV_FROM_LINE_YN) AS SVC_PROV_FROM_LINE_YN_filled
+INTO #fc_123
 FROM CLM_VALUES_SVC_PROV_ID;
 
--- ==========================================================
--- Table: CLM_WC_DIAGNOSIS
+-- ---- fc_124 <- CLM_WC_DIAGNOSIS ----
 -- Worker's comp diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_ID) AS CLAIM_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(WK_COMP_DX) AS WK_COMP_DX_filled
+INTO #fc_124
 FROM CLM_WC_DIAGNOSIS;
 
--- ==========================================================
--- Table: CL_ICD_PX
+-- ---- fc_125 <- CL_ICD_PX ----
 -- The CL_ICD_PX table is the master table for ICD procedures.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ICD_PX_ID) AS ICD_PX_ID_filled,
     COUNT(ICD_PX_ID_ICD_PX_NAME) AS ICD_PX_ID_ICD_PX_NAME_filled,
     COUNT(ICD_PX_NAME) AS ICD_PX_NAME_filled
+INTO #fc_125
 FROM CL_ICD_PX;
 
--- ==========================================================
--- Table: COD_ADMISSION_DX
+-- ---- fc_126 <- COD_ADMISSION_DX ----
 -- Admission diagnoses for the patient.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3098,15 +2976,13 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ADMISSION_DX_ID_DX_NAME) AS ADMISSION_DX_ID_DX_NAME_filled
+INTO #fc_126
 FROM COD_ADMISSION_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_ADMISSION_DX_SOURCE
+-- ---- fc_127 <- COD_ADMISSION_DX_SOURCE ----
 -- Source information about the admission diagonsis value.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3115,15 +2991,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_127
 FROM COD_ADMISSION_DX_SOURCE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_ADMISSION_DX_SRC_REF
+-- ---- fc_128 <- COD_ADMISSION_DX_SRC_REF ----
 -- Source information about the admission diagnosis value. Corresponds to line numbers in the source table.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3132,15 +3006,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_128
 FROM COD_ADMISSION_DX_SRC_REF
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_CPT_CODE
+-- ---- fc_129 <- COD_CPT_CODE ----
 -- CPT/HCPCs codes for the patient.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3152,15 +3024,13 @@ SELECT
     COUNT(CPT_DATE) AS CPT_DATE_filled,
     COUNT(CPT_PROV_ID_PROV_NAME) AS CPT_PROV_ID_PROV_NAME_filled,
     COUNT(CPT_MODIFIERS) AS CPT_MODIFIERS_filled
+INTO #fc_129
 FROM COD_CPT_CODE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_CPT_CODE_SOURCE
+-- ---- fc_130 <- COD_CPT_CODE_SOURCE ----
 -- Source information about the CPT/HCPCs values.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3169,15 +3039,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_130
 FROM COD_CPT_CODE_SOURCE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_CPT_CODE_SRC_REFERENC
+-- ---- fc_131 <- COD_CPT_CODE_SRC_REFERENC ----
 -- Source information about the CPT/HCPCs values. Corresponds to line numbers in the source table.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3186,15 +3054,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_131
 FROM COD_CPT_CODE_SRC_REFERENC
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_ICD_PROC_SOURCE
+-- ---- fc_132 <- COD_ICD_PROC_SOURCE ----
 -- The source of the ICD Procedure.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3203,15 +3069,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_132
 FROM COD_ICD_PROC_SOURCE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_ICD_PROC_SRC_REFERENC
+-- ---- fc_133 <- COD_ICD_PROC_SRC_REFERENC ----
 -- Source references for the ICD procedures.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3220,15 +3084,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_133
 FROM COD_ICD_PROC_SRC_REFERENC
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_PRIMARY_DX_SOURCE
+-- ---- fc_134 <- COD_PRIMARY_DX_SOURCE ----
 -- Source information for the primary diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3237,15 +3099,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_134
 FROM COD_PRIMARY_DX_SOURCE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COD_PRIM_DX_SRC_REFERENCE
+-- ---- fc_135 <- COD_PRIM_DX_SRC_REFERENCE ----
 -- Source references for the primary diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3254,59 +3114,54 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_135
 FROM COD_PRIM_DX_SRC_REFERENCE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: COMPLICATION_DX_MODE
+-- ---- fc_136 <- COMPLICATION_DX_MODE ----
 -- The COMPLICATION_DX_MODE table contains the test or technique used to diagnose the patient.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROBLEM_LIST_ID) AS PROBLEM_LIST_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(MODE_OF_DX_C_NAME) AS MODE_OF_DX_C_NAME_filled
+INTO #fc_136
 FROM COMPLICATION_DX_MODE;
 
--- ==========================================================
--- Table: CRR_SUBMISSION_DX
+-- ---- fc_137 <- CRR_SUBMISSION_DX ----
 -- This table contains the list of diagnoses for a chart review record submission.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_RECON_ID) AS CLAIM_RECON_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CR_SUBMISSION_DX_ID_DX_NAME) AS CR_SUBMISSION_DX_ID_DX_NAME_filled
+INTO #fc_137
 FROM CRR_SUBMISSION_DX;
 
--- ==========================================================
--- Table: CUST_SERVICE_TRANS_DX
+-- ---- fc_138 <- CUST_SERVICE_TRANS_DX ----
 -- The CUST_SERVICE_TRANS_DX table contains diagnosis-related information collected for a transfer patient in both free text and coded form.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(COMM_ID) AS COMM_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(TRANS_DX_TEXT) AS TRANS_DX_TEXT_filled,
     COUNT(TRANS_DX_ID_DX_NAME) AS TRANS_DX_ID_DX_NAME_filled,
     COUNT(TRANS_DX_CATEGORY_C_NAME) AS TRANS_DX_CATEGORY_C_NAME_filled
+INTO #fc_138
 FROM CUST_SERVICE_TRANS_DX;
 
--- ==========================================================
--- Table: CVG_MEM_RISK_ADJ_FACT
+-- ---- fc_139 <- CVG_MEM_RISK_ADJ_FACT ----
 -- This table holds member level risk adjustment factor.
 -- Bucket(s): HCC / Risk adjustment
--- ==========================================================
 SELECT
     YEAR(EFF_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3318,15 +3173,13 @@ SELECT
     COUNT(RISK_ADJ_FACT_MODEL_C_NAME) AS RISK_ADJ_FACT_MODEL_C_NAME_filled,
     COUNT(RISK_ADJ_FACT_TYPE_C_NAME) AS RISK_ADJ_FACT_TYPE_C_NAME_filled,
     COUNT(RISK_ADJ_FACTOR) AS RISK_ADJ_FACTOR_filled
+INTO #fc_139
 FROM CVG_MEM_RISK_ADJ_FACT
-GROUP BY YEAR(EFF_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(EFF_DATE);
 
--- ==========================================================
--- Table: CVG_MEM_RISK_ADJ_FACT_HX
+-- ---- fc_140 <- CVG_MEM_RISK_ADJ_FACT_HX ----
 -- The historical values of the CVG_MEM_RISK_ADJ_FACT table over time.
 -- Bucket(s): HCC / Risk adjustment
--- ==========================================================
 SELECT
     YEAR(EFF_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3343,58 +3196,53 @@ SELECT
     COUNT(ITM_HX_END_LOCAL_DTTM) AS ITM_HX_END_LOCAL_DTTM_filled,
     COUNT(ITM_HX_END_UTC_DTTM) AS ITM_HX_END_UTC_DTTM_filled,
     COUNT(CVG_ITM_HX_REL_ACT_GUID) AS CVG_ITM_HX_REL_ACT_GUID_filled
+INTO #fc_140
 FROM CVG_MEM_RISK_ADJ_FACT_HX
-GROUP BY YEAR(EFF_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(EFF_DATE);
 
--- ==========================================================
--- Table: DENTAL_PROC_DIAGNOSES
+-- ---- fc_141 <- DENTAL_PROC_DIAGNOSES ----
 -- This table contains information about associated diagnoses for a procedure.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(FINDING_ID) AS FINDING_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DENTAL_DX_ID_DX_NAME) AS DENTAL_DX_ID_DX_NAME_filled
+INTO #fc_141
 FROM DENTAL_PROC_DIAGNOSES;
 
--- ==========================================================
--- Table: DENTAL_RES_DX_HX_RM
+-- ---- fc_142 <- DENTAL_RES_DX_HX_RM ----
 -- This table extracts the related multiple response Dental: Associated Diagnoses History (I RES 17519) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(FINDING_ID) AS FINDING_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DENTAL_DX_HX_ID_DX_NAME) AS DENTAL_DX_HX_ID_DX_NAME_filled
+INTO #fc_142
 FROM DENTAL_RES_DX_HX_RM;
 
--- ==========================================================
--- Table: DIAGNOSIS_REVIEW
+-- ---- fc_143 <- DIAGNOSIS_REVIEW ----
 -- This table stores the log diagnosis review status.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LOG_ID) AS LOG_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSIS_REVIEW_C_NAME) AS DIAGNOSIS_REVIEW_C_NAME_filled
+INTO #fc_143
 FROM DIAGNOSIS_REVIEW;
 
--- ==========================================================
--- Table: DIFF_DX_MOD_TYPE
+-- ---- fc_144 <- DIFF_DX_MOD_TYPE ----
 -- This item stores the types of modifiers that have been applied to this diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3404,15 +3252,13 @@ SELECT
     COUNT(PAT_ENC_DATE_REAL) AS PAT_ENC_DATE_REAL_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DDX_MODIFIER_TYPE_C_NAME) AS DDX_MODIFIER_TYPE_C_NAME_filled
+INTO #fc_144
 FROM DIFF_DX_MOD_TYPE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DIFF_DX_MOD_VALUES
+-- ---- fc_145 <- DIFF_DX_MOD_VALUES ----
 -- This item stores the values of the modifiers selected for this diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3422,15 +3268,13 @@ SELECT
     COUNT(PAT_ENC_DATE_REAL) AS PAT_ENC_DATE_REAL_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DDX_MODIFIER_VALS_C_NAME) AS DDX_MODIFIER_VALS_C_NAME_filled
+INTO #fc_145
 FROM DIFF_DX_MOD_VALUES
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_DX
+-- ---- fc_146 <- DOCS_RCVD_DX ----
 -- This table stores discrete diagnosis information received from outside sources.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3460,15 +3304,13 @@ SELECT
     COUNT(DX_NOTED_DATE) AS DX_NOTED_DATE_filled,
     COUNT(DX_DOCUMENTED_INST_UTC_DTTM) AS DX_DOCUMENTED_INST_UTC_DTTM_filled,
     COUNT(DX_POA_C_NAME) AS DX_POA_C_NAME_filled
+INTO #fc_146
 FROM DOCS_RCVD_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_DX_CD_CMPLD
+-- ---- fc_147 <- DOCS_RCVD_DX_CD_CMPLD ----
 -- This table stores the data type, coding system, and code data received for a diagnosis reference ID.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3480,15 +3322,13 @@ SELECT
     COUNT(DATA_TYPE_C) AS DATA_TYPE_C_filled,
     COUNT(CODING_SYSTEM) AS CODING_SYSTEM_filled,
     COUNT(CODE) AS CODE_filled
+INTO #fc_147
 FROM DOCS_RCVD_DX_CD_CMPLD
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_DX_CD_DISPNM
+-- ---- fc_148 <- DOCS_RCVD_DX_CD_DISPNM ----
 -- This table stores the display name of all the mapping codes for one diagnosis reference ID.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3498,15 +3338,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DISPLAY_NAME) AS DISPLAY_NAME_filled
+INTO #fc_148
 FROM DOCS_RCVD_DX_CD_DISPNM
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_DX_CD_NLFLVR
+-- ---- fc_149 <- DOCS_RCVD_DX_CD_NLFLVR ----
 -- This table stores the nullFlavor values of all the mapping codes for one diagnosis reference ID.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3516,15 +3354,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CODE_NULLFLAVOR_C_NAME) AS CODE_NULLFLAVOR_C_NAME_filled
+INTO #fc_149
 FROM DOCS_RCVD_DX_CD_NLFLVR
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_DX_NOTES
+-- ---- fc_150 <- DOCS_RCVD_DX_NOTES ----
 -- This table stores the note elements associated with a diagnosis from an external source.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3534,15 +3370,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_LINKED_NOTES) AS DX_LINKED_NOTES_filled
+INTO #fc_150
 FROM DOCS_RCVD_DX_NOTES
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_ENCOUNTER_DX
+-- ---- fc_151 <- DOCS_RCVD_ENCOUNTER_DX ----
 -- This table extracts the related multiple response Event Linked Diagnosis (I DXR 8025) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3552,15 +3386,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(EVENT_LINKED_DX_DX_NAME) AS EVENT_LINKED_DX_DX_NAME_filled
+INTO #fc_151
 FROM DOCS_RCVD_ENCOUNTER_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_ENDO_DX_INFO
+-- ---- fc_152 <- DOCS_RCVD_ENDO_DX_INFO ----
 -- Contains information about endoscopy procedure diagnoses extracted from customer systems for use in Cosmos.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3573,15 +3405,13 @@ SELECT
     COUNT(ENDO_DX_DDP_REFID) AS ENDO_DX_DDP_REFID_filled,
     COUNT(ENDO_DX_IND_ID_DX_NAME) AS ENDO_DX_IND_ID_DX_NAME_filled,
     COUNT(ENDO_DX_ID_DX_NAME) AS ENDO_DX_ID_DX_NAME_filled
+INTO #fc_152
 FROM DOCS_RCVD_ENDO_DX_INFO
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_GENERIC_ORD_DX
+-- ---- fc_153 <- DOCS_RCVD_GENERIC_ORD_DX ----
 -- This table stores the reference IDs of external diagnosis elements associated with external generic orders.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3591,15 +3421,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(GENERIC_ORDER_ASSOCIATED_DXS) AS GENERIC_ORDER_ASSOCIATED_DXS_filled
+INTO #fc_153
 FROM DOCS_RCVD_GENERIC_ORD_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_MEDS_ASSOC_DX
+-- ---- fc_154 <- DOCS_RCVD_MEDS_ASSOC_DX ----
 -- This table stores the reference IDs of diagnoses associated with a medication from an external source.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3609,30 +3437,26 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(MEDICATION_ASSOCIATED_DX) AS MEDICATION_ASSOCIATED_DX_filled
+INTO #fc_154
 FROM DOCS_RCVD_MEDS_ASSOC_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_MINOR_DENIAL
+-- ---- fc_155 <- DOCS_RCVD_MINOR_DENIAL ----
 -- Contains information about minor denials decisions included in a received document.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_155
 FROM DOCS_RCVD_MINOR_DENIAL
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DOCS_RCVD_RISK_ADJ_CAT
+-- ---- fc_156 <- DOCS_RCVD_RISK_ADJ_CAT ----
 -- This table stores risk adjustment categories received from outside sources.
 -- Bucket(s): HCC / Risk adjustment
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3654,30 +3478,27 @@ SELECT
     COUNT(RAD_BULK_STAT_C_NAME) AS RAD_BULK_STAT_C_NAME_filled,
     COUNT(RAD_LAST_UPD_UTC_DTTM) AS RAD_LAST_UPD_UTC_DTTM_filled,
     COUNT(RAD_CODING_STATUS_C_NAME) AS RAD_CODING_STATUS_C_NAME_filled
+INTO #fc_156
 FROM DOCS_RCVD_RISK_ADJ_CAT
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: DX_MODS_TXT
+-- ---- fc_157 <- DX_MODS_TXT ----
 -- Stores the free text associated with additional diagnoses modifiers (add code).
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_MODIFIER_TEXT) AS DX_MODIFIER_TEXT_filled
+INTO #fc_157
 FROM DX_MODS_TXT;
 
--- ==========================================================
--- Table: EM_CODE_CALC
--- Tracks Evaluation and Management (EM) code calculations based on LOS codes. EM codes are used by physicians to report and bill medical services depending on medical history, physical examinations and 
+-- ---- fc_158 <- EM_CODE_CALC ----
+-- Tracks Evaluation and Management (EM) code calculations based on LOS codes. EM codes are used by physicians to report and bill medical services depending on medical history, physic
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3691,15 +3512,13 @@ SELECT
     COUNT(EMCODE_SDI) AS EMCODE_SDI_filled,
     COUNT(EM_CODE_SOURCE_C_NAME) AS EM_CODE_SOURCE_C_NAME_filled,
     COUNT(EM_CODE) AS EM_CODE_filled
+INTO #fc_158
 FROM EM_CODE_CALC
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: ENC_DX_ASSOC_AMBIENT_DX
+-- ---- fc_159 <- ENC_DX_ASSOC_AMBIENT_DX ----
 -- This table contains the unique IDs of diagnoses provided by Ambient that were finalized to Visit Diagnoses on the encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3710,15 +3529,13 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(DX_ASSOC_AMBIENT_DX) AS DX_ASSOC_AMBIENT_DX_filled
+INTO #fc_159
 FROM ENC_DX_ASSOC_AMBIENT_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: ENC_DX_ASSOC_DATA
--- This table contains data related to a patient's visit diagnoses. Each row corresponds to a visit diagnosis on an encounter. The data includes linked notes, SmartSections, and Ambient diagnosis data.
+-- ---- fc_160 <- ENC_DX_ASSOC_DATA ----
+-- This table contains data related to a patient's visit diagnoses. Each row corresponds to a visit diagnosis on an encounter. The data includes linked notes, SmartSections, and Ambie
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3727,15 +3544,13 @@ SELECT
     COUNT(PAT_ID) AS PAT_ID_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled
+INTO #fc_160
 FROM ENC_DX_ASSOC_DATA
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: ENC_DX_ASSOC_NOTES
+-- ---- fc_161 <- ENC_DX_ASSOC_NOTES ----
 -- This table contains information about linked notes and SmartSections for visit diagnoses that appear in a Diagnosis-Aware Note.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3745,18 +3560,16 @@ SELECT
     COUNT(PAT_ID) AS PAT_ID_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled
+INTO #fc_161
 FROM ENC_DX_ASSOC_NOTES
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: ENC_DX_EDIT_TRAIL
--- This table stores the audit trail information for encounter diagnosis edits. In order to report on diagnosis edits, this table can be linked with PAT_ENC_DX. This linking can be done using the PAT_ENC
+-- ---- fc_162 <- ENC_DX_EDIT_TRAIL ----
+-- This table stores the audit trail information for encounter diagnosis edits. In order to report on diagnosis edits, this table can be linked with PAT_ENC_DX. This linking can be do
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -3764,29 +3577,27 @@ SELECT
     COUNT(DX_EDIT_PRIMDX_YN) AS DX_EDIT_PRIMDX_YN_filled,
     COUNT(DX_EDIT_STATUS_C_NAME) AS DX_EDIT_STATUS_C_NAME_filled,
     COUNT(DX_EDIT_ED_YN) AS DX_EDIT_ED_YN_filled
+INTO #fc_162
 FROM ENC_DX_EDIT_TRAIL;
 
--- ==========================================================
--- Table: EXT_CAUSE_INJ_DX
--- All values associated with a claim are stored in the Claim External Value record. The EXT_CAUSE_INJ_DX table holds the diagnoses that document any accidents or other external causes for the patient's 
+-- ---- fc_163 <- EXT_CAUSE_INJ_DX ----
+-- All values associated with a claim are stored in the Claim External Value record. The EXT_CAUSE_INJ_DX table holds the diagnoses that document any accidents or other external cause
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(EXT_CAUSE_INJ_QUAL) AS EXT_CAUSE_INJ_QUAL_filled,
     COUNT(EXT_CAUSE_INJ_DX) AS EXT_CAUSE_INJ_DX_filled,
     COUNT(EXT_CAUSE_INJ_POA) AS EXT_CAUSE_INJ_POA_filled
+INTO #fc_163
 FROM EXT_CAUSE_INJ_DX;
 
--- ==========================================================
--- Table: HEALTH_PLAN_DX_CODING
+-- ---- fc_164 <- HEALTH_PLAN_DX_CODING ----
 -- This table contains diagnosis coding from health plan risk adjustment review. Each line represents a diagnosis on the evidence associated with the coding record.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3803,15 +3614,13 @@ SELECT
     COUNT(RA_SOURCE_DOCUMENT_ID) AS RA_SOURCE_DOCUMENT_ID_filled,
     COUNT(HIGH_RISK_DX_YN) AS HIGH_RISK_DX_YN_filled,
     COUNT(HAS_AI_YN) AS HAS_AI_YN_filled
+INTO #fc_164
 FROM HEALTH_PLAN_DX_CODING
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_OASIS_ICD10_DX
--- This table contains all of the clinical Outcome and Assessment Information Set (OASIS) ICD-10 diagnoses entered by a field nurse and edited in Diagnosis Review. The first diagnosis for a given patient
+-- ---- fc_165 <- HH_OASIS_ICD10_DX ----
+-- This table contains all of the clinical Outcome and Assessment Information Set (OASIS) ICD-10 diagnoses entered by a field nurse and edited in Diagnosis Review. The first diagnosis
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3826,15 +3635,13 @@ SELECT
     COUNT(OASIS_DX_FLAG_C_NAME) AS OASIS_DX_FLAG_C_NAME_filled,
     COUNT(OASIS_DX_OTHER_1_ID_DX_NAME) AS OASIS_DX_OTHER_1_ID_DX_NAME_filled,
     COUNT(OASIS_DX_OTHER_2_ID_DX_NAME) AS OASIS_DX_OTHER_2_ID_DX_NAME_filled
+INTO #fc_165
 FROM HH_OASIS_ICD10_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_PAT_CASE_MIX_DX
--- This table contains Primary and Secondary case mix diagnoses information entered for a patient as part of a home health Outcome and Assessment Information Set (OASIS) assessment. The table stores valu
+-- ---- fc_166 <- HH_PAT_CASE_MIX_DX ----
+-- This table contains Primary and Secondary case mix diagnoses information entered for a patient as part of a home health Outcome and Assessment Information Set (OASIS) assessment. T
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3845,15 +3652,13 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(CASE_MIX_DX_ID_DX_NAME) AS CASE_MIX_DX_ID_DX_NAME_filled,
     COUNT(SEC_CASE_DX_ID_DX_NAME) AS SEC_CASE_DX_ID_DX_NAME_filled
+INTO #fc_166
 FROM HH_PAT_CASE_MIX_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_PAT_CSMX_OTH_DX
--- This table contains case mix diagnoses information entered for a patient as part of a home health Outcome and Assessment Information Set (OASIS) assessment. The table stores values entered for M0246 f
+-- ---- fc_167 <- HH_PAT_CSMX_OTH_DX ----
+-- This table contains case mix diagnoses information entered for a patient as part of a home health Outcome and Assessment Information Set (OASIS) assessment. The table stores values
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3864,15 +3669,13 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(CASE_MIX_DX1_OTH_ID_DX_NAME) AS CASE_MIX_DX1_OTH_ID_DX_NAME_filled,
     COUNT(CASE_MIX_DX2_OTH_ID_DX_NAME) AS CASE_MIX_DX2_OTH_ID_DX_NAME_filled
+INTO #fc_167
 FROM HH_PAT_CSMX_OTH_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_PAT_IP_DX
+-- ---- fc_168 <- HH_PAT_IP_DX ----
 -- Contains Home Health inpatient diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3882,15 +3685,13 @@ SELECT
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled
+INTO #fc_168
 FROM HH_PAT_IP_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_PAT_OTHER_DX
+-- ---- fc_169 <- HH_PAT_OTHER_DX ----
 -- Contains information from the Home Health Other Diagnoses grid.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3903,15 +3704,13 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(OTHER_DX_FLAG_C_NAME) AS OTHER_DX_FLAG_C_NAME_filled
+INTO #fc_169
 FROM HH_PAT_OTHER_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_PAT_PAYMENT_DX
+-- ---- fc_170 <- HH_PAT_PAYMENT_DX ----
 -- Contains information from the Home Health Payment Diagnoses grid.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3923,15 +3722,13 @@ SELECT
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled
+INTO #fc_170
 FROM HH_PAT_PAYMENT_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HH_PAT_REG_CHG_DX
+-- ---- fc_171 <- HH_PAT_REG_CHG_DX ----
 -- Contains Home Health regimen change diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3941,15 +3738,13 @@ SELECT
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled
+INTO #fc_171
 FROM HH_PAT_REG_CHG_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HNO_ECG_DX
+-- ---- fc_172 <- HNO_ECG_DX ----
 -- This table contains the diagnosis for Electrocardiograms (ECG/EKG) that have been stored on General Use Notes (HNO) records.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3958,18 +3753,16 @@ SELECT
     COUNT(NOTE_ID) AS NOTE_ID_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ECG_DX) AS ECG_DX_filled
+INTO #fc_172
 FROM HNO_ECG_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HOLOGRAM_AMBIENT_DX_INFO
+-- ---- fc_173 <- HOLOGRAM_AMBIENT_DX_INFO ----
 -- This table contains information about the Ambient diagnosis choices that were presented to a clinician.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HOLOGRAM_ID) AS HOLOGRAM_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
@@ -3980,29 +3773,27 @@ SELECT
     COUNT(ADD_DX_TO_PROBLIST_YN) AS ADD_DX_TO_PROBLIST_YN_filled,
     COUNT(INITIAL_DX_ID_DX_NAME) AS INITIAL_DX_ID_DX_NAME_filled,
     COUNT(AMBIENT_PAST_DX_CSN) AS AMBIENT_PAST_DX_CSN_filled
+INTO #fc_173
 FROM HOLOGRAM_AMBIENT_DX_INFO;
 
--- ==========================================================
--- Table: HOLO_LEVEL_OF_SERVICE_MOD
+-- ---- fc_174 <- HOLO_LEVEL_OF_SERVICE_MOD ----
 -- This table contains level of service modifier information.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HOLOGRAM_ID) AS HOLOGRAM_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(LEVEL_OF_SERVICE_MODIFIER_ID) AS LEVEL_OF_SERVICE_MODIFIER_ID_filled,
     COUNT(LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME) AS LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled
+INTO #fc_174
 FROM HOLO_LEVEL_OF_SERVICE_MOD;
 
--- ==========================================================
--- Table: HOSPICE_CODED_DX
+-- ---- fc_175 <- HOSPICE_CODED_DX ----
 -- The table lists coded hospice diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4013,15 +3804,13 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(HOSPICE_CODED_DX_ID_DX_NAME) AS HOSPICE_CODED_DX_ID_DX_NAME_filled,
     COUNT(HOSPICE_RELATED_C_NAME) AS HOSPICE_RELATED_C_NAME_filled
+INTO #fc_175
 FROM HOSPICE_CODED_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HOSPICE_DX
+-- ---- fc_176 <- HOSPICE_DX ----
 -- This table holds Hospice Episode Diagnoses information.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4031,89 +3820,82 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(HOSPICE_DX_NONCODED) AS HOSPICE_DX_NONCODED_filled
+INTO #fc_176
 FROM HOSPICE_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: HOSPICE_DX_HX
+-- ---- fc_177 <- HOSPICE_DX_HX ----
 -- This table contains audit history for a patient's Hospice diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PAT_ID) AS PAT_ID_filled,
     COUNT(ENTRY_USER_ID) AS ENTRY_USER_ID_filled,
     COUNT(ENTRY_UTC_DTTM) AS ENTRY_UTC_DTTM_filled
+INTO #fc_177
 FROM HOSPICE_DX_HX;
 
--- ==========================================================
--- Table: HSP_ACCT_ADDL_DX
+-- ---- fc_178 <- HSP_ACCT_ADDL_DX ----
 -- Additional diagnoses for reporting associated with this hospital account.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ACCT_ID) AS ACCT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ADDL_RPT_DX_ID_DX_NAME) AS ADDL_RPT_DX_ID_DX_NAME_filled
+INTO #fc_178
 FROM HSP_ACCT_ADDL_DX;
 
--- ==========================================================
--- Table: HSP_ACCT_ADMIT_DX
+-- ---- fc_179 <- HSP_ACCT_ADMIT_DX ----
 -- This table contains hospital account admit diagnoses from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ADMIT_DX_ID_DX_NAME) AS ADMIT_DX_ID_DX_NAME_filled,
     COUNT(ADMIT_DX_TEXT) AS ADMIT_DX_TEXT_filled
+INTO #fc_179
 FROM HSP_ACCT_ADMIT_DX;
 
--- ==========================================================
--- Table: HSP_ACCT_CLM_CPT
+-- ---- fc_180 <- HSP_ACCT_CLM_CPT ----
 -- This table contains hospital account claim CPT codes information from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CLAIM_CODE_QTY) AS CLAIM_CODE_QTY_filled
+INTO #fc_180
 FROM HSP_ACCT_CLM_CPT;
 
--- ==========================================================
--- Table: HSP_ACCT_CPT_ASSOC_DX
+-- ---- fc_181 <- HSP_ACCT_CPT_ASSOC_DX ----
 -- This table stores the diagnoses that are linked to a coded Current Procedural Terminology (CPT)/Healthcare Common Procedure Coding System (HCPCS) code on a hospital account.
 -- Bucket(s): ICD-10 / Diagnosis coding;E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ACCT_ID) AS ACCT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_LINKED_DX_ID_DX_NAME) AS CPT_LINKED_DX_ID_DX_NAME_filled
+INTO #fc_181
 FROM HSP_ACCT_CPT_ASSOC_DX;
 
--- ==========================================================
--- Table: HSP_ACCT_CPT_CODES
+-- ---- fc_182 <- HSP_ACCT_CPT_CODES ----
 -- This table contains hospital account CPT(R) codes from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 SELECT
     YEAR(CPT_CODE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4136,63 +3918,58 @@ SELECT
     COUNT(CPT_EXCLD_RPT_YN) AS CPT_EXCLD_RPT_YN_filled,
     COUNT(CPT_QUANTITY) AS CPT_QUANTITY_filled,
     COUNT(CPT_POS_TYPE_C_NAME) AS CPT_POS_TYPE_C_NAME_filled
+INTO #fc_182
 FROM HSP_ACCT_CPT_CODES
-GROUP BY YEAR(CPT_CODE_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CPT_CODE_DATE);
 
--- ==========================================================
--- Table: HSP_ACCT_CPT_PRVCM
+-- ---- fc_183 <- HSP_ACCT_CPT_PRVCM ----
 -- This table contains the other provider comments associated with the hospital account CPT(R)/HCPCS codes list in the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_OTHER_PROV_CMNT) AS CPT_OTHER_PROV_CMNT_filled
+INTO #fc_183
 FROM HSP_ACCT_CPT_PRVCM;
 
--- ==========================================================
--- Table: HSP_ACCT_CPT_PRVDR
+-- ---- fc_184 <- HSP_ACCT_CPT_PRVDR ----
 -- This table contains the other providers associated with the hospital account CPT(R)/HCPCS codes list in the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_OTHER_PROV_ID_PROV_NAME) AS CPT_OTHER_PROV_ID_PROV_NAME_filled
+INTO #fc_184
 FROM HSP_ACCT_CPT_PRVDR;
 
--- ==========================================================
--- Table: HSP_ACCT_CPT_PRVRO
+-- ---- fc_185 <- HSP_ACCT_CPT_PRVRO ----
 -- This table contains the other provider roles associated with the hospital account CPT(R)/HCPCS codes list in the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_OTHER_PROV_RL_C_NAME) AS CPT_OTHER_PROV_RL_C_NAME_filled
+INTO #fc_185
 FROM HSP_ACCT_CPT_PRVRO;
 
--- ==========================================================
--- Table: HSP_ACCT_DX_LIST
+-- ---- fc_186 <- HSP_ACCT_DX_LIST ----
 -- This table contains hospital account final diagnosis list information from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -4213,43 +3990,40 @@ SELECT
     COUNT(DX_CLASS_C_NAME) AS DX_CLASS_C_NAME_filled,
     COUNT(CAUSE_DEATH_YN) AS CAUSE_DEATH_YN_filled,
     COUNT(DX_CLUSTER) AS DX_CLUSTER_filled
+INTO #fc_186
 FROM HSP_ACCT_DX_LIST;
 
--- ==========================================================
--- Table: HSP_ACCT_DX_LIST_AU_HACS
+-- ---- fc_187 <- HSP_ACCT_DX_LIST_AU_HACS ----
 -- The Australian Hospital Acquired Complications associated with coded diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AU_HAC_CAT_C_NAME) AS DX_AU_HAC_CAT_C_NAME_filled
+INTO #fc_187
 FROM HSP_ACCT_DX_LIST_AU_HACS;
 
--- ==========================================================
--- Table: HSP_ACCT_DX_LIST_HACS
+-- ---- fc_188 <- HSP_ACCT_DX_LIST_HACS ----
 -- The Hospital Acquired Conditions (HACs) associated with final coded diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_CAT_C_NAME) AS DX_HAC_CAT_C_NAME_filled
+INTO #fc_188
 FROM HSP_ACCT_DX_LIST_HACS;
 
--- ==========================================================
--- Table: HSP_ACCT_ICDPX_ALT
--- This table contains the hospital account alternate ICD procedures from the hospital account (HAR) master file. Alternate ICD procedures will be specified if hospital accounts are coded with two sets o
+-- ---- fc_189 <- HSP_ACCT_ICDPX_ALT ----
+-- This table contains the hospital account alternate ICD procedures from the hospital account (HAR) master file. Alternate ICD procedures will be specified if hospital accounts are c
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(ICD_PX_ALT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4263,15 +4037,13 @@ SELECT
     COUNT(ICD_PX_ALT_EXCLD_YN) AS ICD_PX_ALT_EXCLD_YN_filled,
     COUNT(ICD_PX_ALT_AFSOI_YN) AS ICD_PX_ALT_AFSOI_YN_filled,
     COUNT(ICD_PX_ALT_AFROM_YN) AS ICD_PX_ALT_AFROM_YN_filled
+INTO #fc_189
 FROM HSP_ACCT_ICDPX_ALT
-GROUP BY YEAR(ICD_PX_ALT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(ICD_PX_ALT_DATE);
 
--- ==========================================================
--- Table: HSP_BDC_APPEAL_DATES
+-- ---- fc_190 <- HSP_BDC_APPEAL_DATES ----
 -- This table stores Appealed Days start and end dates.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(APPEAL_START_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4279,15 +4051,13 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(APPEAL_START_DATE) AS APPEAL_START_DATE_filled,
     COUNT(APPEAL_END_DATE) AS APPEAL_END_DATE_filled
+INTO #fc_190
 FROM HSP_BDC_APPEAL_DATES
-GROUP BY YEAR(APPEAL_START_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(APPEAL_START_DATE);
 
--- ==========================================================
--- Table: HSP_BDC_CHNG_HX
+-- ---- fc_191 <- HSP_BDC_CHNG_HX ----
 -- Change History for the Denial/Correspondence (BDC) record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CHNG_FOLLOW_UP_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4302,57 +4072,52 @@ SELECT
     COUNT(CHNG_FOLLOW_UP_DT) AS CHNG_FOLLOW_UP_DT_filled,
     COUNT(CHNG_COMMENTS) AS CHNG_COMMENTS_filled,
     COUNT(BFH_ID) AS BFH_ID_filled
+INTO #fc_191
 FROM HSP_BDC_CHNG_HX
-GROUP BY YEAR(CHNG_FOLLOW_UP_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(CHNG_FOLLOW_UP_DT);
 
--- ==========================================================
--- Table: HSP_BDC_CONTRIB_PMT
+-- ---- fc_192 <- HSP_BDC_CONTRIB_PMT ----
 -- This table includes a list of payments that contributed to the creation of the follow-up record.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTRIB_PMT_TX_ID) AS CONTRIB_PMT_TX_ID_filled
+INTO #fc_192
 FROM HSP_BDC_CONTRIB_PMT;
 
--- ==========================================================
--- Table: HSP_BDC_CPT_CODE
+-- ---- fc_193 <- HSP_BDC_CPT_CODE ----
 -- This table contains user-entered Current Procedural Terminology (CPT) code overrides for follow-up records (that is, denials).
 -- Bucket(s): E/M level / CPT coding;Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CPT_CODE) AS CPT_CODE_filled
+INTO #fc_193
 FROM HSP_BDC_CPT_CODE;
 
--- ==========================================================
--- Table: HSP_BDC_CRSPNDNCE
+-- ---- fc_194 <- HSP_BDC_CRSPNDNCE ----
 -- Correspondence text in a Denial/Correspondence (BDC) record. Stores the lines of correspondence text received.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE_COUNT) AS LINE_COUNT_filled,
     COUNT(CRSPNDCE_TEXT) AS CRSPNDCE_TEXT_filled
+INTO #fc_194
 FROM HSP_BDC_CRSPNDNCE;
 
--- ==========================================================
--- Table: HSP_BDC_DENIAL_DATA
--- This table contains denial information stored in the Denial/Remark/Correspondence records in the Denial/Correspondence (BDC) master file. There can be multiple lines of data for each record. Each line
+-- ---- fc_195 <- HSP_BDC_DENIAL_DATA ----
+-- This table contains denial information stored in the Denial/Remark/Correspondence records in the Denial/Correspondence (BDC) master file. There can be multiple lines of data for ea
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(LINE_SERVICE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4372,15 +4137,13 @@ SELECT
     COUNT(LINE_QUANTITY) AS LINE_QUANTITY_filled,
     COUNT(LINE_ON_CLAIM) AS LINE_ON_CLAIM_filled,
     COUNT(LINE_EXPECTED_ALLOWED_AMT) AS LINE_EXPECTED_ALLOWED_AMT_filled
+INTO #fc_195
 FROM HSP_BDC_DENIAL_DATA
-GROUP BY YEAR(LINE_SERVICE_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(LINE_SERVICE_DATE);
 
--- ==========================================================
--- Table: HSP_BDC_DENIED_DATES
+-- ---- fc_196 <- HSP_BDC_DENIED_DATES ----
 -- This table stores the Denied Days start and end dates.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(DENIED_START_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4388,32 +4151,29 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DENIED_START_DATE) AS DENIED_START_DATE_filled,
     COUNT(DENIED_END_DATE) AS DENIED_END_DATE_filled
+INTO #fc_196
 FROM HSP_BDC_DENIED_DATES
-GROUP BY YEAR(DENIED_START_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(DENIED_START_DATE);
 
--- ==========================================================
--- Table: HSP_BDC_DENIED_DIAGNOSES
+-- ---- fc_197 <- HSP_BDC_DENIED_DIAGNOSES ----
 -- This table stores the list of diagnoses on the denial.
 -- Bucket(s): ICD-10 / Diagnosis coding;Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DENIED_DIAGNOSIS) AS DENIED_DIAGNOSIS_filled
+INTO #fc_197
 FROM HSP_BDC_DENIED_DIAGNOSES;
 
--- ==========================================================
--- Table: HSP_BDC_DSC_RSN_CD
+-- ---- fc_198 <- HSP_BDC_DSC_RSN_CD ----
 -- This table contains discrepancy reason code information for records in the Denial/Correspondence (DBC) master file.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -4421,16 +4181,15 @@ SELECT
     COUNT(DISCP_RMC_CODE_ID_REMIT_CODE_NAME) AS DISCP_RMC_CODE_ID_REMIT_CODE_NAME_filled,
     COUNT(EXTL_DISCP_RSN_CD) AS EXTL_DISCP_RSN_CD_filled,
     COUNT(DISP_GRP_CODE_C_NAME) AS DISP_GRP_CODE_C_NAME_filled
+INTO #fc_198
 FROM HSP_BDC_DSC_RSN_CD;
 
--- ==========================================================
--- Table: HSP_BDC_IMAGING
+-- ---- fc_199 <- HSP_BDC_IMAGING ----
 -- This table contains related imaging information for the Denial/Correspondence (BDC) master file.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -4438,16 +4197,15 @@ SELECT
     COUNT(IMAGE_KEY) AS IMAGE_KEY_filled,
     COUNT(IMAGE_PAGE_NUMBER) AS IMAGE_PAGE_NUMBER_filled,
     COUNT(BDC_PB_IMG_MNE_C_NAME) AS BDC_PB_IMG_MNE_C_NAME_filled
+INTO #fc_199
 FROM HSP_BDC_IMAGING;
 
--- ==========================================================
--- Table: HSP_BDC_LINE_MODIFIERS
--- This table extracts the comma-delimited list of modifiers that is stored in the Line Modifier (I BDC 291) item for line-level denials. This table will contain one row for each modifier that exists in 
+-- ---- fc_200 <- HSP_BDC_LINE_MODIFIERS ----
+-- This table extracts the comma-delimited list of modifiers that is stored in the Line Modifier (I BDC 291) item for line-level denials. This table will contain one row for each modi
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE_COUNT) AS LINE_COUNT_filled,
@@ -4455,91 +4213,85 @@ SELECT
     COUNT(EXT_MODIFIER) AS EXT_MODIFIER_filled,
     COUNT(MODIFIER_ID) AS MODIFIER_ID_filled,
     COUNT(MODIFIER_ID_MODIFIER_NAME) AS MODIFIER_ID_MODIFIER_NAME_filled
+INTO #fc_200
 FROM HSP_BDC_LINE_MODIFIERS;
 
--- ==========================================================
--- Table: HSP_BDC_PAYOR
+-- ---- fc_201 <- HSP_BDC_PAYOR ----
 -- Table of payors attached to denial/correspondence records. Each denial/correspondence can be associated with multiple payors.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PAYOR_ID_PAYOR_NAME) AS PAYOR_ID_PAYOR_NAME_filled
+INTO #fc_201
 FROM HSP_BDC_PAYOR;
 
--- ==========================================================
--- Table: HSP_BDC_PROF_INV
+-- ---- fc_202 <- HSP_BDC_PROF_INV ----
 -- Table of professional invoice numbers attached to correspondence records. Each correspondence record can be associated with multiple professional invoices.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PROF_INVOICE_NUM) AS PROF_INVOICE_NUM_filled
+INTO #fc_202
 FROM HSP_BDC_PROF_INV;
 
--- ==========================================================
--- Table: HSP_BDC_RECV_TX
+-- ---- fc_203 <- HSP_BDC_RECV_TX ----
 -- This table contains recovery payment information for Denial/Correspondence (BDC) records.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(RECV_PAYMENT_TX_ID) AS RECV_PAYMENT_TX_ID_filled,
     COUNT(RECV_PAYMENT_TX_AMT) AS RECV_PAYMENT_TX_AMT_filled,
     COUNT(PB_RECV_PMT_TX_ID) AS PB_RECV_PMT_TX_ID_filled
+INTO #fc_203
 FROM HSP_BDC_RECV_TX;
 
--- ==========================================================
--- Table: HSP_BDC_REV_CODE
+-- ---- fc_204 <- HSP_BDC_REV_CODE ----
 -- This table contains the user-entered revenue code overrides for follow-up records (i.e. denials).
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REVENUE_CODE_ID) AS REVENUE_CODE_ID_filled,
     COUNT(REVENUE_CODE_ID_REVENUE_CODE_NAME) AS REVENUE_CODE_ID_REVENUE_CODE_NAME_filled
+INTO #fc_204
 FROM HSP_BDC_REV_CODE;
 
--- ==========================================================
--- Table: HSP_BDC_WO_ADJ_TX
+-- ---- fc_205 <- HSP_BDC_WO_ADJ_TX ----
 -- This table contains write-off adjustment information for Denial/Correspondence (BDC) records.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(BDC_ID) AS BDC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(WRITE_OFF_ADJ_TX_ID) AS WRITE_OFF_ADJ_TX_ID_filled,
     COUNT(WRITE_OFF_ADJ_AMT) AS WRITE_OFF_ADJ_AMT_filled,
     COUNT(PB_WRITE_OFF_ADJ_TX_ID) AS PB_WRITE_OFF_ADJ_TX_ID_filled
+INTO #fc_205
 FROM HSP_BDC_WO_ADJ_TX;
 
--- ==========================================================
--- Table: HSP_CLAIM_APC_GRP_DISP
+-- ---- fc_206 <- HSP_CLAIM_APC_GRP_DISP ----
 -- Table that holds the display data for each grouping and claim line tuple when Ambulatory Payment Classification (APC) grouping is run through Epic for a claim.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -4548,16 +4300,15 @@ SELECT
     COUNT(APC_DISP_VALUE) AS APC_DISP_VALUE_filled,
     COUNT(APC_DISP_FORMULA) AS APC_DISP_FORMULA_filled,
     COUNT(APC_DISP_PMT_CLASS_GRP_C_NAME) AS APC_DISP_PMT_CLASS_GRP_C_NAME_filled
+INTO #fc_206
 FROM HSP_CLAIM_APC_GRP_DISP;
 
--- ==========================================================
--- Table: HSP_CLAIM_APC_GRP_META
--- Table for Ambulatory Payment Classification (APC) grouping metadata. Holds information such as the instant of grouping, the payment classification method, and, if grouped by Epic, the mapping and loca
+-- ---- fc_207 <- HSP_CLAIM_APC_GRP_META ----
+-- Table for Ambulatory Payment Classification (APC) grouping metadata. Holds information such as the instant of grouping, the payment classification method, and, if grouped by Epic, 
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -4566,13 +4317,12 @@ SELECT
     COUNT(APC_EPIC_PCM_ID) AS APC_EPIC_PCM_ID_filled,
     COUNT(APC_EPIC_PCM_ID_PCM_NAME) AS APC_EPIC_PCM_ID_PCM_NAME_filled,
     COUNT(APC_EPIC_PMT_CLASS_RATE_C_NAME) AS APC_EPIC_PMT_CLASS_RATE_C_NAME_filled
+INTO #fc_207
 FROM HSP_CLAIM_APC_GRP_META;
 
--- ==========================================================
--- Table: HSP_CLAIM_DETAIL1
+-- ---- fc_208 <- HSP_CLAIM_DETAIL1 ----
 -- This table contains claim print record information for claims associated with a given hospital account or liability bucket.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CONTRACT_USED_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4624,15 +4374,13 @@ SELECT
     COUNT(MAIL_COUNTRY_C_NAME) AS MAIL_COUNTRY_C_NAME_filled,
     COUNT(EXPECT_PAT_RESP_AMT) AS EXPECT_PAT_RESP_AMT_filled,
     COUNT(CLM_CAP_XR_REDUCT) AS CLM_CAP_XR_REDUCT_filled
+INTO #fc_208
 FROM HSP_CLAIM_DETAIL1
-GROUP BY YEAR(CONTRACT_USED_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTRACT_USED_DT);
 
--- ==========================================================
--- Table: HSP_CLAIM_DETAIL2
+-- ---- fc_209 <- HSP_CLAIM_DETAIL2 ----
 -- This table contains detailed claim print record information for claims associated with the hospital liability bucket.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(MIN_SERVICE_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4703,33 +4451,29 @@ SELECT
     COUNT(SUGGESTED_FOL_UP_DATE) AS SUGGESTED_FOL_UP_DATE_filled,
     COUNT(CLM_CLOSED_TIMELY_YN) AS CLM_CLOSED_TIMELY_YN_filled,
     COUNT(REIMB_DRG_SOI) AS REIMB_DRG_SOI_filled
+INTO #fc_209
 FROM HSP_CLAIM_DETAIL2
-GROUP BY YEAR(MIN_SERVICE_DT)
-ORDER BY activity_year;
+GROUP BY YEAR(MIN_SERVICE_DT);
 
--- ==========================================================
--- Table: HSP_CLAIM_DETAIL3
+-- ---- fc_210 <- HSP_CLAIM_DETAIL3 ----
 -- This table contains detailed claim print record information for claims associated with the hospital liability bucket.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 SELECT
     YEAR(CH_SENT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(CH_SENT_DATE) AS CH_SENT_DATE_filled,
     COUNT(PAYER_RECEIVED_DATE) AS PAYER_RECEIVED_DATE_filled
+INTO #fc_210
 FROM HSP_CLAIM_DETAIL3
-GROUP BY YEAR(CH_SENT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CH_SENT_DATE);
 
--- ==========================================================
--- Table: HSP_CLAIM_PAT_RESP
+-- ---- fc_211 <- HSP_CLAIM_PAT_RESP ----
 -- This table contains information about how the patient responsibility for the claim was calculated.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -4745,47 +4489,44 @@ SELECT
     COUNT(ANNUAL_MOOP_CONTRIB_AMOUNT) AS ANNUAL_MOOP_CONTRIB_AMOUNT_filled,
     COUNT(VISIT_MOOP_CONTRIB_AMOUNT) AS VISIT_MOOP_CONTRIB_AMOUNT_filled,
     COUNT(OUT_OF_POCKET_LMT_RSN_C_NAME) AS OUT_OF_POCKET_LMT_RSN_C_NAME_filled
+INTO #fc_211
 FROM HSP_CLAIM_PAT_RESP;
 
--- ==========================================================
--- Table: HSP_CLAIM_PRINT
+-- ---- fc_212 <- HSP_CLAIM_PRINT ----
 -- This table contains claim print record information for claims associated with a given hospital account or liability bucket.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(CM_PHY_OWN_ID) AS CM_PHY_OWN_ID_filled
+INTO #fc_212
 FROM HSP_CLAIM_PRINT;
 
--- ==========================================================
--- Table: HSP_CLAIM_XR_DISP
+-- ---- fc_213 <- HSP_CLAIM_XR_DISP ----
 -- This table contains the information used to display the details of calculations performed by contract pricing extensions when calculating expected reimbursement.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(XR_DISP_LINE_NUM) AS XR_DISP_LINE_NUM_filled,
     COUNT(XR_DISP_DESCRIPTION) AS XR_DISP_DESCRIPTION_filled,
     COUNT(XR_DISP_AMT) AS XR_DISP_AMT_filled
+INTO #fc_213
 FROM HSP_CLAIM_XR_DISP;
 
--- ==========================================================
--- Table: HSP_CLAIM_XR_VARS
+-- ---- fc_214 <- HSP_CLAIM_XR_VARS ----
 -- This table contains the values used by contract pricing extensions for calculating expected reimbursement.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(COST_OUT_PMT_TOTAL) AS COST_OUT_PMT_TOTAL_filled,
@@ -4796,59 +4537,55 @@ SELECT
     COUNT(ADD_ON_TAX_TOTAL) AS ADD_ON_TAX_TOTAL_filled,
     COUNT(SUPPLY_ADD_ON_PMT_TOTAL) AS SUPPLY_ADD_ON_PMT_TOTAL_filled,
     COUNT(DRUG_ADD_ON_PMT_TOTAL) AS DRUG_ADD_ON_PMT_TOTAL_filled
+INTO #fc_214
 FROM HSP_CLAIM_XR_VARS;
 
--- ==========================================================
--- Table: HSP_CLP_CMS_LINE_DX
+-- ---- fc_215 <- HSP_CLP_CMS_LINE_DX ----
 -- This table contains linkages between service lines and diagnoses for Hospital Billing claims.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(LINE_DX_SVC_LINE) AS LINE_DX_SVC_LINE_filled,
     COUNT(LINE_DX_PIECE) AS LINE_DX_PIECE_filled,
     COUNT(LINE_DX_POINTER) AS LINE_DX_POINTER_filled
+INTO #fc_215
 FROM HSP_CLP_CMS_LINE_DX;
 
--- ==========================================================
--- Table: HSP_CLP_DIAGNOSIS
+-- ---- fc_216 <- HSP_CLP_DIAGNOSIS ----
 -- This table contains diagnosis related information for claim print records associated with the hospital account/liability bucket.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CLAIM_PRINT_ID) AS CLAIM_PRINT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_POA_C_NAME) AS DX_POA_C_NAME_filled
+INTO #fc_216
 FROM HSP_CLP_DIAGNOSIS;
 
--- ==========================================================
--- Table: HSP_PRE_AR_DX
--- This table contains diagnosis related information for Hospital Billing temporary transactions. This table is limited to charge temporary transactions that have not yet been posted to the account.
+-- ---- fc_217 <- HSP_PRE_AR_DX ----
+-- This table contains diagnosis related information for Hospital Billing temporary transactions. This table is limited to charge temporary transactions that have not yet been posted 
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HTT_ID) AS HTT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUAL_HA_C_NAME) AS DX_QUAL_HA_C_NAME_filled
+INTO #fc_217
 FROM HSP_PRE_AR_DX;
 
--- ==========================================================
--- Table: ICD_EVNT_INTRP_CMT
+-- ---- fc_218 <- ICD_EVNT_INTRP_CMT ----
 -- Table for event interpretation comment item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4857,15 +4594,13 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ICD_EVENT_INTERPRET) AS ICD_EVENT_INTERPRET_filled
+INTO #fc_218
 FROM ICD_EVNT_INTRP_CMT
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: ICD_POCKET_CMT
+-- ---- fc_219 <- ICD_POCKET_CMT ----
 -- Table for implantable cardioverter-defibrillator (ICD) Pocket Comment item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4874,45 +4609,41 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ICD_POCKET_CMT) AS ICD_POCKET_CMT_filled
+INTO #fc_219
 FROM ICD_POCKET_CMT
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: INV_DX_INFO
--- Stores claim-level diagnosis information sent on Resolute Professional Billing claims. Diagnosis information is coming from the INV 350 related group. The Group 100 column corresponds to claims that w
+-- ---- fc_220 <- INV_DX_INFO ----
+-- Stores claim-level diagnosis information sent on Resolute Professional Billing claims. Diagnosis information is coming from the INV 350 related group. The Group 100 column correspo
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(INVOICE_ID) AS INVOICE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(INV_NUM) AS INV_NUM_filled,
     COUNT(INV_NUM_100_GRP_LN) AS INV_NUM_100_GRP_LN_filled
+INTO #fc_220
 FROM INV_DX_INFO;
 
--- ==========================================================
--- Table: LAB_CASE_RESULT_DX
+-- ---- fc_221 <- LAB_CASE_RESULT_DX ----
 -- This table contains result diagnosis information for anatomic pathology cases.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CASE_ID) AS CASE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(RESULT_DX_ID_DX_NAME) AS RESULT_DX_ID_DX_NAME_filled
+INTO #fc_221
 FROM LAB_CASE_RESULT_DX;
 
--- ==========================================================
--- Table: MED_ALL_DX_CODES
--- This item stores all unmapped diagnosis codes associated with medications for incoming e-prescribing messages. This table is replacing columns PRIMARY_DX_CODE and SECONDARY_DX_CODE in table DOCS_RCVD_
+-- ---- fc_222 <- MED_ALL_DX_CODES ----
+-- This item stores all unmapped diagnosis codes associated with medications for incoming e-prescribing messages. This table is replacing columns PRIMARY_DX_CODE and SECONDARY_DX_CODE
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4921,15 +4652,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_222
 FROM MED_ALL_DX_CODES
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: MED_ALL_DX_CODE_SYSTEMS
--- This item stores the coding systems used for all diagnoses (for example, ICD-9) for incoming e-prescribing messages. This table is replacing columns PRIMARY_DX_CODE_SYSTEM and SECONDARY_DX_CODE_SYSTEM
+-- ---- fc_223 <- MED_ALL_DX_CODE_SYSTEMS ----
+-- This item stores the coding systems used for all diagnoses (for example, ICD-9) for incoming e-prescribing messages. This table is replacing columns PRIMARY_DX_CODE_SYSTEM and SECO
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4938,15 +4667,13 @@ SELECT
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled
+INTO #fc_223
 FROM MED_ALL_DX_CODE_SYSTEMS
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: MED_ALL_DX_IDS
+-- ---- fc_224 <- MED_ALL_DX_IDS ----
 -- All diagnoses for the medication specified within the incoming electronic prescription. This table is replacing columns MED_PRIM_DX_ID and MED_SEC_DX_ID in table DOCS_RCVD_MEDS.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4956,15 +4683,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(MED_ALL_DX_ID_DX_NAME) AS MED_ALL_DX_ID_DX_NAME_filled
+INTO #fc_224
 FROM MED_ALL_DX_IDS
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: MED_CVG_DX_VALUE
+-- ---- fc_225 <- MED_CVG_DX_VALUE ----
 -- This table extracts the diagnosis codes associated with a medication estimate.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4974,15 +4699,13 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled
+INTO #fc_225
 FROM MED_CVG_DX_VALUE
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: MED_DISPENSE_DX
+-- ---- fc_226 <- MED_DISPENSE_DX ----
 -- This table holds information about diagnoses associated with medication dispenses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4992,76 +4715,70 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled
+INTO #fc_226
 FROM MED_DISPENSE_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: MED_DISP_ALL_DX_CODES
--- All diagnosis codes for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table is replacing columns MED_DI
+-- ---- fc_227 <- MED_DISP_ALL_DX_CODES ----
+-- All diagnosis codes for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table is repl
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MED_DISP_ALL_DX) AS MED_DISP_ALL_DX_filled
+INTO #fc_227
 FROM MED_DISP_ALL_DX_CODES;
 
--- ==========================================================
--- Table: MED_DISP_ALL_DX_CODE_SYS
--- The coding system used for all diagnosis codes for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table 
+-- ---- fc_228 <- MED_DISP_ALL_DX_CODE_SYS ----
+-- The coding system used for all diagnosis codes for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing in
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MED_DIS_ALL_DX_SYS) AS MED_DIS_ALL_DX_SYS_filled
+INTO #fc_228
 FROM MED_DISP_ALL_DX_CODE_SYS;
 
--- ==========================================================
--- Table: MED_DISP_ALL_DX_IDS
--- All diagnoses for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table is replacing columns MED_DISP_PRI
+-- ---- fc_229 <- MED_DISP_ALL_DX_IDS ----
+-- All diagnoses for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table is replacing 
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MED_DISP_ALL_DX_ID_DX_NAME) AS MED_DISP_ALL_DX_ID_DX_NAME_filled
+INTO #fc_229
 FROM MED_DISP_ALL_DX_IDS;
 
--- ==========================================================
--- Table: MED_THERAPY_PROB_DX
+-- ---- fc_230 <- MED_THERAPY_PROB_DX ----
 -- Contains diagnosis information for the medication therapy problem.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROBLEM_ID) AS PROBLEM_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PROBLEM_DX_ID_DX_NAME) AS PROBLEM_DX_ID_DX_NAME_filled,
     COUNT(PROB_DIAG_SOURCE_C_NAME) AS PROB_DIAG_SOURCE_C_NAME_filled
+INTO #fc_230
 FROM MED_THERAPY_PROB_DX;
 
--- ==========================================================
--- Table: MTP_AUTO_EVAL_DIAGNOSES
+-- ---- fc_231 <- MTP_AUTO_EVAL_DIAGNOSES ----
 -- The diagnosis information obtained from the Medication Therapy Opportunities Engine.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(DX_DATE_FILED_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5075,213 +4792,198 @@ SELECT
     COUNT(SURGICAL_LOG_ID) AS SURGICAL_LOG_ID_filled,
     COUNT(SURGICAL_CASE_ID) AS SURGICAL_CASE_ID_filled,
     COUNT(DX_DATE_FILED_DATE) AS DX_DATE_FILED_DATE_filled
+INTO #fc_231
 FROM MTP_AUTO_EVAL_DIAGNOSES
-GROUP BY YEAR(DX_DATE_FILED_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(DX_DATE_FILED_DATE);
 
--- ==========================================================
--- Table: MTP_AUTO_EVAL_DX_EXT_REF
+-- ---- fc_232 <- MTP_AUTO_EVAL_DX_EXT_REF ----
 -- The external data reference identifiers associated with the diagnosis identified by the medication therapy opportunities engine evaluation.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROBLEM_ID) AS PROBLEM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_EXT_REF_IDENT) AS DX_EXT_REF_IDENT_filled
+INTO #fc_232
 FROM MTP_AUTO_EVAL_DX_EXT_REF;
 
--- ==========================================================
--- Table: MTP_AUTO_EVAL_DX_SRC_ORG
+-- ---- fc_233 <- MTP_AUTO_EVAL_DX_SRC_ORG ----
 -- The source organizations that filed the information.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROBLEM_ID) AS PROBLEM_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_SOURCE_ORG_ID) AS DX_SOURCE_ORG_ID_filled,
     COUNT(DX_SOURCE_ORG_ID_EXTERNAL_NAME) AS DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled
+INTO #fc_233
 FROM MTP_AUTO_EVAL_DX_SRC_ORG;
 
--- ==========================================================
--- Table: MULT_DISC_DX
+-- ---- fc_234 <- MULT_DISC_DX ----
 -- This table contains information on the defined multidisciplinary diagnoses/problems.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PROBLEM_ID_NAME) AS PROBLEM_ID_NAME_filled,
     COUNT(NAME) AS NAME_filled,
     COUNT(DISPLAY_NAME) AS DISPLAY_NAME_filled
+INTO #fc_234
 FROM MULT_DISC_DX;
 
--- ==========================================================
--- Table: NOTES_PROC_PRE_DX
+-- ---- fc_235 <- NOTES_PROC_PRE_DX ----
 -- This table contains a list of preoperative diagnoses for ambulatory procedure notes.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(NOTE_ID) AS NOTE_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PROC_NOTE_PRE_DX_DX_NAME) AS PROC_NOTE_PRE_DX_DX_NAME_filled
+INTO #fc_235
 FROM NOTES_PROC_PRE_DX;
 
--- ==========================================================
--- Table: NOTES_PROC_PST_DX
+-- ---- fc_236 <- NOTES_PROC_PST_DX ----
 -- This table contains a list of postoperative diagnoses for ambulatory procedure notes.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(NOTE_ID) AS NOTE_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PROC_NOTE_PST_DX_DX_NAME) AS PROC_NOTE_PST_DX_DX_NAME_filled
+INTO #fc_236
 FROM NOTES_PROC_PST_DX;
 
--- ==========================================================
--- Table: NSQIP_FIRST_REOP_CPT
+-- ---- fc_237 <- NSQIP_FIRST_REOP_CPT ----
 -- This table contains CPT® and procedure description related to the first reoperation.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_FST_REOP_INF_SRC_C_NAME) AS NSQIP_FST_REOP_INF_SRC_C_NAME_filled,
     COUNT(NSQIP_FST_REOP_CPT) AS NSQIP_FST_REOP_CPT_filled,
     COUNT(NSQIP_FST_REOP_PROC_DESC) AS NSQIP_FST_REOP_PROC_DESC_filled
+INTO #fc_237
 FROM NSQIP_FIRST_REOP_CPT;
 
--- ==========================================================
--- Table: NSQIP_FIRST_REOP_ICD10
+-- ---- fc_238 <- NSQIP_FIRST_REOP_ICD10 ----
 -- This table contains ICD-10 code and diagnosis description related to the first reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_FST_REOP_ICD10) AS NSQIP_FST_REOP_ICD10_filled,
     COUNT(NSQIP_FST_REOP_ICD10_DX_DESC) AS NSQIP_FST_REOP_ICD10_DX_DESC_filled
+INTO #fc_238
 FROM NSQIP_FIRST_REOP_ICD10;
 
--- ==========================================================
--- Table: NSQIP_FIRST_REOP_ICD9
+-- ---- fc_239 <- NSQIP_FIRST_REOP_ICD9 ----
 -- This table contains ICD-9 code and diagnosis description related to the first reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_FST_REOP_ICD9) AS NSQIP_FST_REOP_ICD9_filled,
     COUNT(NSQIP_FST_REOP_DX_DESC) AS NSQIP_FST_REOP_DX_DESC_filled
+INTO #fc_239
 FROM NSQIP_FIRST_REOP_ICD9;
 
--- ==========================================================
--- Table: NSQIP_RETURN_DX_COMMENTS
+-- ---- fc_240 <- NSQIP_RETURN_DX_COMMENTS ----
 -- This table contains diagnosis comments associated with unplanned returns to the OR.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_RETURN_DX_COMMENTS) AS NSQIP_RETURN_DX_COMMENTS_filled
+INTO #fc_240
 FROM NSQIP_RETURN_DX_COMMENTS;
 
--- ==========================================================
--- Table: NSQIP_RETURN_ICD10_CODES
+-- ---- fc_241 <- NSQIP_RETURN_ICD10_CODES ----
 -- This table contains ICD-10 codes associated with unplanned returns to the OR.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_RETURN_ICD10_CODES) AS NSQIP_RETURN_ICD10_CODES_filled
+INTO #fc_241
 FROM NSQIP_RETURN_ICD10_CODES;
 
--- ==========================================================
--- Table: NSQIP_SECOND_REOP_CPT
+-- ---- fc_242 <- NSQIP_SECOND_REOP_CPT ----
 -- This table contains CPT® and procedure description related to the second reoperation.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_SEC_REOP_INF_SRC_C_NAME) AS NSQIP_SEC_REOP_INF_SRC_C_NAME_filled,
     COUNT(NSQIP_SEC_REOP_CPT) AS NSQIP_SEC_REOP_CPT_filled,
     COUNT(NSQIP_SEC_REOP_PROC_DESC) AS NSQIP_SEC_REOP_PROC_DESC_filled
+INTO #fc_242
 FROM NSQIP_SECOND_REOP_CPT;
 
--- ==========================================================
--- Table: NSQIP_SECOND_REOP_ICD10
+-- ---- fc_243 <- NSQIP_SECOND_REOP_ICD10 ----
 -- This table contains ICD-10 code and diagnosis description related to the second reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_SEC_REOP_ICD10) AS NSQIP_SEC_REOP_ICD10_filled,
     COUNT(NSQIP_SEC_REOP_ICD10_DX_DESC) AS NSQIP_SEC_REOP_ICD10_DX_DESC_filled
+INTO #fc_243
 FROM NSQIP_SECOND_REOP_ICD10;
 
--- ==========================================================
--- Table: NSQIP_SECOND_REOP_ICD9
+-- ---- fc_244 <- NSQIP_SECOND_REOP_ICD9 ----
 -- This table contains ICD-9 code and diagnosis description related to the second reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REGISTRY_DATA_ID) AS REGISTRY_DATA_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_SEC_REOP_ICD9) AS NSQIP_SEC_REOP_ICD9_filled,
     COUNT(NSQIP_SEC_REOP_DX_DESC) AS NSQIP_SEC_REOP_DX_DESC_filled
+INTO #fc_244
 FROM NSQIP_SECOND_REOP_ICD9;
 
--- ==========================================================
--- Table: ORDER_DX_MED
--- The ORDER_DX_MED table enables you to report on the diagnoses associated with medications ordered in clinical system (prescriptions). Since one medication order may be associated with multiple diagnos
+-- ---- fc_245 <- ORDER_DX_MED ----
+-- The ORDER_DX_MED table enables you to report on the diagnoses associated with medications ordered in clinical system (prescriptions). Since one medication order may be associated w
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ORDER_MED_ID) AS ORDER_MED_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -5291,16 +4993,15 @@ SELECT
     COUNT(DX_QUALIFIER_C_NAME) AS DX_QUALIFIER_C_NAME_filled,
     COUNT(DX_CHRONIC_YN) AS DX_CHRONIC_YN_filled,
     COUNT(COMMENTS) AS COMMENTS_filled
+INTO #fc_245
 FROM ORDER_DX_MED;
 
--- ==========================================================
--- Table: ORDER_DX_PROC
--- The ORDER_DX_PROC table enables you to report on the diagnoses associated with procedures ordered in clinical system. Since one procedure order may be associated with multiple diagnoses, each row in t
+-- ---- fc_246 <- ORDER_DX_PROC ----
+-- The ORDER_DX_PROC table enables you to report on the diagnoses associated with procedures ordered in clinical system. Since one procedure order may be associated with multiple diag
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ORDER_PROC_ID) AS ORDER_PROC_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -5312,83 +5013,77 @@ SELECT
     COUNT(DX_CHRONIC_YN) AS DX_CHRONIC_YN_filled,
     COUNT(ASSOC_DX_DESC) AS ASSOC_DX_DESC_filled,
     COUNT(ASSOC_REQ_DX_ID_DX_NAME) AS ASSOC_REQ_DX_ID_DX_NAME_filled
+INTO #fc_246
 FROM ORDER_DX_PROC;
 
--- ==========================================================
--- Table: ORDER_ORIG_RX_DX
+-- ---- fc_247 <- ORDER_ORIG_RX_DX ----
 -- For orders representing electronic refill requests received via an interface, this item contains the diagnoses that were received in the interface message.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ORDER_ID) AS ORDER_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ORIG_DX_ID_DX_NAME) AS ORIG_DX_ID_DX_NAME_filled
+INTO #fc_247
 FROM ORDER_ORIG_RX_DX;
 
--- ==========================================================
--- Table: ORDER_RAD_DX
+-- ---- fc_248 <- ORDER_RAD_DX ----
 -- This table contains diagnoses attached to an imaging order by the reading physician. The diagnoses are used by billing to drop charges.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ORDER_ID) AS ORDER_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(RIS_DIAGNOSES_ID_DX_NAME) AS RIS_DIAGNOSES_ID_DX_NAME_filled
+INTO #fc_248
 FROM ORDER_RAD_DX;
 
--- ==========================================================
--- Table: OR_CASE_CPT_TXT
+-- ---- fc_249 <- OR_CASE_CPT_TXT ----
 -- The OR_CASE_CPT_TXT table contains the list of free-text CPT(R) codes entered for a case record.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CASE_ID) AS CASE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(CPT_CODE_TXT) AS CPT_CODE_TXT_filled
+INTO #fc_249
 FROM OR_CASE_CPT_TXT;
 
--- ==========================================================
--- Table: OR_CASE_DIAGNOSTIC_PROC
+-- ---- fc_250 <- OR_CASE_DIAGNOSTIC_PROC ----
 -- This table contains the diagnostic procedures performed for a case.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CASE_ID) AS CASE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSTIC_PROC_C_NAME) AS DIAGNOSTIC_PROC_C_NAME_filled
+INTO #fc_250
 FROM OR_CASE_DIAGNOSTIC_PROC;
 
--- ==========================================================
--- Table: OR_CASE_DX_CODE
+-- ---- fc_251 <- OR_CASE_DX_CODE ----
 -- The OR_CASE_DX_CODE table contains OR management system case diagnosis codes.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(OR_CASE_ID) AS OR_CASE_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled
+INTO #fc_251
 FROM OR_CASE_DX_CODE;
 
--- ==========================================================
--- Table: OR_IMP_DIAGNOSIS
+-- ---- fc_252 <- OR_IMP_DIAGNOSIS ----
 -- This table contains information about implant diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5397,46 +5092,42 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(IMPLANT_DIAGNOSIS_C_NAME) AS IMPLANT_DIAGNOSIS_C_NAME_filled
+INTO #fc_252
 FROM OR_IMP_DIAGNOSIS
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: OR_IMP_ICD_PACEMAKER_RATE
+-- ---- fc_253 <- OR_IMP_ICD_PACEMAKER_RATE ----
 -- This table stores the rate type for implantable cardioverter-defibrillator (ICD)/Pacemaker implants.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(IMPLANT_ID) AS IMPLANT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ICD_PACEMAKER_RATE_TYPE_C_NAME) AS ICD_PACEMAKER_RATE_TYPE_C_NAME_filled
+INTO #fc_253
 FROM OR_IMP_ICD_PACEMAKER_RATE;
 
--- ==========================================================
--- Table: OR_LNLG_ANINF_CPT
+-- ---- fc_254 <- OR_LNLG_ANINF_CPT ----
 -- This table contains the Anesthesia Info CPT codes for the Surgical Log (ORL).
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ANES_INFO_CPTM_ID_PROC_NAME) AS ANES_INFO_CPTM_ID_PROC_NAME_filled
+INTO #fc_254
 FROM OR_LNLG_ANINF_CPT;
 
--- ==========================================================
--- Table: OR_LNLG_DIAGNOSIS
+-- ---- fc_255 <- OR_LNLG_DIAGNOSIS ----
 -- This table contains the Diagnosis information for the Surgical Log (ORL).
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(DX_ORP_ID) AS DX_ORP_ID_filled,
@@ -5448,115 +5139,107 @@ SELECT
     COUNT(DX_CPT_CODE_3_ID_PROC_NAME) AS DX_CPT_CODE_3_ID_PROC_NAME_filled,
     COUNT(DX_QTY) AS DX_QTY_filled,
     COUNT(DX_PROC_TYPE_C_NAME) AS DX_PROC_TYPE_C_NAME_filled
+INTO #fc_255
 FROM OR_LNLG_DIAGNOSIS;
 
--- ==========================================================
--- Table: OR_LNLG_DIAG_CPTS
+-- ---- fc_256 <- OR_LNLG_DIAG_CPTS ----
 -- This table contains the Diagnosis CPT codes for the Surgical Log (ORL).
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_CPT_CODE_1_ID_PROC_NAME) AS DX_CPT_CODE_1_ID_PROC_NAME_filled
+INTO #fc_256
 FROM OR_LNLG_DIAG_CPTS;
 
--- ==========================================================
--- Table: OR_LOG_DIAGNOSTIC_PROC
+-- ---- fc_257 <- OR_LOG_DIAGNOSTIC_PROC ----
 -- This table stores additional diagnostic/therapeutic procedures performed.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LOG_ID) AS LOG_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSTIC_PROCEDURES_C_NAME) AS DIAGNOSTIC_PROCEDURES_C_NAME_filled
+INTO #fc_257
 FROM OR_LOG_DIAGNOSTIC_PROC;
 
--- ==========================================================
--- Table: OR_LOG_DIAGNOSTIC_PROC_FT
+-- ---- fc_258 <- OR_LOG_DIAGNOSTIC_PROC_FT ----
 -- This table stores free-text comments about additional diagnostic/therapeutic procedures performed.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LOG_ID) AS LOG_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSTIC_PROCEDURES_FT) AS DIAGNOSTIC_PROCEDURES_FT_filled
+INTO #fc_258
 FROM OR_LOG_DIAGNOSTIC_PROC_FT;
 
--- ==========================================================
--- Table: OR_LOG_LN_DIAGNOS
+-- ---- fc_259 <- OR_LOG_LN_DIAGNOS ----
 -- This table contains the line IDs (ORM) for the Diagnosis Information of the Surgical Log (ORL).
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LOG_ID) AS LOG_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_PROC_INFO_ID) AS DX_PROC_INFO_ID_filled
+INTO #fc_259
 FROM OR_LOG_LN_DIAGNOS;
 
--- ==========================================================
--- Table: OR_OPE_CODE_DIAGNOSIS
+-- ---- fc_260 <- OR_OPE_CODE_DIAGNOSIS ----
 -- This table contains the diagnoses associated with procedure codes.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(OPE_ID) AS OPE_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PROC_CODE_DX_ID_DX_NAME) AS PROC_CODE_DX_ID_DX_NAME_filled
+INTO #fc_260
 FROM OR_OPE_CODE_DIAGNOSIS;
 
--- ==========================================================
--- Table: OTP_DX_ASSOC
--- The diagnoses associated with an order template. Note that if an order template is unreleased and it has no diagnoses then it will use the plan diagnoses stored in the ASSOCIATED_DX table.
+-- ---- fc_261 <- OTP_DX_ASSOC ----
+-- The diagnoses associated with an order template. Note that if an order template is unreleased and it has no diagnoses then it will use the plan diagnoses stored in the ASSOCIATED_D
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(OTP_ID) AS OTP_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ASSOC_DX_ID_DX_NAME) AS ASSOC_DX_ID_DX_NAME_filled,
     COUNT(ASSOC_DX_DESC) AS ASSOC_DX_DESC_filled,
     COUNT(ASSOC_DX_COMMENT) AS ASSOC_DX_COMMENT_filled
+INTO #fc_261
 FROM OTP_DX_ASSOC;
 
--- ==========================================================
--- Table: PAS_TRIAGE_DX_HX
+-- ---- fc_262 <- PAS_TRIAGE_DX_HX ----
 -- This table extracts the related multiple response Triage History - Diagnoses (I RFL 971) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PAS_TRI_HX_DX_ID_DX_NAME) AS PAS_TRI_HX_DX_ID_DX_NAME_filled
+INTO #fc_262
 FROM PAS_TRIAGE_DX_HX;
 
--- ==========================================================
--- Table: PAT_DIFF_DX
+-- ---- fc_263 <- PAT_DIFF_DX ----
 -- This table will contain all of the differential diagnosis entries for a particular encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5572,29 +5255,26 @@ SELECT
     COUNT(DIFF_DX_UNIQUE) AS DIFF_DX_UNIQUE_filled,
     COUNT(DIFF_CHRONIC_YN) AS DIFF_CHRONIC_YN_filled,
     COUNT(DDX_LINK_PROB_ID) AS DDX_LINK_PROB_ID_filled
+INTO #fc_263
 FROM PAT_DIFF_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_ADMIT_DX_AUDIT
+-- ---- fc_264 <- PAT_ENC_ADMIT_DX_AUDIT ----
 -- This tables stores previous instances in which the admission diagnosis was populated or deleted for an encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(PAT_ENC_CSN_ID) AS PAT_ENC_CSN_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ADMISSION_DX_EDIT_UTC_DTTM) AS ADMISSION_DX_EDIT_UTC_DTTM_filled
+INTO #fc_264
 FROM PAT_ENC_ADMIT_DX_AUDIT;
 
--- ==========================================================
--- Table: PAT_ENC_APPT_DX
--- The PAT_ENC_APPT_DX table contains a list of diagnoses associated with appointments that were manually entered by a user on the "Clinical Information" form, which can appear in Advantage Activities in
+-- ---- fc_265 <- PAT_ENC_APPT_DX ----
+-- The PAT_ENC_APPT_DX table contains a list of diagnoses associated with appointments that were manually entered by a user on the "Clinical Information" form, which can appear in Adv
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5604,15 +5284,13 @@ SELECT
     COUNT(PAT_ENC_DATE_REAL) AS PAT_ENC_DATE_REAL_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled
+INTO #fc_265
 FROM PAT_ENC_APPT_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_DX
--- The patient encounter diagnosis table contains one record for each diagnosis associated with each encounter level of service. This table will contain all diagnoses specified on the Order Summary scree
+-- ---- fc_266 <- PAT_ENC_DX ----
+-- The patient encounter diagnosis table contains one record for each diagnosis associated with each encounter level of service. This table will contain all diagnoses specified on the
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5630,15 +5308,13 @@ SELECT
     COUNT(DX_UNIQUE) AS DX_UNIQUE_filled,
     COUNT(DX_ED_YN) AS DX_ED_YN_filled,
     COUNT(DX_LINK_PROB_ID) AS DX_LINK_PROB_ID_filled
+INTO #fc_266
 FROM PAT_ENC_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_EM_CODE_DX
--- The PAT_ENC_EM_CODE_DX table enables you to report on the diagnoses associated with evaluation and management (E/M) codes entered for a patient encounter. Since one E/M code may be associated with mul
+-- ---- fc_267 <- PAT_ENC_EM_CODE_DX ----
+-- The PAT_ENC_EM_CODE_DX table enables you to report on the diagnoses associated with evaluation and management (E/M) codes entered for a patient encounter. Since one E/M code may be
 -- Bucket(s): ICD-10 / Diagnosis coding;E/M level / CPT coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5648,15 +5324,13 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(EM_CODE_LINE) AS EM_CODE_LINE_filled,
     COUNT(DX_UNIQUE) AS DX_UNIQUE_filled
+INTO #fc_267
 FROM PAT_ENC_EM_CODE_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_ENC_LOS_DX
--- The PAT_ENC_LOS_DX table enables you to report on the diagnoses associated with the level of service (LOS) entered for a patient encounter. This table contains only information for those diagnoses tha
+-- ---- fc_268 <- PAT_ENC_LOS_DX ----
+-- The PAT_ENC_LOS_DX table enables you to report on the diagnoses associated with the level of service (LOS) entered for a patient encounter. This table contains only information for
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5664,73 +5338,67 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_UNIQUE) AS DX_UNIQUE_filled
+INTO #fc_268
 FROM PAT_ENC_LOS_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: PAT_RSN_VISIT_DX
--- All values associated with a claim are stored in the Claim External Value record. The PAT_RSN_VISIT_DX table holds the diagnoses that document the patient's reason for an outpatient visit.
+-- ---- fc_269 <- PAT_RSN_VISIT_DX ----
+-- All values associated with a claim are stored in the Claim External Value record. The PAT_RSN_VISIT_DX table holds the diagnoses that document the patient's reason for an outpatien
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PAT_RSN_VISIT_QUAL) AS PAT_RSN_VISIT_QUAL_filled,
     COUNT(PAT_RSN_VISIT_DX) AS PAT_RSN_VISIT_DX_filled
+INTO #fc_269
 FROM PAT_RSN_VISIT_DX;
 
--- ==========================================================
--- Table: POC_HSPC_DX
+-- ---- fc_270 <- POC_HSPC_DX ----
 -- Contains information concerning the hospice diagnoses corresponding to the plan of care.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(POC_ID) AS POC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(POC_HSPC_DX_ID_DX_NAME) AS POC_HSPC_DX_ID_DX_NAME_filled
+INTO #fc_270
 FROM POC_HSPC_DX;
 
--- ==========================================================
--- Table: POC_HSPC_DX_RELATED
+-- ---- fc_271 <- POC_HSPC_DX_RELATED ----
 -- This table indicates whether the hospice diagnoses at the time of the completed plan of care were hospice related.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(POC_ID) AS POC_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(HOSPICE_RELATED_C_NAME) AS HOSPICE_RELATED_C_NAME_filled
+INTO #fc_271
 FROM POC_HSPC_DX_RELATED;
 
--- ==========================================================
--- Table: PRE_AR_ORG_DX
--- This table contains the original diagnosis information of the transaction. Note: temporary accounts receivable (TAR) records in Chronicles are purged periodically depending on your system setting. Be 
+-- ---- fc_272 <- PRE_AR_ORG_DX ----
+-- This table contains the original diagnosis information of the transaction. Note: temporary accounts receivable (TAR) records in Chronicles are purged periodically depending on your
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(TAR_ID) AS TAR_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ORG_DX_ID_DX_NAME) AS ORG_DX_ID_DX_NAME_filled,
     COUNT(ORG_DX_QUAL_C_NAME) AS ORG_DX_QUAL_C_NAME_filled
+INTO #fc_272
 FROM PRE_AR_ORG_DX;
 
--- ==========================================================
--- Table: RECONCILE_MA_RA_DX_INFO
+-- ---- fc_273 <- RECONCILE_MA_RA_DX_INFO ----
 -- This table contains reconciliation information regarding statuses of diagnoses from Medicare Advantage Risk Adjustment files.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5740,159 +5408,147 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(MA_RA_DX_ID_DX_NAME) AS MA_RA_DX_ID_DX_NAME_filled,
     COUNT(MA_RA_DX_FLAG_C_NAME) AS MA_RA_DX_FLAG_C_NAME_filled
+INTO #fc_273
 FROM RECONCILE_MA_RA_DX_INFO
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: REFERRAL_CE_DX_TXT
+-- ---- fc_274 <- REFERRAL_CE_DX_TXT ----
 -- This audit table stores the Care Everywhere Diagnoses Free Text.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(AUDIT_DIAGNOSIS_TXT) AS AUDIT_DIAGNOSIS_TXT_filled
+INTO #fc_274
 FROM REFERRAL_CE_DX_TXT;
 
--- ==========================================================
--- Table: REFERRAL_DX
+-- ---- fc_275 <- REFERRAL_DX ----
 -- The REFERRAL_DX table contains diagnosis information stored with referrals.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_TEXT) AS DX_TEXT_filled,
     COUNT(DX_CODE_TYPE_C_NAME) AS DX_CODE_TYPE_C_NAME_filled
+INTO #fc_275
 FROM REFERRAL_DX;
 
--- ==========================================================
--- Table: REFERRAL_DX_MODIFIERS
+-- ---- fc_276 <- REFERRAL_DX_MODIFIERS ----
 -- This table extracts the related multiple response Diagnosis Modifiers (I RFL 1001) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_MODIFIER_ID) AS DX_MODIFIER_ID_filled,
     COUNT(DX_MODIFIER_ID_MODIFIER_NAME) AS DX_MODIFIER_ID_MODIFIER_NAME_filled
+INTO #fc_276
 FROM REFERRAL_DX_MODIFIERS;
 
--- ==========================================================
--- Table: REFERRAL_DX_NOTES
+-- ---- fc_277 <- REFERRAL_DX_NOTES ----
 -- Referral free text diagnosis notes as entered on the Procedures and Diagnoses (Px/Dx) form during referral entry.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REFERRAL_DX_NOTES) AS REFERRAL_DX_NOTES_filled
+INTO #fc_277
 FROM REFERRAL_DX_NOTES;
 
--- ==========================================================
--- Table: REMOVED_CLAIM_DX
+-- ---- fc_278 <- REMOVED_CLAIM_DX ----
 -- This table contains information about removed diagnoses from a claim adjustment.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(REMOVED_CLAIM_DX) AS REMOVED_CLAIM_DX_filled
+INTO #fc_278
 FROM REMOVED_CLAIM_DX;
 
--- ==========================================================
--- Table: REQ_DIAGNOSIS
+-- ---- fc_279 <- REQ_DIAGNOSIS ----
 -- This table contains the associated diagnoses on requisitions.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REQUISITION_ID) AS REQUISITION_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(ASSOCIATED_DX_ID_DX_NAME) AS ASSOCIATED_DX_ID_DX_NAME_filled
+INTO #fc_279
 FROM REQ_DIAGNOSIS;
 
--- ==========================================================
--- Table: RFL_DX_PRIM_MODS_TXT
+-- ---- fc_280 <- RFL_DX_PRIM_MODS_TXT ----
 -- A table to hold primary diagnosis modifier text.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PRIMARY_DX_MOD_TXT) AS PRIMARY_DX_MOD_TXT_filled
+INTO #fc_280
 FROM RFL_DX_PRIM_MODS_TXT;
 
--- ==========================================================
--- Table: RFL_DX_TXT
+-- ---- fc_281 <- RFL_DX_TXT ----
 -- This table holds the primary diagnosis free text that is associated with a referral.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(RFL_DX_TEXT) AS RFL_DX_TEXT_filled
+INTO #fc_281
 FROM RFL_DX_TXT;
 
--- ==========================================================
--- Table: RFL_PRI_DX_MOD
+-- ---- fc_282 <- RFL_PRI_DX_MOD ----
 -- RFL_PRI_DX_MOD contains information about modifiers associated with the primary referral diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(PRIMARY_DX_MOD_ID) AS PRIMARY_DX_MOD_ID_filled,
     COUNT(PRIMARY_DX_MOD_ID_MODIFIER_NAME) AS PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled
+INTO #fc_282
 FROM RFL_PRI_DX_MOD;
 
--- ==========================================================
--- Table: RISK_ADJ_EVAL_VERS_INFO
+-- ---- fc_283 <- RISK_ADJ_EVAL_VERS_INFO ----
 -- Stores contact specific identification information for risk adjustment data.
 -- Bucket(s): HCC / Risk adjustment
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SUMMARY_DATA_ID) AS SUMMARY_DATA_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled
+INTO #fc_283
 FROM RISK_ADJ_EVAL_VERS_INFO;
 
--- ==========================================================
--- Table: RXA_DX_INFO
+-- ---- fc_284 <- RXA_DX_INFO ----
 -- This table holds the diagnosis-related National Council for Prescription Drug Programs (NCPDP) items used in prescription adjudication.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5902,15 +5558,13 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_CODE_QUALIFIER_C_NAME) AS DX_CODE_QUALIFIER_C_NAME_filled,
     COUNT(DX_CODE) AS DX_CODE_filled
+INTO #fc_284
 FROM RXA_DX_INFO
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: RXA_DX_OUT
+-- ---- fc_285 <- RXA_DX_OUT ----
 -- Clarity extract of the outgoing diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5922,30 +5576,27 @@ SELECT
     COUNT(O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME) AS O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME_filled,
     COUNT(O_DX_CODE) AS O_DX_CODE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled
+INTO #fc_285
 FROM RXA_DX_OUT
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: RXFILL_DIAGNOSES
+-- ---- fc_286 <- RXFILL_DIAGNOSES ----
 -- Table for the RxFill diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(MED_PRBLM_LIST_ID) AS MED_PRBLM_LIST_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(RXFILL_DIAGNOSES_ID_DX_NAME) AS RXFILL_DIAGNOSES_ID_DX_NAME_filled
+INTO #fc_286
 FROM RXFILL_DIAGNOSES;
 
--- ==========================================================
--- Table: RX_DISPENSE_DX
+-- ---- fc_287 <- RX_DISPENSE_DX ----
 -- This table holds the diagnoses associated with a prescription fill.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5954,44 +5605,40 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(RX_DISPENSE_DX_ID_DX_NAME) AS RX_DISPENSE_DX_ID_DX_NAME_filled
+INTO #fc_287
 FROM RX_DISPENSE_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: RX_TRANSFER_DENIAL_REASON
+-- ---- fc_288 <- RX_TRANSFER_DENIAL_REASON ----
 -- Electronic prescription transfer denial reason.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(EXFER_DENIAL_REASON) AS EXFER_DENIAL_REASON_filled
+INTO #fc_288
 FROM RX_TRANSFER_DENIAL_REASON;
 
--- ==========================================================
--- Table: RX_XFER_DENIAL_RSN_CODES
+-- ---- fc_289 <- RX_XFER_DENIAL_RSN_CODES ----
 -- Electronic prescription transfer denial reason codes.
 -- Bucket(s): Claims / Denials
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(RXTRANS_DENIAL_ID) AS RXTRANS_DENIAL_ID_filled,
     COUNT(RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME) AS RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled
+INTO #fc_289
 FROM RX_XFER_DENIAL_RSN_CODES;
 
--- ==========================================================
--- Table: RYAN_WHITE_DX
+-- ---- fc_290 <- RYAN_WHITE_DX ----
 -- This table contains diagnosis information from Ryan White abstractions.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(RYN_WHT_DX_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6004,88 +5651,81 @@ SELECT
     COUNT(RYN_WHT_DX_COMMENT) AS RYN_WHT_DX_COMMENT_filled,
     COUNT(RYN_WHT_DX_PROBLEM) AS RYN_WHT_DX_PROBLEM_filled,
     COUNT(RYN_WHT_DX_STATUS_C_NAME) AS RYN_WHT_DX_STATUS_C_NAME_filled
+INTO #fc_290
 FROM RYAN_WHITE_DX
-GROUP BY YEAR(RYN_WHT_DX_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(RYN_WHT_DX_DATE);
 
--- ==========================================================
--- Table: SAR_INFO_DX
+-- ---- fc_291 <- SAR_INFO_DX ----
 -- This table extracts the diagnoses associated with the general/administrative information pertaining to a SAR (Service Authorization Request) case.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CCS_DX_ID_DX_NAME) AS CCS_DX_ID_DX_NAME_filled
+INTO #fc_291
 FROM SAR_INFO_DX;
 
--- ==========================================================
--- Table: SPEC_ARCH_DX_CMT
--- This table extracts the related multiple response Archived Order Associated Diagnosis Comment (I OVS 33009) item, which contains the diagnosis comment for diagnoses associated with an archived order.
+-- ---- fc_292 <- SPEC_ARCH_DX_CMT ----
+-- This table extracts the related multiple response Archived Order Associated Diagnosis Comment (I OVS 33009) item, which contains the diagnosis comment for diagnoses associated with
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SPECIMEN_ID) AS SPECIMEN_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ARCH_ORD_DX_CMT) AS ARCH_ORD_DX_CMT_filled
+INTO #fc_292
 FROM SPEC_ARCH_DX_CMT;
 
--- ==========================================================
--- Table: SPEC_ARCH_ORD_DX
+-- ---- fc_293 <- SPEC_ARCH_ORD_DX ----
 -- This table extracts the related multiple response item Archived Order Associated Diagnoses (I OVS 33008), which contains the list of diagnoses associated with an archived order.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SPECIMEN_ID) AS SPECIMEN_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ARCH_ORD_DX_ID_DX_NAME) AS ARCH_ORD_DX_ID_DX_NAME_filled
+INTO #fc_293
 FROM SPEC_ARCH_ORD_DX;
 
--- ==========================================================
--- Table: SPEC_DX_CODES
+-- ---- fc_294 <- SPEC_DX_CODES ----
 -- This table contains diagnosis codes (EDG records) for a specimen documented in Specimens navigator section.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(SPEC_DX_CODE_ID_DX_NAME) AS SPEC_DX_CODE_ID_DX_NAME_filled
+INTO #fc_294
 FROM SPEC_DX_CODES;
 
--- ==========================================================
--- Table: SPEC_SECTION_DX_CODES
+-- ---- fc_295 <- SPEC_SECTION_DX_CODES ----
 -- This table contains diagnosis codes (EDG records) for all the specimens documented in Specimens navigator section.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RECORD_ID) AS RECORD_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(SPEC_SECTION_DX_CODE_ID_DX_NAME) AS SPEC_SECTION_DX_CODE_ID_DX_NAME_filled
+INTO #fc_295
 FROM SPEC_SECTION_DX_CODES;
 
--- ==========================================================
--- Table: TIMEOUT_POST_OP_DX
+-- ---- fc_296 <- TIMEOUT_POST_OP_DX ----
 -- This table holds whether a discussion took place regarding the post-op diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6094,64 +5734,59 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(POST_OP_DX_REVIEW_C_NAME) AS POST_OP_DX_REVIEW_C_NAME_filled
+INTO #fc_296
 FROM TIMEOUT_POST_OP_DX
-GROUP BY YEAR(CONTACT_DATE)
-ORDER BY activity_year;
+GROUP BY YEAR(CONTACT_DATE);
 
--- ==========================================================
--- Table: TRIAGE_HX_DX_CODE_TYPE
+-- ---- fc_297 <- TRIAGE_HX_DX_CODE_TYPE ----
 -- History item to track changes made to diagnosis description code type.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(TRI_HX_DX_TYPE_C_NAME) AS TRI_HX_DX_TYPE_C_NAME_filled
+INTO #fc_297
 FROM TRIAGE_HX_DX_CODE_TYPE;
 
--- ==========================================================
--- Table: TRIAGE_HX_DX_TXT
+-- ---- fc_298 <- TRIAGE_HX_DX_TXT ----
 -- History item to track changes made to free text associated with diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(TRI_HX_DX_TXT) AS TRI_HX_DX_TXT_filled
+INTO #fc_298
 FROM TRIAGE_HX_DX_TXT;
 
--- ==========================================================
--- Table: TRIAGE_HX_RFL_DX_MOD
+-- ---- fc_299 <- TRIAGE_HX_RFL_DX_MOD ----
 -- This table extracts the related multiple response History - Primary Referral Diagnosis Modifiers (I RFL 992) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(REFERRAL_ID) AS REFERRAL_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(TRIAGE_HX_DX_MOD_ID) AS TRIAGE_HX_DX_MOD_ID_filled,
     COUNT(TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME) AS TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled
+INTO #fc_299
 FROM TRIAGE_HX_RFL_DX_MOD;
 
--- ==========================================================
--- Table: TXP_RETRANSPLANT_DX
+-- ---- fc_300 <- TXP_RETRANSPLANT_DX ----
 -- UNOS retransplant diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SUMMARY_BLOCK_ID) AS SUMMARY_BLOCK_ID_filled,
     COUNT(LINE) AS LINE_filled,
@@ -6159,46 +5794,43 @@ SELECT
     COUNT(RETXP_PRIMARY_DX_C_NAME) AS RETXP_PRIMARY_DX_C_NAME_filled,
     COUNT(RETXP_PRIMARY_DX_OTHR) AS RETXP_PRIMARY_DX_OTHR_filled,
     COUNT(RETXP_SEC_DX_OTHR) AS RETXP_SEC_DX_OTHR_filled
+INTO #fc_300
 FROM TXP_RETRANSPLANT_DX;
 
--- ==========================================================
--- Table: TXP_RETRANSPLANT_DX_RM
+-- ---- fc_301 <- TXP_RETRANSPLANT_DX_RM ----
 -- This table extracts the related multiple-response Secondary Re-transplant Diagnosis (I HSB 30553) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SUMMARY_BLOCK_ID) AS SUMMARY_BLOCK_ID_filled,
     COUNT(GROUP_LINE) AS GROUP_LINE_filled,
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(RETXP_SEC_DX_C_NAME) AS RETXP_SEC_DX_C_NAME_filled
+INTO #fc_301
 FROM TXP_RETRANSPLANT_DX_RM;
 
--- ==========================================================
--- Table: UNIV_CHG_LN_DX
+-- ---- fc_302 <- UNIV_CHG_LN_DX ----
 -- This table contains diagnosis information for one charge in the Universal Charge Line (UCL) masterfile.
 -- Bucket(s): ICD-10 / Diagnosis coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(UCL_ID) AS UCL_ID_filled,
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSIS_ID_DX_NAME) AS DIAGNOSIS_ID_DX_NAME_filled,
     COUNT(DIAGNOSIS_QUAL_C_NAME) AS DIAGNOSIS_QUAL_C_NAME_filled
+INTO #fc_302
 FROM UNIV_CHG_LN_DX;
 
--- ==========================================================
--- Table: URIN_BLADDER_CPTR
+-- ---- fc_303 <- URIN_BLADDER_CPTR ----
 -- Stores single response data for College of American Pathologists (CAP) form 76061-URINARY BLADDER: Cystectomy, Partial, Total, or Radical.
 -- Bucket(s): E/M level / CPT coding
--- ==========================================================
 -- no date/datetime-typed column found on this table; flat total only
--- (no temporal-cutover read possible from this table alone)
 SELECT
+    CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RESULT_ID) AS RESULT_ID_filled,
     COUNT(TUMOR_SITE_SPECIFY) AS TUMOR_SITE_SPECIFY_filled,
@@ -6234,4 +5866,5928 @@ SELECT
     COUNT(MG_UVLV_IC_SM) AS MG_UVLV_IC_SM_filled,
     COUNT(MG_IVLV_CCNM_SS) AS MG_IVLV_CCNM_SS_filled,
     COUNT(MG_IVLV_CCNM_ST_C_NAME) AS MG_IVLV_CCNM_ST_C_NAME_filled
+INTO #fc_303
 FROM URIN_BLADDER_CPTR;
+
+-- ============================== PHASE 2 ==============================
+-- The one result set this script returns: every staging table's wide
+-- aggregate row, reshaped into long format (one row per table/column/
+-- year) and unioned together. Export this grid and send it back.
+
+SELECT table_name, column_name, activity_year, total_rows, filled_count
+FROM (
+    SELECT 'ACCUM_CLAIM_DIAGNOSES' AS table_name, 'ACCUMULATION_ID' AS column_name, activity_year, total_rows, ACCUMULATION_ID_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'ACCUM_CLAIM_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'ACCUM_CLAIM_DIAGNOSES' AS table_name, 'CLAIM_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, CLAIM_DX_ID_DX_NAME_filled AS filled_count FROM #fc_001
+    UNION ALL
+    SELECT 'ACCUM_SERVICE_DIAGNOSES' AS table_name, 'ACCUMULATION_ID' AS column_name, activity_year, total_rows, ACCUMULATION_ID_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'ACCUM_SERVICE_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'ACCUM_SERVICE_DIAGNOSES' AS table_name, 'ASSOCIATED_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ASSOCIATED_DX_ID_DX_NAME_filled AS filled_count FROM #fc_002
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'EM_CODE_ADDL_ID_PROC_NAME' AS column_name, activity_year, total_rows, EM_CODE_ADDL_ID_PROC_NAME_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'EM_CODE_MOD_ID' AS column_name, activity_year, total_rows, EM_CODE_MOD_ID_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'EM_CODE_BILPROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, EM_CODE_BILPROV_ID_PROV_NAME_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'EM_CODE_UNIQUE_NUM' AS column_name, activity_year, total_rows, EM_CODE_UNIQUE_NUM_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'EM_NO_CHG_REASON_C_NAME' AS column_name, activity_year, total_rows, EM_NO_CHG_REASON_C_NAME_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ADDITIONAL_EM_CODE' AS table_name, 'AR_EM_CODE_DX' AS column_name, activity_year, total_rows, AR_EM_CODE_DX_filled AS filled_count FROM #fc_003
+    UNION ALL
+    SELECT 'ALT_PRC_DIAGNOSES' AS table_name, 'ALERT_ID' AS column_name, activity_year, total_rows, ALERT_ID_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ALT_PRC_DIAGNOSES' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ALT_PRC_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ALT_PRC_DIAGNOSES' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ALT_PRC_DIAGNOSES' AS table_name, 'PRC_DIAGNOSES_ID_DX_NAME' AS column_name, activity_year, total_rows, PRC_DIAGNOSES_ID_DX_NAME_filled AS filled_count FROM #fc_004
+    UNION ALL
+    SELECT 'ANTICOAG_TRTMNT_DX' AS table_name, 'PROBLEM_LIST_ID' AS column_name, activity_year, total_rows, PROBLEM_LIST_ID_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'ANTICOAG_TRTMNT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'ANTICOAG_TRTMNT_DX' AS table_name, 'ANTICOAG_PRE_DX_C_NAME' AS column_name, activity_year, total_rows, ANTICOAG_PRE_DX_C_NAME_filled AS filled_count FROM #fc_005
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'CM_LOG_OWNER_ID' AS column_name, activity_year, total_rows, CM_LOG_OWNER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'RECORD_STATUS_C_NAME' AS column_name, activity_year, total_rows, RECORD_STATUS_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'APPEAL_GRV_TYPE_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SERIES_IDENTIFIER' AS column_name, activity_year, total_rows, SERIES_IDENTIFIER_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXTERNAL_IDENTIFIER' AS column_name, activity_year, total_rows, EXTERNAL_IDENTIFIER_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'INITIATED_BY_TYPE_C_NAME' AS column_name, activity_year, total_rows, INITIATED_BY_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'INITIATING_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, INITIATING_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'INITIATING_REP_MEM_RESP_GUID' AS column_name, activity_year, total_rows, INITIATING_REP_MEM_RESP_GUID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_METHOD_C_NAME' AS column_name, activity_year, total_rows, SUBMISSION_METHOD_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'REVIEW_LEVEL_C_NAME' AS column_name, activity_year, total_rows, REVIEW_LEVEL_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'APPEAL_SUBJECT_TYPE_C_NAME' AS column_name, activity_year, total_rows, APPEAL_SUBJECT_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_AUTH_REQUEST_ID' AS column_name, activity_year, total_rows, SUBJECT_AUTH_REQUEST_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_CLAIM_ID' AS column_name, activity_year, total_rows, SUBJECT_CLAIM_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'RESULT_AUTH_REQUEST_ID' AS column_name, activity_year, total_rows, RESULT_AUTH_REQUEST_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'RESULT_CLAIM_ID' AS column_name, activity_year, total_rows, RESULT_CLAIM_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'RECORD_CREATE_UTC_DTTM' AS column_name, activity_year, total_rows, RECORD_CREATE_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'RECORD_CREATE_USER_ID' AS column_name, activity_year, total_rows, RECORD_CREATE_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'RECORD_CREATE_USER_ID_NAME' AS column_name, activity_year, total_rows, RECORD_CREATE_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'URGENCY_C_NAME' AS column_name, activity_year, total_rows, URGENCY_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_OVRIDE_UTC_DTTM' AS column_name, activity_year, total_rows, SUBMISSION_OVRIDE_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_SYS_UTC_DTTM' AS column_name, activity_year, total_rows, DECISION_SYS_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_USER_ID' AS column_name, activity_year, total_rows, DECISION_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_USER_ID_NAME' AS column_name, activity_year, total_rows, DECISION_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_OVRIDE_UTC_DTTM' AS column_name, activity_year, total_rows, DECISION_OVRIDE_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'APPEAL_DECISION_C_NAME' AS column_name, activity_year, total_rows, APPEAL_DECISION_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'TIMEFRAME_START_UTC_DTTM' AS column_name, activity_year, total_rows, TIMEFRAME_START_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_RPT_UTC_DTTM' AS column_name, activity_year, total_rows, SUBMISSION_RPT_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_SYS_UTC_DTTM' AS column_name, activity_year, total_rows, SUBMISSION_SYS_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXP_REQ_REC_UTC_DTTM' AS column_name, activity_year, total_rows, EXP_REQ_REC_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'WAS_UPGRADED_TO_EXP_YN' AS column_name, activity_year, total_rows, WAS_UPGRADED_TO_EXP_YN_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXP_REQ_DEC_UTC_DTTM' AS column_name, activity_year, total_rows, EXP_REQ_DEC_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXT_REQ_REC_UTC_DTTM' AS column_name, activity_year, total_rows, EXT_REQ_REC_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXT_DAYS' AS column_name, activity_year, total_rows, EXT_DAYS_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXT_REQ_DEC_UTC_DTTM' AS column_name, activity_year, total_rows, EXT_REQ_DEC_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXT_MAX_DAYS' AS column_name, activity_year, total_rows, EXT_MAX_DAYS_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_SYS_UTC_DTTM' AS column_name, activity_year, total_rows, EFFECT_SYS_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_OVR_UTC_DTTM' AS column_name, activity_year, total_rows, EFFECT_OVR_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_RPT_UTC_DTTM' AS column_name, activity_year, total_rows, EFFECT_RPT_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_DUE_UTC_DTTM' AS column_name, activity_year, total_rows, EFFECT_DUE_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'OVERALL_DUE_UTC_DTTM' AS column_name, activity_year, total_rows, OVERALL_DUE_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_RPT_UTC_DTTM' AS column_name, activity_year, total_rows, DECISION_RPT_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_DUE_UTC_DTTM' AS column_name, activity_year, total_rows, DECISION_DUE_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'TAT_SYS_TIME_ZONE_C_NAME' AS column_name, activity_year, total_rows, TAT_SYS_TIME_ZONE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'TAT_OVR_TIME_ZONE_C_NAME' AS column_name, activity_year, total_rows, TAT_OVR_TIME_ZONE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'TAT_RPT_TIME_ZONE_C_NAME' AS column_name, activity_year, total_rows, TAT_RPT_TIME_ZONE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'TIMEFRAME_START_LOCAL_DTTM' AS column_name, activity_year, total_rows, TIMEFRAME_START_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_SYS_LOCAL_DTTM' AS column_name, activity_year, total_rows, SUBMISSION_SYS_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_OVR_LOCAL_DTTM' AS column_name, activity_year, total_rows, SUBMISSION_OVR_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBMISSION_RPT_LOCAL_DTTM' AS column_name, activity_year, total_rows, SUBMISSION_RPT_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXP_REQ_REC_LOCAL_DTTM' AS column_name, activity_year, total_rows, EXP_REQ_REC_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXP_DEC_LOCAL_DTTM' AS column_name, activity_year, total_rows, EXP_DEC_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXT_REQ_LOCAL_DTTM' AS column_name, activity_year, total_rows, EXT_REQ_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXT_DEC_LOCAL_DTTM' AS column_name, activity_year, total_rows, EXT_DEC_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_SYS_LOCAL_DTTM' AS column_name, activity_year, total_rows, EFFECT_SYS_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_OVR_LOCAL_DTTM' AS column_name, activity_year, total_rows, EFFECT_OVR_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_RPT_LOCAL_DTTM' AS column_name, activity_year, total_rows, EFFECT_RPT_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EFFECT_DUE_LOCAL_DTTM' AS column_name, activity_year, total_rows, EFFECT_DUE_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'OVERALL_DUE_LOCAL_DTTM' AS column_name, activity_year, total_rows, OVERALL_DUE_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_LOCAL_DTTM' AS column_name, activity_year, total_rows, DECISION_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_OVR_LOCAL_DTTM' AS column_name, activity_year, total_rows, DECISION_OVR_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_RPT_LOCAL_DTTM' AS column_name, activity_year, total_rows, DECISION_RPT_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_DUE_LOCAL_DTTM' AS column_name, activity_year, total_rows, DECISION_DUE_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'GRIEVANCE_SUBJECT_TYPE_C_NAME' AS column_name, activity_year, total_rows, GRIEVANCE_SUBJECT_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'REASON_FOR_GRIEVANCE_C_NAME' AS column_name, activity_year, total_rows, REASON_FOR_GRIEVANCE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_APPEAL_APPEAL_GRV_ID' AS column_name, activity_year, total_rows, SUBJECT_APPEAL_APPEAL_GRV_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_GRIEVANC_APPEAL_GRV_ID' AS column_name, activity_year, total_rows, SUBJECT_GRIEVANC_APPEAL_GRV_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, SUBJECT_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_FACILITY_ID_LOC_NAME' AS column_name, activity_year, total_rows, SUBJECT_FACILITY_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_EMPLOYEE_USER_ID' AS column_name, activity_year, total_rows, SUBJECT_EMPLOYEE_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_EMPLOYEE_USER_ID_NAME' AS column_name, activity_year, total_rows, SUBJECT_EMPLOYEE_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_RESOURCE_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, SUBJECT_RESOURCE_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_LOC_ID_LOC_NAME' AS column_name, activity_year, total_rows, SUBJECT_LOC_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_POS_ID_LOC_NAME' AS column_name, activity_year, total_rows, SUBJECT_POS_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_BUS_SEG_POS_ID_LOC_NAME' AS column_name, activity_year, total_rows, SUBJECT_BUS_SEG_POS_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_REGION_ID_LOC_NAME' AS column_name, activity_year, total_rows, SUBJECT_REGION_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_GROUP_ID_LOC_NAME' AS column_name, activity_year, total_rows, SUBJECT_GROUP_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_COVERAGE_ID' AS column_name, activity_year, total_rows, SUBJECT_COVERAGE_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'GRIEVANCE_INCIDENT_UTC_DTTM' AS column_name, activity_year, total_rows, GRIEVANCE_INCIDENT_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'GRIEVANCE_INCIDENT_LOCAL_DTTM' AS column_name, activity_year, total_rows, GRIEVANCE_INCIDENT_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'EXTENSION_INITIATED_BY_TYPE_C_NAME' AS column_name, activity_year, total_rows, EXTENSION_INITIATED_BY_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_OVR_USER_ID' AS column_name, activity_year, total_rows, DECISION_OVR_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_OVR_USER_ID_NAME' AS column_name, activity_year, total_rows, DECISION_OVR_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_RPT_USER_ID' AS column_name, activity_year, total_rows, DECISION_RPT_USER_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'DECISION_RPT_USER_ID_NAME' AS column_name, activity_year, total_rows, DECISION_RPT_USER_ID_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'LATE_FILING_RCV_UTC_DTTM' AS column_name, activity_year, total_rows, LATE_FILING_RCV_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'FILED_ON_TIME_C_NAME' AS column_name, activity_year, total_rows, FILED_ON_TIME_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'AG_REVIEW_TYPE_C_NAME' AS column_name, activity_year, total_rows, AG_REVIEW_TYPE_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'REVIEW_AGENCY_ID' AS column_name, activity_year, total_rows, REVIEW_AGENCY_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'REVIEW_AGENCY_ID_AGENCY_NAME' AS column_name, activity_year, total_rows, REVIEW_AGENCY_ID_AGENCY_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'CASE_SENT_REVW_ENTITY_UTC_DTTM' AS column_name, activity_year, total_rows, CASE_SENT_REVW_ENTITY_UTC_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'CASE_SENT_REVW_ENTY_LOCAL_DTTM' AS column_name, activity_year, total_rows, CASE_SENT_REVW_ENTY_LOCAL_DTTM_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'COVERAGE_ID' AS column_name, activity_year, total_rows, COVERAGE_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'PAYER_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, PAYER_ID_PAYOR_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME' AS column_name, activity_year, total_rows, BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'LOB_ID' AS column_name, activity_year, total_rows, LOB_ID_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'LOB_ID_LOB_NAME' AS column_name, activity_year, total_rows, LOB_ID_LOB_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'MC_PEER_GROUP_C_NAME' AS column_name, activity_year, total_rows, MC_PEER_GROUP_C_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'REGION_ID_LOC_NAME' AS column_name, activity_year, total_rows, REGION_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'MEDICAL_GROUP_ID_LOC_NAME' AS column_name, activity_year, total_rows, MEDICAL_GROUP_ID_LOC_NAME_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV' AS table_name, 'SUBJECT_FREE_TEXT' AS column_name, activity_year, total_rows, SUBJECT_FREE_TEXT_filled AS filled_count FROM #fc_006
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_DECISION_UTC_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_DECISION_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_DECISION_LOCAL_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_DECISION_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_EFFECT_UTC_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_EFFECT_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_EFFECT_LOCAL_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_EFFECT_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_NOTIF_UTC_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_NOTIF_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_NOTIF_LOCAL_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_NOTIF_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'REQUIREMENTS_COMP_UTC_DTTM' AS column_name, activity_year, total_rows, REQUIREMENTS_COMP_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'REQUIREMENTS_COMP_LOCAL_DTTM' AS column_name, activity_year, total_rows, REQUIREMENTS_COMP_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'DECISION_ON_TIME_C_NAME' AS column_name, activity_year, total_rows, DECISION_ON_TIME_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'EFFECTUATION_ON_TIME_C_NAME' AS column_name, activity_year, total_rows, EFFECTUATION_ON_TIME_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NOTIFICATIONS_ON_TIME_C_NAME' AS column_name, activity_year, total_rows, NOTIFICATIONS_ON_TIME_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'OVERALL_ON_TIME_C_NAME' AS column_name, activity_year, total_rows, OVERALL_ON_TIME_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'APPEAL_GRV_WKFL_STEP_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_WKFL_STEP_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'FILED_LATE_EXCPTNS_ALLOWED_YN' AS column_name, activity_year, total_rows, FILED_LATE_EXCPTNS_ALLOWED_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'FILED_LATE_OVERRIDE_YN' AS column_name, activity_year, total_rows, FILED_LATE_OVERRIDE_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'DISMISSED_YN' AS column_name, activity_year, total_rows, DISMISSED_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_ACTION_UTC_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_ACTION_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_ACTION_LOCAL_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_ACTION_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'CURRENT_REQUESTED_URGENCY_C_NAME' AS column_name, activity_year, total_rows, CURRENT_REQUESTED_URGENCY_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'REQUESTED_EXP_PROCESSED_STD_YN' AS column_name, activity_year, total_rows, REQUESTED_EXP_PROCESSED_STD_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'MEM_OUT_ORAL_NOTIF_UTC_DTTM' AS column_name, activity_year, total_rows, MEM_OUT_ORAL_NOTIF_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'MEM_OUT_ORAL_NOTIF_LOCAL_DTTM' AS column_name, activity_year, total_rows, MEM_OUT_ORAL_NOTIF_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'MEM_OUT_WRIT_NOTIF_UTC_DTTM' AS column_name, activity_year, total_rows, MEM_OUT_WRIT_NOTIF_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'MEM_OUT_WRIT_NOTIF_LOCAL_DTTM' AS column_name, activity_year, total_rows, MEM_OUT_WRIT_NOTIF_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'QUEUED_COMPLETE_USER_ID' AS column_name, activity_year, total_rows, QUEUED_COMPLETE_USER_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'QUEUED_COMPLETE_USER_ID_NAME' AS column_name, activity_year, total_rows, QUEUED_COMPLETE_USER_ID_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'COMPLETED_UTC_DTTM' AS column_name, activity_year, total_rows, COMPLETED_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'COMPLETED_LOCAL_DTTM' AS column_name, activity_year, total_rows, COMPLETED_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'PROCESSING_TYPE_C_NAME' AS column_name, activity_year, total_rows, PROCESSING_TYPE_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'AG_CREATION_METHOD_C_NAME' AS column_name, activity_year, total_rows, AG_CREATION_METHOD_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'REQ_ADDL_REVIEW_C_NAME' AS column_name, activity_year, total_rows, REQ_ADDL_REVIEW_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUGGESTED_APPEAL_DECISION_C_NAME' AS column_name, activity_year, total_rows, SUGGESTED_APPEAL_DECISION_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUGGESTED_DECISION_USER_ID' AS column_name, activity_year, total_rows, SUGGESTED_DECISION_USER_ID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUGGESTED_DECISION_USER_ID_NAME' AS column_name, activity_year, total_rows, SUGGESTED_DECISION_USER_ID_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUGGESTED_DECISION_UTC_DTTM' AS column_name, activity_year, total_rows, SUGGESTED_DECISION_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUGGESTED_DECISION_LOCAL_DTTM' AS column_name, activity_year, total_rows, SUGGESTED_DECISION_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'EDITED_AFTER_COMPLETION_YN' AS column_name, activity_year, total_rows, EDITED_AFTER_COMPLETION_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'DECISION_LOGIN_DEPARTMENT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, DECISION_LOGIN_DEPARTMENT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUGGESTED_DECISION_DEPT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, SUGGESTED_DECISION_DEPT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'MEDICARE_CVG_TYP_C_NAME' AS column_name, activity_year, total_rows, MEDICARE_CVG_TYP_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'IS_PART_B_DRUG_YN' AS column_name, activity_year, total_rows, IS_PART_B_DRUG_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'LATE_FILING_RCV_LOCAL_DTTM' AS column_name, activity_year, total_rows, LATE_FILING_RCV_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'REQUESTING_REP_DOCUMENT_REQ_YN' AS column_name, activity_year, total_rows, REQUESTING_REP_DOCUMENT_REQ_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'CASE_FILE_DUE_UTC_DTTM' AS column_name, activity_year, total_rows, CASE_FILE_DUE_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'CASE_FILE_DUE_LOCAL_DTTM' AS column_name, activity_year, total_rows, CASE_FILE_DUE_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'APPEAL_ORIG_DENIAL_RSN_C_NAME' AS column_name, activity_year, total_rows, APPEAL_ORIG_DENIAL_RSN_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_CASE_FWD_UTC_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_CASE_FWD_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'NEXT_OUTST_CASE_FWD_LOCAL_DTTM' AS column_name, activity_year, total_rows, NEXT_OUTST_CASE_FWD_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'CASE_FILE_ON_TIME_C_NAME' AS column_name, activity_year, total_rows, CASE_FILE_ON_TIME_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'FILED_LATE_REPORTABLE_YN' AS column_name, activity_year, total_rows, FILED_LATE_REPORTABLE_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'RECORD_CREATE_LOCAL_DTTM' AS column_name, activity_year, total_rows, RECORD_CREATE_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'PROCESS_AS_FORMAL_GRIEVANCE_YN' AS column_name, activity_year, total_rows, PROCESS_AS_FORMAL_GRIEVANCE_YN_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'UPGRADE_TO_FORMAL_UTC_DTTM' AS column_name, activity_year, total_rows, UPGRADE_TO_FORMAL_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'UPGRADE_TO_FORMAL_LOCAL_DTTM' AS column_name, activity_year, total_rows, UPGRADE_TO_FORMAL_LOCAL_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'AG_FORMALITY_C_NAME' AS column_name, activity_year, total_rows, AG_FORMALITY_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'UPGRD_FRML_OCCR_UTC_DTTM' AS column_name, activity_year, total_rows, UPGRD_FRML_OCCR_UTC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'UPGRD_FRML_OCCR_LOC_DTTM' AS column_name, activity_year, total_rows, UPGRD_FRML_OCCR_LOC_DTTM_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'TAG_SOURCE_TYPE_C_NAME' AS column_name, activity_year, total_rows, TAG_SOURCE_TYPE_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'APPEAL_EXCEPTION_TYPE_C_NAME' AS column_name, activity_year, total_rows, APPEAL_EXCEPTION_TYPE_C_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'INITIATING_POS_ID_LOC_NAME' AS column_name, activity_year, total_rows, INITIATING_POS_ID_LOC_NAME_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'REQUESTING_PROV_ADDRESSID' AS column_name, activity_year, total_rows, REQUESTING_PROV_ADDRESSID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_2' AS table_name, 'SUBJECT_PROV_ADDRESSID' AS column_name, activity_year, total_rows, SUBJECT_PROV_ADDRESSID_filled AS filled_count FROM #fc_007
+    UNION ALL
+    SELECT 'APPEAL_GRV_APPEAL_REASONS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'APPEAL_GRV_APPEAL_REASONS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'APPEAL_GRV_APPEAL_REASONS' AS table_name, 'APPEAL_CREATE_REASONS_C_NAME' AS column_name, activity_year, total_rows, APPEAL_CREATE_REASONS_C_NAME_filled AS filled_count FROM #fc_008
+    UNION ALL
+    SELECT 'APPEAL_GRV_AUDIT_TRAIL' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'APPEAL_GRV_AUDIT_TRAIL' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'APPEAL_GRV_AUDIT_TRAIL' AS table_name, 'AUDIT_TRAIL_TYPE_C_NAME' AS column_name, activity_year, total_rows, AUDIT_TRAIL_TYPE_C_NAME_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'APPEAL_GRV_AUDIT_TRAIL' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_009
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'REQUESTED_URGENCY_C_NAME' AS column_name, activity_year, total_rows, REQUESTED_URGENCY_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'REQUEST_UTC_DTTM' AS column_name, activity_year, total_rows, REQUEST_UTC_DTTM_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'REQUEST_LOCAL_DTTM' AS column_name, activity_year, total_rows, REQUEST_LOCAL_DTTM_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'INITIATED_BY_TYPE_C_NAME' AS column_name, activity_year, total_rows, INITIATED_BY_TYPE_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'URGENCY_COMMENTS' AS column_name, activity_year, total_rows, URGENCY_COMMENTS_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_CHANGE_URGENCY' AS table_name, 'URGENCY_DECISION_C_NAME' AS column_name, activity_year, total_rows, URGENCY_DECISION_C_NAME_filled AS filled_count FROM #fc_010
+    UNION ALL
+    SELECT 'APPEAL_GRV_DSMISS_REASONS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'APPEAL_GRV_DSMISS_REASONS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'APPEAL_GRV_DSMISS_REASONS' AS table_name, 'DISMISS_REASON_C_NAME' AS column_name, activity_year, total_rows, DISMISS_REASON_C_NAME_filled AS filled_count FROM #fc_011
+    UNION ALL
+    SELECT 'APPEAL_GRV_LATE_FILE_RSNS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'APPEAL_GRV_LATE_FILE_RSNS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'APPEAL_GRV_LATE_FILE_RSNS' AS table_name, 'LATE_FILING_RSN_C_NAME' AS column_name, activity_year, total_rows, LATE_FILING_RSN_C_NAME_filled AS filled_count FROM #fc_012
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'LETTER_SENT_DOCUMENT_ID' AS column_name, activity_year, total_rows, LETTER_SENT_DOCUMENT_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'APPEAL_GRV_LETTER_STS_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_LETTER_STS_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'LETTER_GUID' AS column_name, activity_year, total_rows, LETTER_GUID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'APPEAL_GRV_LETTER_TYPE_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_LETTER_TYPE_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RECIPIENT_CLASS_EVENT_ID' AS column_name, activity_year, total_rows, RECIPIENT_CLASS_EVENT_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RECIPIENT_CLASS_EVENT_ID_EVENT_NAME' AS column_name, activity_year, total_rows, RECIPIENT_CLASS_EVENT_ID_EVENT_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_FEV_SEND_TO_C_NAME' AS column_name, activity_year, total_rows, RESOLVED_FEV_SEND_TO_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_RECIPIENT_INI' AS column_name, activity_year, total_rows, RESOLVED_RECIPIENT_INI_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_RECIPIENT_ID' AS column_name, activity_year, total_rows, RESOLVED_RECIPIENT_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_RECIPIENT_GUID' AS column_name, activity_year, total_rows, RESOLVED_RECIPIENT_GUID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'DELIVERY_LOGIC_C_NAME' AS column_name, activity_year, total_rows, DELIVERY_LOGIC_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_FEV_DLVR_MTHD_C_NAME' AS column_name, activity_year, total_rows, RESOLVED_FEV_DLVR_MTHD_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BATCH_PRINT_LTR_HX_JOB_TYPE_C_NAME' AS column_name, activity_year, total_rows, BATCH_PRINT_LTR_HX_JOB_TYPE_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BODY_SMARTTEXT_ID' AS column_name, activity_year, total_rows, BODY_SMARTTEXT_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BODY_SMARTTEXT_ID_SMARTTEXT_NAME' AS column_name, activity_year, total_rows, BODY_SMARTTEXT_ID_SMARTTEXT_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'COVER_SMARTTEXT_ID' AS column_name, activity_year, total_rows, COVER_SMARTTEXT_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'COVER_SMARTTEXT_ID_SMARTTEXT_NAME' AS column_name, activity_year, total_rows, COVER_SMARTTEXT_ID_SMARTTEXT_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BACK_SMARTTEXT_ID' AS column_name, activity_year, total_rows, BACK_SMARTTEXT_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BACK_SMARTTEXT_ID_SMARTTEXT_NAME' AS column_name, activity_year, total_rows, BACK_SMARTTEXT_ID_SMARTTEXT_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_IB_POOL_ID' AS column_name, activity_year, total_rows, RESOLVED_IB_POOL_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_IB_POOL_ID_REGISTRY_NAME' AS column_name, activity_year, total_rows, RESOLVED_IB_POOL_ID_REGISTRY_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RESOLVED_PROV_ADDR_UNIQUE_ID' AS column_name, activity_year, total_rows, RESOLVED_PROV_ADDR_UNIQUE_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'CITY' AS column_name, activity_year, total_rows, CITY_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'STATE_C_NAME' AS column_name, activity_year, total_rows, STATE_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'ZIP' AS column_name, activity_year, total_rows, ZIP_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'DISTRICT_C_NAME' AS column_name, activity_year, total_rows, DISTRICT_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'COUNTY_C_NAME' AS column_name, activity_year, total_rows, COUNTY_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'COUNTRY_C_NAME' AS column_name, activity_year, total_rows, COUNTRY_C_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BUILDING_NUMBER' AS column_name, activity_year, total_rows, BUILDING_NUMBER_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'RECIPIENT_NAME' AS column_name, activity_year, total_rows, RECIPIENT_NAME_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'SENT_SYS_UTC_DTTM' AS column_name, activity_year, total_rows, SENT_SYS_UTC_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'SENT_SYS_LOCAL_DTTM' AS column_name, activity_year, total_rows, SENT_SYS_LOCAL_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'SENT_OVD_UTC_DTTM' AS column_name, activity_year, total_rows, SENT_OVD_UTC_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'SENT_OVD_LOCAL_DTTM' AS column_name, activity_year, total_rows, SENT_OVD_LOCAL_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'SENT_RPT_UTC_DTTM' AS column_name, activity_year, total_rows, SENT_RPT_UTC_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'SENT_RPT_LOCAL_DTTM' AS column_name, activity_year, total_rows, SENT_RPT_LOCAL_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'MAILED_SYS_UTC_DTTM' AS column_name, activity_year, total_rows, MAILED_SYS_UTC_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'MAILED_SYS_LOCAL_DTTM' AS column_name, activity_year, total_rows, MAILED_SYS_LOCAL_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'MAILED_OVR_UTC_DTTM' AS column_name, activity_year, total_rows, MAILED_OVR_UTC_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'MAILED_OVR_LOCAL_DTTM' AS column_name, activity_year, total_rows, MAILED_OVR_LOCAL_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'MAILED_RPT_UTC_DTTM' AS column_name, activity_year, total_rows, MAILED_RPT_UTC_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'MAILED_RPT_LOCAL_DTTM' AS column_name, activity_year, total_rows, MAILED_RPT_LOCAL_DTTM_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BODY_NOTE_ID' AS column_name, activity_year, total_rows, BODY_NOTE_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'COVER_SHEET_NOTE_ID' AS column_name, activity_year, total_rows, COVER_SHEET_NOTE_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'BACK_NOTE_ID' AS column_name, activity_year, total_rows, BACK_NOTE_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER' AS table_name, 'FAX_FACE_SHEET_NOTE_ID' AS column_name, activity_year, total_rows, FAX_FACE_SHEET_NOTE_ID_filled AS filled_count FROM #fc_013
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_ADDRESS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_ADDRESS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_ADDRESS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_ADDRESS' AS table_name, 'STREET_ADDRESS' AS column_name, activity_year, total_rows, STREET_ADDRESS_filled AS filled_count FROM #fc_014
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'HISTORY_KEY' AS column_name, activity_year, total_rows, HISTORY_KEY_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'LETTER_HX_GUID' AS column_name, activity_year, total_rows, LETTER_HX_GUID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'APPEAL_GRV_LETTER_ACT_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_LETTER_ACT_C_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'OCCUR_UTC_DTTM' AS column_name, activity_year, total_rows, OCCUR_UTC_DTTM_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'COMMITTING_USER_ID' AS column_name, activity_year, total_rows, COMMITTING_USER_ID_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'COMMITTING_USER_ID_NAME' AS column_name, activity_year, total_rows, COMMITTING_USER_ID_NAME_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_LETTER_GEN_HX' AS table_name, 'LETTER_HX_COMMENT' AS column_name, activity_year, total_rows, LETTER_HX_COMMENT_filled AS filled_count FROM #fc_015
+    UNION ALL
+    SELECT 'APPEAL_GRV_MAX_EXTENSION' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'APPEAL_GRV_MAX_EXTENSION' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'APPEAL_GRV_MAX_EXTENSION' AS table_name, 'EXTENSION_TAT_TIME_STANDARD_C_NAME' AS column_name, activity_year, total_rows, EXTENSION_TAT_TIME_STANDARD_C_NAME_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'APPEAL_GRV_MAX_EXTENSION' AS table_name, 'MAX_EXTENSION_DAYS' AS column_name, activity_year, total_rows, MAX_EXTENSION_DAYS_filled AS filled_count FROM #fc_016
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_TIME_STANDARD_C_NAME' AS column_name, activity_year, total_rows, NOTIF_TAT_TIME_STANDARD_C_NAME_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'APPEAL_GRV_LETTER_TYPE_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_LETTER_TYPE_C_NAME_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_RECIP_CLASS_ID' AS column_name, activity_year, total_rows, NOTIF_TAT_RECIP_CLASS_ID_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_RECIP_CLASS_ID_EVENT_NAME' AS column_name, activity_year, total_rows, NOTIF_TAT_RECIP_CLASS_ID_EVENT_NAME_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_METHOD_C_NAME' AS column_name, activity_year, total_rows, NOTIF_TAT_METHOD_C_NAME_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_DUE_UTC_DTTM' AS column_name, activity_year, total_rows, NOTIF_TAT_DUE_UTC_DTTM_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_OCCUR_UTC_DTTM' AS column_name, activity_year, total_rows, NOTIF_TAT_OCCUR_UTC_DTTM_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_LETTER' AS column_name, activity_year, total_rows, NOTIF_LETTER_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_CALL_COMM_ID' AS column_name, activity_year, total_rows, NOTIF_CALL_COMM_ID_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_DUE_LOCAL_DTTM' AS column_name, activity_year, total_rows, NOTIF_TAT_DUE_LOCAL_DTTM_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_NOTIF_TAT' AS table_name, 'NOTIF_TAT_OCCUR_LOCAL_DTTM' AS column_name, activity_year, total_rows, NOTIF_TAT_OCCUR_LOCAL_DTTM_filled AS filled_count FROM #fc_017
+    UNION ALL
+    SELECT 'APPEAL_GRV_OUTCOMES' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_018
+    UNION ALL
+    SELECT 'APPEAL_GRV_OUTCOMES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_018
+    UNION ALL
+    SELECT 'APPEAL_GRV_OUTCOMES' AS table_name, 'GRIEVANCE_OUTCOME_C_NAME' AS column_name, activity_year, total_rows, GRIEVANCE_OUTCOME_C_NAME_filled AS filled_count FROM #fc_018
+    UNION ALL
+    SELECT 'APPEAL_GRV_OVRTRN_REASONS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_019
+    UNION ALL
+    SELECT 'APPEAL_GRV_OVRTRN_REASONS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_019
+    UNION ALL
+    SELECT 'APPEAL_GRV_OVRTRN_REASONS' AS table_name, 'OVERTURN_REASON_C_NAME' AS column_name, activity_year, total_rows, OVERTURN_REASON_C_NAME_filled AS filled_count FROM #fc_019
+    UNION ALL
+    SELECT 'APPEAL_GRV_POST_APL_UPD' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_020
+    UNION ALL
+    SELECT 'APPEAL_GRV_POST_APL_UPD' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_020
+    UNION ALL
+    SELECT 'APPEAL_GRV_POST_APL_UPD' AS table_name, 'UPDATE_INST_UTC_DTTM' AS column_name, activity_year, total_rows, UPDATE_INST_UTC_DTTM_filled AS filled_count FROM #fc_020
+    UNION ALL
+    SELECT 'APPEAL_GRV_POST_APL_UPD' AS table_name, 'UPDATE_REALTIME_TX_CSN_ID' AS column_name, activity_year, total_rows, UPDATE_REALTIME_TX_CSN_ID_filled AS filled_count FROM #fc_020
+    UNION ALL
+    SELECT 'APPEAL_GRV_POST_APL_UPD' AS table_name, 'UPDATE_ACK_YN' AS column_name, activity_year, total_rows, UPDATE_ACK_YN_filled AS filled_count FROM #fc_020
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'SDFL_EDIT_INSTANT_DTTM' AS column_name, activity_year, total_rows, SDFL_EDIT_INSTANT_DTTM_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'SDFL_EDIT_USER_ID' AS column_name, activity_year, total_rows, SDFL_EDIT_USER_ID_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'SDFL_EDIT_USER_ID_NAME' AS column_name, activity_year, total_rows, SDFL_EDIT_USER_ID_NAME_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REC_STAT_HX' AS table_name, 'SDFL_EDIT_ACTI_C_NAME' AS column_name, activity_year, total_rows, SDFL_EDIT_ACTI_C_NAME_filled AS filled_count FROM #fc_021
+    UNION ALL
+    SELECT 'APPEAL_GRV_REOPEN_REASONS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_022
+    UNION ALL
+    SELECT 'APPEAL_GRV_REOPEN_REASONS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_022
+    UNION ALL
+    SELECT 'APPEAL_GRV_REOPEN_REASONS' AS table_name, 'REOPEN_REASON_C_NAME' AS column_name, activity_year, total_rows, REOPEN_REASON_C_NAME_filled AS filled_count FROM #fc_022
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'TAT_TIME_STANDARD_C_NAME' AS column_name, activity_year, total_rows, TAT_TIME_STANDARD_C_NAME_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'DOC_INFO_TYPE_C_NAME' AS column_name, activity_year, total_rows, DOC_INFO_TYPE_C_NAME_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'ATTACHMENT_SUBMIT_UTC_DTTM' AS column_name, activity_year, total_rows, ATTACHMENT_SUBMIT_UTC_DTTM_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'APPEAL_GRV_WKFL_STEP_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_WKFL_STEP_C_NAME_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'REQUIRED_FOR_TAT_YN' AS column_name, activity_year, total_rows, REQUIRED_FOR_TAT_YN_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_REQ_ATTACHMENT' AS table_name, 'ATTACHMENT_SUBMIT_LOCAL_DTTM' AS column_name, activity_year, total_rows, ATTACHMENT_SUBMIT_LOCAL_DTTM_filled AS filled_count FROM #fc_023
+    UNION ALL
+    SELECT 'APPEAL_GRV_ROOT_CAUSES' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_024
+    UNION ALL
+    SELECT 'APPEAL_GRV_ROOT_CAUSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_024
+    UNION ALL
+    SELECT 'APPEAL_GRV_ROOT_CAUSES' AS table_name, 'GRIEVANCE_ROOT_CAUSE_C_NAME' AS column_name, activity_year, total_rows, GRIEVANCE_ROOT_CAUSE_C_NAME_filled AS filled_count FROM #fc_024
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'APPEAL_GRV_WKFL_STEP_C_NAME' AS column_name, activity_year, total_rows, APPEAL_GRV_WKFL_STEP_C_NAME_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'COMPLETED_USER_ID' AS column_name, activity_year, total_rows, COMPLETED_USER_ID_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'COMPLETED_USER_ID_NAME' AS column_name, activity_year, total_rows, COMPLETED_USER_ID_NAME_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'COMPLETED_UTC_DTTM' AS column_name, activity_year, total_rows, COMPLETED_UTC_DTTM_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_STEP_COMPLETE' AS table_name, 'COMPLETED_LOCAL_DTTM' AS column_name, activity_year, total_rows, COMPLETED_LOCAL_DTTM_filled AS filled_count FROM #fc_025
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'SUBJECT_CLAIM_ID' AS column_name, activity_year, total_rows, SUBJECT_CLAIM_ID_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'RESULT_CLAIM_ID' AS column_name, activity_year, total_rows, RESULT_CLAIM_ID_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'APPEAL_DECISION_C_NAME' AS column_name, activity_year, total_rows, APPEAL_DECISION_C_NAME_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'RESULT_FREE_TEXT' AS column_name, activity_year, total_rows, RESULT_FREE_TEXT_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'SUBJECT_FREE_TEXT' AS column_name, activity_year, total_rows, SUBJECT_FREE_TEXT_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'IND_EFFEC_INST_UTC_DTTM' AS column_name, activity_year, total_rows, IND_EFFEC_INST_UTC_DTTM_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'IND_EFFEC_INST_LOCAL_DTTM' AS column_name, activity_year, total_rows, IND_EFFEC_INST_LOCAL_DTTM_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'PAYMENT_AUTH_UTC_DTTM' AS column_name, activity_year, total_rows, PAYMENT_AUTH_UTC_DTTM_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'PAYMENT_AUTH_LOC_DTTM' AS column_name, activity_year, total_rows, PAYMENT_AUTH_LOC_DTTM_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'PAYMENT_RECIPIENT_C_NAME' AS column_name, activity_year, total_rows, PAYMENT_RECIPIENT_C_NAME_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_SUBJECT_RESULT' AS table_name, 'NO_PAYMENT_REQ_YN' AS column_name, activity_year, total_rows, NO_PAYMENT_REQ_YN_filled AS filled_count FROM #fc_026
+    UNION ALL
+    SELECT 'APPEAL_GRV_TAT_MILESTONES' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_027
+    UNION ALL
+    SELECT 'APPEAL_GRV_TAT_MILESTONES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_027
+    UNION ALL
+    SELECT 'APPEAL_GRV_TAT_MILESTONES' AS table_name, 'TAT_TIME_STANDARD_C_NAME' AS column_name, activity_year, total_rows, TAT_TIME_STANDARD_C_NAME_filled AS filled_count FROM #fc_027
+    UNION ALL
+    SELECT 'APPEAL_GRV_TAT_MILESTONES' AS table_name, 'TAT_MILESTONE_C_NAME' AS column_name, activity_year, total_rows, TAT_MILESTONE_C_NAME_filled AS filled_count FROM #fc_027
+    UNION ALL
+    SELECT 'APPEAL_GRV_TAT_MILESTONES' AS table_name, 'TAT_MILE_INST_UTC_DTTM' AS column_name, activity_year, total_rows, TAT_MILE_INST_UTC_DTTM_filled AS filled_count FROM #fc_027
+    UNION ALL
+    SELECT 'APPEAL_GRV_TAT_MILESTONES' AS table_name, 'TAT_MILE_DUE_LOCAL_DTTM' AS column_name, activity_year, total_rows, TAT_MILE_DUE_LOCAL_DTTM_filled AS filled_count FROM #fc_027
+    UNION ALL
+    SELECT 'APPEAL_GRV_UPHOLD_REASONS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_028
+    UNION ALL
+    SELECT 'APPEAL_GRV_UPHOLD_REASONS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_028
+    UNION ALL
+    SELECT 'APPEAL_GRV_UPHOLD_REASONS' AS table_name, 'UPHOLD_REASON_C_NAME' AS column_name, activity_year, total_rows, UPHOLD_REASON_C_NAME_filled AS filled_count FROM #fc_028
+    UNION ALL
+    SELECT 'APPEAL_GRV_VACATE_REASONS' AS table_name, 'APPEAL_GRV_ID' AS column_name, activity_year, total_rows, APPEAL_GRV_ID_filled AS filled_count FROM #fc_029
+    UNION ALL
+    SELECT 'APPEAL_GRV_VACATE_REASONS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_029
+    UNION ALL
+    SELECT 'APPEAL_GRV_VACATE_REASONS' AS table_name, 'VACATE_REASON_C_NAME' AS column_name, activity_year, total_rows, VACATE_REASON_C_NAME_filled AS filled_count FROM #fc_029
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ORIG_CLAIM_NUM' AS column_name, activity_year, total_rows, ORIG_CLAIM_NUM_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'STATUS_C_NAME' AS column_name, activity_year, total_rows, STATUS_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'AP_STS_C_NAME' AS column_name, activity_year, total_rows, AP_STS_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DATE_RECEIVED' AS column_name, activity_year, total_rows, DATE_RECEIVED_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADMISSION_DATE' AS column_name, activity_year, total_rows, ADMISSION_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADMISSION_HOUR' AS column_name, activity_year, total_rows, ADMISSION_HOUR_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ENTRY_DATE' AS column_name, activity_year, total_rows, ENTRY_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'SERV_AREA_ID_LOC_NAME' AS column_name, activity_year, total_rows, SERV_AREA_ID_LOC_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'NUM_PROC' AS column_name, activity_year, total_rows, NUM_PROC_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_BILLED_AMT' AS column_name, activity_year, total_rows, TOT_BILLED_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_PAT_PORTION' AS column_name, activity_year, total_rows, TOT_PAT_PORTION_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_NET_PAYABLE' AS column_name, activity_year, total_rows, TOT_NET_PAYABLE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'COVERAGE_ID' AS column_name, activity_year, total_rows, COVERAGE_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'SERV_DATE' AS column_name, activity_year, total_rows, SERV_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ASSOC_SPEC_C_NAME' AS column_name, activity_year, total_rows, ASSOC_SPEC_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'PAT_STATUS_C_NAME' AS column_name, activity_year, total_rows, PAT_STATUS_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADMISSION_SOURCE_C_NAME' AS column_name, activity_year, total_rows, ADMISSION_SOURCE_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'EXTERNAL_CLAIM_ID' AS column_name, activity_year, total_rows, EXTERNAL_CLAIM_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'PAY_BY_DATE' AS column_name, activity_year, total_rows, PAY_BY_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'NETWORK_ID' AS column_name, activity_year, total_rows, NETWORK_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'NETWORK_ID_NETWORK_NAME' AS column_name, activity_year, total_rows, NETWORK_ID_NETWORK_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'METH_TO_PAY_CLM_C_NAME' AS column_name, activity_year, total_rows, METH_TO_PAY_CLM_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_PRIM_INS_AMT' AS column_name, activity_year, total_rows, TOT_PRIM_INS_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_PRIM_PAT_PORT' AS column_name, activity_year, total_rows, TOT_PRIM_PAT_PORT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_ADJUSTMENT' AS column_name, activity_year, total_rows, TOT_ADJUSTMENT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADMISSION_TYPE_C_NAME' AS column_name, activity_year, total_rows, ADMISSION_TYPE_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_INSURANCE_AMT' AS column_name, activity_year, total_rows, TOT_INSURANCE_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADMISSION_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ADMISSION_DX_ID_DX_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_NET_INSURANCE' AS column_name, activity_year, total_rows, TOT_NET_INSURANCE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'E_CODE_ID_DX_NAME' AS column_name, activity_year, total_rows, E_CODE_ID_DX_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TYPE_OF_BILL' AS column_name, activity_year, total_rows, TYPE_OF_BILL_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'RCVD_BY_CARRIER_DT' AS column_name, activity_year, total_rows, RCVD_BY_CARRIER_DT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'HCFA_UNCLEAN_YN' AS column_name, activity_year, total_rows, HCFA_UNCLEAN_YN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ORIG_REV_CLM_ID' AS column_name, activity_year, total_rows, ORIG_REV_CLM_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJST_CLM_ID' AS column_name, activity_year, total_rows, ADJST_CLM_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ORIG_ADJST_CLM_ID' AS column_name, activity_year, total_rows, ORIG_ADJST_CLM_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'REF_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, REF_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_U_AND_C_AMT' AS column_name, activity_year, total_rows, TOT_U_AND_C_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_DISALLOW_AMT' AS column_name, activity_year, total_rows, TOT_DISALLOW_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_NOT_COVD_AMT' AS column_name, activity_year, total_rows, TOT_NOT_COVD_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_DEDUCTIBLE' AS column_name, activity_year, total_rows, TOT_DEDUCTIBLE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_COPAY' AS column_name, activity_year, total_rows, TOT_COPAY_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_COINS' AS column_name, activity_year, total_rows, TOT_COINS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_PAT_TOTAL' AS column_name, activity_year, total_rows, TOT_PAT_TOTAL_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_BBEN_PNLTY' AS column_name, activity_year, total_rows, TOT_BBEN_PNLTY_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_EXD_BEN_AMT' AS column_name, activity_year, total_rows, TOT_EXD_BEN_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'IN_OUT_NET_C_NAME' AS column_name, activity_year, total_rows, IN_OUT_NET_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'RKP_ID' AS column_name, activity_year, total_rows, RKP_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'RKP_ID_RISK_PANEL_NAME' AS column_name, activity_year, total_rows, RKP_ID_RISK_PANEL_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLM_LOB_ID' AS column_name, activity_year, total_rows, CLM_LOB_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLM_LOB_ID_LOB_NAME' AS column_name, activity_year, total_rows, CLM_LOB_ID_LOB_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'WORKFLOW_C_NAME' AS column_name, activity_year, total_rows, WORKFLOW_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'SENSITIVITY_C_NAME' AS column_name, activity_year, total_rows, SENSITIVITY_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'SERVICE_START_DATE' AS column_name, activity_year, total_rows, SERVICE_START_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'SERVICE_END_DATE' AS column_name, activity_year, total_rows, SERVICE_END_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_COB_SAVING' AS column_name, activity_year, total_rows, TOT_COB_SAVING_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_PAT_OUT_PCKT' AS column_name, activity_year, total_rows, TOT_PAT_OUT_PCKT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'SHADOW_RECON_AMT' AS column_name, activity_year, total_rows, SHADOW_RECON_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DRG_ID' AS column_name, activity_year, total_rows, DRG_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DRG_ID_DRG_NAME' AS column_name, activity_year, total_rows, DRG_ID_DRG_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TIF_NUM' AS column_name, activity_year, total_rows, TIF_NUM_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'LIFEMAX_AMT_IN' AS column_name, activity_year, total_rows, LIFEMAX_AMT_IN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'LIFEMAX_AMT_OUT' AS column_name, activity_year, total_rows, LIFEMAX_AMT_OUT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLAIM_FORMAT_C_NAME' AS column_name, activity_year, total_rows, CLAIM_FORMAT_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'OTHER_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, OTHER_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'OPERATING_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, OPERATING_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJ_TIME' AS column_name, activity_year, total_rows, ADJ_TIME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ATTEND_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, ATTEND_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_COB_SV_PAYOUT' AS column_name, activity_year, total_rows, TOT_COB_SV_PAYOUT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'LOC_ID_LOC_NAME' AS column_name, activity_year, total_rows, LOC_ID_LOC_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_SEC_DIS' AS column_name, activity_year, total_rows, TOT_SEC_DIS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_PRIM_FAC' AS column_name, activity_year, total_rows, TOT_PRIM_FAC_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_CODE_EDIT_SAV' AS column_name, activity_year, total_rows, TOT_CODE_EDIT_SAV_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'INTEREST_AMT_OVRD' AS column_name, activity_year, total_rows, INTEREST_AMT_OVRD_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'RTF_EOB_NOTE_ID' AS column_name, activity_year, total_rows, RTF_EOB_NOTE_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'INFO_CVG_ID' AS column_name, activity_year, total_rows, INFO_CVG_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLM_PRIM_INS_AMT' AS column_name, activity_year, total_rows, CLM_PRIM_INS_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLM_PRIM_PAT_AMT' AS column_name, activity_year, total_rows, CLM_PRIM_PAT_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'STATUS_DATE' AS column_name, activity_year, total_rows, STATUS_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'PEND_TYPE_C_NAME' AS column_name, activity_year, total_rows, PEND_TYPE_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CL_DEN_PEND_EXAM_ID' AS column_name, activity_year, total_rows, CL_DEN_PEND_EXAM_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CL_DEN_PEND_EXAM_ID_NAME' AS column_name, activity_year, total_rows, CL_DEN_PEND_EXAM_ID_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CL_DEN_PEND_DTTM' AS column_name, activity_year, total_rows, CL_DEN_PEND_DTTM_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'VOID_EXAMINER_ID' AS column_name, activity_year, total_rows, VOID_EXAMINER_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'VOID_EXAMINER_ID_NAME' AS column_name, activity_year, total_rows, VOID_EXAMINER_ID_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'VOID_CHNG_DATETIME' AS column_name, activity_year, total_rows, VOID_CHNG_DATETIME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ACCIDENT_DT' AS column_name, activity_year, total_rows, ACCIDENT_DT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ER_ENTRY_DATETIME' AS column_name, activity_year, total_rows, ER_ENTRY_DATETIME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'IN_NET_ADJUD_OVRD_C_NAME' AS column_name, activity_year, total_rows, IN_NET_ADJUD_OVRD_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DRG_PRICING_YN' AS column_name, activity_year, total_rows, DRG_PRICING_YN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'WORKFLOW_PAYOR_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, WORKFLOW_PAYOR_ID_PAYOR_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_BILLED_ENT' AS column_name, activity_year, total_rows, TOT_BILLED_ENT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_ALLOWED_AMT' AS column_name, activity_year, total_rows, TOT_ALLOWED_AMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_WITHHOLDING' AS column_name, activity_year, total_rows, TOT_WITHHOLDING_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_DISCOUNT' AS column_name, activity_year, total_rows, TOT_DISCOUNT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJ_NET_PAID' AS column_name, activity_year, total_rows, ADJ_NET_PAID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJ_PAT_PORTION' AS column_name, activity_year, total_rows, ADJ_PAT_PORTION_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'MEM_PRIMARY_NET_ID' AS column_name, activity_year, total_rows, MEM_PRIMARY_NET_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'MEM_PRIMARY_NET_ID_NETWORK_NAME' AS column_name, activity_year, total_rows, MEM_PRIMARY_NET_ID_NETWORK_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'LIFEMAX_ETR_DATA' AS column_name, activity_year, total_rows, LIFEMAX_ETR_DATA_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'INBASKET_MESSAGE_ID' AS column_name, activity_year, total_rows, INBASKET_MESSAGE_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'STMT_COV_FROM_DATE' AS column_name, activity_year, total_rows, STMT_COV_FROM_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'STMT_COV_TO_DATE' AS column_name, activity_year, total_rows, STMT_COV_TO_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'MSP_YN' AS column_name, activity_year, total_rows, MSP_YN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLM_REPRICER_ID' AS column_name, activity_year, total_rows, CLM_REPRICER_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'CLM_REPRICER_ID_RUL_NAME' AS column_name, activity_year, total_rows, CLM_REPRICER_ID_RUL_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'COVERED_DAYS' AS column_name, activity_year, total_rows, COVERED_DAYS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'NONCOVERED_DAYS' AS column_name, activity_year, total_rows, NONCOVERED_DAYS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'COINS_DAYS' AS column_name, activity_year, total_rows, COINS_DAYS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'LIFETIME_RESRV_DAYS' AS column_name, activity_year, total_rows, LIFETIME_RESRV_DAYS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ILL_INJ_LMP_DATE' AS column_name, activity_year, total_rows, ILL_INJ_LMP_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'INTEREST_TO_DT' AS column_name, activity_year, total_rows, INTEREST_TO_DT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DISCHRG_HR_UB92_FMT' AS column_name, activity_year, total_rows, DISCHRG_HR_UB92_FMT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJUSTMENT_USER_ID' AS column_name, activity_year, total_rows, ADJUSTMENT_USER_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJUSTMENT_USER_ID_NAME' AS column_name, activity_year, total_rows, ADJUSTMENT_USER_ID_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ADJST_CREATE_DATE' AS column_name, activity_year, total_rows, ADJST_CREATE_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'REFUNDED_FLAG_YN' AS column_name, activity_year, total_rows, REFUNDED_FLAG_YN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'EMPY_RELATED_YN' AS column_name, activity_year, total_rows, EMPY_RELATED_YN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'AUTO_ACDNT_STATE_C_NAME' AS column_name, activity_year, total_rows, AUTO_ACDNT_STATE_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DISABILITY_FROM_DT' AS column_name, activity_year, total_rows, DISABILITY_FROM_DT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DISABILITY_TO_DT' AS column_name, activity_year, total_rows, DISABILITY_TO_DT_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'DISCHARGE_DATE' AS column_name, activity_year, total_rows, DISCHARGE_DATE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'OUTSIDE_LAB_YN' AS column_name, activity_year, total_rows, OUTSIDE_LAB_YN_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'OUTSIDE_LAB_CHARGE' AS column_name, activity_year, total_rows, OUTSIDE_LAB_CHARGE_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'RELATED_CONDITION_C_NAME' AS column_name, activity_year, total_rows, RELATED_CONDITION_C_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'WGT_BED_DAYS' AS column_name, activity_year, total_rows, WGT_BED_DAYS_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'TOT_CONV_DAYS_RFL' AS column_name, activity_year, total_rows, TOT_CONV_DAYS_RFL_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME' AS column_name, activity_year, total_rows, BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'PLAN_GROUP_ID' AS column_name, activity_year, total_rows, PLAN_GROUP_ID_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'PLAN_GROUP_ID_PLAN_GRP_NAME' AS column_name, activity_year, total_rows, PLAN_GROUP_ID_PLAN_GRP_NAME_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM' AS table_name, 'ENTRY_INSTANT_DTTM' AS column_name, activity_year, total_rows, ENTRY_INSTANT_DTTM_filled AS filled_count FROM #fc_030
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'E_CODE_POA_C_NAME' AS column_name, activity_year, total_rows, E_CODE_POA_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'READY_FOR_AP_MGR_ID_MEM_GRP_NAME' AS column_name, activity_year, total_rows, READY_FOR_AP_MGR_ID_MEM_GRP_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TOT_REFD_RECVD' AS column_name, activity_year, total_rows, TOT_REFD_RECVD_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TOTAL_COB_AMOUNT' AS column_name, activity_year, total_rows, TOTAL_COB_AMOUNT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'EPSDT_YN' AS column_name, activity_year, total_rows, EPSDT_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'RENDERING_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, RENDERING_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TOTAL_MOB_AMOUNT' AS column_name, activity_year, total_rows, TOTAL_MOB_AMOUNT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_MAP_LN' AS column_name, activity_year, total_rows, PMT_INFO_MAP_LN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_GRPR_ID' AS column_name, activity_year, total_rows, PMT_INFO_GRPR_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_GRPR_ID_RULE_NAME' AS column_name, activity_year, total_rows, PMT_INFO_GRPR_ID_RULE_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_RULE_ID' AS column_name, activity_year, total_rows, PMT_INFO_RULE_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_RULE_ID_RULE_NAME' AS column_name, activity_year, total_rows, PMT_INFO_RULE_ID_RULE_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_SPLIT_ID' AS column_name, activity_year, total_rows, PMT_INFO_SPLIT_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_SPLIT_ID_SPLIT_DEF_NAME' AS column_name, activity_year, total_rows, PMT_INFO_SPLIT_ID_SPLIT_DEF_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'SPECIALTY_SOURCE_C_NAME' AS column_name, activity_year, total_rows, SPECIALTY_SOURCE_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CASE_MGMT_CREAT_ID' AS column_name, activity_year, total_rows, CASE_MGMT_CREAT_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CVG_FILTER_EPP_ID_BENEFIT_PLAN_NAME' AS column_name, activity_year, total_rows, CVG_FILTER_EPP_ID_BENEFIT_PLAN_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PMT_INFO_STOP_COND' AS column_name, activity_year, total_rows, PMT_INFO_STOP_COND_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'NO_MEM_GRP_YN' AS column_name, activity_year, total_rows, NO_MEM_GRP_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'INTEREST_TOTAL' AS column_name, activity_year, total_rows, INTEREST_TOTAL_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PROV_ACPT_ASGN_C_NAME' AS column_name, activity_year, total_rows, PROV_ACPT_ASGN_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'BEN_ASGN_IND_C_NAME' AS column_name, activity_year, total_rows, BEN_ASGN_IND_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'OVRD_SUB_POLICY_YN' AS column_name, activity_year, total_rows, OVRD_SUB_POLICY_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'OVRD_SUB_POL_RSN_C_NAME' AS column_name, activity_year, total_rows, OVRD_SUB_POL_RSN_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_TRAIT_1_C_NAME' AS column_name, activity_year, total_rows, CLM_TRAIT_1_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_TRAIT_2_C_NAME' AS column_name, activity_year, total_rows, CLM_TRAIT_2_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_TRAIT_3_C_NAME' AS column_name, activity_year, total_rows, CLM_TRAIT_3_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_TRAIT_4_C_NAME' AS column_name, activity_year, total_rows, CLM_TRAIT_4_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_TRAIT_5_C_NAME' AS column_name, activity_year, total_rows, CLM_TRAIT_5_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TP_INFO_837_SEND_ID' AS column_name, activity_year, total_rows, TP_INFO_837_SEND_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TP_INFO_837_SEND_ID_TRADING_PARTNR_NAME' AS column_name, activity_year, total_rows, TP_INFO_837_SEND_ID_TRADING_PARTNR_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TP_INFO_837_RCVR_ID' AS column_name, activity_year, total_rows, TP_INFO_837_RCVR_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TP_INFO_837_RCVR_ID_TRADING_PARTNR_NAME' AS column_name, activity_year, total_rows, TP_INFO_837_RCVR_ID_TRADING_PARTNR_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'APPLIANCE_PLACE_DT' AS column_name, activity_year, total_rows, APPLIANCE_PLACE_DT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'DNTL_SVC_FROM_DT' AS column_name, activity_year, total_rows, DNTL_SVC_FROM_DT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'DNTL_SVC_TO_DT' AS column_name, activity_year, total_rows, DNTL_SVC_TO_DT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'ORTHO_SVCS_YN' AS column_name, activity_year, total_rows, ORTHO_SVCS_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'ORTHO_TOT_MONTHS' AS column_name, activity_year, total_rows, ORTHO_TOT_MONTHS_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'ORTHO_MNTHS_REMAIN' AS column_name, activity_year, total_rows, ORTHO_MNTHS_REMAIN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'ASSIST_SURGEON_ID_PROV_NAME' AS column_name, activity_year, total_rows, ASSIST_SURGEON_ID_PROV_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'DENTAL_INFO_YN' AS column_name, activity_year, total_rows, DENTAL_INFO_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'LMP_DATE' AS column_name, activity_year, total_rows, LMP_DATE_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CHIR_FRST_TRT_DT' AS column_name, activity_year, total_rows, CHIR_FRST_TRT_DT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'FROM_OCR_YN' AS column_name, activity_year, total_rows, FROM_OCR_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_PRICER_IDENT_C_NAME' AS column_name, activity_year, total_rows, CLM_PRICER_IDENT_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'TOTAL_HRA_AMOUNT' AS column_name, activity_year, total_rows, TOTAL_HRA_AMOUNT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'ORIG_ACT_ADJ_CLM_ID' AS column_name, activity_year, total_rows, ORIG_ACT_ADJ_CLM_ID_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'REF_CLM' AS column_name, activity_year, total_rows, REF_CLM_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'MGR_ASSOC_EXT_VAL_C_NAME' AS column_name, activity_year, total_rows, MGR_ASSOC_EXT_VAL_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_TRAN_REASON_C_NAME' AS column_name, activity_year, total_rows, AMBU_TRAN_REASON_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_TRAN_DIST' AS column_name, activity_year, total_rows, AMBU_TRAN_DIST_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_TXPORT_WT' AS column_name, activity_year, total_rows, AMBU_TXPORT_WT_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_COND_YN' AS column_name, activity_year, total_rows, AMBU_COND_YN_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_PICK_UP_CITY' AS column_name, activity_year, total_rows, AMBU_PICK_UP_CITY_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_PICK_UP_ST_C_NAME' AS column_name, activity_year, total_rows, AMBU_PICK_UP_ST_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_PICK_UP_ZIP' AS column_name, activity_year, total_rows, AMBU_PICK_UP_ZIP_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_DROP_OFF_CITY' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_CITY_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_DROP_OFF_ST_C_NAME' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_ST_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_DROP_OFF_ZIP' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_ZIP_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'AMBU_DROP_OFF_NM' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_NM_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PAYEE_C_NAME' AS column_name, activity_year, total_rows, PAYEE_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'ESRD_ONSET_DATE' AS column_name, activity_year, total_rows, ESRD_ONSET_DATE_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'PAYOR_SEQ_NUMBER_C_NAME' AS column_name, activity_year, total_rows, PAYOR_SEQ_NUMBER_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'CLM_FREQ_CODE_C_NAME' AS column_name, activity_year, total_rows, CLM_FREQ_CODE_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_2' AS table_name, 'DENY_CLM_SRC_C_NAME' AS column_name, activity_year, total_rows, DENY_CLM_SRC_C_NAME_filled AS filled_count FROM #fc_031
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_PRIM_PAT_NOTCOV' AS column_name, activity_year, total_rows, TOT_PRIM_PAT_NOTCOV_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_PRIM_PAT_DED' AS column_name, activity_year, total_rows, TOT_PRIM_PAT_DED_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_PRIM_PAT_COPAY' AS column_name, activity_year, total_rows, TOT_PRIM_PAT_COPAY_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_PRIM_PAT_COINS' AS column_name, activity_year, total_rows, TOT_PRIM_PAT_COINS_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'SUBMITTER_CREAT_DATE' AS column_name, activity_year, total_rows, SUBMITTER_CREAT_DATE_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'INTERCHANGE_DATE' AS column_name, activity_year, total_rows, INTERCHANGE_DATE_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'FUNC_GROUP_DATE' AS column_name, activity_year, total_rows, FUNC_GROUP_DATE_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOTAL_RESP_AMOUNT' AS column_name, activity_year, total_rows, TOTAL_RESP_AMOUNT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOTAL_ADJ_PAT_OOP' AS column_name, activity_year, total_rows, TOTAL_ADJ_PAT_OOP_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TERMED_CVG_YN' AS column_name, activity_year, total_rows, TERMED_CVG_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'IS_INPATIENT_YN' AS column_name, activity_year, total_rows, IS_INPATIENT_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'DRG_CODE' AS column_name, activity_year, total_rows, DRG_CODE_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'DRG_ID_TYPE_ID' AS column_name, activity_year, total_rows, DRG_ID_TYPE_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'DRG_ID_TYPE_ID_ID_TYPE_NAME' AS column_name, activity_year, total_rows, DRG_ID_TYPE_ID_ID_TYPE_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PERM_ORIG_OF_REV_CLAIM_ID' AS column_name, activity_year, total_rows, PERM_ORIG_OF_REV_CLAIM_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PERM_ORIG_OF_CORR_CLAIM_ID' AS column_name, activity_year, total_rows, PERM_ORIG_OF_CORR_CLAIM_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PERM_ORIG_OF_ADJST_CLAIM_ID' AS column_name, activity_year, total_rows, PERM_ORIG_OF_ADJST_CLAIM_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'INVOICE_AMT_REM' AS column_name, activity_year, total_rows, INVOICE_AMT_REM_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'ADJST_ACTION_TYPE_C_NAME' AS column_name, activity_year, total_rows, ADJST_ACTION_TYPE_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_EFFECTIVE_DATE' AS column_name, activity_year, total_rows, CLAIM_EFFECTIVE_DATE_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'VENDOR_TAXONOMY' AS column_name, activity_year, total_rows, VENDOR_TAXONOMY_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PROVIDER_TAXONOMY' AS column_name, activity_year, total_rows, PROVIDER_TAXONOMY_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'ADJST_REASON_C_NAME' AS column_name, activity_year, total_rows, ADJST_REASON_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'AMBU_PICK_UP_COUNTY_C_NAME' AS column_name, activity_year, total_rows, AMBU_PICK_UP_COUNTY_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'AMBU_PICK_UP_DISTRICT_C_NAME' AS column_name, activity_year, total_rows, AMBU_PICK_UP_DISTRICT_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'AMBU_PICK_UP_HOUSE_NUM' AS column_name, activity_year, total_rows, AMBU_PICK_UP_HOUSE_NUM_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'AMBU_DROP_OFF_COUNTY_C_NAME' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_COUNTY_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'AMBU_DROP_OFF_DISTRICT_C_NAME' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_DISTRICT_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'AMBU_DROP_OFF_HOUSE_NUM' AS column_name, activity_year, total_rows, AMBU_DROP_OFF_HOUSE_NUM_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'SUPERVISING_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, SUPERVISING_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_SVC_CLASS_CTX_C_NAME' AS column_name, activity_year, total_rows, CLAIM_SVC_CLASS_CTX_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_SVC_CLASS_C_NAME' AS column_name, activity_year, total_rows, CLAIM_SVC_CLASS_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'IS_SUBROGATION_DEMAND_CLAIM_YN' AS column_name, activity_year, total_rows, IS_SUBROGATION_DEMAND_CLAIM_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_SUBROGATION_DEMAND_AMT' AS column_name, activity_year, total_rows, TOT_SUBROGATION_DEMAND_AMT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_SUBROGATION_ADJ_AMT' AS column_name, activity_year, total_rows, TOT_SUBROGATION_ADJ_AMT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CONTRACT_SEL_MTHD_C_NAME' AS column_name, activity_year, total_rows, CONTRACT_SEL_MTHD_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'IS_CLINICALLY_VALID_YN' AS column_name, activity_year, total_rows, IS_CLINICALLY_VALID_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PRIM_PAYOR_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, PRIM_PAYOR_ID_PAYOR_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'BCDA_GROUP_IDENT' AS column_name, activity_year, total_rows, BCDA_GROUP_IDENT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLIA_NUMBER' AS column_name, activity_year, total_rows, CLIA_NUMBER_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLIN_FILTER_UTC_DTTM' AS column_name, activity_year, total_rows, CLIN_FILTER_UTC_DTTM_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLIN_FILTER_DTTM' AS column_name, activity_year, total_rows, CLIN_FILTER_DTTM_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOT_PI_REDUCT_AMT' AS column_name, activity_year, total_rows, TOT_PI_REDUCT_AMT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'MOST_RECENT_INCOMING_CEV_ID' AS column_name, activity_year, total_rows, MOST_RECENT_INCOMING_CEV_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PAT_REL_TO_COVERED_MEM_C_NAME' AS column_name, activity_year, total_rows, PAT_REL_TO_COVERED_MEM_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLIN_FILTER_TXP_YN' AS column_name, activity_year, total_rows, CLIN_FILTER_TXP_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'KLCTCEV_RECORD_ID' AS column_name, activity_year, total_rows, KLCTCEV_RECORD_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'SOURCE_ORG_ID' AS column_name, activity_year, total_rows, SOURCE_ORG_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'SOURCE_ORG_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, SOURCE_ORG_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'LOOP_OR_SPLIT_YN' AS column_name, activity_year, total_rows, LOOP_OR_SPLIT_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'IS_INVLD_ADJ_SEQ_YN' AS column_name, activity_year, total_rows, IS_INVLD_ADJ_SEQ_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_PAID_DATE' AS column_name, activity_year, total_rows, CLAIM_PAID_DATE_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_NAT_KEY_HASH' AS column_name, activity_year, total_rows, CLAIM_NAT_KEY_HASH_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLAIM_NAT_KEY_ORDER' AS column_name, activity_year, total_rows, CLAIM_NAT_KEY_ORDER_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CLM_ADJ_TYPE_C_NAME' AS column_name, activity_year, total_rows, CLM_ADJ_TYPE_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'NAT_KEY_FINAL_YN' AS column_name, activity_year, total_rows, NAT_KEY_FINAL_YN_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TTL_APL_U_AND_C_AMT' AS column_name, activity_year, total_rows, TTL_APL_U_AND_C_AMT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TTL_APL_CNTRCT_AMT' AS column_name, activity_year, total_rows, TTL_APL_CNTRCT_AMT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'SUBMITTER_C_NAME' AS column_name, activity_year, total_rows, SUBMITTER_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'SUBMITTER_AUTHORIZED_REP_GUID' AS column_name, activity_year, total_rows, SUBMITTER_AUTHORIZED_REP_GUID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOTAL_DENIED_AMOUNT' AS column_name, activity_year, total_rows, TOTAL_DENIED_AMOUNT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'TOTAL_DENIED_TO_PAT' AS column_name, activity_year, total_rows, TOTAL_DENIED_TO_PAT_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'REC_OWN_BUS_SEGMENT_POS_ID_LOC_NAME' AS column_name, activity_year, total_rows, REC_OWN_BUS_SEGMENT_POS_ID_LOC_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'REGION_ID_LOC_NAME' AS column_name, activity_year, total_rows, REGION_ID_LOC_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'MEDICAL_GROUP_ID_LOC_NAME' AS column_name, activity_year, total_rows, MEDICAL_GROUP_ID_LOC_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'PRICER_MSG_ID' AS column_name, activity_year, total_rows, PRICER_MSG_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'OUT_NET_ADJUD_OV_C_NAME' AS column_name, activity_year, total_rows, OUT_NET_ADJUD_OV_C_NAME_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'RECV_CLAIM_RECON_ID' AS column_name, activity_year, total_rows, RECV_CLAIM_RECON_ID_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_3' AS table_name, 'CMS_NATURAL_KEY' AS column_name, activity_year, total_rows, CMS_NATURAL_KEY_filled AS filled_count FROM #fc_032
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'TOT_ADDL_ADJ' AS column_name, activity_year, total_rows, TOT_ADDL_ADJ_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'AP_CLAIM_IMPORT_SOURCE_C_NAME' AS column_name, activity_year, total_rows, AP_CLAIM_IMPORT_SOURCE_C_NAME_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'SOURCE_GROUP_ID_LOC_NAME' AS column_name, activity_year, total_rows, SOURCE_GROUP_ID_LOC_NAME_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'SERVICE_DATE_FROM_LINE_YN' AS column_name, activity_year, total_rows, SERVICE_DATE_FROM_LINE_YN_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'NCH_CLAIM_TYPE_C_NAME' AS column_name, activity_year, total_rows, NCH_CLAIM_TYPE_C_NAME_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'PAID_CLM_FILE_INTEREST_AMT' AS column_name, activity_year, total_rows, PAID_CLM_FILE_INTEREST_AMT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'PAID_CLM_FILE_PENALTY_AMT' AS column_name, activity_year, total_rows, PAID_CLM_FILE_PENALTY_AMT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'BLK_DTA_MESSAGE_ID' AS column_name, activity_year, total_rows, BLK_DTA_MESSAGE_ID_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'REFUND_REASON' AS column_name, activity_year, total_rows, REFUND_REASON_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'PAYER_CLM_IDENT' AS column_name, activity_year, total_rows, PAYER_CLM_IDENT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'AP_CLM_AR_STATUS_C_NAME' AS column_name, activity_year, total_rows, AP_CLM_AR_STATUS_C_NAME_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'CLAIM_CHECK_MAIL_SENT_DATE' AS column_name, activity_year, total_rows, CLAIM_CHECK_MAIL_SENT_DATE_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'CAPITAL_IME_AMOUNT' AS column_name, activity_year, total_rows, CAPITAL_IME_AMOUNT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'OPERATING_IME_AMOUNT' AS column_name, activity_year, total_rows, OPERATING_IME_AMOUNT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'CAPITAL_DSH_AMOUNT' AS column_name, activity_year, total_rows, CAPITAL_DSH_AMOUNT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'UNCOMPENSATED_CARE_AMOUNT' AS column_name, activity_year, total_rows, UNCOMPENSATED_CARE_AMOUNT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_4' AS table_name, 'OPERATING_DSH_AMOUNT' AS column_name, activity_year, total_rows, OPERATING_DSH_AMOUNT_filled AS filled_count FROM #fc_033
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_TIME' AS column_name, activity_year, total_rows, CHANGE_TIME_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'ACTION_C_NAME' AS column_name, activity_year, total_rows, ACTION_C_NAME_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_CMT' AS column_name, activity_year, total_rows, CHANGE_HX_CMT_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_USER_ID' AS column_name, activity_year, total_rows, CHANGE_HX_USER_ID_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_USER_ID_NAME' AS column_name, activity_year, total_rows, CHANGE_HX_USER_ID_NAME_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_CODEEDIT' AS column_name, activity_year, total_rows, CHANGE_HX_CODEEDIT_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_TX_ID' AS column_name, activity_year, total_rows, CHANGE_HX_TX_ID_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_PREV_REC_OR_CAT' AS column_name, activity_year, total_rows, CHANGE_HX_PREV_REC_OR_CAT_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_CHANGE_HX' AS table_name, 'CHANGE_HX_NEW_REC_OR_CAT' AS column_name, activity_year, total_rows, CHANGE_HX_NEW_REC_OR_CAT_filled AS filled_count FROM #fc_034
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'AP_DX_NUM' AS column_name, activity_year, total_rows, AP_DX_NUM_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'AP_DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, AP_DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'AP_DX_POA_C_NAME' AS column_name, activity_year, total_rows, AP_DX_POA_C_NAME_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'AP_DX_RANK' AS column_name, activity_year, total_rows, AP_DX_RANK_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_DX' AS table_name, 'CLAIM_DX_FROM_HEADER_YN' AS column_name, activity_year, total_rows, CLAIM_DX_FROM_HEADER_YN_filled AS filled_count FROM #fc_035
+    UNION ALL
+    SELECT 'AP_CLAIM_ICD_PROC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_036
+    UNION ALL
+    SELECT 'AP_CLAIM_ICD_PROC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_036
+    UNION ALL
+    SELECT 'AP_CLAIM_ICD_PROC' AS table_name, 'ICD_PX_ID' AS column_name, activity_year, total_rows, ICD_PX_ID_filled AS filled_count FROM #fc_036
+    UNION ALL
+    SELECT 'AP_CLAIM_ICD_PROC' AS table_name, 'ICD_PX_ID_ICD_PX_NAME' AS column_name, activity_year, total_rows, ICD_PX_ID_ICD_PX_NAME_filled AS filled_count FROM #fc_036
+    UNION ALL
+    SELECT 'AP_CLAIM_ICD_PROC' AS table_name, 'ICD_PX_DT' AS column_name, activity_year, total_rows, ICD_PX_DT_filled AS filled_count FROM #fc_036
+    UNION ALL
+    SELECT 'AP_CLAIM_ICD_PROC' AS table_name, 'ICD_PX_RANK' AS column_name, activity_year, total_rows, ICD_PX_RANK_filled AS filled_count FROM #fc_036
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_DISP' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_037
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_DISP' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_037
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_DISP' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_037
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_DISP' AS table_name, 'HIGHEST_DX_DISP' AS column_name, activity_year, total_rows, HIGHEST_DX_DISP_filled AS filled_count FROM #fc_037
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_ERR' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_038
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_ERR' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_038
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_ERR' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_038
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_ERR' AS table_name, 'ACE_DX_ERR' AS column_name, activity_year, total_rows, ACE_DX_ERR_filled AS filled_count FROM #fc_038
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_NERR' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_039
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_NERR' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_039
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_NERR' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_039
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ACE_DX_NERR' AS table_name, 'NUM_ERR_THIS_DX' AS column_name, activity_year, total_rows, NUM_ERR_THIS_DX_filled AS filled_count FROM #fc_039
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADMIT_DX_EDIT' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_040
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADMIT_DX_EDIT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_040
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADMIT_DX_EDIT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_040
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADMIT_DX_EDIT' AS table_name, 'ADMIT_DX_EDIT' AS column_name, activity_year, total_rows, ADMIT_DX_EDIT_filled AS filled_count FROM #fc_040
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADM_DX_ECODE' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_041
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADM_DX_ECODE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_041
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADM_DX_ECODE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_041
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_ADM_DX_ECODE' AS table_name, 'ADM_DX_ECODE' AS column_name, activity_year, total_rows, ADM_DX_ECODE_filled AS filled_count FROM #fc_041
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_AGE_SX_DX_FLG' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_042
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_AGE_SX_DX_FLG' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_042
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_AGE_SX_DX_FLG' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_042
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_AGE_SX_DX_FLG' AS table_name, 'AGE_SEX_DX_FLAG' AS column_name, activity_year, total_rows, AGE_SEX_DX_FLAG_filled AS filled_count FROM #fc_042
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_DX_FLAG' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_043
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_DX_FLAG' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_043
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_DX_FLAG' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_043
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_DX_FLAG' AS table_name, 'DUP_DX_FLAG' AS column_name, activity_year, total_rows, DUP_DX_FLAG_filled AS filled_count FROM #fc_043
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_SEC_DX' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_044
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_SEC_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_044
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_SEC_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_044
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DUP_SEC_DX' AS table_name, 'DUP_SEC_DX' AS column_name, activity_year, total_rows, DUP_SEC_DX_filled AS filled_count FROM #fc_044
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_ROM' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_045
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_ROM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_045
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_ROM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_045
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_ROM' AS table_name, 'DX_ADMISSION_ROM' AS column_name, activity_year, total_rows, DX_ADMISSION_ROM_filled AS filled_count FROM #fc_045
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_SOI' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_046
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_SOI' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_046
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_SOI' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_046
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_ADMIT_SOI' AS table_name, 'DX_ADMISSION_SOI' AS column_name, activity_year, total_rows, DX_ADMISSION_SOI_filled AS filled_count FROM #fc_046
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_DRG_FLG' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_047
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_DRG_FLG' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_047
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_DRG_FLG' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_047
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_DRG_FLG' AS table_name, 'DX_AFFECT_DRG_FLAG' AS column_name, activity_year, total_rows, DX_AFFECT_DRG_FLAG_filled AS filled_count FROM #fc_047
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_DRG' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_048
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_DRG' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_048
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_DRG' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_048
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_DRG' AS table_name, 'DX_AFF_HAC_ADJ_DRG' AS column_name, activity_year, total_rows, DX_AFF_HAC_ADJ_DRG_filled AS filled_count FROM #fc_048
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_ROM' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_049
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_ROM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_049
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_ROM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_049
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_ROM' AS table_name, 'DX_AFF_HAC_ADJ_ROM' AS column_name, activity_year, total_rows, DX_AFF_HAC_ADJ_ROM_filled AS filled_count FROM #fc_049
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_SOI' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_050
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_SOI' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_050
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_SOI' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_050
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_AF_HAC_SOI' AS table_name, 'DX_AFF_HAC_ADJ_SOI' AS column_name, activity_year, total_rows, DX_AFF_HAC_ADJ_SOI_filled AS filled_count FROM #fc_050
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_COMP_IND' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_051
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_COMP_IND' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_051
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_COMP_IND' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_051
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_COMP_IND' AS table_name, 'COMPLEXITY_INDICATOR' AS column_name, activity_year, total_rows, COMPLEXITY_INDICATOR_filled AS filled_count FROM #fc_051
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT' AS column_name, activity_year, total_rows, DX_EDIT_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_1' AS column_name, activity_year, total_rows, DX_EDIT_1_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_2' AS column_name, activity_year, total_rows, DX_EDIT_2_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_3' AS column_name, activity_year, total_rows, DX_EDIT_3_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_4' AS column_name, activity_year, total_rows, DX_EDIT_4_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_5' AS column_name, activity_year, total_rows, DX_EDIT_5_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_6' AS column_name, activity_year, total_rows, DX_EDIT_6_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_7' AS column_name, activity_year, total_rows, DX_EDIT_7_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_8' AS column_name, activity_year, total_rows, DX_EDIT_8_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_9' AS column_name, activity_year, total_rows, DX_EDIT_9_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT' AS table_name, 'DX_EDIT_10' AS column_name, activity_year, total_rows, DX_EDIT_10_filled AS filled_count FROM #fc_052
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT_DESC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_053
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT_DESC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_053
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT_DESC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_053
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT_DESC' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_053
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EDIT_DESC' AS table_name, 'DX_EDIT_DESCRIPTION' AS column_name, activity_year, total_rows, DX_EDIT_DESCRIPTION_filled AS filled_count FROM #fc_053
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EXCL_HAC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_054
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EXCL_HAC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_054
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EXCL_HAC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_054
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_EXCL_HAC' AS table_name, 'DX_EXCL_HAC_GRPING' AS column_name, activity_year, total_rows, DX_EXCL_HAC_GRPING_filled AS filled_count FROM #fc_054
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_ROM' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_055
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_ROM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_055
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_ROM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_055
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_ROM' AS table_name, 'DX_HAC_ADJ_ROM' AS column_name, activity_year, total_rows, DX_HAC_ADJ_ROM_filled AS filled_count FROM #fc_055
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_SOI' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_056
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_SOI' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_056
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_SOI' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_056
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_AJ_SOI' AS table_name, 'DX_HAC_ADJ_SOI' AS column_name, activity_year, total_rows, DX_HAC_ADJ_SOI_filled AS filled_count FROM #fc_056
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ASGN' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_057
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ASGN' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_057
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ASGN' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_057
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ASGN' AS table_name, 'DX_AFF_HAC_ASGN' AS column_name, activity_year, total_rows, DX_AFF_HAC_ASGN_filled AS filled_count FROM #fc_057
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'DX_HAC_CAT' AS column_name, activity_year, total_rows, DX_HAC_CAT_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'DX_HAC_CAT_1' AS column_name, activity_year, total_rows, DX_HAC_CAT_1_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'DX_HAC_CAT_2' AS column_name, activity_year, total_rows, DX_HAC_CAT_2_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'DX_HAC_CAT_3' AS column_name, activity_year, total_rows, DX_HAC_CAT_3_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'DX_HAC_CAT_4' AS column_name, activity_year, total_rows, DX_HAC_CAT_4_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_CAT' AS table_name, 'DX_HAC_CAT_5' AS column_name, activity_year, total_rows, DX_HAC_CAT_5_filled AS filled_count FROM #fc_058
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_IND' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_059
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_IND' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_059
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_IND' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_059
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_IND' AS table_name, 'DX_HAC_INDICATOR' AS column_name, activity_year, total_rows, DX_HAC_INDICATOR_filled AS filled_count FROM #fc_059
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ROM_FL' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_060
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ROM_FL' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_060
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ROM_FL' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_060
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_ROM_FL' AS table_name, 'DX_AFFECT_ROM_FLAG' AS column_name, activity_year, total_rows, DX_AFFECT_ROM_FLAG_filled AS filled_count FROM #fc_060
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_SOI_FL' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_061
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_SOI_FL' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_061
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_SOI_FL' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_061
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_SOI_FL' AS table_name, 'DX_AFFECT_SOI_FLAG' AS column_name, activity_year, total_rows, DX_AFFECT_SOI_FLAG_filled AS filled_count FROM #fc_061
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'DX_HAC_USAGE' AS column_name, activity_year, total_rows, DX_HAC_USAGE_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'DX_HAC_USAGE_1' AS column_name, activity_year, total_rows, DX_HAC_USAGE_1_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'DX_HAC_USAGE_2' AS column_name, activity_year, total_rows, DX_HAC_USAGE_2_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'DX_HAC_USAGE_3' AS column_name, activity_year, total_rows, DX_HAC_USAGE_3_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'DX_HAC_USAGE_4' AS column_name, activity_year, total_rows, DX_HAC_USAGE_4_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_HAC_USAGE' AS table_name, 'DX_HAC_USAGE_5' AS column_name, activity_year, total_rows, DX_HAC_USAGE_5_filled AS filled_count FROM #fc_062
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_INVALID' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_063
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_INVALID' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_063
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_INVALID' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_063
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_INVALID' AS table_name, 'DX_INVALID' AS column_name, activity_year, total_rows, DX_INVALID_filled AS filled_count FROM #fc_063
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_BYPASS' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_064
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_BYPASS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_064
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_BYPASS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_064
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_BYPASS' AS table_name, 'DX_PRSNT_ADM_BYPASS' AS column_name, activity_year, total_rows, DX_PRSNT_ADM_BYPASS_filled AS filled_count FROM #fc_064
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_ERR_CD' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_065
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_ERR_CD' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_065
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_ERR_CD' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_065
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_ERR_CD' AS table_name, 'DX_POA_ERROR_CODE' AS column_name, activity_year, total_rows, DX_POA_ERROR_CODE_filled AS filled_count FROM #fc_065
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_USED' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_066
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_USED' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_066
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_USED' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_066
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_POA_USED' AS table_name, 'DX_POA_USED' AS column_name, activity_year, total_rows, DX_POA_USED_filled AS filled_count FROM #fc_066
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_PSCA' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_067
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_PSCA' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_067
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_PSCA' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_067
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_PSCA' AS table_name, 'PSCA' AS column_name, activity_year, total_rows, PSCA_filled AS filled_count FROM #fc_067
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_SUG_SURG' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_068
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_SUG_SURG' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_068
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_SUG_SURG' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_068
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_SUG_SURG' AS table_name, 'DX_SUGGST_SURG' AS column_name, activity_year, total_rows, DX_SUGGST_SURG_filled AS filled_count FROM #fc_068
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'DX_USED' AS column_name, activity_year, total_rows, DX_USED_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'DX_USED_1' AS column_name, activity_year, total_rows, DX_USED_1_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'DX_USED_2' AS column_name, activity_year, total_rows, DX_USED_2_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'DX_USED_3' AS column_name, activity_year, total_rows, DX_USED_3_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'DX_USED_4' AS column_name, activity_year, total_rows, DX_USED_4_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED' AS table_name, 'DX_USED_5' AS column_name, activity_year, total_rows, DX_USED_5_filled AS filled_count FROM #fc_069
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_DESC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_070
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_DESC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_070
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_DESC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_070
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_DESC' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_070
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_DESC' AS table_name, 'DX_USED_DESCRIPTION' AS column_name, activity_year, total_rows, DX_USED_DESCRIPTION_filled AS filled_count FROM #fc_070
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'DX_USED_HAC_PROCESS' AS column_name, activity_year, total_rows, DX_USED_HAC_PROCESS_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'DX_USED_HAC_PROCESS_1' AS column_name, activity_year, total_rows, DX_USED_HAC_PROCESS_1_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'DX_USED_HAC_PROCESS_2' AS column_name, activity_year, total_rows, DX_USED_HAC_PROCESS_2_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'DX_USED_HAC_PROCESS_3' AS column_name, activity_year, total_rows, DX_USED_HAC_PROCESS_3_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'DX_USED_HAC_PROCESS_4' AS column_name, activity_year, total_rows, DX_USED_HAC_PROCESS_4_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_DX_USED_HAC' AS table_name, 'DX_USED_HAC_PROCESS_5' AS column_name, activity_year, total_rows, DX_USED_HAC_PROCESS_5_filled AS filled_count FROM #fc_071
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_GRP_DX_HAC' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_072
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_GRP_DX_HAC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_072
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_GRP_DX_HAC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_072
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_GRP_DX_HAC' AS table_name, 'CM_PHY_OWNER_ID' AS column_name, activity_year, total_rows, CM_PHY_OWNER_ID_filled AS filled_count FROM #fc_072
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_GRP_DX_HAC' AS table_name, 'DX_HAC_PROCESSING_DESC' AS column_name, activity_year, total_rows, DX_HAC_PROCESSING_DESC_filled AS filled_count FROM #fc_072
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_DX' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_073
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_073
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_073
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_DX' AS table_name, 'OUT_DX_CODE' AS column_name, activity_year, total_rows, OUT_DX_CODE_filled AS filled_count FROM #fc_073
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_ICDPX_DT' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_074
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_ICDPX_DT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_074
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_ICDPX_DT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_074
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_ICDPX_DT' AS table_name, 'OUT_ICDPX_DATE' AS column_name, activity_year, total_rows, OUT_ICDPX_DATE_filled AS filled_count FROM #fc_074
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_RFV_DX' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_075
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_RFV_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_075
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_RFV_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_075
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_OUT_RFV_DX' AS table_name, 'OUT_RFV_DX_CODE' AS column_name, activity_year, total_rows, OUT_RFV_DX_CODE_filled AS filled_count FROM #fc_075
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRC_AD_DX_EDT' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_076
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRC_AD_DX_EDT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_076
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRC_AD_DX_EDT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_076
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRC_AD_DX_EDT' AS table_name, 'ADMIT_DX_EDIT_DESCRIPTION' AS column_name, activity_year, total_rows, ADMIT_DX_EDIT_DESCRIPTION_filled AS filled_count FROM #fc_076
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRIN_DX_ERRS' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_077
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRIN_DX_ERRS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_077
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRIN_DX_ERRS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_077
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_PRIN_DX_ERRS' AS table_name, 'PRIN_DX_ERRORS' AS column_name, activity_year, total_rows, PRIN_DX_ERRORS_filled AS filled_count FROM #fc_077
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_SEC_DX_SEQ' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_078
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_SEC_DX_SEQ' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_078
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_SEC_DX_SEQ' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_078
+    UNION ALL
+    SELECT 'AP_CLAIM_IF_SEC_DX_SEQ' AS table_name, 'SEC_DX_SEQUENCE' AS column_name, activity_year, total_rows, SEC_DX_SEQUENCE_filled AS filled_count FROM #fc_078
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'AP_CLAIM_REVIEW_TYPE_C_NAME' AS column_name, activity_year, total_rows, AP_CLAIM_REVIEW_TYPE_C_NAME_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'ATTACH_COMMENT' AS column_name, activity_year, total_rows, ATTACH_COMMENT_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'AP_CLAIM_REVIEW_STATUS_C_NAME' AS column_name, activity_year, total_rows, AP_CLAIM_REVIEW_STATUS_C_NAME_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'ATTACH_DTTM' AS column_name, activity_year, total_rows, ATTACH_DTTM_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'COMPLETION_COMMENT' AS column_name, activity_year, total_rows, COMPLETION_COMMENT_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'COMPLETION_DTTM' AS column_name, activity_year, total_rows, COMPLETION_DTTM_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'REJECTION_EOB_CODE_ID_EOB_CODE_NAME' AS column_name, activity_year, total_rows, REJECTION_EOB_CODE_ID_EOB_CODE_NAME_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'ADDED_MANUALLY_YN' AS column_name, activity_year, total_rows, ADDED_MANUALLY_YN_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLAIM_REVIEW' AS table_name, 'REVIEW_STATUS_REASON_C_NAME' AS column_name, activity_year, total_rows, REVIEW_STATUS_REASON_C_NAME_filled AS filled_count FROM #fc_079
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_CODE_TYP' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_080
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_CODE_TYP' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_080
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_CODE_TYP' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_080
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_CODE_TYP' AS table_name, 'MOE_DX_CODE_TYPE' AS column_name, activity_year, total_rows, MOE_DX_CODE_TYPE_filled AS filled_count FROM #fc_080
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERRORS' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_081
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERRORS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_081
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERRORS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_081
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERRORS' AS table_name, 'MOE_DX_ERRORS' AS column_name, activity_year, total_rows, MOE_DX_ERRORS_filled AS filled_count FROM #fc_081
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERR_NUM' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_082
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERR_NUM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_082
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERR_NUM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_082
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_ERR_NUM' AS table_name, 'MOE_PER_DX_ERR_NUM' AS column_name, activity_year, total_rows, MOE_PER_DX_ERR_NUM_filled AS filled_count FROM #fc_082
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_HI_DISP' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_083
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_HI_DISP' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_083
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_HI_DISP' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_083
+    UNION ALL
+    SELECT 'AP_CLM_IF_MOE_DX_HI_DISP' AS table_name, 'MOE_HIGH_DX_DISP' AS column_name, activity_year, total_rows, MOE_HIGH_DX_DISP_filled AS filled_count FROM #fc_083
+    UNION ALL
+    SELECT 'AP_CLM_VST_RSN_DX' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_084
+    UNION ALL
+    SELECT 'AP_CLM_VST_RSN_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_084
+    UNION ALL
+    SELECT 'AP_CLM_VST_RSN_DX' AS table_name, 'VST_RSN_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, VST_RSN_DX_ID_DX_NAME_filled AS filled_count FROM #fc_084
+    UNION ALL
+    SELECT 'AP_PROC_ASSOC_DX' AS table_name, 'ETR_ID' AS column_name, activity_year, total_rows, ETR_ID_filled AS filled_count FROM #fc_085
+    UNION ALL
+    SELECT 'AP_PROC_ASSOC_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_085
+    UNION ALL
+    SELECT 'AP_PROC_ASSOC_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_085
+    UNION ALL
+    SELECT 'AP_PROC_ASSOC_DX' AS table_name, 'DX_QUAL_C_NAME' AS column_name, activity_year, total_rows, DX_QUAL_C_NAME_filled AS filled_count FROM #fc_085
+    UNION ALL
+    SELECT 'AP_PROC_ASSOC_DX' AS table_name, 'DX_NUM' AS column_name, activity_year, total_rows, DX_NUM_filled AS filled_count FROM #fc_085
+    UNION ALL
+    SELECT 'AP_PROC_ASSOC_DX' AS table_name, 'DX_RANK' AS column_name, activity_year, total_rows, DX_RANK_filled AS filled_count FROM #fc_085
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX' AS table_name, 'TX_ID' AS column_name, activity_year, total_rows, TX_ID_filled AS filled_count FROM #fc_086
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_086
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_086
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX' AS table_name, 'DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_086
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX_ALT' AS table_name, 'TX_ID' AS column_name, activity_year, total_rows, TX_ID_filled AS filled_count FROM #fc_087
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX_ALT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_087
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX_ALT' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_087
+    UNION ALL
+    SELECT 'ARPB_CHG_ENTRY_DX_ALT' AS table_name, 'DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_087
+    UNION ALL
+    SELECT 'ARPB_PMT_RELATED_DENIALS' AS table_name, 'TX_ID' AS column_name, activity_year, total_rows, TX_ID_filled AS filled_count FROM #fc_088
+    UNION ALL
+    SELECT 'ARPB_PMT_RELATED_DENIALS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_088
+    UNION ALL
+    SELECT 'ARPB_PMT_RELATED_DENIALS' AS table_name, 'RELATED_BDC_ID' AS column_name, activity_year, total_rows, RELATED_BDC_ID_filled AS filled_count FROM #fc_088
+    UNION ALL
+    SELECT 'ASSOCIATED_DX' AS table_name, 'TREATMENT_PLAN_ID' AS column_name, activity_year, total_rows, TREATMENT_PLAN_ID_filled AS filled_count FROM #fc_089
+    UNION ALL
+    SELECT 'ASSOCIATED_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_089
+    UNION ALL
+    SELECT 'ASSOCIATED_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_089
+    UNION ALL
+    SELECT 'ASSOCIATED_DX' AS table_name, 'SPECIFIC_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, SPECIFIC_DX_ID_DX_NAME_filled AS filled_count FROM #fc_089
+    UNION ALL
+    SELECT 'ASSOCIATED_DX' AS table_name, 'PROBLEM_LIST_ID' AS column_name, activity_year, total_rows, PROBLEM_LIST_ID_filled AS filled_count FROM #fc_089
+    UNION ALL
+    SELECT 'ASSOCIATED_DX' AS table_name, 'PROBLEM_LINKED_TO_PLAN_YN' AS column_name, activity_year, total_rows, PROBLEM_LINKED_TO_PLAN_YN_filled AS filled_count FROM #fc_089
+    UNION ALL
+    SELECT 'ATB_AUTH_DENIAL_RSNS' AS table_name, 'AUTH_BUNDLE_ID' AS column_name, activity_year, total_rows, AUTH_BUNDLE_ID_filled AS filled_count FROM #fc_090
+    UNION ALL
+    SELECT 'ATB_AUTH_DENIAL_RSNS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_090
+    UNION ALL
+    SELECT 'ATB_AUTH_DENIAL_RSNS' AS table_name, 'AUTH_PYR_DENIAL_REASON_C_NAME' AS column_name, activity_year, total_rows, AUTH_PYR_DENIAL_REASON_C_NAME_filled AS filled_count FROM #fc_090
+    UNION ALL
+    SELECT 'ATB_AUTH_DIAGNOSES' AS table_name, 'AUTH_BUNDLE_ID' AS column_name, activity_year, total_rows, AUTH_BUNDLE_ID_filled AS filled_count FROM #fc_091
+    UNION ALL
+    SELECT 'ATB_AUTH_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_091
+    UNION ALL
+    SELECT 'ATB_AUTH_DIAGNOSES' AS table_name, 'AUTH_DX_REF_ID' AS column_name, activity_year, total_rows, AUTH_DX_REF_ID_filled AS filled_count FROM #fc_091
+    UNION ALL
+    SELECT 'ATB_AUTH_DIAGNOSES' AS table_name, 'AUTH_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, AUTH_DX_ID_DX_NAME_filled AS filled_count FROM #fc_091
+    UNION ALL
+    SELECT 'ATB_AUTH_DIAGNOSES' AS table_name, 'AUTH_PA_DX_TYPE_C_NAME' AS column_name, activity_year, total_rows, AUTH_PA_DX_TYPE_C_NAME_filled AS filled_count FROM #fc_091
+    UNION ALL
+    SELECT 'ATB_AUTH_DIAGNOSES' AS table_name, 'AUTH_DX_DATE' AS column_name, activity_year, total_rows, AUTH_DX_DATE_filled AS filled_count FROM #fc_091
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_ID' AS column_name, activity_year, total_rows, AUTH_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_FROM_DT' AS column_name, activity_year, total_rows, AUTH_FROM_DT_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_TO_DT' AS column_name, activity_year, total_rows, AUTH_TO_DT_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_TYPE_C_NAME' AS column_name, activity_year, total_rows, AUTH_TYPE_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'NUM_SVCS_APPROVED' AS column_name, activity_year, total_rows, NUM_SVCS_APPROVED_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'NUM_SVCS_REQUESTED' AS column_name, activity_year, total_rows, NUM_SVCS_REQUESTED_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'CVG_ID' AS column_name, activity_year, total_rows, CVG_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_NUM' AS column_name, activity_year, total_rows, AUTH_NUM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_COMMENTS' AS column_name, activity_year, total_rows, AUTH_COMMENTS_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'RECORD_CREATION_DT' AS column_name, activity_year, total_rows, RECORD_CREATION_DT_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'CHARGE_COUNTS' AS column_name, activity_year, total_rows, CHARGE_COUNTS_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_REF_NUMBER' AS column_name, activity_year, total_rows, AUTH_REF_NUMBER_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AP_CLAIM_COUNT' AS column_name, activity_year, total_rows, AP_CLAIM_COUNT_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_NUM_SVCS_APRV' AS column_name, activity_year, total_rows, INTER_NUM_SVCS_APRV_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_NUM_SVCS_REQ' AS column_name, activity_year, total_rows, INTER_NUM_SVCS_REQ_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_APRV_FREQ_ID' AS column_name, activity_year, total_rows, INTER_APRV_FREQ_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_APRV_FREQ_ID_FREQ_NAME' AS column_name, activity_year, total_rows, INTER_APRV_FREQ_ID_FREQ_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_REQ_FREQ_ID' AS column_name, activity_year, total_rows, INTER_REQ_FREQ_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_REQ_FREQ_ID_FREQ_NAME' AS column_name, activity_year, total_rows, INTER_REQ_FREQ_ID_FREQ_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_NUM_APRV' AS column_name, activity_year, total_rows, INTER_NUM_APRV_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'INTER_NUM_REQ' AS column_name, activity_year, total_rows, INTER_NUM_REQ_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'PARENT_AUTH_ID' AS column_name, activity_year, total_rows, PARENT_AUTH_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AP_CLAIM_COUNT_METHOD_C_NAME' AS column_name, activity_year, total_rows, AP_CLAIM_COUNT_METHOD_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_STATUS_C_NAME' AS column_name, activity_year, total_rows, UM_STATUS_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_APPROVED_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_APPROVED_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_PART_APRV_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_PART_APRV_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_DENIED_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_DENIED_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_DISMISSED_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_DISMISSED_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_NOT_REQUIRED_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_NOT_REQUIRED_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_PENDING_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_PENDING_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CANCELED_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_CANCELED_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_DECISION_DTTM' AS column_name, activity_year, total_rows, UM_DECISION_DTTM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'NON_UM_AUTH_ID' AS column_name, activity_year, total_rows, NON_UM_AUTH_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_AUTH_REQUEST_ID' AS column_name, activity_year, total_rows, UM_AUTH_REQUEST_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'NON_UM_ORDER_ID' AS column_name, activity_year, total_rows, NON_UM_ORDER_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'ORDER_ENTRY_ORDER_ID' AS column_name, activity_year, total_rows, ORDER_ENTRY_ORDER_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CLOSED_RSN_C_NAME' AS column_name, activity_year, total_rows, UM_CLOSED_RSN_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FINALIZE_USER_ID' AS column_name, activity_year, total_rows, UM_FINALIZE_USER_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FINALIZE_USER_ID_NAME' AS column_name, activity_year, total_rows, UM_FINALIZE_USER_ID_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'FINAL_UM_STATUS_CHANGE_SRC_C_NAME' AS column_name, activity_year, total_rows, FINAL_UM_STATUS_CHANGE_SRC_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_STATUS_C_NAME' AS column_name, activity_year, total_rows, AUTH_STATUS_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_MED_DIR_REV_USER_ID' AS column_name, activity_year, total_rows, UM_MED_DIR_REV_USER_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_MED_DIR_REV_USER_ID_NAME' AS column_name, activity_year, total_rows, UM_MED_DIR_REV_USER_ID_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_PEND_MED_DIRECTOR_DTTM' AS column_name, activity_year, total_rows, UM_PEND_MED_DIRECTOR_DTTM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_PEND_MED_DIRECTOR_UTC_DTTM' AS column_name, activity_year, total_rows, UM_PEND_MED_DIRECTOR_UTC_DTTM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'FIRST_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, FIRST_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'LAST_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, LAST_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'APPEALED_SERVICE_AUTH_ID' AS column_name, activity_year, total_rows, APPEALED_SERVICE_AUTH_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'LAST_CVG_GUIDANCE_C_NAME' AS column_name, activity_year, total_rows, LAST_CVG_GUIDANCE_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_SOURCE_C_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_SOURCE_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GDNC_REALTIME_TX_CSN_ID' AS column_name, activity_year, total_rows, UM_CVG_GDNC_REALTIME_TX_CSN_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_PA_SVC_LN_IDNT' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_PA_SVC_LN_IDNT_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_C_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_FROM_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_FROM_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_REQ_DATE' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_REQ_DATE_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_REQ_LOC_ID_LOC_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_REQ_LOC_ID_LOC_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_REQ_VENDOR_ID_VENDOR_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_REQ_VENDOR_ID_VENDOR_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_REQ_DEPT_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_REQ_DEPT_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_REQUEST_NOTE' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_REQUEST_NOTE_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_LOB_ID' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_LOB_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_LOB_ID_LOB_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_LOB_ID_LOB_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_PAYER_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_PAYER_ID_PAYOR_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_PLAN_ID_BENEFIT_PLAN_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_PLAN_ID_BENEFIT_PLAN_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_CREATE_USER_ID' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_CREATE_USER_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_CREATE_USER_ID_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_CREATE_USER_ID_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'DENIAL_REASON_C_NAME' AS column_name, activity_year, total_rows, DENIAL_REASON_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_BED_DAY_TYPE_ID' AS column_name, activity_year, total_rows, AUTH_BED_DAY_TYPE_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_BED_DAY_TYPE_ID_BED_DAY_TYPE_NAME' AS column_name, activity_year, total_rows, AUTH_BED_DAY_TYPE_ID_BED_DAY_TYPE_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'NUM_DAYS_APPROVED' AS column_name, activity_year, total_rows, NUM_DAYS_APPROVED_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'NUM_NIGHTS_APPROVED' AS column_name, activity_year, total_rows, NUM_NIGHTS_APPROVED_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'EXT_SVC_MSG' AS column_name, activity_year, total_rows, EXT_SVC_MSG_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'EXT_SVC_REF_NUM' AS column_name, activity_year, total_rows, EXT_SVC_REF_NUM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'EXT_SVC_AUTH_NUM' AS column_name, activity_year, total_rows, EXT_SVC_AUTH_NUM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_RESP_AGENCY_ID' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_RESP_AGENCY_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_RESP_AGENCY_ID_AGENCY_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_RESP_AGENCY_ID_AGENCY_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'AUTH_BED_DAY_TX_STATUS_C_NAME' AS column_name, activity_year, total_rows, AUTH_BED_DAY_TX_STATUS_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_REQ_RX_QTY' AS column_name, activity_year, total_rows, UM_REQ_RX_QTY_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_REQ_RX_DISP_QTYUNIT_C_NAME' AS column_name, activity_year, total_rows, UM_REQ_RX_DISP_QTYUNIT_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_REQ_RX_DAYS' AS column_name, activity_year, total_rows, UM_REQ_RX_DAYS_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'REQ_UM_MED_TIER_C_NAME' AS column_name, activity_year, total_rows, REQ_UM_MED_TIER_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_MEDICATION_ID_MEDICATION_NAME' AS column_name, activity_year, total_rows, UM_MEDICATION_ID_MEDICATION_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_NDC_ID' AS column_name, activity_year, total_rows, UM_NDC_ID_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_NDC_ID_NDC_CODE' AS column_name, activity_year, total_rows, UM_NDC_ID_NDC_CODE_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_APRV_RX_QTY' AS column_name, activity_year, total_rows, UM_APRV_RX_QTY_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_APRV_RX_DISP_QTYUNIT_C_NAME' AS column_name, activity_year, total_rows, UM_APRV_RX_DISP_QTYUNIT_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_APRV_RX_DAYS' AS column_name, activity_year, total_rows, UM_APRV_RX_DAYS_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'APRV_UM_MED_TIER_C_NAME' AS column_name, activity_year, total_rows, APRV_UM_MED_TIER_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GUIDANCE_POS_TYPE_C_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_POS_TYPE_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FORMULARY_QL_QUANTITY' AS column_name, activity_year, total_rows, UM_FORMULARY_QL_QUANTITY_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FORMULARY_QL_DISP_QTYUNIT_C_NAME' AS column_name, activity_year, total_rows, UM_FORMULARY_QL_DISP_QTYUNIT_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FORMULARY_QL_DAYS' AS column_name, activity_year, total_rows, UM_FORMULARY_QL_DAYS_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FORMULARY_UM_MED_TIER_C_NAME' AS column_name, activity_year, total_rows, UM_FORMULARY_UM_MED_TIER_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FINAL_STS_CHANGE_LOCAL_DTTM' AS column_name, activity_year, total_rows, UM_FINAL_STS_CHANGE_LOCAL_DTTM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_FINAL_STS_CHANGE_UTC_DTTM' AS column_name, activity_year, total_rows, UM_FINAL_STS_CHANGE_UTC_DTTM_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTHORIZATIONS' AS table_name, 'UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME' AS column_name, activity_year, total_rows, UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled AS filled_count FROM #fc_092
+    UNION ALL
+    SELECT 'AUTH_UM_CVG_GUIDANCE_DX' AS table_name, 'AUTH_ID' AS column_name, activity_year, total_rows, AUTH_ID_filled AS filled_count FROM #fc_093
+    UNION ALL
+    SELECT 'AUTH_UM_CVG_GUIDANCE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_093
+    UNION ALL
+    SELECT 'AUTH_UM_CVG_GUIDANCE_DX' AS table_name, 'UM_CVG_GUIDANCE_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled AS filled_count FROM #fc_093
+    UNION ALL
+    SELECT 'BDC_ADDL_CLAIM_STS_CSN' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_094
+    UNION ALL
+    SELECT 'BDC_ADDL_CLAIM_STS_CSN' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_094
+    UNION ALL
+    SELECT 'BDC_ADDL_CLAIM_STS_CSN' AS table_name, 'ADDL_CLAIM_RECON_CSN_ID' AS column_name, activity_year, total_rows, ADDL_CLAIM_RECON_CSN_ID_filled AS filled_count FROM #fc_094
+    UNION ALL
+    SELECT 'BDC_ASSOC_REMARK_CODES' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_095
+    UNION ALL
+    SELECT 'BDC_ASSOC_REMARK_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_095
+    UNION ALL
+    SELECT 'BDC_ASSOC_REMARK_CODES' AS table_name, 'REMARK_CODE_ID' AS column_name, activity_year, total_rows, REMARK_CODE_ID_filled AS filled_count FROM #fc_095
+    UNION ALL
+    SELECT 'BDC_ASSOC_REMARK_CODES' AS table_name, 'REMARK_CODE_ID_REMIT_CODE_NAME' AS column_name, activity_year, total_rows, REMARK_CODE_ID_REMIT_CODE_NAME_filled AS filled_count FROM #fc_095
+    UNION ALL
+    SELECT 'BDC_CLAIM_STATUS' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_096
+    UNION ALL
+    SELECT 'BDC_CLAIM_STATUS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_096
+    UNION ALL
+    SELECT 'BDC_CLAIM_STATUS' AS table_name, 'CLAIM_STAT_RSN_C_NAME' AS column_name, activity_year, total_rows, CLAIM_STAT_RSN_C_NAME_filled AS filled_count FROM #fc_096
+    UNION ALL
+    SELECT 'BDC_CLAIM_STATUS' AS table_name, 'CLM_STATUS_CODE_C_NAME' AS column_name, activity_year, total_rows, CLM_STATUS_CODE_C_NAME_filled AS filled_count FROM #fc_096
+    UNION ALL
+    SELECT 'BDC_CLAIM_STATUS' AS table_name, 'CLM_STATUS_DATA' AS column_name, activity_year, total_rows, CLM_STATUS_DATA_filled AS filled_count FROM #fc_096
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BDC_NAME' AS column_name, activity_year, total_rows, BDC_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'RECORD_TYPE_C_NAME' AS column_name, activity_year, total_rows, RECORD_TYPE_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BUCKET_ID' AS column_name, activity_year, total_rows, BUCKET_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'RECORD_STATUS_C_NAME' AS column_name, activity_year, total_rows, RECORD_STATUS_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'RECORD_SOURCE_C_NAME' AS column_name, activity_year, total_rows, RECORD_SOURCE_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'INVOICE_NUMBER' AS column_name, activity_year, total_rows, INVOICE_NUMBER_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'GRP_CODE_C_NAME' AS column_name, activity_year, total_rows, GRP_CODE_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'REMIT_CODE_ID' AS column_name, activity_year, total_rows, REMIT_CODE_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'REMIT_CODE_ID_REMIT_CODE_NAME' AS column_name, activity_year, total_rows, REMIT_CODE_ID_REMIT_CODE_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXTERNAL_CODE' AS column_name, activity_year, total_rows, EXTERNAL_CODE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'INV_END_DATE' AS column_name, activity_year, total_rows, INV_END_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'SOURCE_PMT_HB_TX_ID' AS column_name, activity_year, total_rows, SOURCE_PMT_HB_TX_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXP_ALLOW_AMT' AS column_name, activity_year, total_rows, EXP_ALLOW_AMT_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'RESOLVE_REASON_C_NAME' AS column_name, activity_year, total_rows, RESOLVE_REASON_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'RESOLVE_COMMENTS' AS column_name, activity_year, total_rows, RESOLVE_COMMENTS_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BDC_RECEIVE_DATE' AS column_name, activity_year, total_rows, BDC_RECEIVE_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BDC_COMPLETE_VOID_DATE' AS column_name, activity_year, total_rows, BDC_COMPLETE_VOID_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BDC_REOPEN_DATE' AS column_name, activity_year, total_rows, BDC_REOPEN_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'PB_INVOICE_ID' AS column_name, activity_year, total_rows, PB_INVOICE_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'GUARANTOR_ID' AS column_name, activity_year, total_rows, GUARANTOR_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'DOC_INFO_ID' AS column_name, activity_year, total_rows, DOC_INFO_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'WRITE_OFF_AMT_SYS' AS column_name, activity_year, total_rows, WRITE_OFF_AMT_SYS_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'WRITE_OFF_AMT_CALC' AS column_name, activity_year, total_rows, WRITE_OFF_AMT_CALC_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'DISCREPANCY_AMT_SYS' AS column_name, activity_year, total_rows, DISCREPANCY_AMT_SYS_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'CLM_EXT_VAL_ID' AS column_name, activity_year, total_rows, CLM_EXT_VAL_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'BILLING_DRG' AS column_name, activity_year, total_rows, BILLING_DRG_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'PAYER_RECOMMENDED_DRG' AS column_name, activity_year, total_rows, PAYER_RECOMMENDED_DRG_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'FINAL_RESOLUTION_DRG' AS column_name, activity_year, total_rows, FINAL_RESOLUTION_DRG_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXPECTED_RECOVERY_AMT' AS column_name, activity_year, total_rows, EXPECTED_RECOVERY_AMT_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'ACTUAL_RECOVERY_AMT_USER' AS column_name, activity_year, total_rows, ACTUAL_RECOVERY_AMT_USER_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'WRITE_OFF_AMT_USER' AS column_name, activity_year, total_rows, WRITE_OFF_AMT_USER_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXT_PAT_NAME' AS column_name, activity_year, total_rows, EXT_PAT_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXT_PAT_MRN' AS column_name, activity_year, total_rows, EXT_PAT_MRN_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXT_ADMIT_DATE' AS column_name, activity_year, total_rows, EXT_ADMIT_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXT_DISCHARGE_DATE' AS column_name, activity_year, total_rows, EXT_DISCHARGE_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXT_CLAIM_NUM' AS column_name, activity_year, total_rows, EXT_CLAIM_NUM_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'EXT_PAT_BIRTH_DATE' AS column_name, activity_year, total_rows, EXT_PAT_BIRTH_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'SOURCE_PMT_PB_TX_ID' AS column_name, activity_year, total_rows, SOURCE_PMT_PB_TX_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'DFLT_CLASS_USES_REMARK_CODE_ID' AS column_name, activity_year, total_rows, DFLT_CLASS_USES_REMARK_CODE_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'DFLT_CLASS_USES_REMARK_CODE_ID_REMIT_CODE_NAME' AS column_name, activity_year, total_rows, DFLT_CLASS_USES_REMARK_CODE_ID_REMIT_CODE_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'APPEAL_DEADLINE_DATE' AS column_name, activity_year, total_rows, APPEAL_DEADLINE_DATE_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'PAYER_DOWNGRADE_TYPE_C_NAME' AS column_name, activity_year, total_rows, PAYER_DOWNGRADE_TYPE_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'PAYER_DOWNGRADE_OUTCOME_C_NAME' AS column_name, activity_year, total_rows, PAYER_DOWNGRADE_OUTCOME_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'RECONCILE_CLAIM_STATUS_C_NAME' AS column_name, activity_year, total_rows, RECONCILE_CLAIM_STATUS_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'INT_CONTROL_NUMBER' AS column_name, activity_year, total_rows, INT_CONTROL_NUMBER_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'CLAIM_RECON_ID' AS column_name, activity_year, total_rows, CLAIM_RECON_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'CLAIM_RECON_CSN_ID' AS column_name, activity_year, total_rows, CLAIM_RECON_CSN_ID_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'FOLLOW_UP_CONTEXT_C_NAME' AS column_name, activity_year, total_rows, FOLLOW_UP_CONTEXT_C_NAME_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_INFO' AS table_name, 'APPEAL_LLM_TEXT_GENERATED_YN' AS column_name, activity_year, total_rows, APPEAL_LLM_TEXT_GENERATED_YN_filled AS filled_count FROM #fc_097
+    UNION ALL
+    SELECT 'BDC_LOINC_CODES' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_098
+    UNION ALL
+    SELECT 'BDC_LOINC_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_098
+    UNION ALL
+    SELECT 'BDC_LOINC_CODES' AS table_name, 'LOINC_CODE' AS column_name, activity_year, total_rows, LOINC_CODE_filled AS filled_count FROM #fc_098
+    UNION ALL
+    SELECT 'BDC_PB_CHGS' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_099
+    UNION ALL
+    SELECT 'BDC_PB_CHGS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_099
+    UNION ALL
+    SELECT 'BDC_PB_CHGS' AS table_name, 'TX_ID' AS column_name, activity_year, total_rows, TX_ID_filled AS filled_count FROM #fc_099
+    UNION ALL
+    SELECT 'BDC_PB_CHGS' AS table_name, 'FOL_ID' AS column_name, activity_year, total_rows, FOL_ID_filled AS filled_count FROM #fc_099
+    UNION ALL
+    SELECT 'BUNDLE_CHARGE_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_100
+    UNION ALL
+    SELECT 'BUNDLE_CHARGE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_100
+    UNION ALL
+    SELECT 'BUNDLE_CHARGE_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_100
+    UNION ALL
+    SELECT 'BUNDLE_CHARGE_DX' AS table_name, 'DX_QUAL_C_NAME' AS column_name, activity_year, total_rows, DX_QUAL_C_NAME_filled AS filled_count FROM #fc_100
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_AGE' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_101
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_AGE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_101
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_AGE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_101
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_AGE' AS table_name, 'SCORE_AGE' AS column_name, activity_year, total_rows, SCORE_AGE_filled AS filled_count FROM #fc_101
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_102
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_102
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_102
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_DX' AS table_name, 'SCORE_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, SCORE_DX_ID_DX_NAME_filled AS filled_count FROM #fc_102
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CANCER_RISK_SCORE_TYPE' AS table_name, 'CANCER_RISK_TYPE_C_NAME' AS column_name, activity_year, total_rows, CANCER_RISK_TYPE_C_NAME_filled AS filled_count FROM #fc_103
+    UNION ALL
+    SELECT 'CASE_DX' AS table_name, 'CASE_ID' AS column_name, activity_year, total_rows, CASE_ID_filled AS filled_count FROM #fc_104
+    UNION ALL
+    SELECT 'CASE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_104
+    UNION ALL
+    SELECT 'CASE_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_104
+    UNION ALL
+    SELECT 'CASE_ICD_PROC' AS table_name, 'CASE_ID' AS column_name, activity_year, total_rows, CASE_ID_filled AS filled_count FROM #fc_105
+    UNION ALL
+    SELECT 'CASE_ICD_PROC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_105
+    UNION ALL
+    SELECT 'CASE_ICD_PROC' AS table_name, 'ICD_PX_ID' AS column_name, activity_year, total_rows, ICD_PX_ID_filled AS filled_count FROM #fc_105
+    UNION ALL
+    SELECT 'CASE_ICD_PROC' AS table_name, 'ICD_PX_ID_ICD_PX_NAME' AS column_name, activity_year, total_rows, ICD_PX_ID_ICD_PX_NAME_filled AS filled_count FROM #fc_105
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CDI_WKG_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, CDI_WKG_DX_ID_DX_NAME_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CDI_WKG_DX_POA_C_NAME' AS column_name, activity_year, total_rows, CDI_WKG_DX_POA_C_NAME_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CONTACT_SERIAL_NUM' AS column_name, activity_year, total_rows, CONTACT_SERIAL_NUM_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'CDI_WKG_DX_CC_C_NAME' AS column_name, activity_year, total_rows, CDI_WKG_DX_CC_C_NAME_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX' AS table_name, 'WKG_DX_HAC_YN' AS column_name, activity_year, total_rows, WKG_DX_HAC_YN_filled AS filled_count FROM #fc_106
+    UNION ALL
+    SELECT 'CDI_WORKING_DX_HACS' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_107
+    UNION ALL
+    SELECT 'CDI_WORKING_DX_HACS' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_107
+    UNION ALL
+    SELECT 'CDI_WORKING_DX_HACS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_107
+    UNION ALL
+    SELECT 'CDI_WORKING_DX_HACS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_107
+    UNION ALL
+    SELECT 'CDI_WORKING_DX_HACS' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_107
+    UNION ALL
+    SELECT 'CDI_WORKING_DX_HACS' AS table_name, 'WKG_DX_HAC_CAT_C_NAME' AS column_name, activity_year, total_rows, WKG_DX_HAC_CAT_C_NAME_filled AS filled_count FROM #fc_107
+    UNION ALL
+    SELECT 'CHG_REVIEW_DX' AS table_name, 'TAR_ID' AS column_name, activity_year, total_rows, TAR_ID_filled AS filled_count FROM #fc_108
+    UNION ALL
+    SELECT 'CHG_REVIEW_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_108
+    UNION ALL
+    SELECT 'CHG_REVIEW_DX' AS table_name, 'DX_QUAL_C_NAME' AS column_name, activity_year, total_rows, DX_QUAL_C_NAME_filled AS filled_count FROM #fc_108
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CLAIM_NAME' AS column_name, activity_year, total_rows, CLAIM_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ACCOUNT_ID' AS column_name, activity_year, total_rows, ACCOUNT_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CLAIM_TYPE_C_NAME' AS column_name, activity_year, total_rows, CLAIM_TYPE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'USER_ID' AS column_name, activity_year, total_rows, USER_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'USER_ID_NAME' AS column_name, activity_year, total_rows, USER_ID_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ENTRY_DATE' AS column_name, activity_year, total_rows, ENTRY_DATE_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'COVERAGE_ID' AS column_name, activity_year, total_rows, COVERAGE_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ADMIT_DATETIME' AS column_name, activity_year, total_rows, ADMIT_DATETIME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CLM_PAT_STATUS_C_NAME' AS column_name, activity_year, total_rows, CLM_PAT_STATUS_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ADMISSION_SOURCE_C_NAME' AS column_name, activity_year, total_rows, ADMISSION_SOURCE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ADMISSION_TYPE_C_NAME' AS column_name, activity_year, total_rows, ADMISSION_TYPE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ADMIT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ADMIT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ILL_INJ_LMP_C_NAME' AS column_name, activity_year, total_rows, ILL_INJ_LMP_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REL_CONDITION_C_NAME' AS column_name, activity_year, total_rows, REL_CONDITION_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DOC_CTRL_NUM' AS column_name, activity_year, total_rows, DOC_CTRL_NUM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'INJURY_DATETIME' AS column_name, activity_year, total_rows, INJURY_DATETIME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ACCIDENT_TYPE_C_NAME' AS column_name, activity_year, total_rows, ACCIDENT_TYPE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'IS_EPSDT_YN' AS column_name, activity_year, total_rows, IS_EPSDT_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EPSDT_CODE_C_NAME' AS column_name, activity_year, total_rows, EPSDT_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WC_CLAIM_NUM' AS column_name, activity_year, total_rows, WC_CLAIM_NUM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WC_EMPLOYER_ID' AS column_name, activity_year, total_rows, WC_EMPLOYER_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WC_EMPLOYER_ID_EMPLOYER_NAME' AS column_name, activity_year, total_rows, WC_EMPLOYER_ID_EMPLOYER_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'TRAN_CODE_C_NAME' AS column_name, activity_year, total_rows, TRAN_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'TRAN_REASON_C_NAME' AS column_name, activity_year, total_rows, TRAN_REASON_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'TRAN_DIST' AS column_name, activity_year, total_rows, TRAN_DIST_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CLM_LOGIN_SA_ID_LOC_NAME' AS column_name, activity_year, total_rows, CLM_LOGIN_SA_ID_LOC_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ILL_INJ_LMP_DT' AS column_name, activity_year, total_rows, ILL_INJ_LMP_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'AUTO_ACDNT_STATE_C_NAME' AS column_name, activity_year, total_rows, AUTO_ACDNT_STATE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EMPY_RELATED_YN' AS column_name, activity_year, total_rows, EMPY_RELATED_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'FIRST_CONSULT_DT' AS column_name, activity_year, total_rows, FIRST_CONSULT_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PAT_CHIEF_COMPLAINT' AS column_name, activity_year, total_rows, PAT_CHIEF_COMPLAINT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EMERG_YN' AS column_name, activity_year, total_rows, EMERG_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'LAST_WORKED_DT' AS column_name, activity_year, total_rows, LAST_WORKED_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'RETURN_TO_WORK_DT' AS column_name, activity_year, total_rows, RETURN_TO_WORK_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DISCHARGE_DT' AS column_name, activity_year, total_rows, DISCHARGE_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'OUTSIDE_LAB_NAME_C_NAME' AS column_name, activity_year, total_rows, OUTSIDE_LAB_NAME_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HLTH_APPR_SCRN_YN' AS column_name, activity_year, total_rows, HLTH_APPR_SCRN_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'SIG_ON_FILE_YN' AS column_name, activity_year, total_rows, SIG_ON_FILE_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WK_COMP_CLAIM_NUM' AS column_name, activity_year, total_rows, WK_COMP_CLAIM_NUM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WK_COMP_INJ_DESC' AS column_name, activity_year, total_rows, WK_COMP_INJ_DESC_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WK_COMP_APRV_CODE' AS column_name, activity_year, total_rows, WK_COMP_APRV_CODE_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WK_COMP_MED_RLS_DT' AS column_name, activity_year, total_rows, WK_COMP_MED_RLS_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DF_DELAY_RSN_CODE_C_NAME' AS column_name, activity_year, total_rows, DF_DELAY_RSN_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'FIRST_NEXT_VISIT_C_NAME' AS column_name, activity_year, total_rows, FIRST_NEXT_VISIT_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MED_HX_SOC_WORKER' AS column_name, activity_year, total_rows, MED_HX_SOC_WORKER_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MED_HX_PSYCHOLOGIST' AS column_name, activity_year, total_rows, MED_HX_PSYCHOLOGIST_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MED_HX_SUP_PROV' AS column_name, activity_year, total_rows, MED_HX_SUP_PROV_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MED_HX_COUNSELOR' AS column_name, activity_year, total_rows, MED_HX_COUNSELOR_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HDH_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, HDH_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PHY_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, PHY_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PHY_EXAM_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, PHY_EXAM_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'VISION_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, VISION_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'VISION_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, VISION_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HEARING_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, HEARING_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HEARING_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, HEARING_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DEV_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, DEV_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DEV_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, DEV_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'NUTRI_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, NUTRI_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'NUTRI_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, NUTRI_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'OTHER_TREATMNT_DT' AS column_name, activity_year, total_rows, OTHER_TREATMNT_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HOSPITAL_NAME' AS column_name, activity_year, total_rows, HOSPITAL_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HOSPITAL_ADDRESS' AS column_name, activity_year, total_rows, HOSPITAL_ADDRESS_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HOSPITAL_CITY' AS column_name, activity_year, total_rows, HOSPITAL_CITY_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HOSPITAL_STATE_C_NAME' AS column_name, activity_year, total_rows, HOSPITAL_STATE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HOSPITAL_ZIP' AS column_name, activity_year, total_rows, HOSPITAL_ZIP_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HOSP_REQ_YN' AS column_name, activity_year, total_rows, HOSP_REQ_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ADV_RET_WORK_YN' AS column_name, activity_year, total_rows, ADV_RET_WORK_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ADV_RET_WORK_DT' AS column_name, activity_year, total_rows, ADV_RET_WORK_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_NAME' AS column_name, activity_year, total_rows, REF_PHYS_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_ADDR' AS column_name, activity_year, total_rows, REF_PHYS_ADDR_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_CITY' AS column_name, activity_year, total_rows, REF_PHYS_CITY_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_STATE_C_NAME' AS column_name, activity_year, total_rows, REF_PHYS_STATE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_ZIP' AS column_name, activity_year, total_rows, REF_PHYS_ZIP_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_SPEC_C_NAME' AS column_name, activity_year, total_rows, REF_PHYS_SPEC_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PHYS_REASON_C_NAME' AS column_name, activity_year, total_rows, REF_PHYS_REASON_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'FIRST_TREAT_HOUR_TM' AS column_name, activity_year, total_rows, FIRST_TREAT_HOUR_TM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PAT_PREV_TREATED_YN' AS column_name, activity_year, total_rows, PAT_PREV_TREATED_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'IDE_NUM' AS column_name, activity_year, total_rows, IDE_NUM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EST_DOB_DT' AS column_name, activity_year, total_rows, EST_DOB_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'RESPONSIBLE_IND_YN' AS column_name, activity_year, total_rows, RESPONSIBLE_IND_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REFERRAL_SOURCE_ID' AS column_name, activity_year, total_rows, REFERRAL_SOURCE_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REFERRAL_SOURCE_ID_REFERRING_PROV_NAM' AS column_name, activity_year, total_rows, REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EMERGENCY_CODE_C_NAME' AS column_name, activity_year, total_rows, EMERGENCY_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DISABILITY_LEVEL_C_NAME' AS column_name, activity_year, total_rows, DISABILITY_LEVEL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DISABILITY_FROM_DT' AS column_name, activity_year, total_rows, DISABILITY_FROM_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DISABILITY_TO_DT' AS column_name, activity_year, total_rows, DISABILITY_TO_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'OUTSIDE_LAB_YN' AS column_name, activity_year, total_rows, OUTSIDE_LAB_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'OUTSIDE_LAB_CHARGE' AS column_name, activity_year, total_rows, OUTSIDE_LAB_CHARGE_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'FAM_PLANNING_YN' AS column_name, activity_year, total_rows, FAM_PLANNING_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'SPECIAL_PROGRAM_C_NAME' AS column_name, activity_year, total_rows, SPECIAL_PROGRAM_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PGM_FOR_HANDICAP_C_NAME' AS column_name, activity_year, total_rows, PGM_FOR_HANDICAP_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EMPLOYER_LOB' AS column_name, activity_year, total_rows, EMPLOYER_LOB_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'OTH_INFO' AS column_name, activity_year, total_rows, OTH_INFO_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'AUTH_DT' AS column_name, activity_year, total_rows, AUTH_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHIR_FIRST_TREAT_DT' AS column_name, activity_year, total_rows, CHIR_FIRST_TREAT_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHIR_X_RAY_DT' AS column_name, activity_year, total_rows, CHIR_X_RAY_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'NAT_OF_COND_C_NAME' AS column_name, activity_year, total_rows, NAT_OF_COND_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHIR_ACUTE_MANI_DT' AS column_name, activity_year, total_rows, CHIR_ACUTE_MANI_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HBG_HCT_TEST_INCL_C_NAME' AS column_name, activity_year, total_rows, HBG_HCT_TEST_INCL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'URINALYSIS_INCL_C_NAME' AS column_name, activity_year, total_rows, URINALYSIS_INCL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'TUBERCULOSIS_INCL_C_NAME' AS column_name, activity_year, total_rows, TUBERCULOSIS_INCL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'LEAD_TEST_INCL_C_NAME' AS column_name, activity_year, total_rows, LEAD_TEST_INCL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'SICKLE_CELL_INCL_C_NAME' AS column_name, activity_year, total_rows, SICKLE_CELL_INCL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'IMMNZTN_INCL_C_NAME' AS column_name, activity_year, total_rows, IMMNZTN_INCL_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CARDIO_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, CARDIO_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CARDIO_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, CARDIO_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'URINARY_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, URINARY_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'URINARY_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, URINARY_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DIABETE_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, DIABETE_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DIABETE_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, DIABETE_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DENTAL_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, DENTAL_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DENTAL_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, DENTAL_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'IMMNZTN_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, IMMNZTN_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EDU_EXAM_CODE_C_NAME' AS column_name, activity_year, total_rows, EDU_EXAM_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'EDU_RFL_CODE_C_NAME' AS column_name, activity_year, total_rows, EDU_RFL_CODE_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ONLY_CAUSE_YN' AS column_name, activity_year, total_rows, ONLY_CAUSE_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PAT_BURNED_YN' AS column_name, activity_year, total_rows, PAT_BURNED_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'XRAY_BY_WHOM' AS column_name, activity_year, total_rows, XRAY_BY_WHOM_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'WC_XRAY_DT' AS column_name, activity_year, total_rows, WC_XRAY_DT_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'POLIO_IMMNZTN_C_NAME' AS column_name, activity_year, total_rows, POLIO_IMMNZTN_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'DPT_TD_IMMNZTN_C_NAME' AS column_name, activity_year, total_rows, DPT_TD_IMMNZTN_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MEASLES_IMMNZTN_C_NAME' AS column_name, activity_year, total_rows, MEASLES_IMMNZTN_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MUMPS_IMMNZTN_C_NAME' AS column_name, activity_year, total_rows, MUMPS_IMMNZTN_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'RUBELLA_IMMNZTN_C_NAME' AS column_name, activity_year, total_rows, RUBELLA_IMMNZTN_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'HIB_IMMNZTN_C_NAME' AS column_name, activity_year, total_rows, HIB_IMMNZTN_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHAMP_NONAVAIL_YN' AS column_name, activity_year, total_rows, CHAMP_NONAVAIL_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHAMP_NONAV_STMT_NO' AS column_name, activity_year, total_rows, CHAMP_NONAV_STMT_NO_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHAMPUS_ORG' AS column_name, activity_year, total_rows, CHAMPUS_ORG_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHAMPUS_STATION' AS column_name, activity_year, total_rows, CHAMPUS_STATION_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CHAMP_MILIT_ACC_YN' AS column_name, activity_year, total_rows, CHAMP_MILIT_ACC_YN_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'ALTERNATE_CLM_ID' AS column_name, activity_year, total_rows, ALTERNATE_CLM_ID_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'REF_PROVIDER_ID_PROV_NAME' AS column_name, activity_year, total_rows, REF_PROVIDER_ID_PROV_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'MC_CLAIMS_WKFLOW_C_NAME' AS column_name, activity_year, total_rows, MC_CLAIMS_WKFLOW_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'CLM_SENSITIVITY_C_NAME' AS column_name, activity_year, total_rows, CLM_SENSITIVITY_C_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'PLACE_OF_SERVICE_ID_LOC_NAME' AS column_name, activity_year, total_rows, PLACE_OF_SERVICE_ID_LOC_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLAIM_INFO' AS table_name, 'LOC_ID_LOC_NAME' AS column_name, activity_year, total_rows, LOC_ID_LOC_NAME_filled AS filled_count FROM #fc_109
+    UNION ALL
+    SELECT 'CLM_DIAGNOSIS' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_110
+    UNION ALL
+    SELECT 'CLM_DIAGNOSIS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_110
+    UNION ALL
+    SELECT 'CLM_DIAGNOSIS' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_110
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_DX_QUAL' AS column_name, activity_year, total_rows, CLM_DX_QUAL_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_DX' AS column_name, activity_year, total_rows, CLM_DX_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_DX_POA' AS column_name, activity_year, total_rows, CLM_DX_POA_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_DX_CODE_SET_OID' AS column_name, activity_year, total_rows, CLM_DX_CODE_SET_OID_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_DX_RANK' AS column_name, activity_year, total_rows, CLM_DX_RANK_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_DX_FROM_HEADER_YN' AS column_name, activity_year, total_rows, CLM_DX_FROM_HEADER_YN_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'RX_DX_QUAL' AS column_name, activity_year, total_rows, RX_DX_QUAL_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CLM_AP_DX_POA_C_NAME' AS column_name, activity_year, total_rows, CLM_AP_DX_POA_C_NAME_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'DX_TYPE' AS column_name, activity_year, total_rows, DX_TYPE_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'DX_INFO_TYPE' AS column_name, activity_year, total_rows, DX_INFO_TYPE_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_DX' AS table_name, 'CMS_DX_TYPE' AS column_name, activity_year, total_rows, CMS_DX_TYPE_filled AS filled_count FROM #fc_111
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_TYP_QUAL' AS column_name, activity_year, total_rows, BIL_PROV_TYP_QUAL_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_NAM_LAST' AS column_name, activity_year, total_rows, BIL_PROV_NAM_LAST_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, BIL_PROV_NAM_FIRST_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_NAM_MID' AS column_name, activity_year, total_rows, BIL_PROV_NAM_MID_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_NAM_SUF' AS column_name, activity_year, total_rows, BIL_PROV_NAM_SUF_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_NPI' AS column_name, activity_year, total_rows, BIL_PROV_NPI_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_TAXONOMY' AS column_name, activity_year, total_rows, BIL_PROV_TAXONOMY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_TAXID_QUAL' AS column_name, activity_year, total_rows, BIL_PROV_TAXID_QUAL_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_TAXID' AS column_name, activity_year, total_rows, BIL_PROV_TAXID_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_UPIN' AS column_name, activity_year, total_rows, BIL_PROV_UPIN_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_LIC_NUM' AS column_name, activity_year, total_rows, BIL_PROV_LIC_NUM_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_ADDR_1' AS column_name, activity_year, total_rows, BIL_PROV_ADDR_1_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_ADDR_2' AS column_name, activity_year, total_rows, BIL_PROV_ADDR_2_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_CITY' AS column_name, activity_year, total_rows, BIL_PROV_CITY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_STATE' AS column_name, activity_year, total_rows, BIL_PROV_STATE_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_ZIP' AS column_name, activity_year, total_rows, BIL_PROV_ZIP_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_CNTRY' AS column_name, activity_year, total_rows, BIL_PROV_CNTRY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BIL_PROV_CNTRY_SUB' AS column_name, activity_year, total_rows, BIL_PROV_CNTRY_SUB_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_SEQ_CD' AS column_name, activity_year, total_rows, CLM_CVG_SEQ_CD_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_PYR_NAM' AS column_name, activity_year, total_rows, CLM_CVG_PYR_NAM_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_GRP_NUM' AS column_name, activity_year, total_rows, CLM_CVG_GRP_NUM_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_GRP_NAM' AS column_name, activity_year, total_rows, CLM_CVG_GRP_NAM_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_INS_TYP' AS column_name, activity_year, total_rows, CLM_CVG_INS_TYP_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_FILING_IND' AS column_name, activity_year, total_rows, CLM_CVG_FILING_IND_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_PYR_ID_TYP' AS column_name, activity_year, total_rows, CLM_CVG_PYR_ID_TYP_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_PYR_ID' AS column_name, activity_year, total_rows, CLM_CVG_PYR_ID_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_ACPT_ASGN' AS column_name, activity_year, total_rows, CLM_CVG_ACPT_ASGN_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_AUTH_PMT' AS column_name, activity_year, total_rows, CLM_CVG_AUTH_PMT_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'CLM_CVG_REL_INFO' AS column_name, activity_year, total_rows, CLM_CVG_REL_INFO_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_ADDR_1' AS column_name, activity_year, total_rows, PYR_ADDR_1_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_ADDR_2' AS column_name, activity_year, total_rows, PYR_ADDR_2_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_CITY' AS column_name, activity_year, total_rows, PYR_CITY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_STATE' AS column_name, activity_year, total_rows, PYR_STATE_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_ZIP' AS column_name, activity_year, total_rows, PYR_ZIP_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_CNTRY' AS column_name, activity_year, total_rows, PYR_CNTRY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PYR_CNTRY_SUB' AS column_name, activity_year, total_rows, PYR_CNTRY_SUB_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_NAM_LAST' AS column_name, activity_year, total_rows, PAT_NAM_LAST_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_NAM_FIRST' AS column_name, activity_year, total_rows, PAT_NAM_FIRST_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_NAM_MID' AS column_name, activity_year, total_rows, PAT_NAM_MID_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_NAM_SUF' AS column_name, activity_year, total_rows, PAT_NAM_SUF_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_MRN' AS column_name, activity_year, total_rows, PAT_MRN_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_CVG_MEM_ID' AS column_name, activity_year, total_rows, PAT_CVG_MEM_ID_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_REL_TO_INS' AS column_name, activity_year, total_rows, PAT_REL_TO_INS_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_BIRTH_DATE' AS column_name, activity_year, total_rows, PAT_BIRTH_DATE_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_SEX' AS column_name, activity_year, total_rows, PAT_SEX_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_SIG_ON_FILE' AS column_name, activity_year, total_rows, PAT_SIG_ON_FILE_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_SIG_SRC' AS column_name, activity_year, total_rows, PAT_SIG_SRC_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_DEATH_DATE' AS column_name, activity_year, total_rows, PAT_DEATH_DATE_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_WT' AS column_name, activity_year, total_rows, PAT_WT_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_PREG_IND' AS column_name, activity_year, total_rows, PAT_PREG_IND_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_WK_COMP_NUM' AS column_name, activity_year, total_rows, PAT_WK_COMP_NUM_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_MAR_STAT' AS column_name, activity_year, total_rows, PAT_MAR_STAT_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_EMPY_STAT' AS column_name, activity_year, total_rows, PAT_EMPY_STAT_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_PH' AS column_name, activity_year, total_rows, PAT_PH_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_ADDR_1' AS column_name, activity_year, total_rows, PAT_ADDR_1_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_ADDR_2' AS column_name, activity_year, total_rows, PAT_ADDR_2_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_CITY' AS column_name, activity_year, total_rows, PAT_CITY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_STATE' AS column_name, activity_year, total_rows, PAT_STATE_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_ZIP' AS column_name, activity_year, total_rows, PAT_ZIP_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_CNTRY' AS column_name, activity_year, total_rows, PAT_CNTRY_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAT_CNTRY_SUB' AS column_name, activity_year, total_rows, PAT_CNTRY_SUB_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'INV_NUM' AS column_name, activity_year, total_rows, INV_NUM_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'ICN' AS column_name, activity_year, total_rows, ICN_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'TTL_CHG_AMT' AS column_name, activity_year, total_rows, TTL_CHG_AMT_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BILL_TYP_FAC_CD' AS column_name, activity_year, total_rows, BILL_TYP_FAC_CD_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'BILL_TYP_FREQ_CD' AS column_name, activity_year, total_rows, BILL_TYP_FREQ_CD_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'MOMS_MRN' AS column_name, activity_year, total_rows, MOMS_MRN_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES' AS table_name, 'PAYTO_ADDR_TYP_QUAL' AS column_name, activity_year, total_rows, PAYTO_ADDR_TYP_QUAL_filled AS filled_count FROM #fc_112
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ADMSN_TYP' AS column_name, activity_year, total_rows, ADMSN_TYP_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ADMSN_SRC' AS column_name, activity_year, total_rows, ADMSN_SRC_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DISCHRG_DISP' AS column_name, activity_year, total_rows, DISCHRG_DISP_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'RFL_NUM' AS column_name, activity_year, total_rows, RFL_NUM_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AUTH_NUM' AS column_name, activity_year, total_rows, AUTH_NUM_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SPEC_PROG_IND' AS column_name, activity_year, total_rows, SPEC_PROG_IND_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CLM_DELAY_RSN' AS column_name, activity_year, total_rows, CLM_DELAY_RSN_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AUTH_EXCEPT_CD' AS column_name, activity_year, total_rows, AUTH_EXCEPT_CD_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'PAT_AMT_PAID' AS column_name, activity_year, total_rows, PAT_AMT_PAID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'PAT_AMT_DUE' AS column_name, activity_year, total_rows, PAT_AMT_DUE_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AUTO_ACDNT_STATE' AS column_name, activity_year, total_rows, AUTO_ACDNT_STATE_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AUTO_ACDNT_CNTRY' AS column_name, activity_year, total_rows, AUTO_ACDNT_CNTRY_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'MAMM_CERT_NUM' AS column_name, activity_year, total_rows, MAMM_CERT_NUM_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CLIA_NUM' AS column_name, activity_year, total_rows, CLIA_NUM_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DEMO_PRJ_ID' AS column_name, activity_year, total_rows, DEMO_PRJ_ID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SPINAL_MAN_COND_CD' AS column_name, activity_year, total_rows, SPINAL_MAN_COND_CD_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'EPSDT_CERT_APPLIES' AS column_name, activity_year, total_rows, EPSDT_CERT_APPLIES_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ORTHO_TOT_MO' AS column_name, activity_year, total_rows, ORTHO_TOT_MO_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ORTHO_MO_REMAIN' AS column_name, activity_year, total_rows, ORTHO_MO_REMAIN_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ADMSN_DX_QUAL' AS column_name, activity_year, total_rows, ADMSN_DX_QUAL_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ADMSN_DX' AS column_name, activity_year, total_rows, ADMSN_DX_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DRG' AS column_name, activity_year, total_rows, DRG_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ANES_SURG_PROC' AS column_name, activity_year, total_rows, ANES_SURG_PROC_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OUTSIDE_LAB' AS column_name, activity_year, total_rows, OUTSIDE_LAB_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OUTSIDE_LAB_CHG' AS column_name, activity_year, total_rows, OUTSIDE_LAB_CHG_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CLM_FROM_DT' AS column_name, activity_year, total_rows, CLM_FROM_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CLM_TO_DT' AS column_name, activity_year, total_rows, CLM_TO_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ADMSN_DT' AS column_name, activity_year, total_rows, ADMSN_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ADMSN_TM' AS column_name, activity_year, total_rows, ADMSN_TM_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DISCHG_DT' AS column_name, activity_year, total_rows, DISCHG_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DISCHG_TM' AS column_name, activity_year, total_rows, DISCHG_TM_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ILL_INJ_DT' AS column_name, activity_year, total_rows, ILL_INJ_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'INIT_TREAT_DT' AS column_name, activity_year, total_rows, INIT_TREAT_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'LST_SEEN_DT' AS column_name, activity_year, total_rows, LST_SEEN_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ACUTE_MANIF_DT' AS column_name, activity_year, total_rows, ACUTE_MANIF_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ACDNT_DT' AS column_name, activity_year, total_rows, ACDNT_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'LMP_DT' AS column_name, activity_year, total_rows, LMP_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'LST_XRAY_DT' AS column_name, activity_year, total_rows, LST_XRAY_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'HEAR_VIS_RX_DT' AS column_name, activity_year, total_rows, HEAR_VIS_RX_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DISAB_START_DT' AS column_name, activity_year, total_rows, DISAB_START_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DISAB_END_DT' AS column_name, activity_year, total_rows, DISAB_END_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'LST_WK_DT' AS column_name, activity_year, total_rows, LST_WK_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AUTH_RETURN_WK_DT' AS column_name, activity_year, total_rows, AUTH_RETURN_WK_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ASSUM_CARE_DT' AS column_name, activity_year, total_rows, ASSUM_CARE_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'RELINQ_CARE_DT' AS column_name, activity_year, total_rows, RELINQ_CARE_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ORTHO_BAND_DT' AS column_name, activity_year, total_rows, ORTHO_BAND_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'DENT_SRV_DT' AS column_name, activity_year, total_rows, DENT_SRV_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SIMILAR_ILL_DT' AS column_name, activity_year, total_rows, SIMILAR_ILL_DT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AMB_PAT_WT' AS column_name, activity_year, total_rows, AMB_PAT_WT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AMB_TRANS_RSN_CD' AS column_name, activity_year, total_rows, AMB_TRANS_RSN_CD_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AMB_TRANS_DIST' AS column_name, activity_year, total_rows, AMB_TRANS_DIST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AMB_RND_TRIP_DESC' AS column_name, activity_year, total_rows, AMB_RND_TRIP_DESC_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'AMB_STRETCHER_DESC' AS column_name, activity_year, total_rows, AMB_STRETCHER_DESC_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CNTRCT_TYP' AS column_name, activity_year, total_rows, CNTRCT_TYP_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CNTRCT_AMT' AS column_name, activity_year, total_rows, CNTRCT_AMT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CNTRCT_PCT' AS column_name, activity_year, total_rows, CNTRCT_PCT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CNTRCT_CD' AS column_name, activity_year, total_rows, CNTRCT_CD_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CNTRCT_DISCNT_PCT' AS column_name, activity_year, total_rows, CNTRCT_DISCNT_PCT_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'CNTRCT_VERS_ID' AS column_name, activity_year, total_rows, CNTRCT_VERS_ID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ATT_PROV_NAM_LAST' AS column_name, activity_year, total_rows, ATT_PROV_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ATT_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, ATT_PROV_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ATT_PROV_NAM_MID' AS column_name, activity_year, total_rows, ATT_PROV_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ATT_PROV_NAM_SUF' AS column_name, activity_year, total_rows, ATT_PROV_NAM_SUF_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ATT_PROV_NPI' AS column_name, activity_year, total_rows, ATT_PROV_NPI_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ATT_PROV_TAXONOMY' AS column_name, activity_year, total_rows, ATT_PROV_TAXONOMY_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OPER_PROV_NAM_LAST' AS column_name, activity_year, total_rows, OPER_PROV_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OPER_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, OPER_PROV_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OPER_PROV_NAM_MID' AS column_name, activity_year, total_rows, OPER_PROV_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OPER_PROV_NAM_SUF' AS column_name, activity_year, total_rows, OPER_PROV_NAM_SUF_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OPER_PROV_NPI' AS column_name, activity_year, total_rows, OPER_PROV_NPI_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OTH_PROV_NAM_LAST' AS column_name, activity_year, total_rows, OTH_PROV_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OTH_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, OTH_PROV_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OTH_PROV_NAM_MID' AS column_name, activity_year, total_rows, OTH_PROV_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OTH_PROV_NAM_SUF' AS column_name, activity_year, total_rows, OTH_PROV_NAM_SUF_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'OTH_PROV_NPI' AS column_name, activity_year, total_rows, OTH_PROV_NPI_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_TYP' AS column_name, activity_year, total_rows, REND_PROV_TYP_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_NAM_LAST' AS column_name, activity_year, total_rows, REND_PROV_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, REND_PROV_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_NAM_MID' AS column_name, activity_year, total_rows, REND_PROV_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_NAM_SUF' AS column_name, activity_year, total_rows, REND_PROV_NAM_SUF_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_NPI' AS column_name, activity_year, total_rows, REND_PROV_NPI_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REND_PROV_TAXONOMY' AS column_name, activity_year, total_rows, REND_PROV_TAXONOMY_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REF_PROV_NAM_LAST' AS column_name, activity_year, total_rows, REF_PROV_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REF_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, REF_PROV_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REF_PROV_NAM_MID' AS column_name, activity_year, total_rows, REF_PROV_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REF_PROV_NAM_SUF' AS column_name, activity_year, total_rows, REF_PROV_NAM_SUF_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REF_PROV_NPI' AS column_name, activity_year, total_rows, REF_PROV_NPI_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'REF_PROV_TAXONOMY' AS column_name, activity_year, total_rows, REF_PROV_TAXONOMY_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SUP_PROV_NAM_LAST' AS column_name, activity_year, total_rows, SUP_PROV_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SUP_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, SUP_PROV_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SUP_PROV_NAM_MID' AS column_name, activity_year, total_rows, SUP_PROV_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SUP_PROV_NAM_SUF' AS column_name, activity_year, total_rows, SUP_PROV_NAM_SUF_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'SUP_PROV_NPI' AS column_name, activity_year, total_rows, SUP_PROV_NPI_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ASST_SURG_NAM_LAST' AS column_name, activity_year, total_rows, ASST_SURG_NAM_LAST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ASST_SURG_NAM_FIRST' AS column_name, activity_year, total_rows, ASST_SURG_NAM_FIRST_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_2' AS table_name, 'ASST_SURG_NAM_MID' AS column_name, activity_year, total_rows, ASST_SURG_NAM_MID_filled AS filled_count FROM #fc_113
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'ASST_SURG_NAM_SUF' AS column_name, activity_year, total_rows, ASST_SURG_NAM_SUF_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'ASST_SURG_NPI' AS column_name, activity_year, total_rows, ASST_SURG_NPI_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'ASST_SURG_TAXONOMY' AS column_name, activity_year, total_rows, ASST_SURG_TAXONOMY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_NAM' AS column_name, activity_year, total_rows, SVC_FAC_NAM_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_NPI' AS column_name, activity_year, total_rows, SVC_FAC_NPI_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_CNCT_NAM' AS column_name, activity_year, total_rows, SVC_FAC_CNCT_NAM_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_CNCT_PH' AS column_name, activity_year, total_rows, SVC_FAC_CNCT_PH_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_CNCT_EXT' AS column_name, activity_year, total_rows, SVC_FAC_CNCT_EXT_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_ADDR_1' AS column_name, activity_year, total_rows, SVC_FAC_ADDR_1_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_ADDR_2' AS column_name, activity_year, total_rows, SVC_FAC_ADDR_2_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_CITY' AS column_name, activity_year, total_rows, SVC_FAC_CITY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_STATE' AS column_name, activity_year, total_rows, SVC_FAC_STATE_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_ZIP' AS column_name, activity_year, total_rows, SVC_FAC_ZIP_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_CNTRY' AS column_name, activity_year, total_rows, SVC_FAC_CNTRY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'SVC_FAC_CNTRY_SUB' AS column_name, activity_year, total_rows, SVC_FAC_CNTRY_SUB_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_ADDR_1' AS column_name, activity_year, total_rows, PICK_UP_ADDR_1_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_ADDR_2' AS column_name, activity_year, total_rows, PICK_UP_ADDR_2_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_CITY' AS column_name, activity_year, total_rows, PICK_UP_CITY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_STATE' AS column_name, activity_year, total_rows, PICK_UP_STATE_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_ZIP' AS column_name, activity_year, total_rows, PICK_UP_ZIP_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_CNTRY' AS column_name, activity_year, total_rows, PICK_UP_CNTRY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PICK_UP_CNTRY_SUB' AS column_name, activity_year, total_rows, PICK_UP_CNTRY_SUB_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_NAM' AS column_name, activity_year, total_rows, DROP_OFF_NAM_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_ADDR_1' AS column_name, activity_year, total_rows, DROP_OFF_ADDR_1_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_ADDR_2' AS column_name, activity_year, total_rows, DROP_OFF_ADDR_2_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_CITY' AS column_name, activity_year, total_rows, DROP_OFF_CITY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_STATE' AS column_name, activity_year, total_rows, DROP_OFF_STATE_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_ZIP' AS column_name, activity_year, total_rows, DROP_OFF_ZIP_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_CNTRY' AS column_name, activity_year, total_rows, DROP_OFF_CNTRY_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DROP_OFF_CNTRY_SUB' AS column_name, activity_year, total_rows, DROP_OFF_CNTRY_SUB_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CREATE_DT' AS column_name, activity_year, total_rows, CREATE_DT_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CLM_CVG_AMT_PAID' AS column_name, activity_year, total_rows, CLM_CVG_AMT_PAID_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PAT_PROP_CAS_ID_TYP' AS column_name, activity_year, total_rows, PAT_PROP_CAS_ID_TYP_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'PAT_PROP_CAS_ID' AS column_name, activity_year, total_rows, PAT_PROP_CAS_ID_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'ADMSN_QUAL' AS column_name, activity_year, total_rows, ADMSN_QUAL_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'REMARK' AS column_name, activity_year, total_rows, REMARK_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CLM_CVG_AMT_DUE' AS column_name, activity_year, total_rows, CLM_CVG_AMT_DUE_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CLM_CVG_COMPLMT_ID' AS column_name, activity_year, total_rows, CLM_CVG_COMPLMT_ID_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CLM_CVG_REL_INFO_DT' AS column_name, activity_year, total_rows, CLM_CVG_REL_INFO_DT_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'LOCAL_USE_CMS' AS column_name, activity_year, total_rows, LOCAL_USE_CMS_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DISABILITY_QUAL' AS column_name, activity_year, total_rows, DISABILITY_QUAL_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'DISABILITY_TM_QUAL' AS column_name, activity_year, total_rows, DISABILITY_TM_QUAL_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CAS_SRC_CEV_ID' AS column_name, activity_year, total_rows, CAS_SRC_CEV_ID_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CAS_LVL_C_NAME' AS column_name, activity_year, total_rows, CAS_LVL_C_NAME_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CAS_CVG_LN_NUM' AS column_name, activity_year, total_rows, CAS_CVG_LN_NUM_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'CAS_SVC_LN_NUM' AS column_name, activity_year, total_rows, CAS_SVC_LN_NUM_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'NCPDP_RECORD_TYPE' AS column_name, activity_year, total_rows, NCPDP_RECORD_TYPE_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'TXST_TRANSMISSION_ACTION' AS column_name, activity_year, total_rows, TXST_TRANSMISSION_ACTION_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_3' AS table_name, 'TXST_SUBMISSION_NUMBER' AS column_name, activity_year, total_rows, TXST_SUBMISSION_NUMBER_filled AS filled_count FROM #fc_114
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_CLM_NUM' AS column_name, activity_year, total_rows, REP_CLM_NUM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'ADJ_REP_CLM_NUM' AS column_name, activity_year, total_rows, ADJ_REP_CLM_NUM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_TRANS_INTMD' AS column_name, activity_year, total_rows, CLM_TRANS_INTMD_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_PRO_APP_NUM' AS column_name, activity_year, total_rows, CLM_PRO_APP_NUM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_PRICING_METHDLG' AS column_name, activity_year, total_rows, CLM_PRICING_METHDLG_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_REP_ALWD_AMT' AS column_name, activity_year, total_rows, CLM_REP_ALWD_AMT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_REP_SVNG_AMT' AS column_name, activity_year, total_rows, CLM_REP_SVNG_AMT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_REP_ORGID' AS column_name, activity_year, total_rows, CLM_REP_ORGID_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_PDIEM_FLTRT_AMT' AS column_name, activity_year, total_rows, REP_PDIEM_FLTRT_AMT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_APRVD_DRG_CODE' AS column_name, activity_year, total_rows, REP_APRVD_DRG_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_APPRVD_AMT' AS column_name, activity_year, total_rows, REP_APPRVD_AMT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_APRVD_REV_CODE' AS column_name, activity_year, total_rows, REP_APRVD_REV_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_ASU_MSRMNT_CODE' AS column_name, activity_year, total_rows, REP_ASU_MSRMNT_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REP_APR_SERV_CNT' AS column_name, activity_year, total_rows, REP_APR_SERV_CNT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAYTO_PLAN_TAXID' AS column_name, activity_year, total_rows, PAYTO_PLAN_TAXID_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'FIRST_CNCT_DT' AS column_name, activity_year, total_rows, FIRST_CNCT_DT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REPRICER_RECVD_DT' AS column_name, activity_year, total_rows, REPRICER_RECVD_DT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'MCARE_XOVER_IND' AS column_name, activity_year, total_rows, MCARE_XOVER_IND_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CARE_PLN_NUM' AS column_name, activity_year, total_rows, CARE_PLN_NUM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'HOMEBOUND_COND_QUAL' AS column_name, activity_year, total_rows, HOMEBOUND_COND_QUAL_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'HOMEBOUND_COND_CD' AS column_name, activity_year, total_rows, HOMEBOUND_COND_CD_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DENTAL_SVC_FROM_DT' AS column_name, activity_year, total_rows, DENTAL_SVC_FROM_DT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DENTAL_SVC_TO_DT' AS column_name, activity_year, total_rows, DENTAL_SVC_TO_DT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DENTAL_SVC_DT_QUAL' AS column_name, activity_year, total_rows, DENTAL_SVC_DT_QUAL_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'ORTHO_TREAT_IND' AS column_name, activity_year, total_rows, ORTHO_TREAT_IND_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DENT_PREDET_CODE' AS column_name, activity_year, total_rows, DENT_PREDET_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'OTH_ACC_EMER_YN' AS column_name, activity_year, total_rows, OTH_ACC_EMER_YN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'STER_ABOR_YN' AS column_name, activity_year, total_rows, STER_ABOR_YN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAYEE_NUM' AS column_name, activity_year, total_rows, PAYEE_NUM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_LVL_TOS' AS column_name, activity_year, total_rows, CLM_LVL_TOS_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_LVL_EPSDT_YN' AS column_name, activity_year, total_rows, CLM_LVL_EPSDT_YN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_LVL_FAM_PLAN_YN' AS column_name, activity_year, total_rows, CLM_LVL_FAM_PLAN_YN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_LVL_EMER_YN' AS column_name, activity_year, total_rows, CLM_LVL_EMER_YN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAT_LOCATION_IDENT' AS column_name, activity_year, total_rows, PAT_LOCATION_IDENT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAT_PERSONAL_IDENT' AS column_name, activity_year, total_rows, PAT_PERSONAL_IDENT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DRG_SOI' AS column_name, activity_year, total_rows, DRG_SOI_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DRG_ROM' AS column_name, activity_year, total_rows, DRG_ROM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CAS_SVC_POS_NUM' AS column_name, activity_year, total_rows, CAS_SVC_POS_NUM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_RECORD_INDICATOR' AS column_name, activity_year, total_rows, CLM_RECORD_INDICATOR_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'LINE_OF_BUSINESS_CODE' AS column_name, activity_year, total_rows, LINE_OF_BUSINESS_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'BENEFIT_ID' AS column_name, activity_year, total_rows, BENEFIT_ID_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PLAN_TYPE' AS column_name, activity_year, total_rows, PLAN_TYPE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PRESC_PROV_TAXONOMY' AS column_name, activity_year, total_rows, PRESC_PROV_TAXONOMY_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'ADJUD_DATE' AS column_name, activity_year, total_rows, ADJUD_DATE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'ADJUD_TM' AS column_name, activity_year, total_rows, ADJUD_TM_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'REJECT_OVERRIDE_CODE' AS column_name, activity_year, total_rows, REJECT_OVERRIDE_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CROSS_REF_ICN' AS column_name, activity_year, total_rows, CROSS_REF_ICN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAYMENT_CLARIFICATION_CODE' AS column_name, activity_year, total_rows, PAYMENT_CLARIFICATION_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'ADJUSTMENT_TYPE' AS column_name, activity_year, total_rows, ADJUSTMENT_TYPE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'STER_ABOR_CODE' AS column_name, activity_year, total_rows, STER_ABOR_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'POSSIBLE_DISABILITY_YN' AS column_name, activity_year, total_rows, POSSIBLE_DISABILITY_YN_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PMT_SRC_MCR_INVOLVE' AS column_name, activity_year, total_rows, PMT_SRC_MCR_INVOLVE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PMT_SRC_OTHR_INVOLV' AS column_name, activity_year, total_rows, PMT_SRC_OTHR_INVOLV_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PMT_SRC_INS_CODE' AS column_name, activity_year, total_rows, PMT_SRC_INS_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'LOCATOR_CODE' AS column_name, activity_year, total_rows, LOCATOR_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'MEM_SUBMIT_PMT_RELEASE_DATE' AS column_name, activity_year, total_rows, MEM_SUBMIT_PMT_RELEASE_DATE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CHECK_DATE' AS column_name, activity_year, total_rows, CHECK_DATE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAT_DEM_CODE_QUAL' AS column_name, activity_year, total_rows, PAT_DEM_CODE_QUAL_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'PAT_DEM_CODE' AS column_name, activity_year, total_rows, PAT_DEM_CODE_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DRG_CODE_SET' AS column_name, activity_year, total_rows, DRG_CODE_SET_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'CLM_STATUS' AS column_name, activity_year, total_rows, CLM_STATUS_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DRG_CODE_VERSION' AS column_name, activity_year, total_rows, DRG_CODE_VERSION_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'IS_CLINICALLY_INVALID_IDENT' AS column_name, activity_year, total_rows, IS_CLINICALLY_INVALID_IDENT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DRG_CODE_SET_IDENT' AS column_name, activity_year, total_rows, DRG_CODE_SET_IDENT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_4' AS table_name, 'DRG_CODE_VER_IDENT' AS column_name, activity_year, total_rows, DRG_CODE_VER_IDENT_filled AS filled_count FROM #fc_115
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'FHIR_GROUP_IDENTIFIER' AS column_name, activity_year, total_rows, FHIR_GROUP_IDENTIFIER_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'DEPT_ALT_CODE' AS column_name, activity_year, total_rows, DEPT_ALT_CODE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PAYER_ENTERPRISE_IDENTIFIER' AS column_name, activity_year, total_rows, PAYER_ENTERPRISE_IDENTIFIER_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'ATT_PROV_SPECIALTY' AS column_name, activity_year, total_rows, ATT_PROV_SPECIALTY_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'NON_PAYMENT_RSN_DESC' AS column_name, activity_year, total_rows, NON_PAYMENT_RSN_DESC_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'CARRIER_PAYMENT_DNL_CD' AS column_name, activity_year, total_rows, CARRIER_PAYMENT_DNL_CD_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'NON_PAYMENT_RSN_CD' AS column_name, activity_year, total_rows, NON_PAYMENT_RSN_CD_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'CARRIER_PAYMENT_DNL_DESC' AS column_name, activity_year, total_rows, CARRIER_PAYMENT_DNL_DESC_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'BCDA_GROUP_IDENT' AS column_name, activity_year, total_rows, BCDA_GROUP_IDENT_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PRIMARY_PAYER_CD' AS column_name, activity_year, total_rows, PRIMARY_PAYER_CD_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'BIL_PROV_SPEC_CODE_SET' AS column_name, activity_year, total_rows, BIL_PROV_SPEC_CODE_SET_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'OPER_PROV_TAXONOMY' AS column_name, activity_year, total_rows, OPER_PROV_TAXONOMY_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PREDETERMIN_IDENT' AS column_name, activity_year, total_rows, PREDETERMIN_IDENT_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'ADJ_TO_CLAIM_ID' AS column_name, activity_year, total_rows, ADJ_TO_CLAIM_ID_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'REV_TO_CLAIM_ID' AS column_name, activity_year, total_rows, REV_TO_CLAIM_ID_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'ADJ_SEQUENCE' AS column_name, activity_year, total_rows, ADJ_SEQUENCE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PLAN_NAME' AS column_name, activity_year, total_rows, PLAN_NAME_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'CORPORATION_NAME' AS column_name, activity_year, total_rows, CORPORATION_NAME_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'NETWORK_LEVEL' AS column_name, activity_year, total_rows, NETWORK_LEVEL_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'REGION_NAME' AS column_name, activity_year, total_rows, REGION_NAME_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'LINE_OF_BUSINESS_NAME' AS column_name, activity_year, total_rows, LINE_OF_BUSINESS_NAME_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'SVC_PROV_IN_NETWORK' AS column_name, activity_year, total_rows, SVC_PROV_IN_NETWORK_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'MEDICARE_DRUG_CVG_CODE' AS column_name, activity_year, total_rows, MEDICARE_DRUG_CVG_CODE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'SVC_FAC_CCN' AS column_name, activity_year, total_rows, SVC_FAC_CCN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PCP_REF_PROV_NAM_LAST' AS column_name, activity_year, total_rows, PCP_REF_PROV_NAM_LAST_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PCP_REF_PROV_NAM_FIRST' AS column_name, activity_year, total_rows, PCP_REF_PROV_NAM_FIRST_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PCP_REF_PROV_NAM_MID' AS column_name, activity_year, total_rows, PCP_REF_PROV_NAM_MID_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PCP_REF_PROV_NAM_SUF' AS column_name, activity_year, total_rows, PCP_REF_PROV_NAM_SUF_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PCP_REF_PROV_NPI' AS column_name, activity_year, total_rows, PCP_REF_PROV_NPI_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PCP_REF_PROV_TAXONOMY' AS column_name, activity_year, total_rows, PCP_REF_PROV_TAXONOMY_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'REF_PROV_FROM_LINE_YN' AS column_name, activity_year, total_rows, REF_PROV_FROM_LINE_YN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'REN_PROV_FROM_LINE_YN' AS column_name, activity_year, total_rows, REN_PROV_FROM_LINE_YN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'OPER_PROV_FROM_LINE_YN' AS column_name, activity_year, total_rows, OPER_PROV_FROM_LINE_YN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'OTHOP_PROV_FROM_LINE_YN' AS column_name, activity_year, total_rows, OTHOP_PROV_FROM_LINE_YN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PAT_RESIDENCE_CODE' AS column_name, activity_year, total_rows, PAT_RESIDENCE_CODE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'SVC_FAC_CMS_PARTD_FLAG' AS column_name, activity_year, total_rows, SVC_FAC_CMS_PARTD_FLAG_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'BANK_IDENT_NUM' AS column_name, activity_year, total_rows, BANK_IDENT_NUM_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PROCESSOR_CTL_NUM' AS column_name, activity_year, total_rows, PROCESSOR_CTL_NUM_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'RX_PRIOR_AUTH_TYPE' AS column_name, activity_year, total_rows, RX_PRIOR_AUTH_TYPE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PRESCRIBER_LAST_NAME' AS column_name, activity_year, total_rows, PRESCRIBER_LAST_NAME_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'SNAPSHOT_CEV_YN' AS column_name, activity_year, total_rows, SNAPSHOT_CEV_YN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'SNAPSHOT_CEV_RECORD_ID' AS column_name, activity_year, total_rows, SNAPSHOT_CEV_RECORD_ID_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'PICK_UP_CNTY' AS column_name, activity_year, total_rows, PICK_UP_CNTY_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'DROP_OFF_CNTY' AS column_name, activity_year, total_rows, DROP_OFF_CNTY_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'LAST_SRP_DATE' AS column_name, activity_year, total_rows, LAST_SRP_DATE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'NCH_CLAIM_TYPE' AS column_name, activity_year, total_rows, NCH_CLAIM_TYPE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'CMS_ADJSTMT_DLTN_CD' AS column_name, activity_year, total_rows, CMS_ADJSTMT_DLTN_CD_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'CLAIM_TYPE_OUT_IN' AS column_name, activity_year, total_rows, CLAIM_TYPE_OUT_IN_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'COVERAGE_EXPIRY_DATE' AS column_name, activity_year, total_rows, COVERAGE_EXPIRY_DATE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'DECEASED_INDICATOR' AS column_name, activity_year, total_rows, DECEASED_INDICATOR_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'CLAIM_NET_AMOUNT' AS column_name, activity_year, total_rows, CLAIM_NET_AMOUNT_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'VALUE_ADDED_TAX' AS column_name, activity_year, total_rows, VALUE_ADDED_TAX_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'ENC_TYPE' AS column_name, activity_year, total_rows, ENC_TYPE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'ENC_TRANSFER_SOURCE' AS column_name, activity_year, total_rows, ENC_TRANSFER_SOURCE_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_5' AS table_name, 'ENC_TRANSFER_DEST' AS column_name, activity_year, total_rows, ENC_TRANSFER_DEST_filled AS filled_count FROM #fc_116
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'RESUBMISSION_COMMENT' AS column_name, activity_year, total_rows, RESUBMISSION_COMMENT_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'SUBSCR_EMPLOYER_PHONE' AS column_name, activity_year, total_rows, SUBSCR_EMPLOYER_PHONE_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'PAT_SEX_ASSIGNED_AT_BIRTH' AS column_name, activity_year, total_rows, PAT_SEX_ASSIGNED_AT_BIRTH_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'ENC_START_DATE' AS column_name, activity_year, total_rows, ENC_START_DATE_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'ENC_START_TIME_TM' AS column_name, activity_year, total_rows, ENC_START_TIME_TM_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'ENC_END_DATE' AS column_name, activity_year, total_rows, ENC_END_DATE_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'ENC_END_TIME_TM' AS column_name, activity_year, total_rows, ENC_END_TIME_TM_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'ENC_END_TYPE' AS column_name, activity_year, total_rows, ENC_END_TYPE_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'SVC_PROV_NAME' AS column_name, activity_year, total_rows, SVC_PROV_NAME_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_6' AS table_name, 'CONTRACT_NUMBER' AS column_name, activity_year, total_rows, CONTRACT_NUMBER_filled AS filled_count FROM #fc_117
+    UNION ALL
+    SELECT 'CLM_VALUES_DENT_STAT' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_118
+    UNION ALL
+    SELECT 'CLM_VALUES_DENT_STAT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_118
+    UNION ALL
+    SELECT 'CLM_VALUES_DENT_STAT' AS table_name, 'TOOTH_NUM' AS column_name, activity_year, total_rows, TOOTH_NUM_filled AS filled_count FROM #fc_118
+    UNION ALL
+    SELECT 'CLM_VALUES_DENT_STAT' AS table_name, 'TOOTH_STAT_CODE' AS column_name, activity_year, total_rows, TOOTH_STAT_CODE_filled AS filled_count FROM #fc_118
+    UNION ALL
+    SELECT 'CLM_VALUES_PAT_IDENT' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_119
+    UNION ALL
+    SELECT 'CLM_VALUES_PAT_IDENT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_119
+    UNION ALL
+    SELECT 'CLM_VALUES_PAT_IDENT' AS table_name, 'PAT_IDENT_QUAL' AS column_name, activity_year, total_rows, PAT_IDENT_QUAL_filled AS filled_count FROM #fc_119
+    UNION ALL
+    SELECT 'CLM_VALUES_PAT_IDENT' AS table_name, 'PAT_IDENT' AS column_name, activity_year, total_rows, PAT_IDENT_filled AS filled_count FROM #fc_119
+    UNION ALL
+    SELECT 'CLM_VALUES_PRESC_PROV_ID' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_120
+    UNION ALL
+    SELECT 'CLM_VALUES_PRESC_PROV_ID' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_120
+    UNION ALL
+    SELECT 'CLM_VALUES_PRESC_PROV_ID' AS table_name, 'PROV_IDENT_QUAL' AS column_name, activity_year, total_rows, PROV_IDENT_QUAL_filled AS filled_count FROM #fc_120
+    UNION ALL
+    SELECT 'CLM_VALUES_PRESC_PROV_ID' AS table_name, 'PROV_IDENT' AS column_name, activity_year, total_rows, PROV_IDENT_filled AS filled_count FROM #fc_120
+    UNION ALL
+    SELECT 'CLM_VALUES_REFERRAL_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_121
+    UNION ALL
+    SELECT 'CLM_VALUES_REFERRAL_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_121
+    UNION ALL
+    SELECT 'CLM_VALUES_REFERRAL_DX' AS table_name, 'REFERRAL_DX' AS column_name, activity_year, total_rows, REFERRAL_DX_filled AS filled_count FROM #fc_121
+    UNION ALL
+    SELECT 'CLM_VALUES_REFERRAL_DX' AS table_name, 'REFERRAL_DX_QUAL' AS column_name, activity_year, total_rows, REFERRAL_DX_QUAL_filled AS filled_count FROM #fc_121
+    UNION ALL
+    SELECT 'CLM_VALUES_REFERRAL_DX' AS table_name, 'REFERRAL_DX_CODE_SET_OID' AS column_name, activity_year, total_rows, REFERRAL_DX_CODE_SET_OID_filled AS filled_count FROM #fc_121
+    UNION ALL
+    SELECT 'CLM_VALUES_REJECT_CODE' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_122
+    UNION ALL
+    SELECT 'CLM_VALUES_REJECT_CODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_122
+    UNION ALL
+    SELECT 'CLM_VALUES_REJECT_CODE' AS table_name, 'REJECT_CODE' AS column_name, activity_year, total_rows, REJECT_CODE_filled AS filled_count FROM #fc_122
+    UNION ALL
+    SELECT 'CLM_VALUES_SVC_PROV_ID' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_123
+    UNION ALL
+    SELECT 'CLM_VALUES_SVC_PROV_ID' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_123
+    UNION ALL
+    SELECT 'CLM_VALUES_SVC_PROV_ID' AS table_name, 'SVC_PROV_IDENT_QUAL' AS column_name, activity_year, total_rows, SVC_PROV_IDENT_QUAL_filled AS filled_count FROM #fc_123
+    UNION ALL
+    SELECT 'CLM_VALUES_SVC_PROV_ID' AS table_name, 'SVC_PROV_IDENT' AS column_name, activity_year, total_rows, SVC_PROV_IDENT_filled AS filled_count FROM #fc_123
+    UNION ALL
+    SELECT 'CLM_VALUES_SVC_PROV_ID' AS table_name, 'SVC_PROV_TAXONOMY' AS column_name, activity_year, total_rows, SVC_PROV_TAXONOMY_filled AS filled_count FROM #fc_123
+    UNION ALL
+    SELECT 'CLM_VALUES_SVC_PROV_ID' AS table_name, 'SVC_PROV_FROM_LINE_YN' AS column_name, activity_year, total_rows, SVC_PROV_FROM_LINE_YN_filled AS filled_count FROM #fc_123
+    UNION ALL
+    SELECT 'CLM_WC_DIAGNOSIS' AS table_name, 'CLAIM_ID' AS column_name, activity_year, total_rows, CLAIM_ID_filled AS filled_count FROM #fc_124
+    UNION ALL
+    SELECT 'CLM_WC_DIAGNOSIS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_124
+    UNION ALL
+    SELECT 'CLM_WC_DIAGNOSIS' AS table_name, 'WK_COMP_DX' AS column_name, activity_year, total_rows, WK_COMP_DX_filled AS filled_count FROM #fc_124
+    UNION ALL
+    SELECT 'CL_ICD_PX' AS table_name, 'ICD_PX_ID' AS column_name, activity_year, total_rows, ICD_PX_ID_filled AS filled_count FROM #fc_125
+    UNION ALL
+    SELECT 'CL_ICD_PX' AS table_name, 'ICD_PX_ID_ICD_PX_NAME' AS column_name, activity_year, total_rows, ICD_PX_ID_ICD_PX_NAME_filled AS filled_count FROM #fc_125
+    UNION ALL
+    SELECT 'CL_ICD_PX' AS table_name, 'ICD_PX_NAME' AS column_name, activity_year, total_rows, ICD_PX_NAME_filled AS filled_count FROM #fc_125
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_126
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_126
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_126
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_126
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX' AS table_name, 'ADMISSION_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ADMISSION_DX_ID_DX_NAME_filled AS filled_count FROM #fc_126
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SOURCE' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_127
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SOURCE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_127
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SOURCE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_127
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SOURCE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_127
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SOURCE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_127
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SRC_REF' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_128
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SRC_REF' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_128
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SRC_REF' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_128
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SRC_REF' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_128
+    UNION ALL
+    SELECT 'COD_ADMISSION_DX_SRC_REF' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_128
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CPT_CODE' AS column_name, activity_year, total_rows, CPT_CODE_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CPT_DATE' AS column_name, activity_year, total_rows, CPT_DATE_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CPT_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, CPT_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE' AS table_name, 'CPT_MODIFIERS' AS column_name, activity_year, total_rows, CPT_MODIFIERS_filled AS filled_count FROM #fc_129
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SOURCE' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_130
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SOURCE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_130
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SOURCE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_130
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SOURCE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_130
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SOURCE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_130
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SRC_REFERENC' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_131
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SRC_REFERENC' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_131
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SRC_REFERENC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_131
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SRC_REFERENC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_131
+    UNION ALL
+    SELECT 'COD_CPT_CODE_SRC_REFERENC' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_131
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SOURCE' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_132
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SOURCE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_132
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SOURCE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_132
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SOURCE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_132
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SOURCE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_132
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SRC_REFERENC' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_133
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SRC_REFERENC' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_133
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SRC_REFERENC' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_133
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SRC_REFERENC' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_133
+    UNION ALL
+    SELECT 'COD_ICD_PROC_SRC_REFERENC' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_133
+    UNION ALL
+    SELECT 'COD_PRIMARY_DX_SOURCE' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_134
+    UNION ALL
+    SELECT 'COD_PRIMARY_DX_SOURCE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_134
+    UNION ALL
+    SELECT 'COD_PRIMARY_DX_SOURCE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_134
+    UNION ALL
+    SELECT 'COD_PRIMARY_DX_SOURCE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_134
+    UNION ALL
+    SELECT 'COD_PRIMARY_DX_SOURCE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_134
+    UNION ALL
+    SELECT 'COD_PRIM_DX_SRC_REFERENCE' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_135
+    UNION ALL
+    SELECT 'COD_PRIM_DX_SRC_REFERENCE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_135
+    UNION ALL
+    SELECT 'COD_PRIM_DX_SRC_REFERENCE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_135
+    UNION ALL
+    SELECT 'COD_PRIM_DX_SRC_REFERENCE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_135
+    UNION ALL
+    SELECT 'COD_PRIM_DX_SRC_REFERENCE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_135
+    UNION ALL
+    SELECT 'COMPLICATION_DX_MODE' AS table_name, 'PROBLEM_LIST_ID' AS column_name, activity_year, total_rows, PROBLEM_LIST_ID_filled AS filled_count FROM #fc_136
+    UNION ALL
+    SELECT 'COMPLICATION_DX_MODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_136
+    UNION ALL
+    SELECT 'COMPLICATION_DX_MODE' AS table_name, 'MODE_OF_DX_C_NAME' AS column_name, activity_year, total_rows, MODE_OF_DX_C_NAME_filled AS filled_count FROM #fc_136
+    UNION ALL
+    SELECT 'CRR_SUBMISSION_DX' AS table_name, 'CLAIM_RECON_ID' AS column_name, activity_year, total_rows, CLAIM_RECON_ID_filled AS filled_count FROM #fc_137
+    UNION ALL
+    SELECT 'CRR_SUBMISSION_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_137
+    UNION ALL
+    SELECT 'CRR_SUBMISSION_DX' AS table_name, 'CR_SUBMISSION_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, CR_SUBMISSION_DX_ID_DX_NAME_filled AS filled_count FROM #fc_137
+    UNION ALL
+    SELECT 'CUST_SERVICE_TRANS_DX' AS table_name, 'COMM_ID' AS column_name, activity_year, total_rows, COMM_ID_filled AS filled_count FROM #fc_138
+    UNION ALL
+    SELECT 'CUST_SERVICE_TRANS_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_138
+    UNION ALL
+    SELECT 'CUST_SERVICE_TRANS_DX' AS table_name, 'TRANS_DX_TEXT' AS column_name, activity_year, total_rows, TRANS_DX_TEXT_filled AS filled_count FROM #fc_138
+    UNION ALL
+    SELECT 'CUST_SERVICE_TRANS_DX' AS table_name, 'TRANS_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, TRANS_DX_ID_DX_NAME_filled AS filled_count FROM #fc_138
+    UNION ALL
+    SELECT 'CUST_SERVICE_TRANS_DX' AS table_name, 'TRANS_DX_CATEGORY_C_NAME' AS column_name, activity_year, total_rows, TRANS_DX_CATEGORY_C_NAME_filled AS filled_count FROM #fc_138
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'CVG_ID' AS column_name, activity_year, total_rows, CVG_ID_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'EFF_DATE' AS column_name, activity_year, total_rows, EFF_DATE_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'TERM_DATE' AS column_name, activity_year, total_rows, TERM_DATE_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'RISK_ADJ_FACT_MODEL_C_NAME' AS column_name, activity_year, total_rows, RISK_ADJ_FACT_MODEL_C_NAME_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'RISK_ADJ_FACT_TYPE_C_NAME' AS column_name, activity_year, total_rows, RISK_ADJ_FACT_TYPE_C_NAME_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT' AS table_name, 'RISK_ADJ_FACTOR' AS column_name, activity_year, total_rows, RISK_ADJ_FACTOR_filled AS filled_count FROM #fc_139
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'CVG_ID' AS column_name, activity_year, total_rows, CVG_ID_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'EFF_DATE' AS column_name, activity_year, total_rows, EFF_DATE_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'TERM_DATE' AS column_name, activity_year, total_rows, TERM_DATE_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'RISK_ADJ_FACT_MODEL_C_NAME' AS column_name, activity_year, total_rows, RISK_ADJ_FACT_MODEL_C_NAME_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'RISK_ADJ_FACT_TYPE_C_NAME' AS column_name, activity_year, total_rows, RISK_ADJ_FACT_TYPE_C_NAME_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'RSK_ADJ_FACTOR' AS column_name, activity_year, total_rows, RSK_ADJ_FACTOR_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'ITM_HX_START_LOCAL_DTTM' AS column_name, activity_year, total_rows, ITM_HX_START_LOCAL_DTTM_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'ITM_HX_START_UTC_DTTM' AS column_name, activity_year, total_rows, ITM_HX_START_UTC_DTTM_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'ITM_HX_END_LOCAL_DTTM' AS column_name, activity_year, total_rows, ITM_HX_END_LOCAL_DTTM_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'ITM_HX_END_UTC_DTTM' AS column_name, activity_year, total_rows, ITM_HX_END_UTC_DTTM_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'CVG_MEM_RISK_ADJ_FACT_HX' AS table_name, 'CVG_ITM_HX_REL_ACT_GUID' AS column_name, activity_year, total_rows, CVG_ITM_HX_REL_ACT_GUID_filled AS filled_count FROM #fc_140
+    UNION ALL
+    SELECT 'DENTAL_PROC_DIAGNOSES' AS table_name, 'FINDING_ID' AS column_name, activity_year, total_rows, FINDING_ID_filled AS filled_count FROM #fc_141
+    UNION ALL
+    SELECT 'DENTAL_PROC_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_141
+    UNION ALL
+    SELECT 'DENTAL_PROC_DIAGNOSES' AS table_name, 'DENTAL_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DENTAL_DX_ID_DX_NAME_filled AS filled_count FROM #fc_141
+    UNION ALL
+    SELECT 'DENTAL_RES_DX_HX_RM' AS table_name, 'FINDING_ID' AS column_name, activity_year, total_rows, FINDING_ID_filled AS filled_count FROM #fc_142
+    UNION ALL
+    SELECT 'DENTAL_RES_DX_HX_RM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_142
+    UNION ALL
+    SELECT 'DENTAL_RES_DX_HX_RM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_142
+    UNION ALL
+    SELECT 'DENTAL_RES_DX_HX_RM' AS table_name, 'DENTAL_DX_HX_ID_DX_NAME' AS column_name, activity_year, total_rows, DENTAL_DX_HX_ID_DX_NAME_filled AS filled_count FROM #fc_142
+    UNION ALL
+    SELECT 'DIAGNOSIS_REVIEW' AS table_name, 'LOG_ID' AS column_name, activity_year, total_rows, LOG_ID_filled AS filled_count FROM #fc_143
+    UNION ALL
+    SELECT 'DIAGNOSIS_REVIEW' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_143
+    UNION ALL
+    SELECT 'DIAGNOSIS_REVIEW' AS table_name, 'DIAGNOSIS_REVIEW_C_NAME' AS column_name, activity_year, total_rows, DIAGNOSIS_REVIEW_C_NAME_filled AS filled_count FROM #fc_143
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_TYPE' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_144
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_TYPE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_144
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_TYPE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_144
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_TYPE' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_144
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_TYPE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_144
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_TYPE' AS table_name, 'DDX_MODIFIER_TYPE_C_NAME' AS column_name, activity_year, total_rows, DDX_MODIFIER_TYPE_C_NAME_filled AS filled_count FROM #fc_144
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_VALUES' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_145
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_VALUES' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_145
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_VALUES' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_145
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_VALUES' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_145
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_VALUES' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_145
+    UNION ALL
+    SELECT 'DIFF_DX_MOD_VALUES' AS table_name, 'DDX_MODIFIER_VALS_C_NAME' AS column_name, activity_year, total_rows, DDX_MODIFIER_VALS_C_NAME_filled AS filled_count FROM #fc_145
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_REF_ID' AS column_name, activity_year, total_rows, DX_REF_ID_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_ENC_ID' AS column_name, activity_year, total_rows, DX_ENC_ID_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_NAME' AS column_name, activity_year, total_rows, DX_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_CONTEXT_C_NAME' AS column_name, activity_year, total_rows, DX_CONTEXT_C_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_SRC_CSN' AS column_name, activity_year, total_rows, DX_SRC_CSN_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_START_DTTM' AS column_name, activity_year, total_rows, DX_START_DTTM_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_END_DTTM' AS column_name, activity_year, total_rows, DX_END_DTTM_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_EDG_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_EDG_ID_DX_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_LST_UPD_INST_DTTM' AS column_name, activity_year, total_rows, DX_LST_UPD_INST_DTTM_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_PRIMARY_YN' AS column_name, activity_year, total_rows, DX_PRIMARY_YN_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_FILTER_RSN_C_NAME' AS column_name, activity_year, total_rows, DX_FILTER_RSN_C_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_IS_ED_YN' AS column_name, activity_year, total_rows, DX_IS_ED_YN_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_BULK_STAT_C_NAME' AS column_name, activity_year, total_rows, DX_BULK_STAT_C_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_BULK_INCL_DATE' AS column_name, activity_year, total_rows, DX_BULK_INCL_DATE_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_GENERIC_NAME' AS column_name, activity_year, total_rows, DX_GENERIC_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_BEST_MATCH_DX_REFID' AS column_name, activity_year, total_rows, DX_BEST_MATCH_DX_REFID_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_CONFIDENCE_RANK' AS column_name, activity_year, total_rows, DX_CONFIDENCE_RANK_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_STATE_HOLOGRAM_ID' AS column_name, activity_year, total_rows, DX_STATE_HOLOGRAM_ID_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_TOPIC_NAME' AS column_name, activity_year, total_rows, DX_TOPIC_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_NOTED_DATE' AS column_name, activity_year, total_rows, DX_NOTED_DATE_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_DOCUMENTED_INST_UTC_DTTM' AS column_name, activity_year, total_rows, DX_DOCUMENTED_INST_UTC_DTTM_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX' AS table_name, 'DX_POA_C_NAME' AS column_name, activity_year, total_rows, DX_POA_C_NAME_filled AS filled_count FROM #fc_146
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'DATA_TYPE_C' AS column_name, activity_year, total_rows, DATA_TYPE_C_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'CODING_SYSTEM' AS column_name, activity_year, total_rows, CODING_SYSTEM_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_CMPLD' AS table_name, 'CODE' AS column_name, activity_year, total_rows, CODE_filled AS filled_count FROM #fc_147
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_DISPNM' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_148
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_DISPNM' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_148
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_DISPNM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_148
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_DISPNM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_148
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_DISPNM' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_148
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_DISPNM' AS table_name, 'DISPLAY_NAME' AS column_name, activity_year, total_rows, DISPLAY_NAME_filled AS filled_count FROM #fc_148
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_NLFLVR' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_149
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_NLFLVR' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_149
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_NLFLVR' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_149
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_NLFLVR' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_149
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_NLFLVR' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_149
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_CD_NLFLVR' AS table_name, 'CODE_NULLFLAVOR_C_NAME' AS column_name, activity_year, total_rows, CODE_NULLFLAVOR_C_NAME_filled AS filled_count FROM #fc_149
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_NOTES' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_150
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_NOTES' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_150
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_NOTES' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_150
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_NOTES' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_150
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_NOTES' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_150
+    UNION ALL
+    SELECT 'DOCS_RCVD_DX_NOTES' AS table_name, 'DX_LINKED_NOTES' AS column_name, activity_year, total_rows, DX_LINKED_NOTES_filled AS filled_count FROM #fc_150
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENCOUNTER_DX' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_151
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENCOUNTER_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_151
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENCOUNTER_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_151
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENCOUNTER_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_151
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENCOUNTER_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_151
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENCOUNTER_DX' AS table_name, 'EVENT_LINKED_DX_DX_NAME' AS column_name, activity_year, total_rows, EVENT_LINKED_DX_DX_NAME_filled AS filled_count FROM #fc_151
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'ENDO_DX_REF_IDENT' AS column_name, activity_year, total_rows, ENDO_DX_REF_IDENT_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'ENDO_DX_SRC_REFID' AS column_name, activity_year, total_rows, ENDO_DX_SRC_REFID_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'ENDO_DX_DDP_REFID' AS column_name, activity_year, total_rows, ENDO_DX_DDP_REFID_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'ENDO_DX_IND_ID_DX_NAME' AS column_name, activity_year, total_rows, ENDO_DX_IND_ID_DX_NAME_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_ENDO_DX_INFO' AS table_name, 'ENDO_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ENDO_DX_ID_DX_NAME_filled AS filled_count FROM #fc_152
+    UNION ALL
+    SELECT 'DOCS_RCVD_GENERIC_ORD_DX' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_153
+    UNION ALL
+    SELECT 'DOCS_RCVD_GENERIC_ORD_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_153
+    UNION ALL
+    SELECT 'DOCS_RCVD_GENERIC_ORD_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_153
+    UNION ALL
+    SELECT 'DOCS_RCVD_GENERIC_ORD_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_153
+    UNION ALL
+    SELECT 'DOCS_RCVD_GENERIC_ORD_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_153
+    UNION ALL
+    SELECT 'DOCS_RCVD_GENERIC_ORD_DX' AS table_name, 'GENERIC_ORDER_ASSOCIATED_DXS' AS column_name, activity_year, total_rows, GENERIC_ORDER_ASSOCIATED_DXS_filled AS filled_count FROM #fc_153
+    UNION ALL
+    SELECT 'DOCS_RCVD_MEDS_ASSOC_DX' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_154
+    UNION ALL
+    SELECT 'DOCS_RCVD_MEDS_ASSOC_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_154
+    UNION ALL
+    SELECT 'DOCS_RCVD_MEDS_ASSOC_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_154
+    UNION ALL
+    SELECT 'DOCS_RCVD_MEDS_ASSOC_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_154
+    UNION ALL
+    SELECT 'DOCS_RCVD_MEDS_ASSOC_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_154
+    UNION ALL
+    SELECT 'DOCS_RCVD_MEDS_ASSOC_DX' AS table_name, 'MEDICATION_ASSOCIATED_DX' AS column_name, activity_year, total_rows, MEDICATION_ASSOCIATED_DX_filled AS filled_count FROM #fc_154
+    UNION ALL
+    SELECT 'DOCS_RCVD_MINOR_DENIAL' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_155
+    UNION ALL
+    SELECT 'DOCS_RCVD_MINOR_DENIAL' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_155
+    UNION ALL
+    SELECT 'DOCS_RCVD_MINOR_DENIAL' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_155
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_REF_IDENT' AS column_name, activity_year, total_rows, RAD_REF_IDENT_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_CALC_DATE' AS column_name, activity_year, total_rows, RAD_CALC_DATE_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_START_DATE' AS column_name, activity_year, total_rows, RAD_START_DATE_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_END_DATE' AS column_name, activity_year, total_rows, RAD_END_DATE_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_CAT_NAME' AS column_name, activity_year, total_rows, RAD_CAT_NAME_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_DESCRIPTOR' AS column_name, activity_year, total_rows, RAD_DESCRIPTOR_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_STATUS_C_NAME' AS column_name, activity_year, total_rows, RAD_STATUS_C_NAME_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_EVIDENCE_NOTE_ID' AS column_name, activity_year, total_rows, RAD_EVIDENCE_NOTE_ID_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, RAD_DX_ID_DX_NAME_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_EXT_DATA_FILTER_REASON_C_NAME' AS column_name, activity_year, total_rows, RAD_EXT_DATA_FILTER_REASON_C_NAME_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_SRC_DOCUMENT_CSN_ID' AS column_name, activity_year, total_rows, RAD_SRC_DOCUMENT_CSN_ID_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_BULK_STAT_C_NAME' AS column_name, activity_year, total_rows, RAD_BULK_STAT_C_NAME_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_LAST_UPD_UTC_DTTM' AS column_name, activity_year, total_rows, RAD_LAST_UPD_UTC_DTTM_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DOCS_RCVD_RISK_ADJ_CAT' AS table_name, 'RAD_CODING_STATUS_C_NAME' AS column_name, activity_year, total_rows, RAD_CODING_STATUS_C_NAME_filled AS filled_count FROM #fc_156
+    UNION ALL
+    SELECT 'DX_MODS_TXT' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_157
+    UNION ALL
+    SELECT 'DX_MODS_TXT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_157
+    UNION ALL
+    SELECT 'DX_MODS_TXT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_157
+    UNION ALL
+    SELECT 'DX_MODS_TXT' AS table_name, 'DX_MODIFIER_TEXT' AS column_name, activity_year, total_rows, DX_MODIFIER_TEXT_filled AS filled_count FROM #fc_157
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'EM_CODE_SECTION' AS column_name, activity_year, total_rows, EM_CODE_SECTION_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'EM_CODE_ATTRIBUTE' AS column_name, activity_year, total_rows, EM_CODE_ATTRIBUTE_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'EMCODE_ASSO_NOTE_ID' AS column_name, activity_year, total_rows, EMCODE_ASSO_NOTE_ID_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'EMCODE_SDI' AS column_name, activity_year, total_rows, EMCODE_SDI_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'EM_CODE_SOURCE_C_NAME' AS column_name, activity_year, total_rows, EM_CODE_SOURCE_C_NAME_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'EM_CODE_CALC' AS table_name, 'EM_CODE' AS column_name, activity_year, total_rows, EM_CODE_filled AS filled_count FROM #fc_158
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_AMBIENT_DX' AS table_name, 'DX_ASSOC_AMBIENT_DX' AS column_name, activity_year, total_rows, DX_ASSOC_AMBIENT_DX_filled AS filled_count FROM #fc_159
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_DATA' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_160
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_DATA' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_160
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_DATA' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_160
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_DATA' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_160
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_DATA' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_160
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_NOTES' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_161
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_NOTES' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_161
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_NOTES' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_161
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_NOTES' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_161
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_NOTES' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_161
+    UNION ALL
+    SELECT 'ENC_DX_ASSOC_NOTES' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_161
+    UNION ALL
+    SELECT 'ENC_DX_EDIT_TRAIL' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_162
+    UNION ALL
+    SELECT 'ENC_DX_EDIT_TRAIL' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_162
+    UNION ALL
+    SELECT 'ENC_DX_EDIT_TRAIL' AS table_name, 'DX_EDIT_CHRONIC_YN' AS column_name, activity_year, total_rows, DX_EDIT_CHRONIC_YN_filled AS filled_count FROM #fc_162
+    UNION ALL
+    SELECT 'ENC_DX_EDIT_TRAIL' AS table_name, 'DX_EDIT_PRIMDX_YN' AS column_name, activity_year, total_rows, DX_EDIT_PRIMDX_YN_filled AS filled_count FROM #fc_162
+    UNION ALL
+    SELECT 'ENC_DX_EDIT_TRAIL' AS table_name, 'DX_EDIT_STATUS_C_NAME' AS column_name, activity_year, total_rows, DX_EDIT_STATUS_C_NAME_filled AS filled_count FROM #fc_162
+    UNION ALL
+    SELECT 'ENC_DX_EDIT_TRAIL' AS table_name, 'DX_EDIT_ED_YN' AS column_name, activity_year, total_rows, DX_EDIT_ED_YN_filled AS filled_count FROM #fc_162
+    UNION ALL
+    SELECT 'EXT_CAUSE_INJ_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_163
+    UNION ALL
+    SELECT 'EXT_CAUSE_INJ_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_163
+    UNION ALL
+    SELECT 'EXT_CAUSE_INJ_DX' AS table_name, 'EXT_CAUSE_INJ_QUAL' AS column_name, activity_year, total_rows, EXT_CAUSE_INJ_QUAL_filled AS filled_count FROM #fc_163
+    UNION ALL
+    SELECT 'EXT_CAUSE_INJ_DX' AS table_name, 'EXT_CAUSE_INJ_DX' AS column_name, activity_year, total_rows, EXT_CAUSE_INJ_DX_filled AS filled_count FROM #fc_163
+    UNION ALL
+    SELECT 'EXT_CAUSE_INJ_DX' AS table_name, 'EXT_CAUSE_INJ_POA' AS column_name, activity_year, total_rows, EXT_CAUSE_INJ_POA_filled AS filled_count FROM #fc_163
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'CODING_RECORD_ID' AS column_name, activity_year, total_rows, CODING_RECORD_ID_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'DX_ACTION_C_NAME' AS column_name, activity_year, total_rows, DX_ACTION_C_NAME_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'DX_ACTION_COMMENT' AS column_name, activity_year, total_rows, DX_ACTION_COMMENT_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'DX_REMOVE_RSN_C_NAME' AS column_name, activity_year, total_rows, DX_REMOVE_RSN_C_NAME_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'RA_SOURCE_PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, RA_SOURCE_PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'RA_SOURCE_DOCUMENT_CSN_ID' AS column_name, activity_year, total_rows, RA_SOURCE_DOCUMENT_CSN_ID_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'RA_SOURCE_DOCUMENT_ID' AS column_name, activity_year, total_rows, RA_SOURCE_DOCUMENT_ID_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'HIGH_RISK_DX_YN' AS column_name, activity_year, total_rows, HIGH_RISK_DX_YN_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HEALTH_PLAN_DX_CODING' AS table_name, 'HAS_AI_YN' AS column_name, activity_year, total_rows, HAS_AI_YN_filled AS filled_count FROM #fc_164
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'OASIS_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, OASIS_DX_ID_DX_NAME_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'OASIS_DX_START_DATE' AS column_name, activity_year, total_rows, OASIS_DX_START_DATE_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'OASIS_DX_SCR_C_NAME' AS column_name, activity_year, total_rows, OASIS_DX_SCR_C_NAME_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'OASIS_DX_FLAG_C_NAME' AS column_name, activity_year, total_rows, OASIS_DX_FLAG_C_NAME_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'OASIS_DX_OTHER_1_ID_DX_NAME' AS column_name, activity_year, total_rows, OASIS_DX_OTHER_1_ID_DX_NAME_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_OASIS_ICD10_DX' AS table_name, 'OASIS_DX_OTHER_2_ID_DX_NAME' AS column_name, activity_year, total_rows, OASIS_DX_OTHER_2_ID_DX_NAME_filled AS filled_count FROM #fc_165
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'CASE_MIX_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, CASE_MIX_DX_ID_DX_NAME_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CASE_MIX_DX' AS table_name, 'SEC_CASE_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, SEC_CASE_DX_ID_DX_NAME_filled AS filled_count FROM #fc_166
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'CASE_MIX_DX1_OTH_ID_DX_NAME' AS column_name, activity_year, total_rows, CASE_MIX_DX1_OTH_ID_DX_NAME_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_CSMX_OTH_DX' AS table_name, 'CASE_MIX_DX2_OTH_ID_DX_NAME' AS column_name, activity_year, total_rows, CASE_MIX_DX2_OTH_ID_DX_NAME_filled AS filled_count FROM #fc_167
+    UNION ALL
+    SELECT 'HH_PAT_IP_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_168
+    UNION ALL
+    SELECT 'HH_PAT_IP_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_168
+    UNION ALL
+    SELECT 'HH_PAT_IP_DX' AS table_name, 'INPATIENT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, INPATIENT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_168
+    UNION ALL
+    SELECT 'HH_PAT_IP_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_168
+    UNION ALL
+    SELECT 'HH_PAT_IP_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_168
+    UNION ALL
+    SELECT 'HH_PAT_IP_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_168
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'OTHER_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, OTHER_DX_ID_DX_NAME_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'OTHER_DX_START_DT' AS column_name, activity_year, total_rows, OTHER_DX_START_DT_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'OTHER_DX_SEVERITY' AS column_name, activity_year, total_rows, OTHER_DX_SEVERITY_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_OTHER_DX' AS table_name, 'OTHER_DX_FLAG_C_NAME' AS column_name, activity_year, total_rows, OTHER_DX_FLAG_C_NAME_filled AS filled_count FROM #fc_169
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'PAYMENT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, PAYMENT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'PAYMENT_DX_DATE' AS column_name, activity_year, total_rows, PAYMENT_DX_DATE_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'PAYMNT_DX_SEVERITY' AS column_name, activity_year, total_rows, PAYMNT_DX_SEVERITY_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_PAYMENT_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_170
+    UNION ALL
+    SELECT 'HH_PAT_REG_CHG_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_171
+    UNION ALL
+    SELECT 'HH_PAT_REG_CHG_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_171
+    UNION ALL
+    SELECT 'HH_PAT_REG_CHG_DX' AS table_name, 'REGIMEN_CHG_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, REGIMEN_CHG_DX_ID_DX_NAME_filled AS filled_count FROM #fc_171
+    UNION ALL
+    SELECT 'HH_PAT_REG_CHG_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_171
+    UNION ALL
+    SELECT 'HH_PAT_REG_CHG_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_171
+    UNION ALL
+    SELECT 'HH_PAT_REG_CHG_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_171
+    UNION ALL
+    SELECT 'HNO_ECG_DX' AS table_name, 'NOTE_CSN_ID' AS column_name, activity_year, total_rows, NOTE_CSN_ID_filled AS filled_count FROM #fc_172
+    UNION ALL
+    SELECT 'HNO_ECG_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_172
+    UNION ALL
+    SELECT 'HNO_ECG_DX' AS table_name, 'NOTE_ID' AS column_name, activity_year, total_rows, NOTE_ID_filled AS filled_count FROM #fc_172
+    UNION ALL
+    SELECT 'HNO_ECG_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_172
+    UNION ALL
+    SELECT 'HNO_ECG_DX' AS table_name, 'ECG_DX' AS column_name, activity_year, total_rows, ECG_DX_filled AS filled_count FROM #fc_172
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'HOLOGRAM_ID' AS column_name, activity_year, total_rows, HOLOGRAM_ID_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'AMBIENT_DX_SOURCE_C_NAME' AS column_name, activity_year, total_rows, AMBIENT_DX_SOURCE_C_NAME_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'AMBIENT_DX_LNK_PROB_LST_ID' AS column_name, activity_year, total_rows, AMBIENT_DX_LNK_PROB_LST_ID_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'AMBIENT_DX_LINKED_VDX' AS column_name, activity_year, total_rows, AMBIENT_DX_LINKED_VDX_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'AMBIENT_DX_AUTO_MATCH_YN' AS column_name, activity_year, total_rows, AMBIENT_DX_AUTO_MATCH_YN_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'ADD_DX_TO_PROBLIST_YN' AS column_name, activity_year, total_rows, ADD_DX_TO_PROBLIST_YN_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'INITIAL_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, INITIAL_DX_ID_DX_NAME_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLOGRAM_AMBIENT_DX_INFO' AS table_name, 'AMBIENT_PAST_DX_CSN' AS column_name, activity_year, total_rows, AMBIENT_PAST_DX_CSN_filled AS filled_count FROM #fc_173
+    UNION ALL
+    SELECT 'HOLO_LEVEL_OF_SERVICE_MOD' AS table_name, 'HOLOGRAM_ID' AS column_name, activity_year, total_rows, HOLOGRAM_ID_filled AS filled_count FROM #fc_174
+    UNION ALL
+    SELECT 'HOLO_LEVEL_OF_SERVICE_MOD' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_174
+    UNION ALL
+    SELECT 'HOLO_LEVEL_OF_SERVICE_MOD' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_174
+    UNION ALL
+    SELECT 'HOLO_LEVEL_OF_SERVICE_MOD' AS table_name, 'LEVEL_OF_SERVICE_MODIFIER_ID' AS column_name, activity_year, total_rows, LEVEL_OF_SERVICE_MODIFIER_ID_filled AS filled_count FROM #fc_174
+    UNION ALL
+    SELECT 'HOLO_LEVEL_OF_SERVICE_MOD' AS table_name, 'LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_174
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'HOSPICE_CODED_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, HOSPICE_CODED_DX_ID_DX_NAME_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_CODED_DX' AS table_name, 'HOSPICE_RELATED_C_NAME' AS column_name, activity_year, total_rows, HOSPICE_RELATED_C_NAME_filled AS filled_count FROM #fc_175
+    UNION ALL
+    SELECT 'HOSPICE_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_176
+    UNION ALL
+    SELECT 'HOSPICE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_176
+    UNION ALL
+    SELECT 'HOSPICE_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_176
+    UNION ALL
+    SELECT 'HOSPICE_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_176
+    UNION ALL
+    SELECT 'HOSPICE_DX' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_176
+    UNION ALL
+    SELECT 'HOSPICE_DX' AS table_name, 'HOSPICE_DX_NONCODED' AS column_name, activity_year, total_rows, HOSPICE_DX_NONCODED_filled AS filled_count FROM #fc_176
+    UNION ALL
+    SELECT 'HOSPICE_DX_HX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_177
+    UNION ALL
+    SELECT 'HOSPICE_DX_HX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_177
+    UNION ALL
+    SELECT 'HOSPICE_DX_HX' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_177
+    UNION ALL
+    SELECT 'HOSPICE_DX_HX' AS table_name, 'ENTRY_USER_ID' AS column_name, activity_year, total_rows, ENTRY_USER_ID_filled AS filled_count FROM #fc_177
+    UNION ALL
+    SELECT 'HOSPICE_DX_HX' AS table_name, 'ENTRY_UTC_DTTM' AS column_name, activity_year, total_rows, ENTRY_UTC_DTTM_filled AS filled_count FROM #fc_177
+    UNION ALL
+    SELECT 'HSP_ACCT_ADDL_DX' AS table_name, 'ACCT_ID' AS column_name, activity_year, total_rows, ACCT_ID_filled AS filled_count FROM #fc_178
+    UNION ALL
+    SELECT 'HSP_ACCT_ADDL_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_178
+    UNION ALL
+    SELECT 'HSP_ACCT_ADDL_DX' AS table_name, 'ADDL_RPT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ADDL_RPT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_178
+    UNION ALL
+    SELECT 'HSP_ACCT_ADMIT_DX' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_179
+    UNION ALL
+    SELECT 'HSP_ACCT_ADMIT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_179
+    UNION ALL
+    SELECT 'HSP_ACCT_ADMIT_DX' AS table_name, 'ADMIT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ADMIT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_179
+    UNION ALL
+    SELECT 'HSP_ACCT_ADMIT_DX' AS table_name, 'ADMIT_DX_TEXT' AS column_name, activity_year, total_rows, ADMIT_DX_TEXT_filled AS filled_count FROM #fc_179
+    UNION ALL
+    SELECT 'HSP_ACCT_CLM_CPT' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_180
+    UNION ALL
+    SELECT 'HSP_ACCT_CLM_CPT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_180
+    UNION ALL
+    SELECT 'HSP_ACCT_CLM_CPT' AS table_name, 'CLAIM_CODE_QTY' AS column_name, activity_year, total_rows, CLAIM_CODE_QTY_filled AS filled_count FROM #fc_180
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_ASSOC_DX' AS table_name, 'ACCT_ID' AS column_name, activity_year, total_rows, ACCT_ID_filled AS filled_count FROM #fc_181
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_ASSOC_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_181
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_ASSOC_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_181
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_ASSOC_DX' AS table_name, 'CPT_LINKED_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, CPT_LINKED_DX_ID_DX_NAME_filled AS filled_count FROM #fc_181
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_CODE' AS column_name, activity_year, total_rows, CPT_CODE_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_CODE_DATE' AS column_name, activity_year, total_rows, CPT_CODE_DATE_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_PERF_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, CPT_PERF_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_EVENT_NUMBER' AS column_name, activity_year, total_rows, CPT_EVENT_NUMBER_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_MODIFIERS' AS column_name, activity_year, total_rows, CPT_MODIFIERS_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'LMRP_CODE' AS column_name, activity_year, total_rows, LMRP_CODE_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_CODE_DESC' AS column_name, activity_year, total_rows, CPT_CODE_DESC_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_APC_FAC_RMB_AMT' AS column_name, activity_year, total_rows, PX_APC_FAC_RMB_AMT_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_OCE_EDIT_CODE' AS column_name, activity_year, total_rows, PX_OCE_EDIT_CODE_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_APC_CODE' AS column_name, activity_year, total_rows, PX_APC_CODE_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_HCFA_PAYMT_AMT' AS column_name, activity_year, total_rows, PX_HCFA_PAYMT_AMT_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_COPAY_AMT' AS column_name, activity_year, total_rows, PX_COPAY_AMT_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_REV_CODE_ID' AS column_name, activity_year, total_rows, PX_REV_CODE_ID_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'PX_REV_CODE_ID_REVENUE_CODE_NAME' AS column_name, activity_year, total_rows, PX_REV_CODE_ID_REVENUE_CODE_NAME_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_EXCLD_RPT_YN' AS column_name, activity_year, total_rows, CPT_EXCLD_RPT_YN_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_QUANTITY' AS column_name, activity_year, total_rows, CPT_QUANTITY_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_CODES' AS table_name, 'CPT_POS_TYPE_C_NAME' AS column_name, activity_year, total_rows, CPT_POS_TYPE_C_NAME_filled AS filled_count FROM #fc_182
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVCM' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_183
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVCM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_183
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVCM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_183
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVCM' AS table_name, 'CPT_OTHER_PROV_CMNT' AS column_name, activity_year, total_rows, CPT_OTHER_PROV_CMNT_filled AS filled_count FROM #fc_183
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVDR' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_184
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVDR' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_184
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVDR' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_184
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVDR' AS table_name, 'CPT_OTHER_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, CPT_OTHER_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_184
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVRO' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_185
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVRO' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_185
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVRO' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_185
+    UNION ALL
+    SELECT 'HSP_ACCT_CPT_PRVRO' AS table_name, 'CPT_OTHER_PROV_RL_C_NAME' AS column_name, activity_year, total_rows, CPT_OTHER_PROV_RL_C_NAME_filled AS filled_count FROM #fc_185
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_AFFECTS_DRG_YN' AS column_name, activity_year, total_rows, DX_AFFECTS_DRG_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_COMORBIDITY_YN' AS column_name, activity_year, total_rows, DX_COMORBIDITY_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'FINAL_DX_SOI_C_NAME' AS column_name, activity_year, total_rows, FINAL_DX_SOI_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'FINAL_DX_ROM_C_NAME' AS column_name, activity_year, total_rows, FINAL_DX_ROM_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'FINAL_DX_EXCLD_YN' AS column_name, activity_year, total_rows, FINAL_DX_EXCLD_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'FNL_DX_AFCT_SOI_YN' AS column_name, activity_year, total_rows, FNL_DX_AFCT_SOI_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'FNL_DX_AFCT_ROM_YN' AS column_name, activity_year, total_rows, FNL_DX_AFCT_ROM_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'FINAL_DX_POA_C_NAME' AS column_name, activity_year, total_rows, FINAL_DX_POA_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_COMORBIDITY_C_NAME' AS column_name, activity_year, total_rows, DX_COMORBIDITY_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_HAC_YN' AS column_name, activity_year, total_rows, DX_HAC_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_COF_C_NAME' AS column_name, activity_year, total_rows, DX_COF_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_COMPLEXITY_LVL' AS column_name, activity_year, total_rows, DX_COMPLEXITY_LVL_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'COMPLEX_DX_C_NAME' AS column_name, activity_year, total_rows, COMPLEX_DX_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_CLASS_C_NAME' AS column_name, activity_year, total_rows, DX_CLASS_C_NAME_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'CAUSE_DEATH_YN' AS column_name, activity_year, total_rows, CAUSE_DEATH_YN_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST' AS table_name, 'DX_CLUSTER' AS column_name, activity_year, total_rows, DX_CLUSTER_filled AS filled_count FROM #fc_186
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_AU_HACS' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_187
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_AU_HACS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_187
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_AU_HACS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_187
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_AU_HACS' AS table_name, 'DX_AU_HAC_CAT_C_NAME' AS column_name, activity_year, total_rows, DX_AU_HAC_CAT_C_NAME_filled AS filled_count FROM #fc_187
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_HACS' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_188
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_HACS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_188
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_HACS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_188
+    UNION ALL
+    SELECT 'HSP_ACCT_DX_LIST_HACS' AS table_name, 'DX_HAC_CAT_C_NAME' AS column_name, activity_year, total_rows, DX_HAC_CAT_C_NAME_filled AS filled_count FROM #fc_188
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ACCT_ID' AS column_name, activity_year, total_rows, ACCT_ID_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_ID' AS column_name, activity_year, total_rows, ICD_PX_ALT_ID_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_ID_ICD_PX_NAME' AS column_name, activity_year, total_rows, ICD_PX_ALT_ID_ICD_PX_NAME_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_DATE' AS column_name, activity_year, total_rows, ICD_PX_ALT_DATE_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, ICD_PX_ALT_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_EVNT_NUM' AS column_name, activity_year, total_rows, ICD_PX_ALT_EVNT_NUM_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_EXCLD_YN' AS column_name, activity_year, total_rows, ICD_PX_ALT_EXCLD_YN_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_AFSOI_YN' AS column_name, activity_year, total_rows, ICD_PX_ALT_AFSOI_YN_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_ACCT_ICDPX_ALT' AS table_name, 'ICD_PX_ALT_AFROM_YN' AS column_name, activity_year, total_rows, ICD_PX_ALT_AFROM_YN_filled AS filled_count FROM #fc_189
+    UNION ALL
+    SELECT 'HSP_BDC_APPEAL_DATES' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_190
+    UNION ALL
+    SELECT 'HSP_BDC_APPEAL_DATES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_190
+    UNION ALL
+    SELECT 'HSP_BDC_APPEAL_DATES' AS table_name, 'APPEAL_START_DATE' AS column_name, activity_year, total_rows, APPEAL_START_DATE_filled AS filled_count FROM #fc_190
+    UNION ALL
+    SELECT 'HSP_BDC_APPEAL_DATES' AS table_name, 'APPEAL_END_DATE' AS column_name, activity_year, total_rows, APPEAL_END_DATE_filled AS filled_count FROM #fc_190
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'LINE_COUNT' AS column_name, activity_year, total_rows, LINE_COUNT_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_INSTANT' AS column_name, activity_year, total_rows, CHNG_INSTANT_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_USER_ID' AS column_name, activity_year, total_rows, CHNG_USER_ID_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_USER_ID_NAME' AS column_name, activity_year, total_rows, CHNG_USER_ID_NAME_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_TYPE_C_NAME' AS column_name, activity_year, total_rows, CHNG_TYPE_C_NAME_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_SOURCE_VAL' AS column_name, activity_year, total_rows, CHNG_SOURCE_VAL_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_TARGET_VAL' AS column_name, activity_year, total_rows, CHNG_TARGET_VAL_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_FOLLOW_UP_DT' AS column_name, activity_year, total_rows, CHNG_FOLLOW_UP_DT_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'CHNG_COMMENTS' AS column_name, activity_year, total_rows, CHNG_COMMENTS_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CHNG_HX' AS table_name, 'BFH_ID' AS column_name, activity_year, total_rows, BFH_ID_filled AS filled_count FROM #fc_191
+    UNION ALL
+    SELECT 'HSP_BDC_CONTRIB_PMT' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_192
+    UNION ALL
+    SELECT 'HSP_BDC_CONTRIB_PMT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_192
+    UNION ALL
+    SELECT 'HSP_BDC_CONTRIB_PMT' AS table_name, 'CONTRIB_PMT_TX_ID' AS column_name, activity_year, total_rows, CONTRIB_PMT_TX_ID_filled AS filled_count FROM #fc_192
+    UNION ALL
+    SELECT 'HSP_BDC_CPT_CODE' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_193
+    UNION ALL
+    SELECT 'HSP_BDC_CPT_CODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_193
+    UNION ALL
+    SELECT 'HSP_BDC_CPT_CODE' AS table_name, 'CPT_CODE' AS column_name, activity_year, total_rows, CPT_CODE_filled AS filled_count FROM #fc_193
+    UNION ALL
+    SELECT 'HSP_BDC_CRSPNDNCE' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_194
+    UNION ALL
+    SELECT 'HSP_BDC_CRSPNDNCE' AS table_name, 'LINE_COUNT' AS column_name, activity_year, total_rows, LINE_COUNT_filled AS filled_count FROM #fc_194
+    UNION ALL
+    SELECT 'HSP_BDC_CRSPNDNCE' AS table_name, 'CRSPNDCE_TEXT' AS column_name, activity_year, total_rows, CRSPNDCE_TEXT_filled AS filled_count FROM #fc_194
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_COUNT' AS column_name, activity_year, total_rows, LINE_COUNT_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_ON_EOB' AS column_name, activity_year, total_rows, LINE_ON_EOB_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_BILLED_AMOUNT' AS column_name, activity_year, total_rows, LINE_BILLED_AMOUNT_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_ALLWD_AMT' AS column_name, activity_year, total_rows, LINE_ALLWD_AMT_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_PAID_AMT' AS column_name, activity_year, total_rows, LINE_PAID_AMT_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_DENIED_AMT' AS column_name, activity_year, total_rows, LINE_DENIED_AMT_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_COMMENTS' AS column_name, activity_year, total_rows, LINE_COMMENTS_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_REVENUE_CODE_ID' AS column_name, activity_year, total_rows, LINE_REVENUE_CODE_ID_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_REVENUE_CODE_ID_REVENUE_CODE_NAME' AS column_name, activity_year, total_rows, LINE_REVENUE_CODE_ID_REVENUE_CODE_NAME_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_CPT_CODE' AS column_name, activity_year, total_rows, LINE_CPT_CODE_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_PRIMARY_CHARGE_TX_ID' AS column_name, activity_year, total_rows, LINE_PRIMARY_CHARGE_TX_ID_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_SERVICE_DATE' AS column_name, activity_year, total_rows, LINE_SERVICE_DATE_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_QUANTITY' AS column_name, activity_year, total_rows, LINE_QUANTITY_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_ON_CLAIM' AS column_name, activity_year, total_rows, LINE_ON_CLAIM_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIAL_DATA' AS table_name, 'LINE_EXPECTED_ALLOWED_AMT' AS column_name, activity_year, total_rows, LINE_EXPECTED_ALLOWED_AMT_filled AS filled_count FROM #fc_195
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DATES' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_196
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DATES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_196
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DATES' AS table_name, 'DENIED_START_DATE' AS column_name, activity_year, total_rows, DENIED_START_DATE_filled AS filled_count FROM #fc_196
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DATES' AS table_name, 'DENIED_END_DATE' AS column_name, activity_year, total_rows, DENIED_END_DATE_filled AS filled_count FROM #fc_196
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DIAGNOSES' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_197
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_197
+    UNION ALL
+    SELECT 'HSP_BDC_DENIED_DIAGNOSES' AS table_name, 'DENIED_DIAGNOSIS' AS column_name, activity_year, total_rows, DENIED_DIAGNOSIS_filled AS filled_count FROM #fc_197
+    UNION ALL
+    SELECT 'HSP_BDC_DSC_RSN_CD' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_198
+    UNION ALL
+    SELECT 'HSP_BDC_DSC_RSN_CD' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_198
+    UNION ALL
+    SELECT 'HSP_BDC_DSC_RSN_CD' AS table_name, 'DISCP_RMC_CODE_ID' AS column_name, activity_year, total_rows, DISCP_RMC_CODE_ID_filled AS filled_count FROM #fc_198
+    UNION ALL
+    SELECT 'HSP_BDC_DSC_RSN_CD' AS table_name, 'DISCP_RMC_CODE_ID_REMIT_CODE_NAME' AS column_name, activity_year, total_rows, DISCP_RMC_CODE_ID_REMIT_CODE_NAME_filled AS filled_count FROM #fc_198
+    UNION ALL
+    SELECT 'HSP_BDC_DSC_RSN_CD' AS table_name, 'EXTL_DISCP_RSN_CD' AS column_name, activity_year, total_rows, EXTL_DISCP_RSN_CD_filled AS filled_count FROM #fc_198
+    UNION ALL
+    SELECT 'HSP_BDC_DSC_RSN_CD' AS table_name, 'DISP_GRP_CODE_C_NAME' AS column_name, activity_year, total_rows, DISP_GRP_CODE_C_NAME_filled AS filled_count FROM #fc_198
+    UNION ALL
+    SELECT 'HSP_BDC_IMAGING' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_199
+    UNION ALL
+    SELECT 'HSP_BDC_IMAGING' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_199
+    UNION ALL
+    SELECT 'HSP_BDC_IMAGING' AS table_name, 'BDC_IMAGE_MNE_C_NAME' AS column_name, activity_year, total_rows, BDC_IMAGE_MNE_C_NAME_filled AS filled_count FROM #fc_199
+    UNION ALL
+    SELECT 'HSP_BDC_IMAGING' AS table_name, 'IMAGE_KEY' AS column_name, activity_year, total_rows, IMAGE_KEY_filled AS filled_count FROM #fc_199
+    UNION ALL
+    SELECT 'HSP_BDC_IMAGING' AS table_name, 'IMAGE_PAGE_NUMBER' AS column_name, activity_year, total_rows, IMAGE_PAGE_NUMBER_filled AS filled_count FROM #fc_199
+    UNION ALL
+    SELECT 'HSP_BDC_IMAGING' AS table_name, 'BDC_PB_IMG_MNE_C_NAME' AS column_name, activity_year, total_rows, BDC_PB_IMG_MNE_C_NAME_filled AS filled_count FROM #fc_199
+    UNION ALL
+    SELECT 'HSP_BDC_LINE_MODIFIERS' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_200
+    UNION ALL
+    SELECT 'HSP_BDC_LINE_MODIFIERS' AS table_name, 'LINE_COUNT' AS column_name, activity_year, total_rows, LINE_COUNT_filled AS filled_count FROM #fc_200
+    UNION ALL
+    SELECT 'HSP_BDC_LINE_MODIFIERS' AS table_name, 'MOD_LINE' AS column_name, activity_year, total_rows, MOD_LINE_filled AS filled_count FROM #fc_200
+    UNION ALL
+    SELECT 'HSP_BDC_LINE_MODIFIERS' AS table_name, 'EXT_MODIFIER' AS column_name, activity_year, total_rows, EXT_MODIFIER_filled AS filled_count FROM #fc_200
+    UNION ALL
+    SELECT 'HSP_BDC_LINE_MODIFIERS' AS table_name, 'MODIFIER_ID' AS column_name, activity_year, total_rows, MODIFIER_ID_filled AS filled_count FROM #fc_200
+    UNION ALL
+    SELECT 'HSP_BDC_LINE_MODIFIERS' AS table_name, 'MODIFIER_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, MODIFIER_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_200
+    UNION ALL
+    SELECT 'HSP_BDC_PAYOR' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_201
+    UNION ALL
+    SELECT 'HSP_BDC_PAYOR' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_201
+    UNION ALL
+    SELECT 'HSP_BDC_PAYOR' AS table_name, 'PAYOR_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, PAYOR_ID_PAYOR_NAME_filled AS filled_count FROM #fc_201
+    UNION ALL
+    SELECT 'HSP_BDC_PROF_INV' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_202
+    UNION ALL
+    SELECT 'HSP_BDC_PROF_INV' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_202
+    UNION ALL
+    SELECT 'HSP_BDC_PROF_INV' AS table_name, 'PROF_INVOICE_NUM' AS column_name, activity_year, total_rows, PROF_INVOICE_NUM_filled AS filled_count FROM #fc_202
+    UNION ALL
+    SELECT 'HSP_BDC_RECV_TX' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_203
+    UNION ALL
+    SELECT 'HSP_BDC_RECV_TX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_203
+    UNION ALL
+    SELECT 'HSP_BDC_RECV_TX' AS table_name, 'RECV_PAYMENT_TX_ID' AS column_name, activity_year, total_rows, RECV_PAYMENT_TX_ID_filled AS filled_count FROM #fc_203
+    UNION ALL
+    SELECT 'HSP_BDC_RECV_TX' AS table_name, 'RECV_PAYMENT_TX_AMT' AS column_name, activity_year, total_rows, RECV_PAYMENT_TX_AMT_filled AS filled_count FROM #fc_203
+    UNION ALL
+    SELECT 'HSP_BDC_RECV_TX' AS table_name, 'PB_RECV_PMT_TX_ID' AS column_name, activity_year, total_rows, PB_RECV_PMT_TX_ID_filled AS filled_count FROM #fc_203
+    UNION ALL
+    SELECT 'HSP_BDC_REV_CODE' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_204
+    UNION ALL
+    SELECT 'HSP_BDC_REV_CODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_204
+    UNION ALL
+    SELECT 'HSP_BDC_REV_CODE' AS table_name, 'REVENUE_CODE_ID' AS column_name, activity_year, total_rows, REVENUE_CODE_ID_filled AS filled_count FROM #fc_204
+    UNION ALL
+    SELECT 'HSP_BDC_REV_CODE' AS table_name, 'REVENUE_CODE_ID_REVENUE_CODE_NAME' AS column_name, activity_year, total_rows, REVENUE_CODE_ID_REVENUE_CODE_NAME_filled AS filled_count FROM #fc_204
+    UNION ALL
+    SELECT 'HSP_BDC_WO_ADJ_TX' AS table_name, 'BDC_ID' AS column_name, activity_year, total_rows, BDC_ID_filled AS filled_count FROM #fc_205
+    UNION ALL
+    SELECT 'HSP_BDC_WO_ADJ_TX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_205
+    UNION ALL
+    SELECT 'HSP_BDC_WO_ADJ_TX' AS table_name, 'WRITE_OFF_ADJ_TX_ID' AS column_name, activity_year, total_rows, WRITE_OFF_ADJ_TX_ID_filled AS filled_count FROM #fc_205
+    UNION ALL
+    SELECT 'HSP_BDC_WO_ADJ_TX' AS table_name, 'WRITE_OFF_ADJ_AMT' AS column_name, activity_year, total_rows, WRITE_OFF_ADJ_AMT_filled AS filled_count FROM #fc_205
+    UNION ALL
+    SELECT 'HSP_BDC_WO_ADJ_TX' AS table_name, 'PB_WRITE_OFF_ADJ_TX_ID' AS column_name, activity_year, total_rows, PB_WRITE_OFF_ADJ_TX_ID_filled AS filled_count FROM #fc_205
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'APC_DISP_CLAIM_LINE' AS column_name, activity_year, total_rows, APC_DISP_CLAIM_LINE_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'APC_DISP_TEXT' AS column_name, activity_year, total_rows, APC_DISP_TEXT_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'APC_DISP_VALUE' AS column_name, activity_year, total_rows, APC_DISP_VALUE_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'APC_DISP_FORMULA' AS column_name, activity_year, total_rows, APC_DISP_FORMULA_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_DISP' AS table_name, 'APC_DISP_PMT_CLASS_GRP_C_NAME' AS column_name, activity_year, total_rows, APC_DISP_PMT_CLASS_GRP_C_NAME_filled AS filled_count FROM #fc_206
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'AMB_GROUPING_DTTM' AS column_name, activity_year, total_rows, AMB_GROUPING_DTTM_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'APC_EPIC_PMT_CLASS_GRP_C_NAME' AS column_name, activity_year, total_rows, APC_EPIC_PMT_CLASS_GRP_C_NAME_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'APC_EPIC_PCM_ID' AS column_name, activity_year, total_rows, APC_EPIC_PCM_ID_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'APC_EPIC_PCM_ID_PCM_NAME' AS column_name, activity_year, total_rows, APC_EPIC_PCM_ID_PCM_NAME_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_APC_GRP_META' AS table_name, 'APC_EPIC_PMT_CLASS_RATE_C_NAME' AS column_name, activity_year, total_rows, APC_EPIC_PMT_CLASS_RATE_C_NAME_filled AS filled_count FROM #fc_207
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_CAT_C_NAME' AS column_name, activity_year, total_rows, CLAIM_CAT_C_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'MAIL_NAME' AS column_name, activity_year, total_rows, MAIL_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'MAIL_CITY_STATE_ZIP' AS column_name, activity_year, total_rows, MAIL_CITY_STATE_ZIP_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'MAIL_PHONE' AS column_name, activity_year, total_rows, MAIL_PHONE_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'SRC_OF_ADDR_C_NAME' AS column_name, activity_year, total_rows, SRC_OF_ADDR_C_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'LINE_SOURCE_CLP_ID' AS column_name, activity_year, total_rows, LINE_SOURCE_CLP_ID_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'PARTIAL_CLAIM_YN' AS column_name, activity_year, total_rows, PARTIAL_CLAIM_YN_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'ORIG_HAR_RES_ACT_ID' AS column_name, activity_year, total_rows, ORIG_HAR_RES_ACT_ID_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'EXPECTED_PYMT' AS column_name, activity_year, total_rows, EXPECTED_PYMT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'DRG_ID' AS column_name, activity_year, total_rows, DRG_ID_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'DRG_ID_DRG_NAME' AS column_name, activity_year, total_rows, DRG_ID_DRG_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_BILLED_AMOUNT' AS column_name, activity_year, total_rows, CLAIM_BILLED_AMOUNT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_CONTRACTUAL' AS column_name, activity_year, total_rows, CLM_CONTRACTUAL_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_EXPECTED_PRICE' AS column_name, activity_year, total_rows, CLM_EXPECTED_PRICE_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_PMT_METHOD_C_NAME' AS column_name, activity_year, total_rows, CLAIM_PMT_METHOD_C_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_PRIM_PMT_RATE' AS column_name, activity_year, total_rows, CLAIM_PRIM_PMT_RATE_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_PRIMARY_CVD_QTY' AS column_name, activity_year, total_rows, CLM_PRIMARY_CVD_QTY_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_ADDL_PMT_MTHDS' AS column_name, activity_year, total_rows, CLM_ADDL_PMT_MTHDS_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_ADDL_PMT_RATES' AS column_name, activity_year, total_rows, CLM_ADDL_PMT_RATES_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_ADDL_CVD_QTY' AS column_name, activity_year, total_rows, CLM_ADDL_CVD_QTY_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_LINE_PNLTY_PER' AS column_name, activity_year, total_rows, CLM_LINE_PNLTY_PER_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_LATE_DAYS' AS column_name, activity_year, total_rows, CLAIM_LATE_DAYS_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_SUB_PNLTY_PER' AS column_name, activity_year, total_rows, CLM_SUB_PNLTY_PER_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_U_AND_C_AMT' AS column_name, activity_year, total_rows, CLM_U_AND_C_AMT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_INS_PORTION' AS column_name, activity_year, total_rows, CLAIM_INS_PORTION_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_PATIENT_PORTION' AS column_name, activity_year, total_rows, CLM_PATIENT_PORTION_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_MTHD_DESC' AS column_name, activity_year, total_rows, CLAIM_MTHD_DESC_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLAIM_TERM_DESC' AS column_name, activity_year, total_rows, CLAIM_TERM_DESC_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'OPERATING_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, OPERATING_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CONTRACT_ID' AS column_name, activity_year, total_rows, CONTRACT_ID_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CONTRACT_ID_CONTRACT_NAME' AS column_name, activity_year, total_rows, CONTRACT_ID_CONTRACT_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CONTRACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTRACT_DATE_REAL_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CONTRACT_USED_DT' AS column_name, activity_year, total_rows, CONTRACT_USED_DT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CONTRACT_NOT_USED' AS column_name, activity_year, total_rows, CONTRACT_NOT_USED_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'EDITED_TOB' AS column_name, activity_year, total_rows, EDITED_TOB_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'EDITED_EOB' AS column_name, activity_year, total_rows, EDITED_EOB_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'MAIL_ADDR1' AS column_name, activity_year, total_rows, MAIL_ADDR1_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'MAIL_ADDR2' AS column_name, activity_year, total_rows, MAIL_ADDR2_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'REIMB_COST_THRESH' AS column_name, activity_year, total_rows, REIMB_COST_THRESH_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'REIMB_COST_OUT' AS column_name, activity_year, total_rows, REIMB_COST_OUT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'REIMB_DAY_THRESH' AS column_name, activity_year, total_rows, REIMB_DAY_THRESH_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'REIMB_DAY_OUT' AS column_name, activity_year, total_rows, REIMB_DAY_OUT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'REIMB_OTH_THRESH' AS column_name, activity_year, total_rows, REIMB_OTH_THRESH_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'REIMB_OTH_OUT' AS column_name, activity_year, total_rows, REIMB_OTH_OUT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'MAIL_COUNTRY_C_NAME' AS column_name, activity_year, total_rows, MAIL_COUNTRY_C_NAME_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'EXPECT_PAT_RESP_AMT' AS column_name, activity_year, total_rows, EXPECT_PAT_RESP_AMT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL1' AS table_name, 'CLM_CAP_XR_REDUCT' AS column_name, activity_year, total_rows, CLM_CAP_XR_REDUCT_filled AS filled_count FROM #fc_208
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SA_ID_LOC_NAME' AS column_name, activity_year, total_rows, SA_ID_LOC_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'INACTV_CLP_YN' AS column_name, activity_year, total_rows, INACTV_CLP_YN_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_ACCEPT_DTTM' AS column_name, activity_year, total_rows, CLAIM_ACCEPT_DTTM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_PAYOR_ID_PAYOR_NAME' AS column_name, activity_year, total_rows, SG_PAYOR_ID_PAYOR_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_PLAN_ID_BENEFIT_PLAN_NAME' AS column_name, activity_year, total_rows, SG_PLAN_ID_BENEFIT_PLAN_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_CVG_ID' AS column_name, activity_year, total_rows, SG_CVG_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'INVOICE_NUM' AS column_name, activity_year, total_rows, INVOICE_NUM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_PAT_ID' AS column_name, activity_year, total_rows, SG_PAT_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_GR_ACCT_ID' AS column_name, activity_year, total_rows, SG_GR_ACCT_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'HOSPITAL_ACCT_ID' AS column_name, activity_year, total_rows, HOSPITAL_ACCT_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'HLB_ID' AS column_name, activity_year, total_rows, HLB_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, SG_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_REF_SRC_ID' AS column_name, activity_year, total_rows, SG_REF_SRC_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_REF_SRC_ID_REFERRING_PROV_NAM' AS column_name, activity_year, total_rows, SG_REF_SRC_ID_REFERRING_PROV_NAM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_LOC_ID_LOC_NAME' AS column_name, activity_year, total_rows, SG_LOC_ID_LOC_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_DEP_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, SG_DEP_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_POS_ID_LOC_NAME' AS column_name, activity_year, total_rows, SG_POS_ID_LOC_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_CLM_ID' AS column_name, activity_year, total_rows, SG_CLM_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_RQG_ID' AS column_name, activity_year, total_rows, SG_RQG_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_CLASS_C_NAME' AS column_name, activity_year, total_rows, CLAIM_CLASS_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_BASE_CLASS_C_NAME' AS column_name, activity_year, total_rows, CLAIM_BASE_CLASS_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'MIN_SERVICE_DT' AS column_name, activity_year, total_rows, MIN_SERVICE_DT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'MAX_SERVICE_DT' AS column_name, activity_year, total_rows, MAX_SERVICE_DT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_FROM_DT' AS column_name, activity_year, total_rows, UB_FROM_DT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_THROUGH_DT' AS column_name, activity_year, total_rows, UB_THROUGH_DT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_TYPE_C_NAME' AS column_name, activity_year, total_rows, CLAIM_TYPE_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_FRM_TYPE_C_NAME' AS column_name, activity_year, total_rows, CLAIM_FRM_TYPE_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'TTL_CHRGS_AMT' AS column_name, activity_year, total_rows, TTL_CHRGS_AMT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'TTL_DUE_AMT' AS column_name, activity_year, total_rows, TTL_DUE_AMT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'TTL_NONCVD_AMT' AS column_name, activity_year, total_rows, TTL_NONCVD_AMT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'TTL_PMT_AMT' AS column_name, activity_year, total_rows, TTL_PMT_AMT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'TTL_ADJ_AMT' AS column_name, activity_year, total_rows, TTL_ADJ_AMT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_BILL_TYPE' AS column_name, activity_year, total_rows, UB_BILL_TYPE_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'HM_HLTH_BILL_TYP_C_NAME' AS column_name, activity_year, total_rows, HM_HLTH_BILL_TYP_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_SG_GRP_NUM' AS column_name, activity_year, total_rows, UB_SG_GRP_NUM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CNCL_CLAIM' AS column_name, activity_year, total_rows, CNCL_CLAIM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'REPL_CLAIM' AS column_name, activity_year, total_rows, REPL_CLAIM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_CVD_DAYS' AS column_name, activity_year, total_rows, UB_CVD_DAYS_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_COINS_DAYS' AS column_name, activity_year, total_rows, UB_COINS_DAYS_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_NON_CVD_DAYS' AS column_name, activity_year, total_rows, UB_NON_CVD_DAYS_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_PRINC_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, UB_PRINC_DX_ID_DX_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CNCL_CLAIM_CODE' AS column_name, activity_year, total_rows, CNCL_CLAIM_CODE_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'REPL_CLAIM_CODE' AS column_name, activity_year, total_rows, REPL_CLAIM_CODE_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_ALTPYR_CLM_YN' AS column_name, activity_year, total_rows, SG_ALTPYR_CLM_YN_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'FILING_ORDER_C_NAME' AS column_name, activity_year, total_rows, FILING_ORDER_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLM_EXT_VAL_ID' AS column_name, activity_year, total_rows, CLM_EXT_VAL_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SG_TREAT_PLAN_ID' AS column_name, activity_year, total_rows, SG_TREAT_PLAN_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'UB_COMB_CLM_TYP_C_NAME' AS column_name, activity_year, total_rows, UB_COMB_CLM_TYP_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'REND_PROV_ID_PROV_NAME' AS column_name, activity_year, total_rows, REND_PROV_ID_PROV_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'RESEARCH_ID_RESEARCH_STUDY_NAME' AS column_name, activity_year, total_rows, RESEARCH_ID_RESEARCH_STUDY_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SRC_INV_NUM' AS column_name, activity_year, total_rows, SRC_INV_NUM_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_TAX_AMOUNT' AS column_name, activity_year, total_rows, CLAIM_TAX_AMOUNT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'DRG_XR_AMOUNT' AS column_name, activity_year, total_rows, DRG_XR_AMOUNT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'DRG_TAX_AMOUNT' AS column_name, activity_year, total_rows, DRG_TAX_AMOUNT_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLAIM_APEC_OUTLIER' AS column_name, activity_year, total_rows, CLAIM_APEC_OUTLIER_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SNF_CLAIM_TYPE_C_NAME' AS column_name, activity_year, total_rows, SNF_CLAIM_TYPE_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'DEPT_TYPE_C_NAME' AS column_name, activity_year, total_rows, DEPT_TYPE_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLM_REBILL_REASON_C_NAME' AS column_name, activity_year, total_rows, CLM_REBILL_REASON_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLM_REBILL_USER_ID' AS column_name, activity_year, total_rows, CLM_REBILL_USER_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLM_REBILL_USER_ID_NAME' AS column_name, activity_year, total_rows, CLM_REBILL_USER_ID_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'FAC_ACTOR_TYPE_C_NAME' AS column_name, activity_year, total_rows, FAC_ACTOR_TYPE_C_NAME_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'BENEFIT_RECORD_ID' AS column_name, activity_year, total_rows, BENEFIT_RECORD_ID_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'PREDICTED_PAY_DATE' AS column_name, activity_year, total_rows, PREDICTED_PAY_DATE_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'SUGGESTED_FOL_UP_DATE' AS column_name, activity_year, total_rows, SUGGESTED_FOL_UP_DATE_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'CLM_CLOSED_TIMELY_YN' AS column_name, activity_year, total_rows, CLM_CLOSED_TIMELY_YN_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL2' AS table_name, 'REIMB_DRG_SOI' AS column_name, activity_year, total_rows, REIMB_DRG_SOI_filled AS filled_count FROM #fc_209
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL3' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_210
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL3' AS table_name, 'CH_SENT_DATE' AS column_name, activity_year, total_rows, CH_SENT_DATE_filled AS filled_count FROM #fc_210
+    UNION ALL
+    SELECT 'HSP_CLAIM_DETAIL3' AS table_name, 'PAYER_RECEIVED_DATE' AS column_name, activity_year, total_rows, PAYER_RECEIVED_DATE_filled AS filled_count FROM #fc_210
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'CLAIM_PX_LINE_NUM' AS column_name, activity_year, total_rows, CLAIM_PX_LINE_NUM_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'SERVICE_TYPE_ID' AS column_name, activity_year, total_rows, SERVICE_TYPE_ID_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'SERVICE_TYPE_ID_SERVICE_TYPE_NAME' AS column_name, activity_year, total_rows, SERVICE_TYPE_ID_SERVICE_TYPE_NAME_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'SERVICE_TYPE_SOURCE_DESC' AS column_name, activity_year, total_rows, SERVICE_TYPE_SOURCE_DESC_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'DEDUCTIBLE_AMOUNT' AS column_name, activity_year, total_rows, DEDUCTIBLE_AMOUNT_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'COPAY_AMOUNT' AS column_name, activity_year, total_rows, COPAY_AMOUNT_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'COINSURANCE_AMOUNT' AS column_name, activity_year, total_rows, COINSURANCE_AMOUNT_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'NON_COVERED_AMOUNT' AS column_name, activity_year, total_rows, NON_COVERED_AMOUNT_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'NON_COVERED_RSN_C_NAME' AS column_name, activity_year, total_rows, NON_COVERED_RSN_C_NAME_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'ANNUAL_MOOP_CONTRIB_AMOUNT' AS column_name, activity_year, total_rows, ANNUAL_MOOP_CONTRIB_AMOUNT_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'VISIT_MOOP_CONTRIB_AMOUNT' AS column_name, activity_year, total_rows, VISIT_MOOP_CONTRIB_AMOUNT_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PAT_RESP' AS table_name, 'OUT_OF_POCKET_LMT_RSN_C_NAME' AS column_name, activity_year, total_rows, OUT_OF_POCKET_LMT_RSN_C_NAME_filled AS filled_count FROM #fc_211
+    UNION ALL
+    SELECT 'HSP_CLAIM_PRINT' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_212
+    UNION ALL
+    SELECT 'HSP_CLAIM_PRINT' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_212
+    UNION ALL
+    SELECT 'HSP_CLAIM_PRINT' AS table_name, 'HSP_ACCOUNT_ID' AS column_name, activity_year, total_rows, HSP_ACCOUNT_ID_filled AS filled_count FROM #fc_212
+    UNION ALL
+    SELECT 'HSP_CLAIM_PRINT' AS table_name, 'CM_PHY_OWN_ID' AS column_name, activity_year, total_rows, CM_PHY_OWN_ID_filled AS filled_count FROM #fc_212
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_DISP' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_213
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_DISP' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_213
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_DISP' AS table_name, 'XR_DISP_LINE_NUM' AS column_name, activity_year, total_rows, XR_DISP_LINE_NUM_filled AS filled_count FROM #fc_213
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_DISP' AS table_name, 'XR_DISP_DESCRIPTION' AS column_name, activity_year, total_rows, XR_DISP_DESCRIPTION_filled AS filled_count FROM #fc_213
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_DISP' AS table_name, 'XR_DISP_AMT' AS column_name, activity_year, total_rows, XR_DISP_AMT_filled AS filled_count FROM #fc_213
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'COST_OUT_PMT_TOTAL' AS column_name, activity_year, total_rows, COST_OUT_PMT_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'COST_OUT_PMT_CAND' AS column_name, activity_year, total_rows, COST_OUT_PMT_CAND_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'IMPLANT_PMT_TOTAL' AS column_name, activity_year, total_rows, IMPLANT_PMT_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'PHY_TRANS_PMT_TOTAL' AS column_name, activity_year, total_rows, PHY_TRANS_PMT_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'COST_OUT_TAX_TOTAL' AS column_name, activity_year, total_rows, COST_OUT_TAX_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'ADD_ON_TAX_TOTAL' AS column_name, activity_year, total_rows, ADD_ON_TAX_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'SUPPLY_ADD_ON_PMT_TOTAL' AS column_name, activity_year, total_rows, SUPPLY_ADD_ON_PMT_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLAIM_XR_VARS' AS table_name, 'DRUG_ADD_ON_PMT_TOTAL' AS column_name, activity_year, total_rows, DRUG_ADD_ON_PMT_TOTAL_filled AS filled_count FROM #fc_214
+    UNION ALL
+    SELECT 'HSP_CLP_CMS_LINE_DX' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_215
+    UNION ALL
+    SELECT 'HSP_CLP_CMS_LINE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_215
+    UNION ALL
+    SELECT 'HSP_CLP_CMS_LINE_DX' AS table_name, 'LINE_DX_SVC_LINE' AS column_name, activity_year, total_rows, LINE_DX_SVC_LINE_filled AS filled_count FROM #fc_215
+    UNION ALL
+    SELECT 'HSP_CLP_CMS_LINE_DX' AS table_name, 'LINE_DX_PIECE' AS column_name, activity_year, total_rows, LINE_DX_PIECE_filled AS filled_count FROM #fc_215
+    UNION ALL
+    SELECT 'HSP_CLP_CMS_LINE_DX' AS table_name, 'LINE_DX_POINTER' AS column_name, activity_year, total_rows, LINE_DX_POINTER_filled AS filled_count FROM #fc_215
+    UNION ALL
+    SELECT 'HSP_CLP_DIAGNOSIS' AS table_name, 'CLAIM_PRINT_ID' AS column_name, activity_year, total_rows, CLAIM_PRINT_ID_filled AS filled_count FROM #fc_216
+    UNION ALL
+    SELECT 'HSP_CLP_DIAGNOSIS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_216
+    UNION ALL
+    SELECT 'HSP_CLP_DIAGNOSIS' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_216
+    UNION ALL
+    SELECT 'HSP_CLP_DIAGNOSIS' AS table_name, 'DX_POA_C_NAME' AS column_name, activity_year, total_rows, DX_POA_C_NAME_filled AS filled_count FROM #fc_216
+    UNION ALL
+    SELECT 'HSP_PRE_AR_DX' AS table_name, 'HTT_ID' AS column_name, activity_year, total_rows, HTT_ID_filled AS filled_count FROM #fc_217
+    UNION ALL
+    SELECT 'HSP_PRE_AR_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_217
+    UNION ALL
+    SELECT 'HSP_PRE_AR_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_217
+    UNION ALL
+    SELECT 'HSP_PRE_AR_DX' AS table_name, 'DX_QUAL_HA_C_NAME' AS column_name, activity_year, total_rows, DX_QUAL_HA_C_NAME_filled AS filled_count FROM #fc_217
+    UNION ALL
+    SELECT 'ICD_EVNT_INTRP_CMT' AS table_name, 'IMPLANT_ID' AS column_name, activity_year, total_rows, IMPLANT_ID_filled AS filled_count FROM #fc_218
+    UNION ALL
+    SELECT 'ICD_EVNT_INTRP_CMT' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_218
+    UNION ALL
+    SELECT 'ICD_EVNT_INTRP_CMT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_218
+    UNION ALL
+    SELECT 'ICD_EVNT_INTRP_CMT' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_218
+    UNION ALL
+    SELECT 'ICD_EVNT_INTRP_CMT' AS table_name, 'ICD_EVENT_INTERPRET' AS column_name, activity_year, total_rows, ICD_EVENT_INTERPRET_filled AS filled_count FROM #fc_218
+    UNION ALL
+    SELECT 'ICD_POCKET_CMT' AS table_name, 'IMPLANT_ID' AS column_name, activity_year, total_rows, IMPLANT_ID_filled AS filled_count FROM #fc_219
+    UNION ALL
+    SELECT 'ICD_POCKET_CMT' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_219
+    UNION ALL
+    SELECT 'ICD_POCKET_CMT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_219
+    UNION ALL
+    SELECT 'ICD_POCKET_CMT' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_219
+    UNION ALL
+    SELECT 'ICD_POCKET_CMT' AS table_name, 'ICD_POCKET_CMT' AS column_name, activity_year, total_rows, ICD_POCKET_CMT_filled AS filled_count FROM #fc_219
+    UNION ALL
+    SELECT 'INV_DX_INFO' AS table_name, 'INVOICE_ID' AS column_name, activity_year, total_rows, INVOICE_ID_filled AS filled_count FROM #fc_220
+    UNION ALL
+    SELECT 'INV_DX_INFO' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_220
+    UNION ALL
+    SELECT 'INV_DX_INFO' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_220
+    UNION ALL
+    SELECT 'INV_DX_INFO' AS table_name, 'INV_NUM' AS column_name, activity_year, total_rows, INV_NUM_filled AS filled_count FROM #fc_220
+    UNION ALL
+    SELECT 'INV_DX_INFO' AS table_name, 'INV_NUM_100_GRP_LN' AS column_name, activity_year, total_rows, INV_NUM_100_GRP_LN_filled AS filled_count FROM #fc_220
+    UNION ALL
+    SELECT 'LAB_CASE_RESULT_DX' AS table_name, 'CASE_ID' AS column_name, activity_year, total_rows, CASE_ID_filled AS filled_count FROM #fc_221
+    UNION ALL
+    SELECT 'LAB_CASE_RESULT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_221
+    UNION ALL
+    SELECT 'LAB_CASE_RESULT_DX' AS table_name, 'RESULT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, RESULT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_221
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODES' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_222
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODES' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_222
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODES' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_222
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODES' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_222
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODES' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_222
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODE_SYSTEMS' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_223
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODE_SYSTEMS' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_223
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODE_SYSTEMS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_223
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODE_SYSTEMS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_223
+    UNION ALL
+    SELECT 'MED_ALL_DX_CODE_SYSTEMS' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_223
+    UNION ALL
+    SELECT 'MED_ALL_DX_IDS' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_224
+    UNION ALL
+    SELECT 'MED_ALL_DX_IDS' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_224
+    UNION ALL
+    SELECT 'MED_ALL_DX_IDS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_224
+    UNION ALL
+    SELECT 'MED_ALL_DX_IDS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_224
+    UNION ALL
+    SELECT 'MED_ALL_DX_IDS' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_224
+    UNION ALL
+    SELECT 'MED_ALL_DX_IDS' AS table_name, 'MED_ALL_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, MED_ALL_DX_ID_DX_NAME_filled AS filled_count FROM #fc_224
+    UNION ALL
+    SELECT 'MED_CVG_DX_VALUE' AS table_name, 'MED_ESTIMATE_ID' AS column_name, activity_year, total_rows, MED_ESTIMATE_ID_filled AS filled_count FROM #fc_225
+    UNION ALL
+    SELECT 'MED_CVG_DX_VALUE' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_225
+    UNION ALL
+    SELECT 'MED_CVG_DX_VALUE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_225
+    UNION ALL
+    SELECT 'MED_CVG_DX_VALUE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_225
+    UNION ALL
+    SELECT 'MED_CVG_DX_VALUE' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_225
+    UNION ALL
+    SELECT 'MED_CVG_DX_VALUE' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_225
+    UNION ALL
+    SELECT 'MED_DISPENSE_DX' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_226
+    UNION ALL
+    SELECT 'MED_DISPENSE_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_226
+    UNION ALL
+    SELECT 'MED_DISPENSE_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_226
+    UNION ALL
+    SELECT 'MED_DISPENSE_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_226
+    UNION ALL
+    SELECT 'MED_DISPENSE_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_226
+    UNION ALL
+    SELECT 'MED_DISPENSE_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_226
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODES' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_227
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODES' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_227
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODES' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_227
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODES' AS table_name, 'MED_DISP_ALL_DX' AS column_name, activity_year, total_rows, MED_DISP_ALL_DX_filled AS filled_count FROM #fc_227
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODE_SYS' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_228
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODE_SYS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_228
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODE_SYS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_228
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_CODE_SYS' AS table_name, 'MED_DIS_ALL_DX_SYS' AS column_name, activity_year, total_rows, MED_DIS_ALL_DX_SYS_filled AS filled_count FROM #fc_228
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_IDS' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_229
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_IDS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_229
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_IDS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_229
+    UNION ALL
+    SELECT 'MED_DISP_ALL_DX_IDS' AS table_name, 'MED_DISP_ALL_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, MED_DISP_ALL_DX_ID_DX_NAME_filled AS filled_count FROM #fc_229
+    UNION ALL
+    SELECT 'MED_THERAPY_PROB_DX' AS table_name, 'PROBLEM_ID' AS column_name, activity_year, total_rows, PROBLEM_ID_filled AS filled_count FROM #fc_230
+    UNION ALL
+    SELECT 'MED_THERAPY_PROB_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_230
+    UNION ALL
+    SELECT 'MED_THERAPY_PROB_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_230
+    UNION ALL
+    SELECT 'MED_THERAPY_PROB_DX' AS table_name, 'PROBLEM_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, PROBLEM_DX_ID_DX_NAME_filled AS filled_count FROM #fc_230
+    UNION ALL
+    SELECT 'MED_THERAPY_PROB_DX' AS table_name, 'PROB_DIAG_SOURCE_C_NAME' AS column_name, activity_year, total_rows, PROB_DIAG_SOURCE_C_NAME_filled AS filled_count FROM #fc_230
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'PROBLEM_ID' AS column_name, activity_year, total_rows, PROBLEM_ID_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'AUTO_EVAL_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, AUTO_EVAL_DX_ID_DX_NAME_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'PROB_DIAG_SOURCE_C_NAME' AS column_name, activity_year, total_rows, PROB_DIAG_SOURCE_C_NAME_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'PROBLEM_LIST_ID' AS column_name, activity_year, total_rows, PROBLEM_LIST_ID_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'INVOICE_ID' AS column_name, activity_year, total_rows, INVOICE_ID_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'SURGICAL_LOG_ID' AS column_name, activity_year, total_rows, SURGICAL_LOG_ID_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'SURGICAL_CASE_ID' AS column_name, activity_year, total_rows, SURGICAL_CASE_ID_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DIAGNOSES' AS table_name, 'DX_DATE_FILED_DATE' AS column_name, activity_year, total_rows, DX_DATE_FILED_DATE_filled AS filled_count FROM #fc_231
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_EXT_REF' AS table_name, 'PROBLEM_ID' AS column_name, activity_year, total_rows, PROBLEM_ID_filled AS filled_count FROM #fc_232
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_EXT_REF' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_232
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_EXT_REF' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_232
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_EXT_REF' AS table_name, 'DX_EXT_REF_IDENT' AS column_name, activity_year, total_rows, DX_EXT_REF_IDENT_filled AS filled_count FROM #fc_232
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_SRC_ORG' AS table_name, 'PROBLEM_ID' AS column_name, activity_year, total_rows, PROBLEM_ID_filled AS filled_count FROM #fc_233
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_SRC_ORG' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_233
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_SRC_ORG' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_233
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_SRC_ORG' AS table_name, 'DX_SOURCE_ORG_ID' AS column_name, activity_year, total_rows, DX_SOURCE_ORG_ID_filled AS filled_count FROM #fc_233
+    UNION ALL
+    SELECT 'MTP_AUTO_EVAL_DX_SRC_ORG' AS table_name, 'DX_SOURCE_ORG_ID_EXTERNAL_NAME' AS column_name, activity_year, total_rows, DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled AS filled_count FROM #fc_233
+    UNION ALL
+    SELECT 'MULT_DISC_DX' AS table_name, 'PROBLEM_ID_NAME' AS column_name, activity_year, total_rows, PROBLEM_ID_NAME_filled AS filled_count FROM #fc_234
+    UNION ALL
+    SELECT 'MULT_DISC_DX' AS table_name, 'NAME' AS column_name, activity_year, total_rows, NAME_filled AS filled_count FROM #fc_234
+    UNION ALL
+    SELECT 'MULT_DISC_DX' AS table_name, 'DISPLAY_NAME' AS column_name, activity_year, total_rows, DISPLAY_NAME_filled AS filled_count FROM #fc_234
+    UNION ALL
+    SELECT 'NOTES_PROC_PRE_DX' AS table_name, 'NOTE_ID' AS column_name, activity_year, total_rows, NOTE_ID_filled AS filled_count FROM #fc_235
+    UNION ALL
+    SELECT 'NOTES_PROC_PRE_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_235
+    UNION ALL
+    SELECT 'NOTES_PROC_PRE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_235
+    UNION ALL
+    SELECT 'NOTES_PROC_PRE_DX' AS table_name, 'PROC_NOTE_PRE_DX_DX_NAME' AS column_name, activity_year, total_rows, PROC_NOTE_PRE_DX_DX_NAME_filled AS filled_count FROM #fc_235
+    UNION ALL
+    SELECT 'NOTES_PROC_PST_DX' AS table_name, 'NOTE_ID' AS column_name, activity_year, total_rows, NOTE_ID_filled AS filled_count FROM #fc_236
+    UNION ALL
+    SELECT 'NOTES_PROC_PST_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_236
+    UNION ALL
+    SELECT 'NOTES_PROC_PST_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_236
+    UNION ALL
+    SELECT 'NOTES_PROC_PST_DX' AS table_name, 'PROC_NOTE_PST_DX_DX_NAME' AS column_name, activity_year, total_rows, PROC_NOTE_PST_DX_DX_NAME_filled AS filled_count FROM #fc_236
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_CPT' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_237
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_CPT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_237
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_CPT' AS table_name, 'NSQIP_FST_REOP_INF_SRC_C_NAME' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_INF_SRC_C_NAME_filled AS filled_count FROM #fc_237
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_CPT' AS table_name, 'NSQIP_FST_REOP_CPT' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_CPT_filled AS filled_count FROM #fc_237
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_CPT' AS table_name, 'NSQIP_FST_REOP_PROC_DESC' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_PROC_DESC_filled AS filled_count FROM #fc_237
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD10' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_238
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD10' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_238
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD10' AS table_name, 'NSQIP_FST_REOP_ICD10' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_ICD10_filled AS filled_count FROM #fc_238
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD10' AS table_name, 'NSQIP_FST_REOP_ICD10_DX_DESC' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_ICD10_DX_DESC_filled AS filled_count FROM #fc_238
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD9' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_239
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD9' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_239
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD9' AS table_name, 'NSQIP_FST_REOP_ICD9' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_ICD9_filled AS filled_count FROM #fc_239
+    UNION ALL
+    SELECT 'NSQIP_FIRST_REOP_ICD9' AS table_name, 'NSQIP_FST_REOP_DX_DESC' AS column_name, activity_year, total_rows, NSQIP_FST_REOP_DX_DESC_filled AS filled_count FROM #fc_239
+    UNION ALL
+    SELECT 'NSQIP_RETURN_DX_COMMENTS' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_240
+    UNION ALL
+    SELECT 'NSQIP_RETURN_DX_COMMENTS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_240
+    UNION ALL
+    SELECT 'NSQIP_RETURN_DX_COMMENTS' AS table_name, 'NSQIP_RETURN_DX_COMMENTS' AS column_name, activity_year, total_rows, NSQIP_RETURN_DX_COMMENTS_filled AS filled_count FROM #fc_240
+    UNION ALL
+    SELECT 'NSQIP_RETURN_ICD10_CODES' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_241
+    UNION ALL
+    SELECT 'NSQIP_RETURN_ICD10_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_241
+    UNION ALL
+    SELECT 'NSQIP_RETURN_ICD10_CODES' AS table_name, 'NSQIP_RETURN_ICD10_CODES' AS column_name, activity_year, total_rows, NSQIP_RETURN_ICD10_CODES_filled AS filled_count FROM #fc_241
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_CPT' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_242
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_CPT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_242
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_CPT' AS table_name, 'NSQIP_SEC_REOP_INF_SRC_C_NAME' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_INF_SRC_C_NAME_filled AS filled_count FROM #fc_242
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_CPT' AS table_name, 'NSQIP_SEC_REOP_CPT' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_CPT_filled AS filled_count FROM #fc_242
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_CPT' AS table_name, 'NSQIP_SEC_REOP_PROC_DESC' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_PROC_DESC_filled AS filled_count FROM #fc_242
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD10' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_243
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD10' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_243
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD10' AS table_name, 'NSQIP_SEC_REOP_ICD10' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_ICD10_filled AS filled_count FROM #fc_243
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD10' AS table_name, 'NSQIP_SEC_REOP_ICD10_DX_DESC' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_ICD10_DX_DESC_filled AS filled_count FROM #fc_243
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD9' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_244
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD9' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_244
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD9' AS table_name, 'NSQIP_SEC_REOP_ICD9' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_ICD9_filled AS filled_count FROM #fc_244
+    UNION ALL
+    SELECT 'NSQIP_SECOND_REOP_ICD9' AS table_name, 'NSQIP_SEC_REOP_DX_DESC' AS column_name, activity_year, total_rows, NSQIP_SEC_REOP_DX_DESC_filled AS filled_count FROM #fc_244
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'ORDER_MED_ID' AS column_name, activity_year, total_rows, ORDER_MED_ID_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'DX_CHRONIC_YN' AS column_name, activity_year, total_rows, DX_CHRONIC_YN_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_MED' AS table_name, 'COMMENTS' AS column_name, activity_year, total_rows, COMMENTS_filled AS filled_count FROM #fc_245
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'ORDER_PROC_ID' AS column_name, activity_year, total_rows, ORDER_PROC_ID_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'COMMENTS' AS column_name, activity_year, total_rows, COMMENTS_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'DX_CHRONIC_YN' AS column_name, activity_year, total_rows, DX_CHRONIC_YN_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'ASSOC_DX_DESC' AS column_name, activity_year, total_rows, ASSOC_DX_DESC_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_DX_PROC' AS table_name, 'ASSOC_REQ_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ASSOC_REQ_DX_ID_DX_NAME_filled AS filled_count FROM #fc_246
+    UNION ALL
+    SELECT 'ORDER_ORIG_RX_DX' AS table_name, 'ORDER_ID' AS column_name, activity_year, total_rows, ORDER_ID_filled AS filled_count FROM #fc_247
+    UNION ALL
+    SELECT 'ORDER_ORIG_RX_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_247
+    UNION ALL
+    SELECT 'ORDER_ORIG_RX_DX' AS table_name, 'ORIG_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ORIG_DX_ID_DX_NAME_filled AS filled_count FROM #fc_247
+    UNION ALL
+    SELECT 'ORDER_RAD_DX' AS table_name, 'ORDER_ID' AS column_name, activity_year, total_rows, ORDER_ID_filled AS filled_count FROM #fc_248
+    UNION ALL
+    SELECT 'ORDER_RAD_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_248
+    UNION ALL
+    SELECT 'ORDER_RAD_DX' AS table_name, 'RIS_DIAGNOSES_ID_DX_NAME' AS column_name, activity_year, total_rows, RIS_DIAGNOSES_ID_DX_NAME_filled AS filled_count FROM #fc_248
+    UNION ALL
+    SELECT 'OR_CASE_CPT_TXT' AS table_name, 'CASE_ID' AS column_name, activity_year, total_rows, CASE_ID_filled AS filled_count FROM #fc_249
+    UNION ALL
+    SELECT 'OR_CASE_CPT_TXT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_249
+    UNION ALL
+    SELECT 'OR_CASE_CPT_TXT' AS table_name, 'CPT_CODE_TXT' AS column_name, activity_year, total_rows, CPT_CODE_TXT_filled AS filled_count FROM #fc_249
+    UNION ALL
+    SELECT 'OR_CASE_DIAGNOSTIC_PROC' AS table_name, 'CASE_ID' AS column_name, activity_year, total_rows, CASE_ID_filled AS filled_count FROM #fc_250
+    UNION ALL
+    SELECT 'OR_CASE_DIAGNOSTIC_PROC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_250
+    UNION ALL
+    SELECT 'OR_CASE_DIAGNOSTIC_PROC' AS table_name, 'DIAGNOSTIC_PROC_C_NAME' AS column_name, activity_year, total_rows, DIAGNOSTIC_PROC_C_NAME_filled AS filled_count FROM #fc_250
+    UNION ALL
+    SELECT 'OR_CASE_DX_CODE' AS table_name, 'OR_CASE_ID' AS column_name, activity_year, total_rows, OR_CASE_ID_filled AS filled_count FROM #fc_251
+    UNION ALL
+    SELECT 'OR_CASE_DX_CODE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_251
+    UNION ALL
+    SELECT 'OR_CASE_DX_CODE' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_251
+    UNION ALL
+    SELECT 'OR_IMP_DIAGNOSIS' AS table_name, 'IMPLANT_ID' AS column_name, activity_year, total_rows, IMPLANT_ID_filled AS filled_count FROM #fc_252
+    UNION ALL
+    SELECT 'OR_IMP_DIAGNOSIS' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_252
+    UNION ALL
+    SELECT 'OR_IMP_DIAGNOSIS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_252
+    UNION ALL
+    SELECT 'OR_IMP_DIAGNOSIS' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_252
+    UNION ALL
+    SELECT 'OR_IMP_DIAGNOSIS' AS table_name, 'IMPLANT_DIAGNOSIS_C_NAME' AS column_name, activity_year, total_rows, IMPLANT_DIAGNOSIS_C_NAME_filled AS filled_count FROM #fc_252
+    UNION ALL
+    SELECT 'OR_IMP_ICD_PACEMAKER_RATE' AS table_name, 'IMPLANT_ID' AS column_name, activity_year, total_rows, IMPLANT_ID_filled AS filled_count FROM #fc_253
+    UNION ALL
+    SELECT 'OR_IMP_ICD_PACEMAKER_RATE' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_253
+    UNION ALL
+    SELECT 'OR_IMP_ICD_PACEMAKER_RATE' AS table_name, 'ICD_PACEMAKER_RATE_TYPE_C_NAME' AS column_name, activity_year, total_rows, ICD_PACEMAKER_RATE_TYPE_C_NAME_filled AS filled_count FROM #fc_253
+    UNION ALL
+    SELECT 'OR_LNLG_ANINF_CPT' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_254
+    UNION ALL
+    SELECT 'OR_LNLG_ANINF_CPT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_254
+    UNION ALL
+    SELECT 'OR_LNLG_ANINF_CPT' AS table_name, 'ANES_INFO_CPTM_ID_PROC_NAME' AS column_name, activity_year, total_rows, ANES_INFO_CPTM_ID_PROC_NAME_filled AS filled_count FROM #fc_254
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_ORP_ID' AS column_name, activity_year, total_rows, DX_ORP_ID_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_ORP_ID_PROC_NAME' AS column_name, activity_year, total_rows, DX_ORP_ID_PROC_NAME_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_LATERALITY_C_NAME' AS column_name, activity_year, total_rows, DX_LATERALITY_C_NAME_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_PRIMARY_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_PRIMARY_DX_ID_DX_NAME_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_PROC_PANEL' AS column_name, activity_year, total_rows, DX_PROC_PANEL_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_CPT_CODE_2_ID_PROC_NAME' AS column_name, activity_year, total_rows, DX_CPT_CODE_2_ID_PROC_NAME_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_CPT_CODE_3_ID_PROC_NAME' AS column_name, activity_year, total_rows, DX_CPT_CODE_3_ID_PROC_NAME_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_QTY' AS column_name, activity_year, total_rows, DX_QTY_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAGNOSIS' AS table_name, 'DX_PROC_TYPE_C_NAME' AS column_name, activity_year, total_rows, DX_PROC_TYPE_C_NAME_filled AS filled_count FROM #fc_255
+    UNION ALL
+    SELECT 'OR_LNLG_DIAG_CPTS' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_256
+    UNION ALL
+    SELECT 'OR_LNLG_DIAG_CPTS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_256
+    UNION ALL
+    SELECT 'OR_LNLG_DIAG_CPTS' AS table_name, 'DX_CPT_CODE_1_ID_PROC_NAME' AS column_name, activity_year, total_rows, DX_CPT_CODE_1_ID_PROC_NAME_filled AS filled_count FROM #fc_256
+    UNION ALL
+    SELECT 'OR_LOG_DIAGNOSTIC_PROC' AS table_name, 'LOG_ID' AS column_name, activity_year, total_rows, LOG_ID_filled AS filled_count FROM #fc_257
+    UNION ALL
+    SELECT 'OR_LOG_DIAGNOSTIC_PROC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_257
+    UNION ALL
+    SELECT 'OR_LOG_DIAGNOSTIC_PROC' AS table_name, 'DIAGNOSTIC_PROCEDURES_C_NAME' AS column_name, activity_year, total_rows, DIAGNOSTIC_PROCEDURES_C_NAME_filled AS filled_count FROM #fc_257
+    UNION ALL
+    SELECT 'OR_LOG_DIAGNOSTIC_PROC_FT' AS table_name, 'LOG_ID' AS column_name, activity_year, total_rows, LOG_ID_filled AS filled_count FROM #fc_258
+    UNION ALL
+    SELECT 'OR_LOG_DIAGNOSTIC_PROC_FT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_258
+    UNION ALL
+    SELECT 'OR_LOG_DIAGNOSTIC_PROC_FT' AS table_name, 'DIAGNOSTIC_PROCEDURES_FT' AS column_name, activity_year, total_rows, DIAGNOSTIC_PROCEDURES_FT_filled AS filled_count FROM #fc_258
+    UNION ALL
+    SELECT 'OR_LOG_LN_DIAGNOS' AS table_name, 'LOG_ID' AS column_name, activity_year, total_rows, LOG_ID_filled AS filled_count FROM #fc_259
+    UNION ALL
+    SELECT 'OR_LOG_LN_DIAGNOS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_259
+    UNION ALL
+    SELECT 'OR_LOG_LN_DIAGNOS' AS table_name, 'DX_PROC_INFO_ID' AS column_name, activity_year, total_rows, DX_PROC_INFO_ID_filled AS filled_count FROM #fc_259
+    UNION ALL
+    SELECT 'OR_OPE_CODE_DIAGNOSIS' AS table_name, 'OPE_ID' AS column_name, activity_year, total_rows, OPE_ID_filled AS filled_count FROM #fc_260
+    UNION ALL
+    SELECT 'OR_OPE_CODE_DIAGNOSIS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_260
+    UNION ALL
+    SELECT 'OR_OPE_CODE_DIAGNOSIS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_260
+    UNION ALL
+    SELECT 'OR_OPE_CODE_DIAGNOSIS' AS table_name, 'PROC_CODE_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, PROC_CODE_DX_ID_DX_NAME_filled AS filled_count FROM #fc_260
+    UNION ALL
+    SELECT 'OTP_DX_ASSOC' AS table_name, 'OTP_ID' AS column_name, activity_year, total_rows, OTP_ID_filled AS filled_count FROM #fc_261
+    UNION ALL
+    SELECT 'OTP_DX_ASSOC' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_261
+    UNION ALL
+    SELECT 'OTP_DX_ASSOC' AS table_name, 'ASSOC_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ASSOC_DX_ID_DX_NAME_filled AS filled_count FROM #fc_261
+    UNION ALL
+    SELECT 'OTP_DX_ASSOC' AS table_name, 'ASSOC_DX_DESC' AS column_name, activity_year, total_rows, ASSOC_DX_DESC_filled AS filled_count FROM #fc_261
+    UNION ALL
+    SELECT 'OTP_DX_ASSOC' AS table_name, 'ASSOC_DX_COMMENT' AS column_name, activity_year, total_rows, ASSOC_DX_COMMENT_filled AS filled_count FROM #fc_261
+    UNION ALL
+    SELECT 'PAS_TRIAGE_DX_HX' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_262
+    UNION ALL
+    SELECT 'PAS_TRIAGE_DX_HX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_262
+    UNION ALL
+    SELECT 'PAS_TRIAGE_DX_HX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_262
+    UNION ALL
+    SELECT 'PAS_TRIAGE_DX_HX' AS table_name, 'PAS_TRI_HX_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, PAS_TRI_HX_DX_ID_DX_NAME_filled AS filled_count FROM #fc_262
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DIFF_DX_ID_DX_NAME_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_DX_DESC' AS column_name, activity_year, total_rows, DIFF_DX_DESC_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DIFF_DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_DX_STATUS_C_NAME' AS column_name, activity_year, total_rows, DIFF_DX_STATUS_C_NAME_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_DX_COMMENT' AS column_name, activity_year, total_rows, DIFF_DX_COMMENT_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_DX_UNIQUE' AS column_name, activity_year, total_rows, DIFF_DX_UNIQUE_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DIFF_CHRONIC_YN' AS column_name, activity_year, total_rows, DIFF_CHRONIC_YN_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_DIFF_DX' AS table_name, 'DDX_LINK_PROB_ID' AS column_name, activity_year, total_rows, DDX_LINK_PROB_ID_filled AS filled_count FROM #fc_263
+    UNION ALL
+    SELECT 'PAT_ENC_ADMIT_DX_AUDIT' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_264
+    UNION ALL
+    SELECT 'PAT_ENC_ADMIT_DX_AUDIT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_264
+    UNION ALL
+    SELECT 'PAT_ENC_ADMIT_DX_AUDIT' AS table_name, 'ADMISSION_DX_EDIT_UTC_DTTM' AS column_name, activity_year, total_rows, ADMISSION_DX_EDIT_UTC_DTTM_filled AS filled_count FROM #fc_264
+    UNION ALL
+    SELECT 'PAT_ENC_APPT_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_265
+    UNION ALL
+    SELECT 'PAT_ENC_APPT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_265
+    UNION ALL
+    SELECT 'PAT_ENC_APPT_DX' AS table_name, 'PAT_ID' AS column_name, activity_year, total_rows, PAT_ID_filled AS filled_count FROM #fc_265
+    UNION ALL
+    SELECT 'PAT_ENC_APPT_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_265
+    UNION ALL
+    SELECT 'PAT_ENC_APPT_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_265
+    UNION ALL
+    SELECT 'PAT_ENC_APPT_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_265
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'ANNOTATION' AS column_name, activity_year, total_rows, ANNOTATION_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DX_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'PRIMARY_DX_YN' AS column_name, activity_year, total_rows, PRIMARY_DX_YN_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'COMMENTS' AS column_name, activity_year, total_rows, COMMENTS_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_CHRONIC_YN' AS column_name, activity_year, total_rows, DX_CHRONIC_YN_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_STAGE_ID' AS column_name, activity_year, total_rows, DX_STAGE_ID_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_UNIQUE' AS column_name, activity_year, total_rows, DX_UNIQUE_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_ED_YN' AS column_name, activity_year, total_rows, DX_ED_YN_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_DX' AS table_name, 'DX_LINK_PROB_ID' AS column_name, activity_year, total_rows, DX_LINK_PROB_ID_filled AS filled_count FROM #fc_266
+    UNION ALL
+    SELECT 'PAT_ENC_EM_CODE_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_267
+    UNION ALL
+    SELECT 'PAT_ENC_EM_CODE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_267
+    UNION ALL
+    SELECT 'PAT_ENC_EM_CODE_DX' AS table_name, 'PAT_ENC_DATE_REAL' AS column_name, activity_year, total_rows, PAT_ENC_DATE_REAL_filled AS filled_count FROM #fc_267
+    UNION ALL
+    SELECT 'PAT_ENC_EM_CODE_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_267
+    UNION ALL
+    SELECT 'PAT_ENC_EM_CODE_DX' AS table_name, 'EM_CODE_LINE' AS column_name, activity_year, total_rows, EM_CODE_LINE_filled AS filled_count FROM #fc_267
+    UNION ALL
+    SELECT 'PAT_ENC_EM_CODE_DX' AS table_name, 'DX_UNIQUE' AS column_name, activity_year, total_rows, DX_UNIQUE_filled AS filled_count FROM #fc_267
+    UNION ALL
+    SELECT 'PAT_ENC_LOS_DX' AS table_name, 'PAT_ENC_CSN_ID' AS column_name, activity_year, total_rows, PAT_ENC_CSN_ID_filled AS filled_count FROM #fc_268
+    UNION ALL
+    SELECT 'PAT_ENC_LOS_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_268
+    UNION ALL
+    SELECT 'PAT_ENC_LOS_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_268
+    UNION ALL
+    SELECT 'PAT_ENC_LOS_DX' AS table_name, 'DX_UNIQUE' AS column_name, activity_year, total_rows, DX_UNIQUE_filled AS filled_count FROM #fc_268
+    UNION ALL
+    SELECT 'PAT_RSN_VISIT_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_269
+    UNION ALL
+    SELECT 'PAT_RSN_VISIT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_269
+    UNION ALL
+    SELECT 'PAT_RSN_VISIT_DX' AS table_name, 'PAT_RSN_VISIT_QUAL' AS column_name, activity_year, total_rows, PAT_RSN_VISIT_QUAL_filled AS filled_count FROM #fc_269
+    UNION ALL
+    SELECT 'PAT_RSN_VISIT_DX' AS table_name, 'PAT_RSN_VISIT_DX' AS column_name, activity_year, total_rows, PAT_RSN_VISIT_DX_filled AS filled_count FROM #fc_269
+    UNION ALL
+    SELECT 'POC_HSPC_DX' AS table_name, 'POC_ID' AS column_name, activity_year, total_rows, POC_ID_filled AS filled_count FROM #fc_270
+    UNION ALL
+    SELECT 'POC_HSPC_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_270
+    UNION ALL
+    SELECT 'POC_HSPC_DX' AS table_name, 'POC_HSPC_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, POC_HSPC_DX_ID_DX_NAME_filled AS filled_count FROM #fc_270
+    UNION ALL
+    SELECT 'POC_HSPC_DX_RELATED' AS table_name, 'POC_ID' AS column_name, activity_year, total_rows, POC_ID_filled AS filled_count FROM #fc_271
+    UNION ALL
+    SELECT 'POC_HSPC_DX_RELATED' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_271
+    UNION ALL
+    SELECT 'POC_HSPC_DX_RELATED' AS table_name, 'HOSPICE_RELATED_C_NAME' AS column_name, activity_year, total_rows, HOSPICE_RELATED_C_NAME_filled AS filled_count FROM #fc_271
+    UNION ALL
+    SELECT 'PRE_AR_ORG_DX' AS table_name, 'TAR_ID' AS column_name, activity_year, total_rows, TAR_ID_filled AS filled_count FROM #fc_272
+    UNION ALL
+    SELECT 'PRE_AR_ORG_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_272
+    UNION ALL
+    SELECT 'PRE_AR_ORG_DX' AS table_name, 'ORG_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ORG_DX_ID_DX_NAME_filled AS filled_count FROM #fc_272
+    UNION ALL
+    SELECT 'PRE_AR_ORG_DX' AS table_name, 'ORG_DX_QUAL_C_NAME' AS column_name, activity_year, total_rows, ORG_DX_QUAL_C_NAME_filled AS filled_count FROM #fc_272
+    UNION ALL
+    SELECT 'RECONCILE_MA_RA_DX_INFO' AS table_name, 'CLAIM_RECON_ID' AS column_name, activity_year, total_rows, CLAIM_RECON_ID_filled AS filled_count FROM #fc_273
+    UNION ALL
+    SELECT 'RECONCILE_MA_RA_DX_INFO' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_273
+    UNION ALL
+    SELECT 'RECONCILE_MA_RA_DX_INFO' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_273
+    UNION ALL
+    SELECT 'RECONCILE_MA_RA_DX_INFO' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_273
+    UNION ALL
+    SELECT 'RECONCILE_MA_RA_DX_INFO' AS table_name, 'MA_RA_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, MA_RA_DX_ID_DX_NAME_filled AS filled_count FROM #fc_273
+    UNION ALL
+    SELECT 'RECONCILE_MA_RA_DX_INFO' AS table_name, 'MA_RA_DX_FLAG_C_NAME' AS column_name, activity_year, total_rows, MA_RA_DX_FLAG_C_NAME_filled AS filled_count FROM #fc_273
+    UNION ALL
+    SELECT 'REFERRAL_CE_DX_TXT' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_274
+    UNION ALL
+    SELECT 'REFERRAL_CE_DX_TXT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_274
+    UNION ALL
+    SELECT 'REFERRAL_CE_DX_TXT' AS table_name, 'AUDIT_DIAGNOSIS_TXT' AS column_name, activity_year, total_rows, AUDIT_DIAGNOSIS_TXT_filled AS filled_count FROM #fc_274
+    UNION ALL
+    SELECT 'REFERRAL_DX' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_275
+    UNION ALL
+    SELECT 'REFERRAL_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_275
+    UNION ALL
+    SELECT 'REFERRAL_DX' AS table_name, 'DX_ID_DX_NAME' AS column_name, activity_year, total_rows, DX_ID_DX_NAME_filled AS filled_count FROM #fc_275
+    UNION ALL
+    SELECT 'REFERRAL_DX' AS table_name, 'DX_TEXT' AS column_name, activity_year, total_rows, DX_TEXT_filled AS filled_count FROM #fc_275
+    UNION ALL
+    SELECT 'REFERRAL_DX' AS table_name, 'DX_CODE_TYPE_C_NAME' AS column_name, activity_year, total_rows, DX_CODE_TYPE_C_NAME_filled AS filled_count FROM #fc_275
+    UNION ALL
+    SELECT 'REFERRAL_DX_MODIFIERS' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_276
+    UNION ALL
+    SELECT 'REFERRAL_DX_MODIFIERS' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_276
+    UNION ALL
+    SELECT 'REFERRAL_DX_MODIFIERS' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_276
+    UNION ALL
+    SELECT 'REFERRAL_DX_MODIFIERS' AS table_name, 'DX_MODIFIER_ID' AS column_name, activity_year, total_rows, DX_MODIFIER_ID_filled AS filled_count FROM #fc_276
+    UNION ALL
+    SELECT 'REFERRAL_DX_MODIFIERS' AS table_name, 'DX_MODIFIER_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, DX_MODIFIER_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_276
+    UNION ALL
+    SELECT 'REFERRAL_DX_NOTES' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_277
+    UNION ALL
+    SELECT 'REFERRAL_DX_NOTES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_277
+    UNION ALL
+    SELECT 'REFERRAL_DX_NOTES' AS table_name, 'REFERRAL_DX_NOTES' AS column_name, activity_year, total_rows, REFERRAL_DX_NOTES_filled AS filled_count FROM #fc_277
+    UNION ALL
+    SELECT 'REMOVED_CLAIM_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_278
+    UNION ALL
+    SELECT 'REMOVED_CLAIM_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_278
+    UNION ALL
+    SELECT 'REMOVED_CLAIM_DX' AS table_name, 'REMOVED_CLAIM_DX' AS column_name, activity_year, total_rows, REMOVED_CLAIM_DX_filled AS filled_count FROM #fc_278
+    UNION ALL
+    SELECT 'REQ_DIAGNOSIS' AS table_name, 'REQUISITION_ID' AS column_name, activity_year, total_rows, REQUISITION_ID_filled AS filled_count FROM #fc_279
+    UNION ALL
+    SELECT 'REQ_DIAGNOSIS' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_279
+    UNION ALL
+    SELECT 'REQ_DIAGNOSIS' AS table_name, 'ASSOCIATED_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ASSOCIATED_DX_ID_DX_NAME_filled AS filled_count FROM #fc_279
+    UNION ALL
+    SELECT 'RFL_DX_PRIM_MODS_TXT' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_280
+    UNION ALL
+    SELECT 'RFL_DX_PRIM_MODS_TXT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_280
+    UNION ALL
+    SELECT 'RFL_DX_PRIM_MODS_TXT' AS table_name, 'PRIMARY_DX_MOD_TXT' AS column_name, activity_year, total_rows, PRIMARY_DX_MOD_TXT_filled AS filled_count FROM #fc_280
+    UNION ALL
+    SELECT 'RFL_DX_TXT' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_281
+    UNION ALL
+    SELECT 'RFL_DX_TXT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_281
+    UNION ALL
+    SELECT 'RFL_DX_TXT' AS table_name, 'RFL_DX_TEXT' AS column_name, activity_year, total_rows, RFL_DX_TEXT_filled AS filled_count FROM #fc_281
+    UNION ALL
+    SELECT 'RFL_PRI_DX_MOD' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_282
+    UNION ALL
+    SELECT 'RFL_PRI_DX_MOD' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_282
+    UNION ALL
+    SELECT 'RFL_PRI_DX_MOD' AS table_name, 'PRIMARY_DX_MOD_ID' AS column_name, activity_year, total_rows, PRIMARY_DX_MOD_ID_filled AS filled_count FROM #fc_282
+    UNION ALL
+    SELECT 'RFL_PRI_DX_MOD' AS table_name, 'PRIMARY_DX_MOD_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_282
+    UNION ALL
+    SELECT 'RISK_ADJ_EVAL_VERS_INFO' AS table_name, 'SUMMARY_DATA_ID' AS column_name, activity_year, total_rows, SUMMARY_DATA_ID_filled AS filled_count FROM #fc_283
+    UNION ALL
+    SELECT 'RISK_ADJ_EVAL_VERS_INFO' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_283
+    UNION ALL
+    SELECT 'RXA_DX_INFO' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_284
+    UNION ALL
+    SELECT 'RXA_DX_INFO' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_284
+    UNION ALL
+    SELECT 'RXA_DX_INFO' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_284
+    UNION ALL
+    SELECT 'RXA_DX_INFO' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_284
+    UNION ALL
+    SELECT 'RXA_DX_INFO' AS table_name, 'DX_CODE_QUALIFIER_C_NAME' AS column_name, activity_year, total_rows, DX_CODE_QUALIFIER_C_NAME_filled AS filled_count FROM #fc_284
+    UNION ALL
+    SELECT 'RXA_DX_INFO' AS table_name, 'DX_CODE' AS column_name, activity_year, total_rows, DX_CODE_filled AS filled_count FROM #fc_284
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'O_DX_CODE_QUAL_ID' AS column_name, activity_year, total_rows, O_DX_CODE_QUAL_ID_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME' AS column_name, activity_year, total_rows, O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'O_DX_CODE' AS column_name, activity_year, total_rows, O_DX_CODE_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXA_DX_OUT' AS table_name, 'CM_CT_OWNER_ID' AS column_name, activity_year, total_rows, CM_CT_OWNER_ID_filled AS filled_count FROM #fc_285
+    UNION ALL
+    SELECT 'RXFILL_DIAGNOSES' AS table_name, 'MED_PRBLM_LIST_ID' AS column_name, activity_year, total_rows, MED_PRBLM_LIST_ID_filled AS filled_count FROM #fc_286
+    UNION ALL
+    SELECT 'RXFILL_DIAGNOSES' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_286
+    UNION ALL
+    SELECT 'RXFILL_DIAGNOSES' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_286
+    UNION ALL
+    SELECT 'RXFILL_DIAGNOSES' AS table_name, 'RXFILL_DIAGNOSES_ID_DX_NAME' AS column_name, activity_year, total_rows, RXFILL_DIAGNOSES_ID_DX_NAME_filled AS filled_count FROM #fc_286
+    UNION ALL
+    SELECT 'RX_DISPENSE_DX' AS table_name, 'ORDER_ID' AS column_name, activity_year, total_rows, ORDER_ID_filled AS filled_count FROM #fc_287
+    UNION ALL
+    SELECT 'RX_DISPENSE_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_287
+    UNION ALL
+    SELECT 'RX_DISPENSE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_287
+    UNION ALL
+    SELECT 'RX_DISPENSE_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_287
+    UNION ALL
+    SELECT 'RX_DISPENSE_DX' AS table_name, 'RX_DISPENSE_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, RX_DISPENSE_DX_ID_DX_NAME_filled AS filled_count FROM #fc_287
+    UNION ALL
+    SELECT 'RX_TRANSFER_DENIAL_REASON' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_288
+    UNION ALL
+    SELECT 'RX_TRANSFER_DENIAL_REASON' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_288
+    UNION ALL
+    SELECT 'RX_TRANSFER_DENIAL_REASON' AS table_name, 'EXFER_DENIAL_REASON' AS column_name, activity_year, total_rows, EXFER_DENIAL_REASON_filled AS filled_count FROM #fc_288
+    UNION ALL
+    SELECT 'RX_XFER_DENIAL_RSN_CODES' AS table_name, 'DOCUMENT_ID' AS column_name, activity_year, total_rows, DOCUMENT_ID_filled AS filled_count FROM #fc_289
+    UNION ALL
+    SELECT 'RX_XFER_DENIAL_RSN_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_289
+    UNION ALL
+    SELECT 'RX_XFER_DENIAL_RSN_CODES' AS table_name, 'RXTRANS_DENIAL_ID' AS column_name, activity_year, total_rows, RXTRANS_DENIAL_ID_filled AS filled_count FROM #fc_289
+    UNION ALL
+    SELECT 'RX_XFER_DENIAL_RSN_CODES' AS table_name, 'RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME' AS column_name, activity_year, total_rows, RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled AS filled_count FROM #fc_289
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'REGISTRY_DATA_ID' AS column_name, activity_year, total_rows, REGISTRY_DATA_ID_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, RYN_WHT_DX_ID_DX_NAME_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_DATE' AS column_name, activity_year, total_rows, RYN_WHT_DX_DATE_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_RESOLVED_DATE' AS column_name, activity_year, total_rows, RYN_WHT_DX_RESOLVED_DATE_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_ASSESSMENT_C_NAME' AS column_name, activity_year, total_rows, RYN_WHT_DX_ASSESSMENT_C_NAME_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_COMMENT' AS column_name, activity_year, total_rows, RYN_WHT_DX_COMMENT_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_PROBLEM' AS column_name, activity_year, total_rows, RYN_WHT_DX_PROBLEM_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'RYAN_WHITE_DX' AS table_name, 'RYN_WHT_DX_STATUS_C_NAME' AS column_name, activity_year, total_rows, RYN_WHT_DX_STATUS_C_NAME_filled AS filled_count FROM #fc_290
+    UNION ALL
+    SELECT 'SAR_INFO_DX' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_291
+    UNION ALL
+    SELECT 'SAR_INFO_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_291
+    UNION ALL
+    SELECT 'SAR_INFO_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_291
+    UNION ALL
+    SELECT 'SAR_INFO_DX' AS table_name, 'CCS_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, CCS_DX_ID_DX_NAME_filled AS filled_count FROM #fc_291
+    UNION ALL
+    SELECT 'SPEC_ARCH_DX_CMT' AS table_name, 'SPECIMEN_ID' AS column_name, activity_year, total_rows, SPECIMEN_ID_filled AS filled_count FROM #fc_292
+    UNION ALL
+    SELECT 'SPEC_ARCH_DX_CMT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_292
+    UNION ALL
+    SELECT 'SPEC_ARCH_DX_CMT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_292
+    UNION ALL
+    SELECT 'SPEC_ARCH_DX_CMT' AS table_name, 'ARCH_ORD_DX_CMT' AS column_name, activity_year, total_rows, ARCH_ORD_DX_CMT_filled AS filled_count FROM #fc_292
+    UNION ALL
+    SELECT 'SPEC_ARCH_ORD_DX' AS table_name, 'SPECIMEN_ID' AS column_name, activity_year, total_rows, SPECIMEN_ID_filled AS filled_count FROM #fc_293
+    UNION ALL
+    SELECT 'SPEC_ARCH_ORD_DX' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_293
+    UNION ALL
+    SELECT 'SPEC_ARCH_ORD_DX' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_293
+    UNION ALL
+    SELECT 'SPEC_ARCH_ORD_DX' AS table_name, 'ARCH_ORD_DX_ID_DX_NAME' AS column_name, activity_year, total_rows, ARCH_ORD_DX_ID_DX_NAME_filled AS filled_count FROM #fc_293
+    UNION ALL
+    SELECT 'SPEC_DX_CODES' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_294
+    UNION ALL
+    SELECT 'SPEC_DX_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_294
+    UNION ALL
+    SELECT 'SPEC_DX_CODES' AS table_name, 'SPEC_DX_CODE_ID_DX_NAME' AS column_name, activity_year, total_rows, SPEC_DX_CODE_ID_DX_NAME_filled AS filled_count FROM #fc_294
+    UNION ALL
+    SELECT 'SPEC_SECTION_DX_CODES' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_295
+    UNION ALL
+    SELECT 'SPEC_SECTION_DX_CODES' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_295
+    UNION ALL
+    SELECT 'SPEC_SECTION_DX_CODES' AS table_name, 'SPEC_SECTION_DX_CODE_ID_DX_NAME' AS column_name, activity_year, total_rows, SPEC_SECTION_DX_CODE_ID_DX_NAME_filled AS filled_count FROM #fc_295
+    UNION ALL
+    SELECT 'TIMEOUT_POST_OP_DX' AS table_name, 'RECORD_ID' AS column_name, activity_year, total_rows, RECORD_ID_filled AS filled_count FROM #fc_296
+    UNION ALL
+    SELECT 'TIMEOUT_POST_OP_DX' AS table_name, 'CONTACT_DATE_REAL' AS column_name, activity_year, total_rows, CONTACT_DATE_REAL_filled AS filled_count FROM #fc_296
+    UNION ALL
+    SELECT 'TIMEOUT_POST_OP_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_296
+    UNION ALL
+    SELECT 'TIMEOUT_POST_OP_DX' AS table_name, 'CONTACT_DATE' AS column_name, activity_year, total_rows, CONTACT_DATE_filled AS filled_count FROM #fc_296
+    UNION ALL
+    SELECT 'TIMEOUT_POST_OP_DX' AS table_name, 'POST_OP_DX_REVIEW_C_NAME' AS column_name, activity_year, total_rows, POST_OP_DX_REVIEW_C_NAME_filled AS filled_count FROM #fc_296
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_CODE_TYPE' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_297
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_CODE_TYPE' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_297
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_CODE_TYPE' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_297
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_CODE_TYPE' AS table_name, 'TRI_HX_DX_TYPE_C_NAME' AS column_name, activity_year, total_rows, TRI_HX_DX_TYPE_C_NAME_filled AS filled_count FROM #fc_297
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_TXT' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_298
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_TXT' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_298
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_TXT' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_298
+    UNION ALL
+    SELECT 'TRIAGE_HX_DX_TXT' AS table_name, 'TRI_HX_DX_TXT' AS column_name, activity_year, total_rows, TRI_HX_DX_TXT_filled AS filled_count FROM #fc_298
+    UNION ALL
+    SELECT 'TRIAGE_HX_RFL_DX_MOD' AS table_name, 'REFERRAL_ID' AS column_name, activity_year, total_rows, REFERRAL_ID_filled AS filled_count FROM #fc_299
+    UNION ALL
+    SELECT 'TRIAGE_HX_RFL_DX_MOD' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_299
+    UNION ALL
+    SELECT 'TRIAGE_HX_RFL_DX_MOD' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_299
+    UNION ALL
+    SELECT 'TRIAGE_HX_RFL_DX_MOD' AS table_name, 'TRIAGE_HX_DX_MOD_ID' AS column_name, activity_year, total_rows, TRIAGE_HX_DX_MOD_ID_filled AS filled_count FROM #fc_299
+    UNION ALL
+    SELECT 'TRIAGE_HX_RFL_DX_MOD' AS table_name, 'TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME' AS column_name, activity_year, total_rows, TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled AS filled_count FROM #fc_299
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX' AS table_name, 'SUMMARY_BLOCK_ID' AS column_name, activity_year, total_rows, SUMMARY_BLOCK_ID_filled AS filled_count FROM #fc_300
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_300
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX' AS table_name, 'RETXP_DX_ORGAN_C_NAME' AS column_name, activity_year, total_rows, RETXP_DX_ORGAN_C_NAME_filled AS filled_count FROM #fc_300
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX' AS table_name, 'RETXP_PRIMARY_DX_C_NAME' AS column_name, activity_year, total_rows, RETXP_PRIMARY_DX_C_NAME_filled AS filled_count FROM #fc_300
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX' AS table_name, 'RETXP_PRIMARY_DX_OTHR' AS column_name, activity_year, total_rows, RETXP_PRIMARY_DX_OTHR_filled AS filled_count FROM #fc_300
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX' AS table_name, 'RETXP_SEC_DX_OTHR' AS column_name, activity_year, total_rows, RETXP_SEC_DX_OTHR_filled AS filled_count FROM #fc_300
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX_RM' AS table_name, 'SUMMARY_BLOCK_ID' AS column_name, activity_year, total_rows, SUMMARY_BLOCK_ID_filled AS filled_count FROM #fc_301
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX_RM' AS table_name, 'GROUP_LINE' AS column_name, activity_year, total_rows, GROUP_LINE_filled AS filled_count FROM #fc_301
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX_RM' AS table_name, 'VALUE_LINE' AS column_name, activity_year, total_rows, VALUE_LINE_filled AS filled_count FROM #fc_301
+    UNION ALL
+    SELECT 'TXP_RETRANSPLANT_DX_RM' AS table_name, 'RETXP_SEC_DX_C_NAME' AS column_name, activity_year, total_rows, RETXP_SEC_DX_C_NAME_filled AS filled_count FROM #fc_301
+    UNION ALL
+    SELECT 'UNIV_CHG_LN_DX' AS table_name, 'UCL_ID' AS column_name, activity_year, total_rows, UCL_ID_filled AS filled_count FROM #fc_302
+    UNION ALL
+    SELECT 'UNIV_CHG_LN_DX' AS table_name, 'LINE' AS column_name, activity_year, total_rows, LINE_filled AS filled_count FROM #fc_302
+    UNION ALL
+    SELECT 'UNIV_CHG_LN_DX' AS table_name, 'DIAGNOSIS_ID_DX_NAME' AS column_name, activity_year, total_rows, DIAGNOSIS_ID_DX_NAME_filled AS filled_count FROM #fc_302
+    UNION ALL
+    SELECT 'UNIV_CHG_LN_DX' AS table_name, 'DIAGNOSIS_QUAL_C_NAME' AS column_name, activity_year, total_rows, DIAGNOSIS_QUAL_C_NAME_filled AS filled_count FROM #fc_302
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'RESULT_ID' AS column_name, activity_year, total_rows, RESULT_ID_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'TUMOR_SITE_SPECIFY' AS column_name, activity_year, total_rows, TUMOR_SITE_SPECIFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'CAP_COMMENTS' AS column_name, activity_year, total_rows, CAP_COMMENTS_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'SPEC_PROC_SPECIFY' AS column_name, activity_year, total_rows, SPEC_PROC_SPECIFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'TUMOR_SIZE_GREAT' AS column_name, activity_year, total_rows, TUMOR_SIZE_GREAT_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'TUMOR_SIZE_ADDL' AS column_name, activity_year, total_rows, TUMOR_SIZE_ADDL_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'TUMOR_SIZE_ADDL2' AS column_name, activity_year, total_rows, TUMOR_SIZE_ADDL2_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'TUMOR_SIZE_SPECIFY' AS column_name, activity_year, total_rows, TUMOR_SIZE_SPECIFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'MICRO_TMR_EXT_SPFY' AS column_name, activity_year, total_rows, MICRO_TMR_EXT_SPFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'SPECIMEN_OTHER_SPFY' AS column_name, activity_year, total_rows, SPECIMEN_OTHER_SPFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'REGIONL_LYMPH_ND_C_NAME' AS column_name, activity_year, total_rows, REGIONL_LYMPH_ND_C_NAME_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'REG_LN_NUM_EXM' AS column_name, activity_year, total_rows, REG_LN_NUM_EXM_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'REG_LN_NUM_INV' AS column_name, activity_year, total_rows, REG_LN_NUM_INV_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'PRIMARY_TUMOR_C_NAME' AS column_name, activity_year, total_rows, PRIMARY_TUMOR_C_NAME_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'DISTNT_METASTASIS_C_NAME' AS column_name, activity_year, total_rows, DISTNT_METASTASIS_C_NAME_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'DSTNT_METASTATIS_ST' AS column_name, activity_year, total_rows, DSTNT_METASTATIS_ST_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'ADDL_PATH_FIND_SPFY' AS column_name, activity_year, total_rows, ADDL_PATH_FIND_SPFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'SPEC_MG_IVLV_INV_CC' AS column_name, activity_year, total_rows, SPEC_MG_IVLV_INV_CC_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'OTHER_TM_CONFIG_S' AS column_name, activity_year, total_rows, OTHER_TM_CONFIG_S_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'HIST_TYP_NONCL_SPFY' AS column_name, activity_year, total_rows, HIST_TYP_NONCL_SPFY_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'HG_URTL_CCNM_C_NAME' AS column_name, activity_year, total_rows, HG_URTL_CCNM_C_NAME_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'HG_URTL_CCNM_S' AS column_name, activity_year, total_rows, HG_URTL_CCNM_S_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'HG_ADEN_SQUA_CC_C_NAME' AS column_name, activity_year, total_rows, HG_ADEN_SQUA_CC_C_NAME_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'ADEN_SQUA_CCS' AS column_name, activity_year, total_rows, ADEN_SQUA_CCS_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'UROT_CCM_W_VAR_HIST' AS column_name, activity_year, total_rows, UROT_CCM_W_VAR_HIST_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'SQM_C_CCNM_VAR_HIST' AS column_name, activity_year, total_rows, SQM_C_CCNM_VAR_HIST_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'ADNCCNM_VAR_HIST' AS column_name, activity_year, total_rows, ADNCCNM_VAR_HIST_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'UNDIFF_CCNM' AS column_name, activity_year, total_rows, UNDIFF_CCNM_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'HIST_TP_MIX_CT' AS column_name, activity_year, total_rows, HIST_TP_MIX_CT_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'MG_IVLV_INV_CCNM_C_NAME' AS column_name, activity_year, total_rows, MG_IVLV_INV_CCNM_C_NAME_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'MG_UVLV_IC_DSTNC_IC' AS column_name, activity_year, total_rows, MG_UVLV_IC_DSTNC_IC_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'MG_UVLV_IC_SM' AS column_name, activity_year, total_rows, MG_UVLV_IC_SM_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'MG_IVLV_CCNM_SS' AS column_name, activity_year, total_rows, MG_IVLV_CCNM_SS_filled AS filled_count FROM #fc_303
+    UNION ALL
+    SELECT 'URIN_BLADDER_CPTR' AS table_name, 'MG_IVLV_CCNM_ST_C_NAME' AS column_name, activity_year, total_rows, MG_IVLV_CCNM_ST_C_NAME_filled AS filled_count FROM #fc_303
+) all_results
+ORDER BY table_name, column_name, activity_year;
+
+-- ============================== CLEANUP (optional) ==============================
+-- SQL Server: not required (temp tables auto-drop at session end), but safe
+-- to run if you want to remove them immediately. Oracle/SAS: uncomment and
+-- run this if you did NOT use true temp tables in Phase 1.
+/*
+DROP TABLE #fc_001;
+DROP TABLE #fc_002;
+DROP TABLE #fc_003;
+DROP TABLE #fc_004;
+DROP TABLE #fc_005;
+DROP TABLE #fc_006;
+DROP TABLE #fc_007;
+DROP TABLE #fc_008;
+DROP TABLE #fc_009;
+DROP TABLE #fc_010;
+DROP TABLE #fc_011;
+DROP TABLE #fc_012;
+DROP TABLE #fc_013;
+DROP TABLE #fc_014;
+DROP TABLE #fc_015;
+DROP TABLE #fc_016;
+DROP TABLE #fc_017;
+DROP TABLE #fc_018;
+DROP TABLE #fc_019;
+DROP TABLE #fc_020;
+DROP TABLE #fc_021;
+DROP TABLE #fc_022;
+DROP TABLE #fc_023;
+DROP TABLE #fc_024;
+DROP TABLE #fc_025;
+DROP TABLE #fc_026;
+DROP TABLE #fc_027;
+DROP TABLE #fc_028;
+DROP TABLE #fc_029;
+DROP TABLE #fc_030;
+DROP TABLE #fc_031;
+DROP TABLE #fc_032;
+DROP TABLE #fc_033;
+DROP TABLE #fc_034;
+DROP TABLE #fc_035;
+DROP TABLE #fc_036;
+DROP TABLE #fc_037;
+DROP TABLE #fc_038;
+DROP TABLE #fc_039;
+DROP TABLE #fc_040;
+DROP TABLE #fc_041;
+DROP TABLE #fc_042;
+DROP TABLE #fc_043;
+DROP TABLE #fc_044;
+DROP TABLE #fc_045;
+DROP TABLE #fc_046;
+DROP TABLE #fc_047;
+DROP TABLE #fc_048;
+DROP TABLE #fc_049;
+DROP TABLE #fc_050;
+DROP TABLE #fc_051;
+DROP TABLE #fc_052;
+DROP TABLE #fc_053;
+DROP TABLE #fc_054;
+DROP TABLE #fc_055;
+DROP TABLE #fc_056;
+DROP TABLE #fc_057;
+DROP TABLE #fc_058;
+DROP TABLE #fc_059;
+DROP TABLE #fc_060;
+DROP TABLE #fc_061;
+DROP TABLE #fc_062;
+DROP TABLE #fc_063;
+DROP TABLE #fc_064;
+DROP TABLE #fc_065;
+DROP TABLE #fc_066;
+DROP TABLE #fc_067;
+DROP TABLE #fc_068;
+DROP TABLE #fc_069;
+DROP TABLE #fc_070;
+DROP TABLE #fc_071;
+DROP TABLE #fc_072;
+DROP TABLE #fc_073;
+DROP TABLE #fc_074;
+DROP TABLE #fc_075;
+DROP TABLE #fc_076;
+DROP TABLE #fc_077;
+DROP TABLE #fc_078;
+DROP TABLE #fc_079;
+DROP TABLE #fc_080;
+DROP TABLE #fc_081;
+DROP TABLE #fc_082;
+DROP TABLE #fc_083;
+DROP TABLE #fc_084;
+DROP TABLE #fc_085;
+DROP TABLE #fc_086;
+DROP TABLE #fc_087;
+DROP TABLE #fc_088;
+DROP TABLE #fc_089;
+DROP TABLE #fc_090;
+DROP TABLE #fc_091;
+DROP TABLE #fc_092;
+DROP TABLE #fc_093;
+DROP TABLE #fc_094;
+DROP TABLE #fc_095;
+DROP TABLE #fc_096;
+DROP TABLE #fc_097;
+DROP TABLE #fc_098;
+DROP TABLE #fc_099;
+DROP TABLE #fc_100;
+DROP TABLE #fc_101;
+DROP TABLE #fc_102;
+DROP TABLE #fc_103;
+DROP TABLE #fc_104;
+DROP TABLE #fc_105;
+DROP TABLE #fc_106;
+DROP TABLE #fc_107;
+DROP TABLE #fc_108;
+DROP TABLE #fc_109;
+DROP TABLE #fc_110;
+DROP TABLE #fc_111;
+DROP TABLE #fc_112;
+DROP TABLE #fc_113;
+DROP TABLE #fc_114;
+DROP TABLE #fc_115;
+DROP TABLE #fc_116;
+DROP TABLE #fc_117;
+DROP TABLE #fc_118;
+DROP TABLE #fc_119;
+DROP TABLE #fc_120;
+DROP TABLE #fc_121;
+DROP TABLE #fc_122;
+DROP TABLE #fc_123;
+DROP TABLE #fc_124;
+DROP TABLE #fc_125;
+DROP TABLE #fc_126;
+DROP TABLE #fc_127;
+DROP TABLE #fc_128;
+DROP TABLE #fc_129;
+DROP TABLE #fc_130;
+DROP TABLE #fc_131;
+DROP TABLE #fc_132;
+DROP TABLE #fc_133;
+DROP TABLE #fc_134;
+DROP TABLE #fc_135;
+DROP TABLE #fc_136;
+DROP TABLE #fc_137;
+DROP TABLE #fc_138;
+DROP TABLE #fc_139;
+DROP TABLE #fc_140;
+DROP TABLE #fc_141;
+DROP TABLE #fc_142;
+DROP TABLE #fc_143;
+DROP TABLE #fc_144;
+DROP TABLE #fc_145;
+DROP TABLE #fc_146;
+DROP TABLE #fc_147;
+DROP TABLE #fc_148;
+DROP TABLE #fc_149;
+DROP TABLE #fc_150;
+DROP TABLE #fc_151;
+DROP TABLE #fc_152;
+DROP TABLE #fc_153;
+DROP TABLE #fc_154;
+DROP TABLE #fc_155;
+DROP TABLE #fc_156;
+DROP TABLE #fc_157;
+DROP TABLE #fc_158;
+DROP TABLE #fc_159;
+DROP TABLE #fc_160;
+DROP TABLE #fc_161;
+DROP TABLE #fc_162;
+DROP TABLE #fc_163;
+DROP TABLE #fc_164;
+DROP TABLE #fc_165;
+DROP TABLE #fc_166;
+DROP TABLE #fc_167;
+DROP TABLE #fc_168;
+DROP TABLE #fc_169;
+DROP TABLE #fc_170;
+DROP TABLE #fc_171;
+DROP TABLE #fc_172;
+DROP TABLE #fc_173;
+DROP TABLE #fc_174;
+DROP TABLE #fc_175;
+DROP TABLE #fc_176;
+DROP TABLE #fc_177;
+DROP TABLE #fc_178;
+DROP TABLE #fc_179;
+DROP TABLE #fc_180;
+DROP TABLE #fc_181;
+DROP TABLE #fc_182;
+DROP TABLE #fc_183;
+DROP TABLE #fc_184;
+DROP TABLE #fc_185;
+DROP TABLE #fc_186;
+DROP TABLE #fc_187;
+DROP TABLE #fc_188;
+DROP TABLE #fc_189;
+DROP TABLE #fc_190;
+DROP TABLE #fc_191;
+DROP TABLE #fc_192;
+DROP TABLE #fc_193;
+DROP TABLE #fc_194;
+DROP TABLE #fc_195;
+DROP TABLE #fc_196;
+DROP TABLE #fc_197;
+DROP TABLE #fc_198;
+DROP TABLE #fc_199;
+DROP TABLE #fc_200;
+DROP TABLE #fc_201;
+DROP TABLE #fc_202;
+DROP TABLE #fc_203;
+DROP TABLE #fc_204;
+DROP TABLE #fc_205;
+DROP TABLE #fc_206;
+DROP TABLE #fc_207;
+DROP TABLE #fc_208;
+DROP TABLE #fc_209;
+DROP TABLE #fc_210;
+DROP TABLE #fc_211;
+DROP TABLE #fc_212;
+DROP TABLE #fc_213;
+DROP TABLE #fc_214;
+DROP TABLE #fc_215;
+DROP TABLE #fc_216;
+DROP TABLE #fc_217;
+DROP TABLE #fc_218;
+DROP TABLE #fc_219;
+DROP TABLE #fc_220;
+DROP TABLE #fc_221;
+DROP TABLE #fc_222;
+DROP TABLE #fc_223;
+DROP TABLE #fc_224;
+DROP TABLE #fc_225;
+DROP TABLE #fc_226;
+DROP TABLE #fc_227;
+DROP TABLE #fc_228;
+DROP TABLE #fc_229;
+DROP TABLE #fc_230;
+DROP TABLE #fc_231;
+DROP TABLE #fc_232;
+DROP TABLE #fc_233;
+DROP TABLE #fc_234;
+DROP TABLE #fc_235;
+DROP TABLE #fc_236;
+DROP TABLE #fc_237;
+DROP TABLE #fc_238;
+DROP TABLE #fc_239;
+DROP TABLE #fc_240;
+DROP TABLE #fc_241;
+DROP TABLE #fc_242;
+DROP TABLE #fc_243;
+DROP TABLE #fc_244;
+DROP TABLE #fc_245;
+DROP TABLE #fc_246;
+DROP TABLE #fc_247;
+DROP TABLE #fc_248;
+DROP TABLE #fc_249;
+DROP TABLE #fc_250;
+DROP TABLE #fc_251;
+DROP TABLE #fc_252;
+DROP TABLE #fc_253;
+DROP TABLE #fc_254;
+DROP TABLE #fc_255;
+DROP TABLE #fc_256;
+DROP TABLE #fc_257;
+DROP TABLE #fc_258;
+DROP TABLE #fc_259;
+DROP TABLE #fc_260;
+DROP TABLE #fc_261;
+DROP TABLE #fc_262;
+DROP TABLE #fc_263;
+DROP TABLE #fc_264;
+DROP TABLE #fc_265;
+DROP TABLE #fc_266;
+DROP TABLE #fc_267;
+DROP TABLE #fc_268;
+DROP TABLE #fc_269;
+DROP TABLE #fc_270;
+DROP TABLE #fc_271;
+DROP TABLE #fc_272;
+DROP TABLE #fc_273;
+DROP TABLE #fc_274;
+DROP TABLE #fc_275;
+DROP TABLE #fc_276;
+DROP TABLE #fc_277;
+DROP TABLE #fc_278;
+DROP TABLE #fc_279;
+DROP TABLE #fc_280;
+DROP TABLE #fc_281;
+DROP TABLE #fc_282;
+DROP TABLE #fc_283;
+DROP TABLE #fc_284;
+DROP TABLE #fc_285;
+DROP TABLE #fc_286;
+DROP TABLE #fc_287;
+DROP TABLE #fc_288;
+DROP TABLE #fc_289;
+DROP TABLE #fc_290;
+DROP TABLE #fc_291;
+DROP TABLE #fc_292;
+DROP TABLE #fc_293;
+DROP TABLE #fc_294;
+DROP TABLE #fc_295;
+DROP TABLE #fc_296;
+DROP TABLE #fc_297;
+DROP TABLE #fc_298;
+DROP TABLE #fc_299;
+DROP TABLE #fc_300;
+DROP TABLE #fc_301;
+DROP TABLE #fc_302;
+DROP TABLE #fc_303;
+*/
