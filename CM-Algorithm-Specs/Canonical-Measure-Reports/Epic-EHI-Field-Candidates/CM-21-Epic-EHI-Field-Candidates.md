@@ -11,7 +11,7 @@
 
 Same method as the [CM-04 pass](./CM-04-Epic-EHI-Field-Candidates.md): be exhaustive on table names first, let the pilot site's data team's density check against the real extract do the precision filtering a schema-only search can't do.
 
-CM-21's [canonical measure report](./CM-21-Coding-Accuracy-Canonical-Measure-Report.md) splits the measure into three algorithms, and only two of them are a clarity-field question:
+CM-21's [canonical measure report](../Reports/CM-21-Coding-Accuracy-Canonical-Measure-Report.md) splits the measure into three algorithms, and only two of them are a clarity-field question:
 
 - **Algorithm 1 (ICD-10 coding depth)** and **Algorithm 3 (L4-5 denial rate)** both depend on EHR-side fields Suki has no visibility into — this pass covers them.
 - **Algorithm 2 (Suki-suggested ICD-10 codes vs. final billed codes)** is blocked on encounter-to-claim linkage and IMO→ICD-10 mapping, per the canonical measure report — a pipeline/integration question, not a "which clarity field" question. Including it in this sweep would misrepresent the actual blocker as a field-availability problem. It's tracked separately; the billed-code side of that comparison (final billed ICD-10/CPT per encounter) does overlap with tables found here (`HSP_ACCT_CPT_CODES`, `HSP_ACCT_CLM_CPT`), so this pass is still useful groundwork for it once linkage exists.

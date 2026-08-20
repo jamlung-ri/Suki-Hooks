@@ -1,6 +1,6 @@
 # Field Feasibility Queries — Read This First
 
-This covers all four `CM-XX-Field-Feasibility-Queries.sql` files in this directory (CM-04, CM-05, CM-21, CM-22). Read it once; the per-measure `.md` docs only add what's specific to that measure (which tables to look at first, measure-specific caveats).
+This covers all four `CM-XX-Field-Feasibility-Queries.sql` files in this directory (CM-04, CM-05, CM-21, CM-22). Read it once; the per-measure `.md` docs only add what's specific to that measure (which tables to look at first, measure-specific caveats). The candidate field lists these batteries check against live in `../Epic-EHI-Field-Candidates/`, and the canonical measure reports that motivate them live in `../Reports/`.
 
 ## What these are
 

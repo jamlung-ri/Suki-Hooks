@@ -1,8 +1,8 @@
 # CM-05 After-Hours Documentation — Field Feasibility Queries
 
-**Purpose:** turns the candidate field list in [CM-05-Epic-EHI-Field-Candidates.md](./CM-05-Epic-EHI-Field-Candidates.md) into one script a developer at any Epic site can run. Read the field-candidates doc first: the honest headline there is that no `after_hours_min`-equivalent field exists in the public EHI export at all, so this battery is narrower and more conditional than the other three.
+**Purpose:** turns the candidate field list in [CM-05-Epic-EHI-Field-Candidates.md](../Epic-EHI-Field-Candidates/CM-05-Epic-EHI-Field-Candidates.md) into one script a developer at any Epic site can run. Read the field-candidates doc first: the honest headline there is that no `after_hours_min`-equivalent field exists in the public EHI export at all, so this battery is narrower and more conditional than the other three.
 **Companion file:** [`CM-05-Field-Feasibility-Queries.sql`](./CM-05-Field-Feasibility-Queries.sql) — 77 candidate tables (reusing the CM-04 note-timestamp candidates), run as one script, returns one result grid.
-**Read first:** [`Field-Feasibility-Queries-README.md`](./Field-Feasibility-Queries-README.md) — what this is, why it's safe to run, how to run it, and how to report results back. This doc only adds what's specific to CM-05.
+**Read first:** [`README.md`](./README.md) — what this is, why it's safe to run, how to run it, and how to report results back. This doc only adds what's specific to CM-05.
 
 ---
 

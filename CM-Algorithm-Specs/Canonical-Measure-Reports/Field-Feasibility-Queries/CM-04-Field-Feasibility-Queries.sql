@@ -1,6 +1,6 @@
 -- CM-04 field feasibility / density queries
 -- Auto-generated. See the companion CM-XX-Field-Feasibility-Queries.md
--- and the shared Field-Feasibility-Queries-README.md in this directory
+-- and the shared README.md in this directory
 -- for what this is, why it's safe to run, and how to report results back.
 --
 -- HOW TO RUN: execute this entire script top to bottom in one session.

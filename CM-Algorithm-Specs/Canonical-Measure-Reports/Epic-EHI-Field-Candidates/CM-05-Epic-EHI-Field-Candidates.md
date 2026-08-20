@@ -1,7 +1,7 @@
 # CM-05 After-Hours Documentation — Epic EHI Field Candidates (Exhaustive Pass)
 
 **Status:** Schema-only reconnaissance for the field-requirements approach for CM-05, part of the broader Sprint 2 feasibility prep (internal confidence against a pilot site's data before approaching South Carolina).
-**Scope:** After-hours documentation time only (CM-05) — narrower than the other passes because the [canonical measure report](./CM-05-After-Hours-Documentation-Canonical-Measure-Report.md) already names a very specific data requirement (`after_hours_min` per provider per month) rather than an open field-discovery question.
+**Scope:** After-hours documentation time only (CM-05) — narrower than the other passes because the [canonical measure report](../Reports/CM-05-After-Hours-Documentation-Canonical-Measure-Report.md) already names a very specific data requirement (`after_hours_min` per provider per month) rather than an open field-discovery question.
 **Source:** [`epic-ehi-kg`](https://github.com/) — Paul's Epic EHI Export Specification knowledge graph (7,797 tables / 63,956 columns, May 2026 release, `su118s2p`).
 **Companion data file:** [`CM-05-Epic-EHI-Field-Candidates.csv`](./CM-05-Epic-EHI-Field-Candidates.csv) (137 rows).
 

@@ -32,20 +32,32 @@ Each Canonical Measure (CM) algorithm card defines the unit(s), dashboard formul
 ## Repository Structure
 
 ```
-CM-Algorithm-Specs/
-  CM-Algorithm-Cards-Combined.html     # All six CM cards combined — primary reference
-  CM-04-Documentation-Time.html        # Algorithm card — CM-04
-  CM-05-After-Hours-Documentation.html # Algorithm card — CM-05
-  CM-07-Total-EHR-Time.html            # Algorithm card — CM-07
-  CM-20-Financial-Productivity.html    # Algorithm card — CM-20 (3 operationalizations)
-  CM-21-Coding-Accuracy.html           # Algorithm card — CM-21 (3 operationalizations)
-  CM-22-Patient-Volume.html            # Algorithm card — CM-22
+CM-Algorithm-Specs/                    # Published site (GitHub Pages + GitLab Pages) — do not rename this path
+  index.html                           # Landing page
+  CM-Algorithm-Cards-Combined.html     # All 25 CM cards combined — primary reference
+  CM-01-*.html … CM-25-*.html          # Individual algorithm cards
   CM-Algorithm-Card-Template.html      # Blank template for new cards
   Measures_suki_ehr_crosswalk.html     # EHR / Suki data crosswalk (interactive)
+  Suki-Sprint-2-Proposal.html          # Sprint 2 proposal (5 Epic-sourced measures)
   build.py                             # Combines individual CM files into the Combined HTML
-  index.html                           # Landing page (GitLab Pages)
+  build_sprint2_proposal.py            # Builds the Sprint 2 proposal from the Epic-sourced subset
+  assets/                              # Images used by the published cards
+  Canonical-Measure-Reports/           # Not published/linked from the site — internal working detail per measure
+    Reports/                           #   CM-XX-...-Canonical-Measure-Report.md (narrative writeups + template)
+    Epic-EHI-Field-Candidates/         #   CM-XX-Epic-EHI-Field-Candidates.md/.csv (EHI schema sweep results)
+    Field-Feasibility-Queries/         #   CM-XX-Field-Feasibility-Queries.md/.sql + shared README
   _archive/                            # Earlier working documents and specs
-Review-notes/                          # Working session notes and transcripts
+
+Hook-Deep-Dives/                       # H1/H3/H9 "Suki hook" deep-dive writeups + measure matrix
+Reference-Material/                    # Input/background material, not deliverables
+  Suki-Developer-Docs/                 #   Crawled Suki API/SDK documentation
+  Suki-Product-Info/                   #   Product/marketing background docs
+  Vendors/                             #   EHR vendor field-mapping CSVs
+Process-Notes/                         # Internal working notes
+  Review-notes/                        #   Meeting notes and transcripts
+  Presentations/                       #   Slide/presentation drafts
+
+assets/, index.html                    # Root redirect page for GitLab Pages (see .gitlab-ci.yml)
 ```
 
 ## Authoring a New Algorithm Card

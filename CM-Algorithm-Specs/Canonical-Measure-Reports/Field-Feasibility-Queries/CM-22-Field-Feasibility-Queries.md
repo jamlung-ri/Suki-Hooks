@@ -1,8 +1,8 @@
 # CM-22 Patient Volume/Throughput — Field Feasibility Queries
 
-**Purpose:** turns the candidate field list in [CM-22-Epic-EHI-Field-Candidates.md](./CM-22-Epic-EHI-Field-Candidates.md) into one script a developer at any Epic site can run to report back which fields are actually populated, and if a promising-but-sparse field is a temporal artifact rather than a permanent gap.
+**Purpose:** turns the candidate field list in [CM-22-Epic-EHI-Field-Candidates.md](../Epic-EHI-Field-Candidates/CM-22-Epic-EHI-Field-Candidates.md) into one script a developer at any Epic site can run to report back which fields are actually populated, and if a promising-but-sparse field is a temporal artifact rather than a permanent gap.
 **Companion file:** [`CM-22-Field-Feasibility-Queries.sql`](./CM-22-Field-Feasibility-Queries.sql) — 16 candidate tables, run as one script, returns one result grid. The smallest of the four batteries.
-**Read first:** [`Field-Feasibility-Queries-README.md`](./Field-Feasibility-Queries-README.md) — what this is, why it's safe to run, how to run it, and how to report results back. This doc only adds what's specific to CM-22.
+**Read first:** [`README.md`](./README.md) — what this is, why it's safe to run, how to run it, and how to report results back. This doc only adds what's specific to CM-22.
 
 ---
 

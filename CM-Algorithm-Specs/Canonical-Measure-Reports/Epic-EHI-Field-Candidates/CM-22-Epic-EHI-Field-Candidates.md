@@ -1,7 +1,7 @@
 # CM-22 Patient Volume/Throughput — Epic EHI Field Candidates (Exhaustive Pass)
 
 **Status:** Schema-only reconnaissance for the field-requirements approach for CM-22, part of the broader Sprint 2 feasibility prep (internal confidence against a pilot site's data before approaching South Carolina).
-**Scope:** Completed-encounter counting for CM-22 — narrower than CM-04 or CM-21 because Suki's side of the data is already sufficient (adoption date, weekly active-use flags, per the [CM-22 canonical measure report](./CM-22-Patient-Volume-Canonical-Measure-Report.md)); the only open question is EHR-side.
+**Scope:** Completed-encounter counting for CM-22 — narrower than CM-04 or CM-21 because Suki's side of the data is already sufficient (adoption date, weekly active-use flags, per the [CM-22 canonical measure report](../Reports/CM-22-Patient-Volume-Canonical-Measure-Report.md)); the only open question is EHR-side.
 **Source:** [`epic-ehi-kg`](https://github.com/) — Paul's Epic EHI Export Specification knowledge graph (7,797 tables / 63,956 columns, May 2026 release, `su118s2p`).
 **Companion data file:** [`CM-22-Epic-EHI-Field-Candidates.csv`](./CM-22-Epic-EHI-Field-Candidates.csv) (566 rows).
 

@@ -1,8 +1,8 @@
 # CM-21 Coding Accuracy — Field Feasibility Queries
 
-**Purpose:** turns the candidate field list in [CM-21-Epic-EHI-Field-Candidates.md](./CM-21-Epic-EHI-Field-Candidates.md) into one script a developer at any Epic site can run to report back which fields are actually populated, and if a promising-but-sparse field is a temporal artifact rather than a permanent gap.
+**Purpose:** turns the candidate field list in [CM-21-Epic-EHI-Field-Candidates.md](../Epic-EHI-Field-Candidates/CM-21-Epic-EHI-Field-Candidates.md) into one script a developer at any Epic site can run to report back which fields are actually populated, and if a promising-but-sparse field is a temporal artifact rather than a permanent gap.
 **Companion file:** [`CM-21-Field-Feasibility-Queries.sql`](./CM-21-Field-Feasibility-Queries.sql) — 303 candidate tables, run as one script, returns one result grid.
-**Read first:** [`Field-Feasibility-Queries-README.md`](./Field-Feasibility-Queries-README.md) — what this is, why it's safe to run, how to run it, and how to report results back. This is the largest of the four batteries (2,802 candidate columns); the README's note on splitting Phase 2 into chunks applies most directly here.
+**Read first:** [`README.md`](./README.md) — what this is, why it's safe to run, how to run it, and how to report results back. This is the largest of the four batteries (2,802 candidate columns); the README's note on splitting Phase 2 into chunks applies most directly here.
 **Scope note:** same as the field-candidates doc — this covers Algorithm 1 (ICD-10 coding depth) and Algorithm 3 (denial rate) inputs, not Algorithm 2 (Suki-suggested vs. billed codes), which is blocked on encounter-to-claim linkage rather than field availability.
 
 ---
