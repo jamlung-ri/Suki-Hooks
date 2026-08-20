@@ -1,6 +1,6 @@
 # CM-04 Documentation Time — Epic EHI Field Candidates (Exhaustive Pass)
 
-**Status:** Smoke test for the query method, run 2026-07-20 per Suki Weekly Huddle action item ([issue #186](https://github.com/jamlung-ri/amlung-task-management/issues/186)).
+**Status:** Smoke test for the query method, run 2026-07-20 as a Suki Weekly Huddle action item.
 **Scope:** Documentation-time only (CM-04) — not run against the full measure set.
 **Source:** [`epic-ehi-kg`](https://github.com/) — Paul's Epic EHI Export Specification knowledge graph (7,797 tables / 63,956 columns, May 2026 release, `su118s2p`).
 **Companion data file:** [`CM-04-Epic-EHI-Field-Candidates.csv`](./CM-04-Epic-EHI-Field-Candidates.csv) (1,022 rows — full table/column detail for the density pass).
@@ -9,15 +9,15 @@
 
 ## Why this run exists
 
-The three fields currently on the [CM-04 algorithm card](../CM-04-Documentation-Time.html) (`NOTES_HISTORY_LOG`, `HNO_INFO`, `PAT_ENC`) validated as *existing* in Eskenazi's Epic build via the EHI knowledge graph, but real-world coverage is very low — `NOTES_HISTORY_LOG` fills in roughly **0.1%** of encounters. Rather than continue refining that narrow, precise field set, Paul asked for the opposite move: **be exhaustive, not precise.** List every Epic field that could plausibly relate to documentation time, hand the full list to Evgenia, and let her per-field information-density query (against the real Eskenazi EHI extract) do the precision filtering that a schema-only query can't do. Whatever has usable density becomes the actual algorithm input; the rest gets dropped.
+The three fields currently on the [CM-04 algorithm card](../CM-04-Documentation-Time.html) (`NOTES_HISTORY_LOG`, `HNO_INFO`, `PAT_ENC`) validated as *existing* in the pilot site's Epic build via the EHI knowledge graph, but real-world coverage is very low — `NOTES_HISTORY_LOG` fills in roughly **0.1%** of encounters. Rather than continue refining that narrow, precise field set, Paul asked for the opposite move: **be exhaustive, not precise.** List every Epic field that could plausibly relate to documentation time, hand the full list to the pilot site's data team, and let their per-field information-density query (against the real EHI extract) do the precision filtering that a schema-only query can't do. Whatever has usable density becomes the actual algorithm input; the rest gets dropped.
 
-**This is schema-only reconnaissance.** The knowledge graph documents that a column *exists* in Epic's export spec — it says nothing about whether Eskenazi's build actually populates it. That determination is Evgenia's next step, not this one.
+**This is schema-only reconnaissance.** The knowledge graph documents that a column *exists* in Epic's export spec — it says nothing about whether the pilot site's build actually populates it. That determination is the site data team's next step, not this one.
 
 ---
 
-## Real density baseline already in hand (Evgenia, Jul 10–15 2026 thread)
+## Real density baseline already in hand (pilot-site data team, Jul 2026)
 
-Before this exhaustive pass, Evgenia had already run SAS fill-rate queries against the real Eskenazi extract for the three known fields — that thread (`Review-notes/Evgenia-reply-20Jul2026.pdf`) is the direct source of the "~0.1%" figure in the issue, and it changes how a couple of the new candidates below should be read:
+Before this exhaustive pass, the pilot site's data team had already run SAS fill-rate queries against the real extract for the three known fields — that thread is the direct source of the "~0.1%" figure below, and it changes how a couple of the new candidates below should be read:
 
 | Table | Column | Fill rate | Note |
 |---|---|---:|---|
@@ -35,7 +35,7 @@ Before this exhaustive pass, Evgenia had already run SAS fill-rate queries again
 | `NOTE_ENC_INFO` | `UPD_AUTHOR_INS_DTTM` | 62,134,056 (**12.4%**) | |
 | `NOTE_ENC_INFO` | `ACTIVITY_DTTM` | 9,947,225 (**2.0%**) | |
 
-**Implication for finding #1 below:** `NOTE_ENC_INFO`'s timestamp columns are meaningfully denser than `HNO_INFO`'s (19.6% vs. 10.2% on the create/entry instant) — Evgenia's Jul 10 email calling it "all dates missing" undersold it; the Jul 15 recheck shows real, if partial, fill. But its own `PAT_ENC_CSN_ID` is far worse (0.55%) than `HNO_INFO`'s (11.4%), so joining straight from `NOTE_ENC_INFO` to the encounter table loses most rows. Since `NOTE_ID` is ~100%-filled on both tables (`NOTE_ENC_INFO` total rows = `HNO_INFO` distinct note count), **joining `HNO_INFO.PAT_ENC_CSN_ID` to `NOTE_ENC_INFO` via `NOTE_ID`** (rather than going through `NOTE_ENC_INFO.PAT_ENC_CSN_ID` directly) combines `HNO_INFO`'s better encounter linkage with `NOTE_ENC_INFO`'s better timestamp density — worth Evgenia testing as an explicit next query, separate from the new candidates below.
+**Implication for finding #1 below:** `NOTE_ENC_INFO`'s timestamp columns are meaningfully denser than `HNO_INFO`'s (19.6% vs. 10.2% on the create/entry instant) — an early update from the site's data team calling it "all dates missing" undersold it; a later recheck shows real, if partial, fill. But its own `PAT_ENC_CSN_ID` is far worse (0.55%) than `HNO_INFO`'s (11.4%), so joining straight from `NOTE_ENC_INFO` to the encounter table loses most rows. Since `NOTE_ID` is ~100%-filled on both tables (`NOTE_ENC_INFO` total rows = `HNO_INFO` distinct note count), **joining `HNO_INFO.PAT_ENC_CSN_ID` to `NOTE_ENC_INFO` via `NOTE_ID`** (rather than going through `NOTE_ENC_INFO.PAT_ENC_CSN_ID` directly) combines `HNO_INFO`'s better encounter linkage with `NOTE_ENC_INFO`'s better timestamp density — worth testing as an explicit next query, separate from the new candidates below.
 
 ---
 
@@ -43,7 +43,7 @@ Before this exhaustive pass, Evgenia had already run SAS fill-rate queries again
 
 1. Matched **table names** (not descriptions — a bare-word search on descriptions across 64k columns floods with noise; an early pass using unqualified terms like `edit`, `sign`, `author`, `hx` returned 16,415 hits before this was tightened) against note/documentation-entity patterns: `HNO_*`, `NOTE*`, `*DOCUMENT*`, `*ADDENDUM*`, `*DICTAT*`, `*TRANSCRI*`, `SMRTDTA*`/`SMARTTEXT*`/`SMARTFORM*`, `*COSIGN*`, `*ATTESTAT*`, `*CHART_CLOS*`, `*SCRIBE*`, `*AMBIENT*`, `*HOLOGRAM*`.
 2. **170 tables** matched. Every column in those tables was pulled (1,022 rows) and tagged with: bucket (below), data type, org-specific flag, discontinued flag, and whether it's date/time-typed (the actual numerator/denominator candidates — 134 columns across 76 tables).
-3. Tables were bucketed by name pattern so Evgenia can triage by relevance without re-deriving it:
+3. Tables were bucketed by name pattern so the data team can triage by relevance without re-deriving it:
 
 | Bucket | Tables | Columns | Time-typed |
 |---|---:|---:|---:|
@@ -74,7 +74,7 @@ Extends the note-contact model `HNO_INFO` only partially covers. Includes `ENTRY
 `DICTATION_TIME`, `TRANSCRIPTION_TIME`, `AUTH_DTTM`, `ACTIVITY_DTTM`, `EDIT_DTTM`. This is a transcription-workflow table (traditional dictation-to-transcriptionist pipeline), structurally the closest thing in Epic's own schema to what Suki's session model measures — worth checking even though it may reflect a legacy dictation workflow rather than direct-entry authoring.
 
 ### 4. `PAT_ENC_AMBIENT_SESSIONS` + `NOTE_AMBIENT_SECTIONS` — Epic's native ambient-scribe linkage
-`AMBIENT_SESSION_IDENT` on both tables ties an encounter/note to Epic's own ambient-documentation session ID ("Points to DXR"). **No duration field is exported here** — the EHI spec only exposes the session identifier, not start/end timestamps — but this is strategically important beyond CM-04: it's the join key that would let Suki-adoption analysis identify (and exclude, or separately track) encounters where a *competing* ambient scribe was used instead of Suki. Worth flagging to Paul directly, not just to Evgenia's density pass.
+`AMBIENT_SESSION_IDENT` on both tables ties an encounter/note to Epic's own ambient-documentation session ID ("Points to DXR"). **No duration field is exported here** — the EHI spec only exposes the session identifier, not start/end timestamps — but this is strategically important beyond CM-04: it's the join key that would let Suki-adoption analysis identify (and exclude, or separately track) encounters where a *competing* ambient scribe was used instead of Suki. Worth flagging to Paul directly, not just folding into the density pass.
 
 ### 5. `PAT_ADDENDUM_INFO` — addendum start→finish as a native duration pair
 `ADDENDUM_STARTED_UTC_DTTM` and `ADDENDUM_DATE_TIME` (completion) bound a discrete addendum-authoring interval — this is a duration Epic hands you directly rather than one you have to sessionize from an edit log. Narrow (addenda are a minority of note activity) but clean if populated.
@@ -89,9 +89,9 @@ Extends the note-contact model `HNO_INFO` only partially covers. Includes `ENTRY
 - Reference/join edges from the KG were **not** used to further expand this list (e.g., walking `PAT_ENC` outward) — the sweep is table-name-driven only. If density comes back thin across the board, a join-graph expansion from `HNO_INFO`/`NOTE_ENC_INFO`/`PAT_ENC` is the natural next widening.
 - `INCOMPLETE_NOTE_EPT` appeared in the raw sweep but its own description says it's been unused since 2010 and is "exported as a formality" — included in the CSV for completeness, not recommended for the density check.
 - All Epic table/column names and structure below are the **public EHI Export Specification** (ONC Cures Act mandated documentation), not proprietary. Per-column descriptions are Epic's own text (see the `epic-ehi-kg` repo README for redistribution notes if this goes external).
-- Longer-term, out of scope for this pass per the issue: once density is known for Eskenazi, check whether the same fields translate to South Carolina's Epic implementation.
-- The density baseline above comes from an internal email thread (`Review-notes/Evgenia-reply-20Jul2026.pdf`, marked confidential/privileged) already sitting in this repo — referenced here as internal project context, not reproduced or distributed further.
+- Longer-term, out of scope for this pass: once density is known for the pilot site, check whether the same fields translate to South Carolina's Epic implementation.
+- The density baseline above comes from an internal review thread (marked confidential/privileged) — referenced here as internal project context, not reproduced or distributed further.
 
 ---
 
-*Generated 2026-07-20 from `epic-ehi-kg` (May 2026 EHI release) for issue #186. Raw query script and full 1,022-row output available on request.*
+*Generated 2026-07-20 from `epic-ehi-kg` (May 2026 EHI release) as a Suki Weekly Huddle follow-up. Raw query script and full 1,022-row output available on request.*
