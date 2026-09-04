@@ -6,6 +6,8 @@ This covers all four `CM-XX-Field-Feasibility-Queries.sql` files in this directo
 
 Each `.sql` file is a mechanically generated battery that checks, for every field on the corresponding `CM-XX-Epic-EHI-Field-Candidates.md` candidate list, whether that field is actually populated in your Epic Clarity build, and if it's sparse, whether that's constant over time or a recent rollout (a field that's ~0% before 2024 and 60%+ after is a version/workflow change, not a dead field). These candidate fields came from Epic's own public EHI Export Specification schema, not from anything Suki-proprietary or site-specific.
 
+**This is a feasibility/discovery pass, not the measure calculation itself.** The goal is narrowing a long candidate list down to the handful of fields worth building the actual measure query against, before anyone writes that query. It's necessarily broader than the eventual measure logic will be, on purpose: a narrower, hand-picked field list sent in an earlier round came back missing information we needed, so this round widens the net rather than risking another back-and-forth.
+
 ## Is this safe to run against our system?
 
 - **Read-only in effect.** Every statement is either a `SELECT`, or a `SELECT ... INTO` that populates a session-scoped temporary table from an aggregate query. Nothing here ever inserts into, updates, or deletes from any table that already exists in your system.
@@ -13,6 +15,7 @@ Each `.sql` file is a mechanically generated battery that checks, for every fiel
 - **Nothing persists.** The `#fc_NNN`-prefixed staging tables are standard SQL Server local temporary tables: scoped to your session and automatically destroyed when your connection closes. No permanent object is created anywhere. (On Oracle/SAS, see the dialect note in each `.sql` file — those platforms don't have the same auto-temp mechanism, so a commented-out cleanup block is provided.)
 - **Uniform and auditable.** Every block in a script's Phase 1 has the exact same shape: an aggregate `SELECT` into a staging table, nothing else. If you or your security/DBA team want to verify the script before running it, skim the first two or three blocks, every remaining block (there may be dozens to hundreds) follows the identical pattern.
 - **No dynamic SQL, no system-catalog access, no cross-database or linked-server calls.**
+- **A missing table or column can't break the run.** Every Phase 1 block is wrapped in its own `BEGIN TRY`/`BEGIN CATCH`. If a candidate table or column doesn't exist in your build, that block's staging table is still created, just with NULL counts and a `query_error` message instead of data. One table not existing never stops the script or affects any other table's results, and Phase 2 always returns its one grid regardless of how many individual tables failed.
 - **Standard due diligence still applies.** Run this against your Clarity reporting layer rather than a live transactional system if your environment distinguishes the two, and route it through whatever review your organization normally requires for a new read-only report query. This document is meant to make that review fast, not to replace it.
 
 ## How to run
@@ -21,6 +24,7 @@ Each `.sql` file is a mechanically generated battery that checks, for every fiel
 2. Run the entire script, top to bottom, in one session/connection.
 3. It will silently populate a series of temporary staging tables (Phase 1), then return **exactly one result grid** at the very end (Phase 2). That's everything, there's nothing else to click through or export separately.
 4. Export that one grid to CSV and send it back. That's the entire ask.
+5. If some tables don't exist in your build, the script does not stop or error out on your end. Those tables just show up in the grid with an error message and no counts. **Please don't spend time troubleshooting individual failures** — a wall of `query_error` values is useful information on its own, not something to fix before sending results back.
 
 If you need to re-run the script in the same session, run the commented-out cleanup block at the bottom first (or just start a fresh connection, SQL Server temp tables clear automatically then).
 
@@ -32,9 +36,11 @@ Written for SQL Server T-SQL by default. On Oracle or in SAS PROC SQL, two mecha
 
 If a column name happens to collide with a reserved word in your platform, quote it (`[COL]` on SQL Server, `"COL"` on Oracle).
 
+The per-table `BEGIN TRY`/`BEGIN CATCH` wrapper (see "Is this safe to run" above) is SQL Server syntax and doesn't translate mechanically. On Oracle, the equivalent is a PL/SQL block per table (`BEGIN ... EXCEPTION WHEN OTHERS THEN ... END;`). SAS PROC SQL has no per-statement equivalent at all — if you're running this through PROC SQL rather than a native SQL Server/Oracle client, let us know before you run it and we'll send a PROC SQL-safe variant.
+
 ## What you'll get back, and what happens to it
 
-One CSV per measure, with one row per `(table, column, activity_year)`: total row count and how many of those rows have that field populated, for that year. We do the interpretation on our end (deciding what counts as usable density, spotting rollout cutovers, etc.) — the ask on your side is just running the script and sending the grid back, no filtering or summarizing needed first.
+One CSV per measure, with one row per `(table, column, activity_year)`: total row count, how many of those rows have that field populated for that year, and a `query_error` column that's NULL for everything that ran fine and holds the database's own error message for anything that didn't (most commonly, a table or column that doesn't exist in your build). We do the interpretation on our end (deciding what counts as usable density, spotting rollout cutovers, sorting out genuine gaps from tables/columns that just aren't there, etc.) — the ask on your side is just running the script and sending the grid back exactly as it comes out, no filtering, summarizing, or troubleshooting needed first.
 
 ## If a script is too large or slow to run as one query
 
