@@ -7,27 +7,35 @@
 -- It produces exactly ONE result grid, at the very end. Export that grid
 -- to CSV and send it back -- that is the entire ask.
 --
--- ERROR HANDLING: each Phase 1 block is wrapped in BEGIN TRY / BEGIN
--- CATCH. If a candidate table or column doesn't exist in your build,
--- that block's staging table is still created, just with NULL counts
--- and a query_error message (e.g. "Invalid object name 'X'."). A
--- missing table never stops the script or requires you to debug or fix
--- anything -- it just shows up as an extra column on that table's rows
--- in the final grid. Please don't spend time troubleshooting individual
--- failures; just run the whole thing top to bottom and send back
--- whatever comes out the other end.
+-- ERROR HANDLING: each Phase 1 block first CREATE TABLEs its own
+-- staging table, then attempts the real query inside BEGIN TRY / BEGIN
+-- CATCH as an INSERT INTO that same table. If a candidate table or
+-- column doesn't exist in your build, the CATCH branch inserts NULL
+-- counts and a query_error message (e.g. "Invalid object name 'X'.")
+-- instead. A missing table never stops the script or requires you to
+-- debug or fix anything -- it just shows up as an extra column on that
+-- table's rows in the final grid. Please don't spend time
+-- troubleshooting individual failures; just run the whole thing top to
+-- bottom and send back whatever comes out the other end. (Earlier
+-- versions of this script used `SELECT ... INTO` for both the TRY and
+-- CATCH branches, which SQL Server rejects at compile time -- you can't
+-- target the same temp table from two SELECT INTOs in one batch, even
+-- in mutually exclusive branches. The explicit CREATE TABLE + INSERT
+-- INTO structure below avoids that.)
 --
 -- Written for SQL Server T-SQL. On Oracle or in SAS PROC SQL, two swaps:
---   1. Replace `SELECT ... INTO #fc_NNN FROM ...` with
---      `CREATE TABLE fc_NNN AS SELECT ... FROM ...`
+--   1. Drop the `#` prefix on every `#fc_NNN` (Oracle has no session-temp-
+--      table shorthand; use an ordinary table, or a global temporary
+--      table, and see the cleanup block at the end of this file).
 --   2. Replace `YEAR(<col>)` with `EXTRACT(YEAR FROM <col>)` (Oracle only --
 --      SAS PROC SQL supports YEAR() natively).
 -- BEGIN TRY/BEGIN CATCH (see ERROR HANDLING note above) is SQL Server
 -- syntax and does not translate mechanically. On Oracle, the equivalent
 -- is a PL/SQL block per table (BEGIN ... EXCEPTION WHEN OTHERS THEN ...
--- END;). SAS PROC SQL has no per-statement equivalent at all -- if you're
--- on SAS, run this through a native SQL Server/Oracle client instead of
--- PROC SQL, or ask us for a PROC SQL-safe variant before running it.
+-- END;) wrapped around the same INSERT INTO. SAS PROC SQL has no per-
+-- statement equivalent at all -- if you're on SAS, run this through a
+-- native SQL Server/Oracle client instead of PROC SQL, or ask us for a
+-- PROC SQL-safe variant before running it.
 -- SQL Server's #-prefixed temp tables are session-scoped and auto-dropped
 -- when your connection closes -- nothing persists. On Oracle/SAS, staging
 -- tables are ordinary tables and will need the cleanup block at the end of
@@ -56,299 +64,389 @@
 -- ---- fc_001 <- ABN_DOCUMENT_ID ----
 -- This table contains information related to a patient's Advance Beneficiary Notice (ABN) documents.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_001 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_001 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_001
 FROM ABN_DOCUMENT_ID
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_001 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_001;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_002 <- ABN_NOTE_COMMENTS ----
 -- Stores information about the follow-up comments associated with an ABN note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_002 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_002 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_002
 FROM ABN_NOTE_COMMENTS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_002 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_002;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_003 <- BLOCK_NOTE_COPIES ----
 -- Info for note copies to potentially block while blocking parent note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_003 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_003 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_003
 FROM BLOCK_NOTE_COPIES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_003 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_003;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_004 <- CHILD_NOTE_INFO ----
 -- The CHILD_NOTE_INFO table contains information about child notes that are linked to clinical notes. Each row represents one child note and contains information such as the user tha
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_004 (
+    activity_year INT,
+    total_rows INT,
+    LINK_UTC_filled INT,
+    LINK_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_004 (activity_year, total_rows, LINK_UTC_filled, LINK_DTTM_filled, query_error)
 SELECT
     YEAR(LINK_UTC) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LINK_UTC) AS LINK_UTC_filled,
     COUNT(LINK_DTTM) AS LINK_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_004
 FROM CHILD_NOTE_INFO
 GROUP BY YEAR(LINK_UTC);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_004 (activity_year, total_rows, LINK_UTC_filled, LINK_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LINK_UTC_filled,
     CAST(NULL AS INT) AS LINK_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_004;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_005 <- CONTACT_POINT_DOCUMENTS ----
 -- This table contains Clinical References linked to patient education points.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_005 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_005 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_005
 FROM CONTACT_POINT_DOCUMENTS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_005 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_005;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_006 <- CONTACT_TITLE_DOCUMENTS ----
 -- This table contains Clinical References linked to patient education titles.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_006 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_006 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_006
 FROM CONTACT_TITLE_DOCUMENTS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_006 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_006;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_007 <- CONTACT_TOPIC_DOCUMENTS ----
 -- This table contains Clinical References linked to patient education topics.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_007 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_007 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_007
 FROM CONTACT_TOPIC_DOCUMENTS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_007 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_007;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_008 <- COVERAGE_NOTE_INFO ----
 -- This table contains information about notes attached to coverage records.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_008 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_DATE_filled INT,
+    NOTE_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_008 (activity_year, total_rows, NOTE_DATE_filled, NOTE_DTTM_filled, query_error)
 SELECT
     YEAR(NOTE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(NOTE_DATE) AS NOTE_DATE_filled,
     COUNT(NOTE_DTTM) AS NOTE_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_008
 FROM COVERAGE_NOTE_INFO
 GROUP BY YEAR(NOTE_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_008 (activity_year, total_rows, NOTE_DATE_filled, NOTE_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS NOTE_DATE_filled,
     CAST(NULL AS INT) AS NOTE_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_008;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_009 <- CP_NOTE_READING_HX ----
 -- This table stores the history information for the note's care plan reading.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_009 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_009 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_009
 FROM CP_NOTE_READING_HX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_009 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_009;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_010 <- DOCS_RCVD_ASMT_PLAN_NOTE ----
 -- This table extracts the related multiple response item DXR-11048.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_010 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_010 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_010
 FROM DOCS_RCVD_ASMT_PLAN_NOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_010 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_010;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_011 <- DOCS_RCVD_CLN_NOTE_SIGNRS ----
 -- Clinical note signer information for notes recieved externally.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_011 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    NOTE_SIGNED_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_011 (activity_year, total_rows, CONTACT_DATE_filled, NOTE_SIGNED_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(NOTE_SIGNED_UTC_DTTM) AS NOTE_SIGNED_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_011
 FROM DOCS_RCVD_CLN_NOTE_SIGNRS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_011 (activity_year, total_rows, CONTACT_DATE_filled, NOTE_SIGNED_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS NOTE_SIGNED_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_011;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_012 <- DOCS_RCVD_INTVN_NOTE ----
 -- This table extracts the dispense intervention note associated with a particular dispense.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_012 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_012 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_012
 FROM DOCS_RCVD_INTVN_NOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_012 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_012;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_013 <- DOCS_RCVD_NOTE_SECTIONS ----
 -- Stores note section data received.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_013 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_013 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_013
 FROM DOCS_RCVD_NOTE_SECTIONS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_013 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_013;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_014 <- DOCS_RCVD_PCCNOTE ----
 -- This table stores discrete information for patient care coordination notes received from outside sources.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_014 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    PCCNOTE_SIGNED_INST_DTTM_filled INT,
+    PCC_LST_UPD_INST_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_014 (activity_year, total_rows, CONTACT_DATE_filled, PCCNOTE_SIGNED_INST_DTTM_filled, PCC_LST_UPD_INST_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -356,271 +454,353 @@ SELECT
     COUNT(PCCNOTE_SIGNED_INST_DTTM) AS PCCNOTE_SIGNED_INST_DTTM_filled,
     COUNT(PCC_LST_UPD_INST_DTTM) AS PCC_LST_UPD_INST_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_014
 FROM DOCS_RCVD_PCCNOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_014 (activity_year, total_rows, CONTACT_DATE_filled, PCCNOTE_SIGNED_INST_DTTM_filled, PCC_LST_UPD_INST_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS PCCNOTE_SIGNED_INST_DTTM_filled,
     CAST(NULL AS INT) AS PCC_LST_UPD_INST_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_014;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_015 <- DOCS_RCVD_RSLTS_ADDENDUM ----
 -- This table stores discrete result addendum information received from outside sources.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_015 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    RSLT_ADDEND_INS_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_015 (activity_year, total_rows, CONTACT_DATE_filled, RSLT_ADDEND_INS_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(RSLT_ADDEND_INS_UTC_DTTM) AS RSLT_ADDEND_INS_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_015
 FROM DOCS_RCVD_RSLTS_ADDENDUM
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_015 (activity_year, total_rows, CONTACT_DATE_filled, RSLT_ADDEND_INS_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS RSLT_ADDEND_INS_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_015;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_016 <- DOCUMENT_SIG_DATA ----
 -- Contains data about the signatures collected for an electronic signature document.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_016 (
+    activity_year INT,
+    total_rows INT,
+    SIG_TIMESTAMP_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_016 (activity_year, total_rows, SIG_TIMESTAMP_DTTM_filled, query_error)
 SELECT
     YEAR(SIG_TIMESTAMP_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SIG_TIMESTAMP_DTTM) AS SIG_TIMESTAMP_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_016
 FROM DOCUMENT_SIG_DATA
 GROUP BY YEAR(SIG_TIMESTAMP_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_016 (activity_year, total_rows, SIG_TIMESTAMP_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS SIG_TIMESTAMP_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_016;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_017 <- DOCUMENT_STAMPS ----
 -- This table contains information about stamps added to scanned documents.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_017 (
+    activity_year INT,
+    total_rows INT,
+    STAMP_ADDED_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_017 (activity_year, total_rows, STAMP_ADDED_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(STAMP_ADDED_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(STAMP_ADDED_UTC_DTTM) AS STAMP_ADDED_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_017
 FROM DOCUMENT_STAMPS
 GROUP BY YEAR(STAMP_ADDED_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_017 (activity_year, total_rows, STAMP_ADDED_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS STAMP_ADDED_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_017;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_018 <- DP_COMM_MEMO_NOTE ----
 -- This table contains the Free Text Note(HNO) IDs of communications sent to a service through the Continued Care and Services Coordination workflow, along with the patient CSN, patie
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_018 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_018 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_018
 FROM DP_COMM_MEMO_NOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_018 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_018;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_019 <- DP_SVC_COORD_NOTE ----
 -- Coordination notes from the Services to Coordinate section of the current patient encounter--used to leave care coordination notes specific to this patient to a user, or to other u
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_019 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_019 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_019
 FROM DP_SVC_COORD_NOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_019 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_019;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_020 <- ENC_DX_ASSOC_AMBIENT_DX ----
 -- This table contains the unique IDs of diagnoses provided by Ambient that were finalized to Visit Diagnoses on the encounter.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_020 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_020 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_020
 FROM ENC_DX_ASSOC_AMBIENT_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_020 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_020;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_021 <- EPRESCRIBE_ERROR_ACTIONS ----
 -- This table holds information about e-prescribing error resolution triggered before the May 23 version. E-prescribing error resolution on or after the upgrade to the May 23 version 
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_021 (
+    activity_year INT,
+    total_rows INT,
+    RESOLVED_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_021 (activity_year, total_rows, RESOLVED_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(RESOLVED_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(RESOLVED_UTC_DTTM) AS RESOLVED_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_021
 FROM EPRESCRIBE_ERROR_ACTIONS
 GROUP BY YEAR(RESOLVED_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_021 (activity_year, total_rows, RESOLVED_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RESOLVED_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_021;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_022 <- FIN_ASST_NOTE ----
 -- This table contains information about notes added to financial assistance tracker records.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_022 (
+    activity_year INT,
+    total_rows INT,
+    ENTRY_DATE_filled INT,
+    ACCT_NOTE_INSTANT_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_022 (activity_year, total_rows, ENTRY_DATE_filled, ACCT_NOTE_INSTANT_DTTM_filled, query_error)
 SELECT
     YEAR(ENTRY_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ENTRY_DATE) AS ENTRY_DATE_filled,
     COUNT(ACCT_NOTE_INSTANT_DTTM) AS ACCT_NOTE_INSTANT_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_022
 FROM FIN_ASST_NOTE
 GROUP BY YEAR(ENTRY_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_022 (activity_year, total_rows, ENTRY_DATE_filled, ACCT_NOTE_INSTANT_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ENTRY_DATE_filled,
     CAST(NULL AS INT) AS ACCT_NOTE_INSTANT_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_022;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_023 <- FLO_INST_COSIGNED ----
 -- This table displays times that cosigners cosigned the flowsheet data.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_023 (
+    activity_year INT,
+    total_rows INT,
+    INSTANT_COSIGNED_TM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_023 (activity_year, total_rows, INSTANT_COSIGNED_TM_filled, query_error)
 SELECT
     YEAR(INSTANT_COSIGNED_TM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(INSTANT_COSIGNED_TM) AS INSTANT_COSIGNED_TM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_023
 FROM FLO_INST_COSIGNED
 GROUP BY YEAR(INSTANT_COSIGNED_TM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_023 (activity_year, total_rows, INSTANT_COSIGNED_TM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS INSTANT_COSIGNED_TM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_023;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_024 <- HNO_CONSULT_ORD_ID ----
 -- This table contains the unique IDs of the consult orders that are attached to a note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_024 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_024 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_024
 FROM HNO_CONSULT_ORD_ID
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_024 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_024;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_025 <- HNO_ECG_DX ----
 -- This table contains the diagnosis for Electrocardiograms (ECG/EKG) that have been stored on General Use Notes (HNO) records.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_025 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_025 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_025
 FROM HNO_ECG_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_025 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_025;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_026 <- HNO_INFO ----
 -- This table contains common information from General Use Notes items. This table focuses on time-insensitive, once-per-record data while other HNO tables (e.g., NOTES_ACCT, CODING_C
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_026 (
+    activity_year INT,
+    total_rows INT,
+    CREATE_INSTANT_DTTM_filled INT,
+    DELETE_INSTANT_DTTM_filled INT,
+    DATE_OF_SERVIC_DTTM_filled INT,
+    LST_FILED_INST_DTTM_filled INT,
+    UPDATE_DATE_filled INT,
+    CRT_INST_LOCAL_DTTM_filled INT,
+    ACTIVE_FROM_DT_filled INT,
+    ACTIVE_TO_DT_filled INT,
+    COMMENT_EDIT_INST_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_026 (activity_year, total_rows, CREATE_INSTANT_DTTM_filled, DELETE_INSTANT_DTTM_filled, DATE_OF_SERVIC_DTTM_filled, LST_FILED_INST_DTTM_filled, UPDATE_DATE_filled, CRT_INST_LOCAL_DTTM_filled, ACTIVE_FROM_DT_filled, ACTIVE_TO_DT_filled, COMMENT_EDIT_INST_DTTM_filled, query_error)
 SELECT
     YEAR(CREATE_INSTANT_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
@@ -634,11 +814,11 @@ SELECT
     COUNT(ACTIVE_TO_DT) AS ACTIVE_TO_DT_filled,
     COUNT(COMMENT_EDIT_INST_DTTM) AS COMMENT_EDIT_INST_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_026
 FROM HNO_INFO
 GROUP BY YEAR(CREATE_INSTANT_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_026 (activity_year, total_rows, CREATE_INSTANT_DTTM_filled, DELETE_INSTANT_DTTM_filled, DATE_OF_SERVIC_DTTM_filled, LST_FILED_INST_DTTM_filled, UPDATE_DATE_filled, CRT_INST_LOCAL_DTTM_filled, ACTIVE_FROM_DT_filled, ACTIVE_TO_DT_filled, COMMENT_EDIT_INST_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -651,148 +831,198 @@ SELECT
     CAST(NULL AS INT) AS ACTIVE_FROM_DT_filled,
     CAST(NULL AS INT) AS ACTIVE_TO_DT_filled,
     CAST(NULL AS INT) AS COMMENT_EDIT_INST_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_026;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_027 <- HNO_INFO_2 ----
 -- This table contains common information from General Use Notes items. This table focuses on one time only data while other HNO tables (e.g., NOTES_ACCT, CODING_CLA_NOTES) contain th
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_027 (
+    activity_year INT,
+    total_rows INT,
+    LETTER_FINAL_UTC_DTTM_filled INT,
+    NOTE_UPDATE_INST_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_027 (activity_year, total_rows, LETTER_FINAL_UTC_DTTM_filled, NOTE_UPDATE_INST_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(LETTER_FINAL_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LETTER_FINAL_UTC_DTTM) AS LETTER_FINAL_UTC_DTTM_filled,
     COUNT(NOTE_UPDATE_INST_UTC_DTTM) AS NOTE_UPDATE_INST_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_027
 FROM HNO_INFO_2
 GROUP BY YEAR(LETTER_FINAL_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_027 (activity_year, total_rows, LETTER_FINAL_UTC_DTTM_filled, NOTE_UPDATE_INST_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LETTER_FINAL_UTC_DTTM_filled,
     CAST(NULL AS INT) AS NOTE_UPDATE_INST_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_027;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_028 <- HNO_MYC_LET_INFO ----
 -- This table contains MyChart related information for letters. It includes whether a letter is released to MyChart and the date/time it was released to MyChart.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_028 (
+    activity_year INT,
+    total_rows INT,
+    LET_REL_MYC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_028 (activity_year, total_rows, LET_REL_MYC_DTTM_filled, query_error)
 SELECT
     YEAR(LET_REL_MYC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(LET_REL_MYC_DTTM) AS LET_REL_MYC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_028
 FROM HNO_MYC_LET_INFO
 GROUP BY YEAR(LET_REL_MYC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_028 (activity_year, total_rows, LET_REL_MYC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LET_REL_MYC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_028;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_029 <- HNO_PLACEHOLDER_CHARGE ----
 -- Contains items related to Create Placeholder Charge action.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_029 (
+    activity_year INT,
+    total_rows INT,
+    CHG_ACTION_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_029 (activity_year, total_rows, CHG_ACTION_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CHG_ACTION_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CHG_ACTION_UTC_DTTM) AS CHG_ACTION_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_029
 FROM HNO_PLACEHOLDER_CHARGE
 GROUP BY YEAR(CHG_ACTION_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_029 (activity_year, total_rows, CHG_ACTION_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CHG_ACTION_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_029;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_030 <- HNO_SMARTFORM_LINK ----
 -- This table contains a list of SmartBlocks and the SmartForms that are linked to those SmartBlocks in a particular note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_030 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_030 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_030
 FROM HNO_SMARTFORM_LINK
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_030 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_030;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_031 <- HNO_SOURCE_LOG_ID ----
 -- This table displays the surgical log where a note was edited.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_031 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_031 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_031
 FROM HNO_SOURCE_LOG_ID
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_031 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_031;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_032 <- HOLOGRAM_DETAILS ----
 -- This table stores workflow-level information about documentation pieces that have been queued up and suspended during an outpatient visit.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_032 (
+    activity_year INT,
+    total_rows INT,
+    WORKFLOW_INST_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_032 (activity_year, total_rows, WORKFLOW_INST_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(WORKFLOW_INST_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(WORKFLOW_INST_UTC_DTTM) AS WORKFLOW_INST_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_032
 FROM HOLOGRAM_DETAILS
 GROUP BY YEAR(WORKFLOW_INST_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_032 (activity_year, total_rows, WORKFLOW_INST_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS WORKFLOW_INST_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_032;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_033 <- HOLOGRAM_SELECTIONS ----
 -- This table stores details about each selection made in a hologram record. Which specific details are stored depends on the type of each row.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_033 (
+    activity_year INT,
+    total_rows INT,
+    IMMNZTN_DATE_filled INT,
+    IMMNZTN_INSTANT_UTC_DTTM_filled INT,
+    IMMNZTN_NEXT_DUE_DATE_filled INT,
+    IMMNZTN_EXPIRATION_DATE_filled INT,
+    IMMNZTN_VIS_DATE_filled INT,
+    LOS_COMPONENT_COUNSEL_TIME_filled INT,
+    NT_DISP_INSTANT_UTC_DTTM_filled INT,
+    REASON_FOR_VISIT_ONSET_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_033 (activity_year, total_rows, IMMNZTN_DATE_filled, IMMNZTN_INSTANT_UTC_DTTM_filled, IMMNZTN_NEXT_DUE_DATE_filled, IMMNZTN_EXPIRATION_DATE_filled, IMMNZTN_VIS_DATE_filled, LOS_COMPONENT_COUNSEL_TIME_filled, NT_DISP_INSTANT_UTC_DTTM_filled, REASON_FOR_VISIT_ONSET_DATE_filled, query_error)
 SELECT
     YEAR(IMMNZTN_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -805,11 +1035,11 @@ SELECT
     COUNT(NT_DISP_INSTANT_UTC_DTTM) AS NT_DISP_INSTANT_UTC_DTTM_filled,
     COUNT(REASON_FOR_VISIT_ONSET_DATE) AS REASON_FOR_VISIT_ONSET_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_033
 FROM HOLOGRAM_SELECTIONS
 GROUP BY YEAR(IMMNZTN_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_033 (activity_year, total_rows, IMMNZTN_DATE_filled, IMMNZTN_INSTANT_UTC_DTTM_filled, IMMNZTN_NEXT_DUE_DATE_filled, IMMNZTN_EXPIRATION_DATE_filled, IMMNZTN_VIS_DATE_filled, LOS_COMPONENT_COUNSEL_TIME_filled, NT_DISP_INSTANT_UTC_DTTM_filled, REASON_FOR_VISIT_ONSET_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -821,14 +1051,22 @@ SELECT
     CAST(NULL AS INT) AS LOS_COMPONENT_COUNSEL_TIME_filled,
     CAST(NULL AS INT) AS NT_DISP_INSTANT_UTC_DTTM_filled,
     CAST(NULL AS INT) AS REASON_FOR_VISIT_ONSET_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_033;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_034 <- INCOMPLETE_NOTE_EPT ----
 -- Table created for the visit narrative data stored in the patient masterfile. No longer used since we use UCN now since 2010, exporting these items as a formality.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_034 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    INC_NOTE_START_DATE_UTC_DTTM_filled INT,
+    INC_NOTE_LAST_EDIT_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_034 (activity_year, total_rows, CONTACT_DATE_filled, INC_NOTE_START_DATE_UTC_DTTM_filled, INC_NOTE_LAST_EDIT_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -836,135 +1074,173 @@ SELECT
     COUNT(INC_NOTE_START_DATE_UTC_DTTM) AS INC_NOTE_START_DATE_UTC_DTTM_filled,
     COUNT(INC_NOTE_LAST_EDIT_UTC_DTTM) AS INC_NOTE_LAST_EDIT_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_034
 FROM INCOMPLETE_NOTE_EPT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_034 (activity_year, total_rows, CONTACT_DATE_filled, INC_NOTE_START_DATE_UTC_DTTM_filled, INC_NOTE_LAST_EDIT_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS INC_NOTE_START_DATE_UTC_DTTM_filled,
     CAST(NULL AS INT) AS INC_NOTE_LAST_EDIT_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_034;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_035 <- INTERV_NOTE_INFO ----
 -- This table links a care plan goal note contact to the related intervention note contacts that were filed at the same time.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_035 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_035 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_035
 FROM INTERV_NOTE_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_035 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_035;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_036 <- LAB_COSIGN_INFO ----
 -- The LAB_COSIGN_INFO table contains cosign information for lab results.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_036 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_036 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_036
 FROM LAB_COSIGN_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_036 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_036;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_037 <- MAR_COSIGN_INST ----
 -- List of instants at which this med administration was cosigned.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_037 (
+    activity_year INT,
+    total_rows INT,
+    MAR_COSIGN_INSTANT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_037 (activity_year, total_rows, MAR_COSIGN_INSTANT_filled, query_error)
 SELECT
     YEAR(MAR_COSIGN_INSTANT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(MAR_COSIGN_INSTANT) AS MAR_COSIGN_INSTANT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_037
 FROM MAR_COSIGN_INST
 GROUP BY YEAR(MAR_COSIGN_INSTANT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_037 (activity_year, total_rows, MAR_COSIGN_INSTANT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS MAR_COSIGN_INSTANT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_037;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_038 <- MED_DISCONTINUE_NOTE ----
 -- This table extracts the multiline discontinue note associated with a medication within a document received.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_038 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_038 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_038
 FROM MED_DISCONTINUE_NOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_038 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_038;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_039 <- NOTES_ACCT ----
 -- This table contains summary information for billing system account notepad notes attached to accounts.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_039 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_ENTRY_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_039 (activity_year, total_rows, NOTE_ENTRY_DTTM_filled, query_error)
 SELECT
     YEAR(NOTE_ENTRY_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(NOTE_ENTRY_DTTM) AS NOTE_ENTRY_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_039
 FROM NOTES_ACCT
 GROUP BY YEAR(NOTE_ENTRY_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_039 (activity_year, total_rows, NOTE_ENTRY_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS NOTE_ENTRY_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_039;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_040 <- NOTES_HISTORY_LOG ----
 -- This table contains the Edit History Information for all Notes (HNO records). Shows information about the type of edit, when the note was edited, and the user who made the edit.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_040 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    EDIT_HX_INSTANT_filled INT,
+    EDIT_HX_EXP_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_040 (activity_year, total_rows, CONTACT_DATE_filled, EDIT_HX_INSTANT_filled, EDIT_HX_EXP_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -972,49 +1248,67 @@ SELECT
     COUNT(EDIT_HX_INSTANT) AS EDIT_HX_INSTANT_filled,
     COUNT(EDIT_HX_EXP_DATE) AS EDIT_HX_EXP_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_040
 FROM NOTES_HISTORY_LOG
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_040 (activity_year, total_rows, CONTACT_DATE_filled, EDIT_HX_INSTANT_filled, EDIT_HX_EXP_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS EDIT_HX_INSTANT_filled,
     CAST(NULL AS INT) AS EDIT_HX_EXP_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_040;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_041 <- NOTES_MC_NMM ----
 -- This table contains the information about notes (HNO) records attached to case (NMM) records.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_041 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_DATE_filled INT,
+    NOTE_TIME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_041 (activity_year, total_rows, NOTE_DATE_filled, NOTE_TIME_filled, query_error)
 SELECT
     YEAR(NOTE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(NOTE_DATE) AS NOTE_DATE_filled,
     COUNT(NOTE_TIME) AS NOTE_TIME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_041
 FROM NOTES_MC_NMM
 GROUP BY YEAR(NOTE_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_041 (activity_year, total_rows, NOTE_DATE_filled, NOTE_TIME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS NOTE_DATE_filled,
     CAST(NULL AS INT) AS NOTE_TIME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_041;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_042 <- NOTES_TRANS_AUTH ----
 -- This table contains transcription authorization info.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_042 (
+    activity_year INT,
+    total_rows INT,
+    AUTH_DTTM_filled INT,
+    DICTATION_TIME_filled INT,
+    TRANSCRIPTION_TIME_filled INT,
+    ACTIVITY_DTTM_filled INT,
+    EDIT_DTTM_filled INT,
+    CHR_CNT_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_042 (activity_year, total_rows, AUTH_DTTM_filled, DICTATION_TIME_filled, TRANSCRIPTION_TIME_filled, ACTIVITY_DTTM_filled, EDIT_DTTM_filled, CHR_CNT_DTTM_filled, query_error)
 SELECT
     YEAR(AUTH_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1025,11 +1319,11 @@ SELECT
     COUNT(EDIT_DTTM) AS EDIT_DTTM_filled,
     COUNT(CHR_CNT_DTTM) AS CHR_CNT_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_042
 FROM NOTES_TRANS_AUTH
 GROUP BY YEAR(AUTH_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_042 (activity_year, total_rows, AUTH_DTTM_filled, DICTATION_TIME_filled, TRANSCRIPTION_TIME_filled, ACTIVITY_DTTM_filled, EDIT_DTTM_filled, CHR_CNT_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1039,106 +1333,155 @@ SELECT
     CAST(NULL AS INT) AS ACTIVITY_DTTM_filled,
     CAST(NULL AS INT) AS EDIT_DTTM_filled,
     CAST(NULL AS INT) AS CHR_CNT_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_042;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_043 <- NOTE_BLOCKING ----
 -- This table stores the reasons for blocking the sharing of a note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_043 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_043 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_043
 FROM NOTE_BLOCKING
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_043 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_043;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_044 <- NOTE_CONTENT_INFO ----
 -- This table contains discrete information pertaining to the type of content contained within the note text of a clinical note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_044 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_044 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_044
 FROM NOTE_CONTENT_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_044 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_044;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_045 <- NOTE_COPY_TRACKING ----
 -- Track the source note information that this note was copied from.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_045 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_COPY_INST_DTTM_filled INT,
+    NOTE_COPY_LOC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_045 (activity_year, total_rows, NOTE_COPY_INST_DTTM_filled, NOTE_COPY_LOC_DTTM_filled, query_error)
 SELECT
     YEAR(NOTE_COPY_INST_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(NOTE_COPY_INST_DTTM) AS NOTE_COPY_INST_DTTM_filled,
     COUNT(NOTE_COPY_LOC_DTTM) AS NOTE_COPY_LOC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_045
 FROM NOTE_COPY_TRACKING
 GROUP BY YEAR(NOTE_COPY_INST_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_045 (activity_year, total_rows, NOTE_COPY_INST_DTTM_filled, NOTE_COPY_LOC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS NOTE_COPY_INST_DTTM_filled,
     CAST(NULL AS INT) AS NOTE_COPY_LOC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_045;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_046 <- NOTE_EDIT_TRAIL ----
 -- This table displays edit trail information for notes (HNO).
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_046 (
+    activity_year INT,
+    total_rows INT,
+    IP_ACTION_DTTM_filled INT,
+    ACT_TAKEN_INST_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_046 (activity_year, total_rows, IP_ACTION_DTTM_filled, ACT_TAKEN_INST_DTTM_filled, query_error)
 SELECT
     YEAR(IP_ACTION_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(IP_ACTION_DTTM) AS IP_ACTION_DTTM_filled,
     COUNT(ACT_TAKEN_INST_DTTM) AS ACT_TAKEN_INST_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_046
 FROM NOTE_EDIT_TRAIL
 GROUP BY YEAR(IP_ACTION_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_046 (activity_year, total_rows, IP_ACTION_DTTM_filled, ACT_TAKEN_INST_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS IP_ACTION_DTTM_filled,
     CAST(NULL AS INT) AS ACT_TAKEN_INST_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_046;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_047 <- NOTE_ENC_INFO ----
 -- This table contains information from overtime single-response items about General Use Notes (HNO) records. Contact creation logic for clinical notes is as follows: 1. If a note doe
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_047 (
+    activity_year INT,
+    total_rows INT,
+    COSIGN_INSTANT_DTTM_filled INT,
+    ENTRY_INSTANT_DTTM_filled INT,
+    UPD_AUTHOR_INS_DTTM_filled INT,
+    SPEC_NOTE_TIME_DTTM_filled INT,
+    NOTE_FILE_TIME_DTTM_filled INT,
+    CONTACT_DATE_filled INT,
+    UPD_BY_AUTH_DTTM_filled INT,
+    ACTIVITY_DTTM_filled INT,
+    UPD_AUT_LOCAL_DTTM_filled INT,
+    ENT_INST_LOCAL_DTTM_filled INT,
+    SPEC_TIME_LOC_DTTM_filled INT,
+    NOT_FILETM_LOC_DTTM_filled INT,
+    TRANSCRIPTION_DTTM_filled INT,
+    TREAT_SUMM_PAT_DTTM_filled INT,
+    TREAT_SUMM_PROV_DTTM_filled INT,
+    TREAT_SUMM_CPLT_DTTM_filled INT,
+    END_OF_TREAT_DATE_filled INT,
+    COSIGN_INST_LOCAL_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_047 (activity_year, total_rows, COSIGN_INSTANT_DTTM_filled, ENTRY_INSTANT_DTTM_filled, UPD_AUTHOR_INS_DTTM_filled, SPEC_NOTE_TIME_DTTM_filled, NOTE_FILE_TIME_DTTM_filled, CONTACT_DATE_filled, UPD_BY_AUTH_DTTM_filled, ACTIVITY_DTTM_filled, UPD_AUT_LOCAL_DTTM_filled, ENT_INST_LOCAL_DTTM_filled, SPEC_TIME_LOC_DTTM_filled, NOT_FILETM_LOC_DTTM_filled, TRANSCRIPTION_DTTM_filled, TREAT_SUMM_PAT_DTTM_filled, TREAT_SUMM_PROV_DTTM_filled, TREAT_SUMM_CPLT_DTTM_filled, END_OF_TREAT_DATE_filled, COSIGN_INST_LOCAL_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1161,11 +1504,11 @@ SELECT
     COUNT(END_OF_TREAT_DATE) AS END_OF_TREAT_DATE_filled,
     COUNT(COSIGN_INST_LOCAL_DTTM) AS COSIGN_INST_LOCAL_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_047
 FROM NOTE_ENC_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_047 (activity_year, total_rows, COSIGN_INSTANT_DTTM_filled, ENTRY_INSTANT_DTTM_filled, UPD_AUTHOR_INS_DTTM_filled, SPEC_NOTE_TIME_DTTM_filled, NOTE_FILE_TIME_DTTM_filled, CONTACT_DATE_filled, UPD_BY_AUTH_DTTM_filled, ACTIVITY_DTTM_filled, UPD_AUT_LOCAL_DTTM_filled, ENT_INST_LOCAL_DTTM_filled, SPEC_TIME_LOC_DTTM_filled, NOT_FILETM_LOC_DTTM_filled, TRANSCRIPTION_DTTM_filled, TREAT_SUMM_PAT_DTTM_filled, TREAT_SUMM_PROV_DTTM_filled, TREAT_SUMM_CPLT_DTTM_filled, END_OF_TREAT_DATE_filled, COSIGN_INST_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1187,416 +1530,535 @@ SELECT
     CAST(NULL AS INT) AS TREAT_SUMM_CPLT_DTTM_filled,
     CAST(NULL AS INT) AS END_OF_TREAT_DATE_filled,
     CAST(NULL AS INT) AS COSIGN_INST_LOCAL_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_047;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_048 <- NOTE_ENC_INFO_2 ----
 -- This table extends HNO_ENC_INFO.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_048 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    EXT_LAST_SIGN_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_048 (activity_year, total_rows, CONTACT_DATE_filled, EXT_LAST_SIGN_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(EXT_LAST_SIGN_UTC_DTTM) AS EXT_LAST_SIGN_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_048
 FROM NOTE_ENC_INFO_2
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_048 (activity_year, total_rows, CONTACT_DATE_filled, EXT_LAST_SIGN_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS EXT_LAST_SIGN_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_048;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_049 <- NOTE_EXT_REL_ORD ----
 -- This table stores information about external orders related to an external note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_049 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_049 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_049
 FROM NOTE_EXT_REL_ORD
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_049 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_049;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_050 <- NOTE_EXT_REL_PREDX ----
 -- This table stores information about external pre-procedure diagnoses related to an external note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_050 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_050 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_050
 FROM NOTE_EXT_REL_PREDX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_050 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_050;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_051 <- NOTE_EXT_REL_PROB ----
 -- This table stores information about external problems related to an external note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_051 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_051 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_051
 FROM NOTE_EXT_REL_PROB
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_051 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_051;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_052 <- NOTE_EXT_REL_PROC ----
 -- This table stores information about external procedures related to an external note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_052 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_052 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_052
 FROM NOTE_EXT_REL_PROC
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_052 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_052;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_053 <- NOTE_EXT_REL_PSTDX ----
 -- This table stores information about external post-procedure diagnoses related to an external note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_053 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_053 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_053
 FROM NOTE_EXT_REL_PSTDX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_053 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_053;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_054 <- NOTE_EXT_SIGNERS ----
 -- Note signer information for auto-reconciled external notes.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_054 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    EXT_NOTE_SIGNING_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_054 (activity_year, total_rows, CONTACT_DATE_filled, EXT_NOTE_SIGNING_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(EXT_NOTE_SIGNING_UTC_DTTM) AS EXT_NOTE_SIGNING_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_054
 FROM NOTE_EXT_SIGNERS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_054 (activity_year, total_rows, CONTACT_DATE_filled, EXT_NOTE_SIGNING_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS EXT_NOTE_SIGNING_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_054;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_055 <- NOTE_EXT_WRN_TYP ----
 -- This table stores the external note warning types for a note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_055 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_055 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_055
 FROM NOTE_EXT_WRN_TYP
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_055 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_055;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_056 <- NOTE_RESEARCH_LINK_HX ----
 -- This table contains information about how the research study linkage on a note has changed over time.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_056 (
+    activity_year INT,
+    total_rows INT,
+    HX_STUDY_LINK_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_056 (activity_year, total_rows, HX_STUDY_LINK_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(HX_STUDY_LINK_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(HX_STUDY_LINK_UTC_DTTM) AS HX_STUDY_LINK_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_056
 FROM NOTE_RESEARCH_LINK_HX
 GROUP BY YEAR(HX_STUDY_LINK_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_056 (activity_year, total_rows, HX_STUDY_LINK_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS HX_STUDY_LINK_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_056;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_057 <- NOTE_SMARTBLOCK_ATTR ----
 -- Store the employee (EMP) ID, the Timestamp, and the SmartBlocks added of the Attribution for SmartBlocks.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_057 (
+    activity_year INT,
+    total_rows INT,
+    ATTRIBUTION_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_057 (activity_year, total_rows, ATTRIBUTION_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(ATTRIBUTION_UTC_DTTM) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ATTRIBUTION_UTC_DTTM) AS ATTRIBUTION_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_057
 FROM NOTE_SMARTBLOCK_ATTR
 GROUP BY YEAR(ATTRIBUTION_UTC_DTTM);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_057 (activity_year, total_rows, ATTRIBUTION_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ATTRIBUTION_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_057;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_058 <- NOTE_SMARTSECTION_IDS ----
 -- Contains the SmartSection IDs used in the note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_058 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_058 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_058
 FROM NOTE_SMARTSECTION_IDS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_058 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_058;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_059 <- ORDER_DOCUMENTS ----
 -- This table contains the DCS records attached to an order on a contact level such as scanned hard copy prescriptions, Lab Scans and Lab Reports.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_059 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_059 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_059
 FROM ORDER_DOCUMENTS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_059 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_059;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_060 <- ORDER_RAD_DICTATE ----
 -- This table stores the dictation radiologist & dictating date information for orders performed in radiology.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_060 (
+    activity_year INT,
+    total_rows INT,
+    DICTATING_DT_filled INT,
+    DICTATED_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_060 (activity_year, total_rows, DICTATING_DT_filled, DICTATED_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(DICTATING_DT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DICTATING_DT) AS DICTATING_DT_filled,
     COUNT(DICTATED_UTC_DTTM) AS DICTATED_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_060
 FROM ORDER_RAD_DICTATE
 GROUP BY YEAR(DICTATING_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_060 (activity_year, total_rows, DICTATING_DT_filled, DICTATED_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS DICTATING_DT_filled,
     CAST(NULL AS INT) AS DICTATED_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_060;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_061 <- ORDER_RESULT_DOCUMENTS ----
 -- This tables holds document IDs for documents that contain results for an order.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_061 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_061 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_061
 FROM ORDER_RESULT_DOCUMENTS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_061 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_061;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_062 <- ORDER_SMARTSECTION_DATA ----
 -- Data for Order specific SmartSections.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_062 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_062 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_062
 FROM ORDER_SMARTSECTION_DATA
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_062 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_062;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_063 <- ORDER_SMARTSECTION_HNO ----
 -- Holds the CSN of HNO records that contain the SmartSection text.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_063 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_063 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_063
 FROM ORDER_SMARTSECTION_HNO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_063 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_063;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_064 <- ORDER_SMARTSECTION_TEXT ----
 -- Holds the SmartSection text for an Order. Associated key is SMARTSECTION_KEY in ORDER_SMARTSECTION_DATA.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_064 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_064 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_064
 FROM ORDER_SMARTSECTION_TEXT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_064 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_064;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_065 <- OUTREACH_ESIG_DOCUMENTS ----
 -- This table stores documents sent to patients for e-signature prior to an outreach.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_065 (
+    activity_year INT,
+    total_rows INT,
+    ESIG_DOC_SEND_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_065 (activity_year, total_rows, ESIG_DOC_SEND_DATE_filled, query_error)
 SELECT
     YEAR(ESIG_DOC_SEND_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(ESIG_DOC_SEND_DATE) AS ESIG_DOC_SEND_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_065
 FROM OUTREACH_ESIG_DOCUMENTS
 GROUP BY YEAR(ESIG_DOC_SEND_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_065 (activity_year, total_rows, ESIG_DOC_SEND_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ESIG_DOC_SEND_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_065;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_066 <- PAT_ADDENDUM_INFO ----
 -- This table contains the encounter addendum information from the Addendum Added Date (I EPT 18123) and Addendum Added User (I EPT 18129) items.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_066 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    ADDENDUM_DATE_TIME_filled INT,
+    ADDENDUM_STARTED_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_066 (activity_year, total_rows, CONTACT_DATE_filled, ADDENDUM_DATE_TIME_filled, ADDENDUM_STARTED_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1604,248 +2066,317 @@ SELECT
     COUNT(ADDENDUM_DATE_TIME) AS ADDENDUM_DATE_TIME_filled,
     COUNT(ADDENDUM_STARTED_UTC_DTTM) AS ADDENDUM_STARTED_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_066
 FROM PAT_ADDENDUM_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_066 (activity_year, total_rows, CONTACT_DATE_filled, ADDENDUM_DATE_TIME_filled, ADDENDUM_STARTED_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS ADDENDUM_DATE_TIME_filled,
     CAST(NULL AS INT) AS ADDENDUM_STARTED_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_066;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_067 <- PAT_DT_STICKY_NOTE_INFO ----
 -- This table contains information regarding a patient's date-specific sticky notes, including the date the note applies to as well as the note ID.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_067 (
+    activity_year INT,
+    total_rows INT,
+    DT_STICKY_NOTE_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_067 (activity_year, total_rows, DT_STICKY_NOTE_DATE_filled, query_error)
 SELECT
     YEAR(DT_STICKY_NOTE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(DT_STICKY_NOTE_DATE) AS DT_STICKY_NOTE_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_067
 FROM PAT_DT_STICKY_NOTE_INFO
 GROUP BY YEAR(DT_STICKY_NOTE_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_067 (activity_year, total_rows, DT_STICKY_NOTE_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS DT_STICKY_NOTE_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_067;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_068 <- PAT_ENC_AMBIENT_SESSIONS ----
 -- Stores ambient session information from a patient's encounter.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_068 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_068 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_068
 FROM PAT_ENC_AMBIENT_SESSIONS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_068 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_068;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_069 <- PAT_ENC_PREPAYNOTE ----
 -- User entered notes associated with a prepayment on a patient encounter.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_069 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_069 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_069
 FROM PAT_ENC_PREPAYNOTE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_069 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_069;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_070 <- QRY_EVIDENCE_NOTE_CSN_ID ----
 -- This table extracts information related to the contact the evidence came from.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_070 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_070 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_070
 FROM QRY_EVIDENCE_NOTE_CSN_ID
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_070 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_070;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_071 <- QRY_EVIDENCE_NOTE_IDS ----
 -- This table extracts information related to the note record that the evidence came from.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_071 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_071 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_071
 FROM QRY_EVIDENCE_NOTE_IDS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_071 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_071;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_072 <- SMARTFORMS_ACCESSED ----
 -- This table contains information pertaining to how specific users are accessing specific SmartForms, such as how long a user has spent in a given SmartForm.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_072 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_072 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_072
 FROM SMARTFORMS_ACCESSED
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_072 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_072;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_073 <- SMARTFORM_METADATA ----
 -- This table contains metadata pertaining to specific SmartForms for a visit.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_073 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_073 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_073
 FROM SMARTFORM_METADATA
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_073 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_073;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_074 <- SMRTDTA_ELEM_CUST_SERVICE ----
 -- This table is a bridge between CRM context SmartData element values and the source customer relationship management records.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_074 (
+    activity_year INT,
+    total_rows INT,
+    CUR_VALUE_DATETIME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_074 (activity_year, total_rows, CUR_VALUE_DATETIME_filled, query_error)
 SELECT
     YEAR(CUR_VALUE_DATETIME) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CUR_VALUE_DATETIME) AS CUR_VALUE_DATETIME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_074
 FROM SMRTDTA_ELEM_CUST_SERVICE
 GROUP BY YEAR(CUR_VALUE_DATETIME);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_074 (activity_year, total_rows, CUR_VALUE_DATETIME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CUR_VALUE_DATETIME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_074;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_075 <- SMRTDTA_ELEM_DATA ----
 -- The SMRTDTA_ELEM_DATA table stores metadata (context, linked records, time of entry, etc.) concerning SmartData element values entered by users through SmartForms, SmartTools or ot
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_075 (
+    activity_year INT,
+    total_rows INT,
+    CUR_VALUE_DATETIME_filled INT,
+    CUR_VAL_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_075 (activity_year, total_rows, CUR_VALUE_DATETIME_filled, CUR_VAL_UTC_DTTM_filled, query_error)
 SELECT
     YEAR(CUR_VALUE_DATETIME) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CUR_VALUE_DATETIME) AS CUR_VALUE_DATETIME_filled,
     COUNT(CUR_VAL_UTC_DTTM) AS CUR_VAL_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_075
 FROM SMRTDTA_ELEM_DATA
 GROUP BY YEAR(CUR_VALUE_DATETIME);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_075 (activity_year, total_rows, CUR_VALUE_DATETIME_filled, CUR_VAL_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CUR_VALUE_DATETIME_filled,
     CAST(NULL AS INT) AS CUR_VAL_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_075;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_076 <- TX_ADDENDUM_NOTES ----
 -- Extract Note (HNO) records containing addendum information for the note.
 -- Bucket(s): Reused from CM-04 note-timestamp candidates (bucket by hour-of-day/day-of-week)
+CREATE TABLE #fc_076 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_076 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_076
 FROM TX_ADDENDUM_NOTES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_076 (activity_year, total_rows, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_076;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_077 <- CLARITY_SER ----
 -- The CLARITY_SER table contains high-level information about your provider records. These records may be caregivers, resources, classes, devices, and modalities.
 -- Bucket(s): Provider record (schedule/FTE -- exploratory, no after-hours-specific field found)
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_077 (
+    activity_year INT,
+    total_rows INT,
+    PROV_ID_PROV_NAME_filled INT,
+    PROV_NAME_filled INT,
+    EXTERNAL_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_077 (activity_year, total_rows, PROV_ID_PROV_NAME_filled, PROV_NAME_filled, EXTERNAL_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1853,18 +2384,17 @@ SELECT
     COUNT(PROV_NAME) AS PROV_NAME_filled,
     COUNT(EXTERNAL_NAME) AS EXTERNAL_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_077
 FROM CLARITY_SER;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_077 (activity_year, total_rows, PROV_ID_PROV_NAME_filled, PROV_NAME_filled, EXTERNAL_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS PROV_ID_PROV_NAME_filled,
     CAST(NULL AS INT) AS PROV_NAME_filled,
     CAST(NULL AS INT) AS EXTERNAL_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_077;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ============================== PHASE 2 ==============================

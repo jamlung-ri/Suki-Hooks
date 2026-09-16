@@ -7,27 +7,35 @@
 -- It produces exactly ONE result grid, at the very end. Export that grid
 -- to CSV and send it back -- that is the entire ask.
 --
--- ERROR HANDLING: each Phase 1 block is wrapped in BEGIN TRY / BEGIN
--- CATCH. If a candidate table or column doesn't exist in your build,
--- that block's staging table is still created, just with NULL counts
--- and a query_error message (e.g. "Invalid object name 'X'."). A
--- missing table never stops the script or requires you to debug or fix
--- anything -- it just shows up as an extra column on that table's rows
--- in the final grid. Please don't spend time troubleshooting individual
--- failures; just run the whole thing top to bottom and send back
--- whatever comes out the other end.
+-- ERROR HANDLING: each Phase 1 block first CREATE TABLEs its own
+-- staging table, then attempts the real query inside BEGIN TRY / BEGIN
+-- CATCH as an INSERT INTO that same table. If a candidate table or
+-- column doesn't exist in your build, the CATCH branch inserts NULL
+-- counts and a query_error message (e.g. "Invalid object name 'X'.")
+-- instead. A missing table never stops the script or requires you to
+-- debug or fix anything -- it just shows up as an extra column on that
+-- table's rows in the final grid. Please don't spend time
+-- troubleshooting individual failures; just run the whole thing top to
+-- bottom and send back whatever comes out the other end. (Earlier
+-- versions of this script used `SELECT ... INTO` for both the TRY and
+-- CATCH branches, which SQL Server rejects at compile time -- you can't
+-- target the same temp table from two SELECT INTOs in one batch, even
+-- in mutually exclusive branches. The explicit CREATE TABLE + INSERT
+-- INTO structure below avoids that.)
 --
 -- Written for SQL Server T-SQL. On Oracle or in SAS PROC SQL, two swaps:
---   1. Replace `SELECT ... INTO #fc_NNN FROM ...` with
---      `CREATE TABLE fc_NNN AS SELECT ... FROM ...`
+--   1. Drop the `#` prefix on every `#fc_NNN` (Oracle has no session-temp-
+--      table shorthand; use an ordinary table, or a global temporary
+--      table, and see the cleanup block at the end of this file).
 --   2. Replace `YEAR(<col>)` with `EXTRACT(YEAR FROM <col>)` (Oracle only --
 --      SAS PROC SQL supports YEAR() natively).
 -- BEGIN TRY/BEGIN CATCH (see ERROR HANDLING note above) is SQL Server
 -- syntax and does not translate mechanically. On Oracle, the equivalent
 -- is a PL/SQL block per table (BEGIN ... EXCEPTION WHEN OTHERS THEN ...
--- END;). SAS PROC SQL has no per-statement equivalent at all -- if you're
--- on SAS, run this through a native SQL Server/Oracle client instead of
--- PROC SQL, or ask us for a PROC SQL-safe variant before running it.
+-- END;) wrapped around the same INSERT INTO. SAS PROC SQL has no per-
+-- statement equivalent at all -- if you're on SAS, run this through a
+-- native SQL Server/Oracle client instead of PROC SQL, or ask us for a
+-- PROC SQL-safe variant before running it.
 -- SQL Server's #-prefixed temp tables are session-scoped and auto-dropped
 -- when your connection closes -- nothing persists. On Oracle/SAS, staging
 -- tables are ordinary tables and will need the cleanup block at the end of
@@ -57,7 +65,18 @@
 -- This table contains the appointment contact serial numbers (CSNs) linked to an authorization as well as the counts used for each CSN.
 -- Bucket(s): Appointment / scheduling status
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_001 (
+    activity_year INT,
+    total_rows INT,
+    AUTH_ID_filled INT,
+    LINE_filled INT,
+    LINKED_APPT_CSNS_filled INT,
+    LINKED_APPT_COUNTS_filled INT,
+    USR_OVR_VST_COUNT_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_001 (activity_year, total_rows, AUTH_ID_filled, LINE_filled, LINKED_APPT_CSNS_filled, LINKED_APPT_COUNTS_filled, USR_OVR_VST_COUNT_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -67,10 +86,10 @@ SELECT
     COUNT(LINKED_APPT_COUNTS) AS LINKED_APPT_COUNTS_filled,
     COUNT(USR_OVR_VST_COUNT_YN) AS USR_OVR_VST_COUNT_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_001
 FROM APPT_CSN_COUNTS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_001 (activity_year, total_rows, AUTH_ID_filled, LINE_filled, LINKED_APPT_CSNS_filled, LINKED_APPT_COUNTS_filled, USR_OVR_VST_COUNT_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -79,15 +98,24 @@ SELECT
     CAST(NULL AS INT) AS LINKED_APPT_CSNS_filled,
     CAST(NULL AS INT) AS LINKED_APPT_COUNTS_filled,
     CAST(NULL AS INT) AS USR_OVR_VST_COUNT_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_001;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_002 <- CANCELED_APPTS_EDI ----
 -- This table contains the list of visit IDs of appointments that used to be linked to an order, but were cancelled due to the order being cancelled. This item is used by the incoming
 -- Bucket(s): Appointment / scheduling status
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_002 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_ID_filled INT,
+    LINE_filled INT,
+    CANCEL_APPTS_EDI_filled INT,
+    CANC_APPT_PREV_STAT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_002 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, CANCEL_APPTS_EDI_filled, CANC_APPT_PREV_STAT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -96,10 +124,10 @@ SELECT
     COUNT(CANCEL_APPTS_EDI) AS CANCEL_APPTS_EDI_filled,
     COUNT(CANC_APPT_PREV_STAT) AS CANC_APPT_PREV_STAT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_002
 FROM CANCELED_APPTS_EDI;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_002 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, CANCEL_APPTS_EDI_filled, CANC_APPT_PREV_STAT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -107,15 +135,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CANCEL_APPTS_EDI_filled,
     CAST(NULL AS INT) AS CANC_APPT_PREV_STAT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_002;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_003 <- CLARITY_SER ----
 -- The CLARITY_SER table contains high-level information about your provider records. These records may be caregivers, resources, classes, devices, and modalities.
 -- Bucket(s): Provider record (FTE / schedule — exploratory)
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_003 (
+    activity_year INT,
+    total_rows INT,
+    PROV_ID_PROV_NAME_filled INT,
+    PROV_NAME_filled INT,
+    EXTERNAL_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_003 (activity_year, total_rows, PROV_ID_PROV_NAME_filled, PROV_NAME_filled, EXTERNAL_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -123,25 +159,34 @@ SELECT
     COUNT(PROV_NAME) AS PROV_NAME_filled,
     COUNT(EXTERNAL_NAME) AS EXTERNAL_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_003
 FROM CLARITY_SER;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_003 (activity_year, total_rows, PROV_ID_PROV_NAME_filled, PROV_NAME_filled, EXTERNAL_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS PROV_ID_PROV_NAME_filled,
     CAST(NULL AS INT) AS PROV_NAME_filled,
     CAST(NULL AS INT) AS EXTERNAL_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_003;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_004 <- ORD_AUD_APPT_INFO ----
 -- This table contains audit information about the appointment-level info for imaging studies.
 -- Bucket(s): Appointment / scheduling status
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_004 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_ID_filled INT,
+    LINE_filled INT,
+    APPT_STUDY_STATUES_filled INT,
+    APPT_STUDY_STAUES_EXT_VALS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_004 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, APPT_STUDY_STATUES_filled, APPT_STUDY_STAUES_EXT_VALS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -150,10 +195,10 @@ SELECT
     COUNT(APPT_STUDY_STATUES) AS APPT_STUDY_STATUES_filled,
     COUNT(APPT_STUDY_STAUES_EXT_VALS) AS APPT_STUDY_STAUES_EXT_VALS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_004
 FROM ORD_AUD_APPT_INFO;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_004 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, APPT_STUDY_STATUES_filled, APPT_STUDY_STAUES_EXT_VALS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -161,14 +206,91 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS APPT_STUDY_STATUES_filled,
     CAST(NULL AS INT) AS APPT_STUDY_STAUES_EXT_VALS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_004;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_005 <- PAT_ENC ----
 -- The patient encounter table contains one record for each patient encounter in your system. By default, this table does not contain Registration or PCP/Clinic Change contacts (encou
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_005 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ID_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    PCP_PROV_ID_PROV_NAME_filled INT,
+    FIN_CLASS_C_NAME_filled INT,
+    VISIT_PROV_ID_PROV_NAME_filled INT,
+    VISIT_PROV_TITLE_NAME_filled INT,
+    DEPARTMENT_ID_EXTERNAL_NAME_filled INT,
+    LMP_DATE_filled INT,
+    ENC_CLOSED_YN_filled INT,
+    ENC_CLOSED_USER_ID_filled INT,
+    ENC_CLOSED_USER_ID_NAME_filled INT,
+    ENC_CLOSE_DATE_filled INT,
+    LOS_MODIFIER1_ID_filled INT,
+    LOS_MODIFIER1_ID_MODIFIER_NAME_filled INT,
+    LOS_MODIFIER2_ID_filled INT,
+    LOS_MODIFIER2_ID_MODIFIER_NAME_filled INT,
+    LOS_MODIFIER3_ID_filled INT,
+    LOS_MODIFIER3_ID_MODIFIER_NAME_filled INT,
+    LOS_MODIFIER4_ID_filled INT,
+    LOS_MODIFIER4_ID_MODIFIER_NAME_filled INT,
+    APPT_STATUS_C_NAME_filled INT,
+    APPT_CANC_USER_ID_filled INT,
+    APPT_CANC_USER_ID_NAME_filled INT,
+    CHECKIN_USER_ID_filled INT,
+    CHECKIN_USER_ID_NAME_filled INT,
+    HOSP_ADMSN_TIME_filled INT,
+    HOSP_DISCHRG_TIME_filled INT,
+    HOSP_ADMSN_TYPE_C_NAME_filled INT,
+    NONCVRED_SERVICE_YN_filled INT,
+    REFERRAL_REQ_YN_filled INT,
+    REFERRAL_ID_filled INT,
+    ACCOUNT_ID_filled INT,
+    COVERAGE_ID_filled INT,
+    CLAIM_ID_filled INT,
+    PRIMARY_LOC_ID_LOC_NAME_filled INT,
+    CHARGE_SLIP_NUMBER_filled INT,
+    COPAY_DUE_filled INT,
+    UPDATE_DATE_filled INT,
+    HSP_ACCOUNT_ID_filled INT,
+    ADM_FOR_SURG_YN_filled INT,
+    SURGICAL_SVC_C_NAME_filled INT,
+    INPATIENT_DATA_ID_filled INT,
+    IP_EPISODE_ID_filled INT,
+    EXTERNAL_VISIT_ID_filled INT,
+    CONTACT_COMMENT_filled INT,
+    OUTGOING_CALL_YN_filled INT,
+    DATA_ENTRY_PERSON_filled INT,
+    REFERRAL_SOURCE_ID_filled INT,
+    REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled INT,
+    WC_TPL_VISIT_C_NAME_filled INT,
+    CONSENT_TYPE_C_NAME_filled INT,
+    BMI_filled INT,
+    BSA_filled INT,
+    AVS_PRINT_TM_filled INT,
+    AVS_FIRST_USER_ID_filled INT,
+    AVS_FIRST_USER_ID_NAME_filled INT,
+    ENC_MED_FRZ_RSN_C_NAME_filled INT,
+    EFFECTIVE_DATE_DT_filled INT,
+    DISCHARGE_DATE_DT_filled INT,
+    COPAY_PD_THRU_NAME_filled INT,
+    INTERPRETER_NEED_YN_filled INT,
+    VST_SPECIAL_NEEDS_C_NAME_filled INT,
+    BEN_ENG_SP_AMT_filled INT,
+    BEN_ADJ_COPAY_AMT_filled INT,
+    BEN_ADJ_METHOD_C_NAME_filled INT,
+    ENC_CREATE_USER_ID_filled INT,
+    ENC_CREATE_USER_ID_NAME_filled INT,
+    ENC_INSTANT_filled INT,
+    EFFECTIVE_DATE_DTTM_filled INT,
+    CALCULATED_ENC_STAT_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_005 (activity_year, total_rows, PAT_ID_filled, PAT_ENC_DATE_REAL_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, PCP_PROV_ID_PROV_NAME_filled, FIN_CLASS_C_NAME_filled, VISIT_PROV_ID_PROV_NAME_filled, VISIT_PROV_TITLE_NAME_filled, DEPARTMENT_ID_EXTERNAL_NAME_filled, LMP_DATE_filled, ENC_CLOSED_YN_filled, ENC_CLOSED_USER_ID_filled, ENC_CLOSED_USER_ID_NAME_filled, ENC_CLOSE_DATE_filled, LOS_MODIFIER1_ID_filled, LOS_MODIFIER1_ID_MODIFIER_NAME_filled, LOS_MODIFIER2_ID_filled, LOS_MODIFIER2_ID_MODIFIER_NAME_filled, LOS_MODIFIER3_ID_filled, LOS_MODIFIER3_ID_MODIFIER_NAME_filled, LOS_MODIFIER4_ID_filled, LOS_MODIFIER4_ID_MODIFIER_NAME_filled, APPT_STATUS_C_NAME_filled, APPT_CANC_USER_ID_filled, APPT_CANC_USER_ID_NAME_filled, CHECKIN_USER_ID_filled, CHECKIN_USER_ID_NAME_filled, HOSP_ADMSN_TIME_filled, HOSP_DISCHRG_TIME_filled, HOSP_ADMSN_TYPE_C_NAME_filled, NONCVRED_SERVICE_YN_filled, REFERRAL_REQ_YN_filled, REFERRAL_ID_filled, ACCOUNT_ID_filled, COVERAGE_ID_filled, CLAIM_ID_filled, PRIMARY_LOC_ID_LOC_NAME_filled, CHARGE_SLIP_NUMBER_filled, COPAY_DUE_filled, UPDATE_DATE_filled, HSP_ACCOUNT_ID_filled, ADM_FOR_SURG_YN_filled, SURGICAL_SVC_C_NAME_filled, INPATIENT_DATA_ID_filled, IP_EPISODE_ID_filled, EXTERNAL_VISIT_ID_filled, CONTACT_COMMENT_filled, OUTGOING_CALL_YN_filled, DATA_ENTRY_PERSON_filled, REFERRAL_SOURCE_ID_filled, REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled, WC_TPL_VISIT_C_NAME_filled, CONSENT_TYPE_C_NAME_filled, BMI_filled, BSA_filled, AVS_PRINT_TM_filled, AVS_FIRST_USER_ID_filled, AVS_FIRST_USER_ID_NAME_filled, ENC_MED_FRZ_RSN_C_NAME_filled, EFFECTIVE_DATE_DT_filled, DISCHARGE_DATE_DT_filled, COPAY_PD_THRU_NAME_filled, INTERPRETER_NEED_YN_filled, VST_SPECIAL_NEEDS_C_NAME_filled, BEN_ENG_SP_AMT_filled, BEN_ADJ_COPAY_AMT_filled, BEN_ADJ_METHOD_C_NAME_filled, ENC_CREATE_USER_ID_filled, ENC_CREATE_USER_ID_NAME_filled, ENC_INSTANT_filled, EFFECTIVE_DATE_DTTM_filled, CALCULATED_ENC_STAT_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -245,11 +367,11 @@ SELECT
     COUNT(EFFECTIVE_DATE_DTTM) AS EFFECTIVE_DATE_DTTM_filled,
     COUNT(CALCULATED_ENC_STAT_C_NAME) AS CALCULATED_ENC_STAT_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_005
 FROM PAT_ENC
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_005 (activity_year, total_rows, PAT_ID_filled, PAT_ENC_DATE_REAL_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, PCP_PROV_ID_PROV_NAME_filled, FIN_CLASS_C_NAME_filled, VISIT_PROV_ID_PROV_NAME_filled, VISIT_PROV_TITLE_NAME_filled, DEPARTMENT_ID_EXTERNAL_NAME_filled, LMP_DATE_filled, ENC_CLOSED_YN_filled, ENC_CLOSED_USER_ID_filled, ENC_CLOSED_USER_ID_NAME_filled, ENC_CLOSE_DATE_filled, LOS_MODIFIER1_ID_filled, LOS_MODIFIER1_ID_MODIFIER_NAME_filled, LOS_MODIFIER2_ID_filled, LOS_MODIFIER2_ID_MODIFIER_NAME_filled, LOS_MODIFIER3_ID_filled, LOS_MODIFIER3_ID_MODIFIER_NAME_filled, LOS_MODIFIER4_ID_filled, LOS_MODIFIER4_ID_MODIFIER_NAME_filled, APPT_STATUS_C_NAME_filled, APPT_CANC_USER_ID_filled, APPT_CANC_USER_ID_NAME_filled, CHECKIN_USER_ID_filled, CHECKIN_USER_ID_NAME_filled, HOSP_ADMSN_TIME_filled, HOSP_DISCHRG_TIME_filled, HOSP_ADMSN_TYPE_C_NAME_filled, NONCVRED_SERVICE_YN_filled, REFERRAL_REQ_YN_filled, REFERRAL_ID_filled, ACCOUNT_ID_filled, COVERAGE_ID_filled, CLAIM_ID_filled, PRIMARY_LOC_ID_LOC_NAME_filled, CHARGE_SLIP_NUMBER_filled, COPAY_DUE_filled, UPDATE_DATE_filled, HSP_ACCOUNT_ID_filled, ADM_FOR_SURG_YN_filled, SURGICAL_SVC_C_NAME_filled, INPATIENT_DATA_ID_filled, IP_EPISODE_ID_filled, EXTERNAL_VISIT_ID_filled, CONTACT_COMMENT_filled, OUTGOING_CALL_YN_filled, DATA_ENTRY_PERSON_filled, REFERRAL_SOURCE_ID_filled, REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled, WC_TPL_VISIT_C_NAME_filled, CONSENT_TYPE_C_NAME_filled, BMI_filled, BSA_filled, AVS_PRINT_TM_filled, AVS_FIRST_USER_ID_filled, AVS_FIRST_USER_ID_NAME_filled, ENC_MED_FRZ_RSN_C_NAME_filled, EFFECTIVE_DATE_DT_filled, DISCHARGE_DATE_DT_filled, COPAY_PD_THRU_NAME_filled, INTERPRETER_NEED_YN_filled, VST_SPECIAL_NEEDS_C_NAME_filled, BEN_ENG_SP_AMT_filled, BEN_ADJ_COPAY_AMT_filled, BEN_ADJ_METHOD_C_NAME_filled, ENC_CREATE_USER_ID_filled, ENC_CREATE_USER_ID_NAME_filled, ENC_INSTANT_filled, EFFECTIVE_DATE_DTTM_filled, CALCULATED_ENC_STAT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -325,14 +447,96 @@ SELECT
     CAST(NULL AS INT) AS ENC_INSTANT_filled,
     CAST(NULL AS INT) AS EFFECTIVE_DATE_DTTM_filled,
     CAST(NULL AS INT) AS CALCULATED_ENC_STAT_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_005;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_006 <- PAT_ENC_2 ----
 -- This table supplements the PAT_ENC table. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_006 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    COPAY_COINS_FLAG_filled INT,
+    CAN_LET_C_NAME_filled INT,
+    SUP_PROV_ID_PROV_NAME_filled INT,
+    SUP_PROV_C_NAME_filled INT,
+    SUP_PROV_REV_TM_filled INT,
+    MEDS_REQUEST_PHR_ID_filled INT,
+    MEDS_REQUEST_PHR_ID_PHARMACY_NAME_filled INT,
+    MEDS_REQUEST_OP_C_NAME_filled INT,
+    PHYS_BP_filled INT,
+    VITALS_TAKEN_TM_filled INT,
+    PHYS_TEMP_SRC_C_NAME_filled INT,
+    PAT_PAIN_SCORE_C_NAME_filled INT,
+    PAT_PAIN_LOC_C_NAME_filled INT,
+    PAT_PAIN_EDU_YN_filled INT,
+    PAT_PAIN_CMT_filled INT,
+    PAT_PAIN_SCALE_CAT_filled INT,
+    SMOKING_STATUS_C_NAME_filled INT,
+    PHYS_SPO2_filled INT,
+    SYS_GEN_LOS_ID_PROC_NAME_filled INT,
+    DOC_HX_SOURCE_C_NAME_filled INT,
+    APPT_LET_C_NAME_filled INT,
+    PARENT_ENC_CSN_ID_filled INT,
+    SYNC_IP_DATA_C_NAME_filled INT,
+    APPTMT_LET_INST_filled INT,
+    RESULT_LET_INST_filled INT,
+    RESCHED_LET_INST_filled INT,
+    FOLLOW_LET_INST_filled INT,
+    PHYS_PEAK_FLOW_filled INT,
+    ENC_SPEC_C_NAME_filled INT,
+    LD_STATUS_YN_filled INT,
+    ADT_PAT_CLASS_C_NAME_filled INT,
+    OTHER_BLOCK_ID_filled INT,
+    OTHER_BLOCK_TYPE_C_NAME_filled INT,
+    BILL_NUM_filled INT,
+    IP_DOC_CONTACT_CSN_filled INT,
+    TEMP_PT_HIS_C_NAME_filled INT,
+    PRIMARY_PROCONT_ID_PROV_NAME_filled INT,
+    PRIMARY_TEAM_ID_filled INT,
+    PRIMARY_TEAM_ID_RECORD_NAME_filled INT,
+    MCIR_VACCINE_CODE_C_NAME_filled INT,
+    VISIT_POS_ID_LOC_NAME_filled INT,
+    NO_INTERP_RSN_C_NAME_filled INT,
+    CVG_ADD_DT_filled INT,
+    FARM_WORKER_C_NAME_filled INT,
+    KIOSK_HH_QUEST_ID_filled INT,
+    KIOSK_HH_QUEST_ID_RECORD_NAME_filled INT,
+    HSP_ACCT_ADV_DTTM_filled INT,
+    VISIT_VERIFIED_YN_filled INT,
+    VERIF_VISIT_DT_filled INT,
+    VERIF_DATE_INIT_DT_filled INT,
+    VERIF_USER_ID_filled INT,
+    ENC_LACT_STAT_C_NAME_filled INT,
+    PAT_LACT_CMNT_filled INT,
+    COSIGNER_USER_ID_filled INT,
+    COSIGNER_USER_ID_NAME_filled INT,
+    COSIGN_REV_INS_DTTM_filled INT,
+    PAR_DICT_COUNTER_filled INT,
+    IS_LOS_UPDATE_C_NAME_filled INT,
+    FORM_ID_COUNTER_filled INT,
+    CONSNT_REV_USER_ID_filled INT,
+    CONSNT_REV_USER_ID_NAME_filled INT,
+    VISIT_PAYOR_ID_PAYOR_NAME_filled INT,
+    VISIT_PLAN_ID_BENEFIT_PLAN_NAME_filled INT,
+    SOCIO_SRC_C_NAME_filled INT,
+    TEL_ENC_MSG_RGRDING_filled INT,
+    MSG_PRIORITY_C_NAME_filled INT,
+    RESEARCH_ENC_FLG_C_NAME_filled INT,
+    FAM_SPOUSE_NAME_filled INT,
+    MSG_CALLER_NAME_filled INT,
+    CONSENT_EXP_DATE_filled INT,
+    CV_ACC4_PAT_RESP_YN_filled INT,
+    FAMILY_MEM_PREFIX_C_NAME_filled INT,
+    AVS_REFUSED_DTTM_filled INT,
+    AVS_LAST_PRINT_DTTM_filled INT,
+    MED_LIST_UPDATE_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_006 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, COPAY_COINS_FLAG_filled, CAN_LET_C_NAME_filled, SUP_PROV_ID_PROV_NAME_filled, SUP_PROV_C_NAME_filled, SUP_PROV_REV_TM_filled, MEDS_REQUEST_PHR_ID_filled, MEDS_REQUEST_PHR_ID_PHARMACY_NAME_filled, MEDS_REQUEST_OP_C_NAME_filled, PHYS_BP_filled, VITALS_TAKEN_TM_filled, PHYS_TEMP_SRC_C_NAME_filled, PAT_PAIN_SCORE_C_NAME_filled, PAT_PAIN_LOC_C_NAME_filled, PAT_PAIN_EDU_YN_filled, PAT_PAIN_CMT_filled, PAT_PAIN_SCALE_CAT_filled, SMOKING_STATUS_C_NAME_filled, PHYS_SPO2_filled, SYS_GEN_LOS_ID_PROC_NAME_filled, DOC_HX_SOURCE_C_NAME_filled, APPT_LET_C_NAME_filled, PARENT_ENC_CSN_ID_filled, SYNC_IP_DATA_C_NAME_filled, APPTMT_LET_INST_filled, RESULT_LET_INST_filled, RESCHED_LET_INST_filled, FOLLOW_LET_INST_filled, PHYS_PEAK_FLOW_filled, ENC_SPEC_C_NAME_filled, LD_STATUS_YN_filled, ADT_PAT_CLASS_C_NAME_filled, OTHER_BLOCK_ID_filled, OTHER_BLOCK_TYPE_C_NAME_filled, BILL_NUM_filled, IP_DOC_CONTACT_CSN_filled, TEMP_PT_HIS_C_NAME_filled, PRIMARY_PROCONT_ID_PROV_NAME_filled, PRIMARY_TEAM_ID_filled, PRIMARY_TEAM_ID_RECORD_NAME_filled, MCIR_VACCINE_CODE_C_NAME_filled, VISIT_POS_ID_LOC_NAME_filled, NO_INTERP_RSN_C_NAME_filled, CVG_ADD_DT_filled, FARM_WORKER_C_NAME_filled, KIOSK_HH_QUEST_ID_filled, KIOSK_HH_QUEST_ID_RECORD_NAME_filled, HSP_ACCT_ADV_DTTM_filled, VISIT_VERIFIED_YN_filled, VERIF_VISIT_DT_filled, VERIF_DATE_INIT_DT_filled, VERIF_USER_ID_filled, ENC_LACT_STAT_C_NAME_filled, PAT_LACT_CMNT_filled, COSIGNER_USER_ID_filled, COSIGNER_USER_ID_NAME_filled, COSIGN_REV_INS_DTTM_filled, PAR_DICT_COUNTER_filled, IS_LOS_UPDATE_C_NAME_filled, FORM_ID_COUNTER_filled, CONSNT_REV_USER_ID_filled, CONSNT_REV_USER_ID_NAME_filled, VISIT_PAYOR_ID_PAYOR_NAME_filled, VISIT_PLAN_ID_BENEFIT_PLAN_NAME_filled, SOCIO_SRC_C_NAME_filled, TEL_ENC_MSG_RGRDING_filled, MSG_PRIORITY_C_NAME_filled, RESEARCH_ENC_FLG_C_NAME_filled, FAM_SPOUSE_NAME_filled, MSG_CALLER_NAME_filled, CONSENT_EXP_DATE_filled, CV_ACC4_PAT_RESP_YN_filled, FAMILY_MEM_PREFIX_C_NAME_filled, AVS_REFUSED_DTTM_filled, AVS_LAST_PRINT_DTTM_filled, MED_LIST_UPDATE_DTTM_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -414,11 +618,11 @@ SELECT
     COUNT(AVS_LAST_PRINT_DTTM) AS AVS_LAST_PRINT_DTTM_filled,
     COUNT(MED_LIST_UPDATE_DTTM) AS MED_LIST_UPDATE_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_006
 FROM PAT_ENC_2
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_006 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, COPAY_COINS_FLAG_filled, CAN_LET_C_NAME_filled, SUP_PROV_ID_PROV_NAME_filled, SUP_PROV_C_NAME_filled, SUP_PROV_REV_TM_filled, MEDS_REQUEST_PHR_ID_filled, MEDS_REQUEST_PHR_ID_PHARMACY_NAME_filled, MEDS_REQUEST_OP_C_NAME_filled, PHYS_BP_filled, VITALS_TAKEN_TM_filled, PHYS_TEMP_SRC_C_NAME_filled, PAT_PAIN_SCORE_C_NAME_filled, PAT_PAIN_LOC_C_NAME_filled, PAT_PAIN_EDU_YN_filled, PAT_PAIN_CMT_filled, PAT_PAIN_SCALE_CAT_filled, SMOKING_STATUS_C_NAME_filled, PHYS_SPO2_filled, SYS_GEN_LOS_ID_PROC_NAME_filled, DOC_HX_SOURCE_C_NAME_filled, APPT_LET_C_NAME_filled, PARENT_ENC_CSN_ID_filled, SYNC_IP_DATA_C_NAME_filled, APPTMT_LET_INST_filled, RESULT_LET_INST_filled, RESCHED_LET_INST_filled, FOLLOW_LET_INST_filled, PHYS_PEAK_FLOW_filled, ENC_SPEC_C_NAME_filled, LD_STATUS_YN_filled, ADT_PAT_CLASS_C_NAME_filled, OTHER_BLOCK_ID_filled, OTHER_BLOCK_TYPE_C_NAME_filled, BILL_NUM_filled, IP_DOC_CONTACT_CSN_filled, TEMP_PT_HIS_C_NAME_filled, PRIMARY_PROCONT_ID_PROV_NAME_filled, PRIMARY_TEAM_ID_filled, PRIMARY_TEAM_ID_RECORD_NAME_filled, MCIR_VACCINE_CODE_C_NAME_filled, VISIT_POS_ID_LOC_NAME_filled, NO_INTERP_RSN_C_NAME_filled, CVG_ADD_DT_filled, FARM_WORKER_C_NAME_filled, KIOSK_HH_QUEST_ID_filled, KIOSK_HH_QUEST_ID_RECORD_NAME_filled, HSP_ACCT_ADV_DTTM_filled, VISIT_VERIFIED_YN_filled, VERIF_VISIT_DT_filled, VERIF_DATE_INIT_DT_filled, VERIF_USER_ID_filled, ENC_LACT_STAT_C_NAME_filled, PAT_LACT_CMNT_filled, COSIGNER_USER_ID_filled, COSIGNER_USER_ID_NAME_filled, COSIGN_REV_INS_DTTM_filled, PAR_DICT_COUNTER_filled, IS_LOS_UPDATE_C_NAME_filled, FORM_ID_COUNTER_filled, CONSNT_REV_USER_ID_filled, CONSNT_REV_USER_ID_NAME_filled, VISIT_PAYOR_ID_PAYOR_NAME_filled, VISIT_PLAN_ID_BENEFIT_PLAN_NAME_filled, SOCIO_SRC_C_NAME_filled, TEL_ENC_MSG_RGRDING_filled, MSG_PRIORITY_C_NAME_filled, RESEARCH_ENC_FLG_C_NAME_filled, FAM_SPOUSE_NAME_filled, MSG_CALLER_NAME_filled, CONSENT_EXP_DATE_filled, CV_ACC4_PAT_RESP_YN_filled, FAMILY_MEM_PREFIX_C_NAME_filled, AVS_REFUSED_DTTM_filled, AVS_LAST_PRINT_DTTM_filled, MED_LIST_UPDATE_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -499,14 +703,56 @@ SELECT
     CAST(NULL AS INT) AS AVS_REFUSED_DTTM_filled,
     CAST(NULL AS INT) AS AVS_LAST_PRINT_DTTM_filled,
     CAST(NULL AS INT) AS MED_LIST_UPDATE_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_006;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_007 <- PAT_ENC_3 ----
 -- This table supplements the PAT_ENC and PAT_ENC_2 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_007 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CHKOUT_USER_ID_filled INT,
+    CHKOUT_USER_ID_NAME_filled INT,
+    ENC_BILL_AREA_ID_filled INT,
+    ENC_BILL_AREA_ID_BILL_AREA_NAME_filled INT,
+    RX_CHG_ADMIT_FLG_C_NAME_filled INT,
+    DX_UNIQUE_COUNTER_filled INT,
+    HP_DEFAULTED_YN_filled INT,
+    IP_CP_LAST_VAR_DTTM_filled INT,
+    READY_QUT_SMOKING_C_NAME_filled INT,
+    COUNSELING_GIVEN_C_NAME_filled INT,
+    COMMAUTO_SENDER_ID_filled INT,
+    COMMAUTO_SENDER_ID_NAME_filled INT,
+    BENEFIT_ID_filled INT,
+    PREPAY_DUE_AMT_filled INT,
+    PREPAY_AMT_FROM_C_NAME_filled INT,
+    PREPAY_PAID_AMT_filled INT,
+    PREADMSN_TESTING_DT_filled INT,
+    SMK_CESS_USER_ID_filled INT,
+    SMK_CESS_USER_ID_NAME_filled INT,
+    SMK_CESS_DTTM_filled INT,
+    DO_NOT_BILL_INS_YN_filled INT,
+    SELF_PAY_VISIT_YN_filled INT,
+    REFERRAL_TYPE_C_NAME_filled INT,
+    SCHOOL_filled INT,
+    COPAY_NUM_UNITS_filled INT,
+    COPAY_AMT_PER_UNIT_filled INT,
+    COPAY_LASTCALC_DT_filled INT,
+    COPAY_OVERRIDDEN_YN_filled INT,
+    OB_TOTAL_WT_GAIN_filled INT,
+    MEDICAID_GROUP_NAME_filled INT,
+    STUDENT_STATUS_C_NAME_filled INT,
+    MEDICAID_GROUP_ID_filled INT,
+    EXTERNAL_REF_ID_filled INT,
+    OUTCOME_C_NAME_filled INT,
+    HSPC_NO_ADM_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_007 (activity_year, total_rows, PAT_ENC_CSN_filled, PAT_ENC_DATE_REAL_filled, CHKOUT_USER_ID_filled, CHKOUT_USER_ID_NAME_filled, ENC_BILL_AREA_ID_filled, ENC_BILL_AREA_ID_BILL_AREA_NAME_filled, RX_CHG_ADMIT_FLG_C_NAME_filled, DX_UNIQUE_COUNTER_filled, HP_DEFAULTED_YN_filled, IP_CP_LAST_VAR_DTTM_filled, READY_QUT_SMOKING_C_NAME_filled, COUNSELING_GIVEN_C_NAME_filled, COMMAUTO_SENDER_ID_filled, COMMAUTO_SENDER_ID_NAME_filled, BENEFIT_ID_filled, PREPAY_DUE_AMT_filled, PREPAY_AMT_FROM_C_NAME_filled, PREPAY_PAID_AMT_filled, PREADMSN_TESTING_DT_filled, SMK_CESS_USER_ID_filled, SMK_CESS_USER_ID_NAME_filled, SMK_CESS_DTTM_filled, DO_NOT_BILL_INS_YN_filled, SELF_PAY_VISIT_YN_filled, REFERRAL_TYPE_C_NAME_filled, SCHOOL_filled, COPAY_NUM_UNITS_filled, COPAY_AMT_PER_UNIT_filled, COPAY_LASTCALC_DT_filled, COPAY_OVERRIDDEN_YN_filled, OB_TOTAL_WT_GAIN_filled, MEDICAID_GROUP_NAME_filled, STUDENT_STATUS_C_NAME_filled, MEDICAID_GROUP_ID_filled, EXTERNAL_REF_ID_filled, OUTCOME_C_NAME_filled, HSPC_NO_ADM_C_NAME_filled, query_error)
 SELECT
     YEAR(PREADMSN_TESTING_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -548,11 +794,11 @@ SELECT
     COUNT(OUTCOME_C_NAME) AS OUTCOME_C_NAME_filled,
     COUNT(HSPC_NO_ADM_C_NAME) AS HSPC_NO_ADM_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_007
 FROM PAT_ENC_3
 GROUP BY YEAR(PREADMSN_TESTING_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_007 (activity_year, total_rows, PAT_ENC_CSN_filled, PAT_ENC_DATE_REAL_filled, CHKOUT_USER_ID_filled, CHKOUT_USER_ID_NAME_filled, ENC_BILL_AREA_ID_filled, ENC_BILL_AREA_ID_BILL_AREA_NAME_filled, RX_CHG_ADMIT_FLG_C_NAME_filled, DX_UNIQUE_COUNTER_filled, HP_DEFAULTED_YN_filled, IP_CP_LAST_VAR_DTTM_filled, READY_QUT_SMOKING_C_NAME_filled, COUNSELING_GIVEN_C_NAME_filled, COMMAUTO_SENDER_ID_filled, COMMAUTO_SENDER_ID_NAME_filled, BENEFIT_ID_filled, PREPAY_DUE_AMT_filled, PREPAY_AMT_FROM_C_NAME_filled, PREPAY_PAID_AMT_filled, PREADMSN_TESTING_DT_filled, SMK_CESS_USER_ID_filled, SMK_CESS_USER_ID_NAME_filled, SMK_CESS_DTTM_filled, DO_NOT_BILL_INS_YN_filled, SELF_PAY_VISIT_YN_filled, REFERRAL_TYPE_C_NAME_filled, SCHOOL_filled, COPAY_NUM_UNITS_filled, COPAY_AMT_PER_UNIT_filled, COPAY_LASTCALC_DT_filled, COPAY_OVERRIDDEN_YN_filled, OB_TOTAL_WT_GAIN_filled, MEDICAID_GROUP_NAME_filled, STUDENT_STATUS_C_NAME_filled, MEDICAID_GROUP_ID_filled, EXTERNAL_REF_ID_filled, OUTCOME_C_NAME_filled, HSPC_NO_ADM_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -593,14 +839,77 @@ SELECT
     CAST(NULL AS INT) AS EXTERNAL_REF_ID_filled,
     CAST(NULL AS INT) AS OUTCOME_C_NAME_filled,
     CAST(NULL AS INT) AS HSPC_NO_ADM_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_007;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_008 <- PAT_ENC_4 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, and PAT_ENC_3 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_008 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    FAMILY_SIZE_filled INT,
+    VISIT_NUMBER_filled INT,
+    PAT_CNCT_IND_C_NAME_filled INT,
+    DENTAL_STUDENT_ID_PROV_NAME_filled INT,
+    LOC_VISIT_ID_LOC_NAME_filled INT,
+    COPAY_NOT_COVERED_C_NAME_filled INT,
+    COPAY_COLL_FLAG_YN_filled INT,
+    COPAY_COLL_PERSON_filled INT,
+    COPAY_WAIVE_RSN_C_NAME_filled INT,
+    COPAY_MIN_VALUE_filled INT,
+    COPAY_RECEIPT_NUM_filled INT,
+    BEN_ADJ_COINS_AMT_filled INT,
+    BEN_ADJ_DEDUCT_AMT_filled INT,
+    PAT_HOMELESS_YN_filled INT,
+    PAT_HOMELESS_TYP_C_NAME_filled INT,
+    PERCENTAGE_OF_FPL_filled INT,
+    MSG_RECEIVED_DTTM_filled INT,
+    TOBACCO_USE_VRFY_YN_filled INT,
+    CR_TX_TYPE_C_NAME_filled INT,
+    ORIG_ENC_CSN_filled INT,
+    PHYS_BP_COMMENTS_filled INT,
+    PHYS_TEMP_COMMENTS_filled INT,
+    PHYS_TEMPSRC_COMNTS_filled INT,
+    PHYS_PULSE_COMMENTS_filled INT,
+    PHYS_WEIGHT_COMNTS_filled INT,
+    PHYS_HEIGHT_COMNTS_filled INT,
+    PHYS_RESP_COMMENTS_filled INT,
+    PHYS_SPO2_COMMENTS_filled INT,
+    PHYS_PF_COMMENTS_filled INT,
+    INTERPRT_ASGN_CMT_filled INT,
+    PAT_HOUSING_STAT_C_NAME_filled INT,
+    BCRA_AGE_filled INT,
+    BCRA_MENARCHE_AGE_C_NAME_filled INT,
+    BCRA_FST_LIVBIRTH_C_NAME_filled INT,
+    BCRA_FST_DEG_REL_C_NAME_filled INT,
+    BCRA_NUM_BIOPSY_C_NAME_filled INT,
+    BCRA_ATYP_HYPLSA_C_NAME_filled INT,
+    BCRA_RACE_C_NAME_filled INT,
+    LB_ENC_START_DT_filled INT,
+    LB_ENC_END_DT_filled INT,
+    WAITING_LIST_ID_filled INT,
+    SUBMITTER_ID_filled INT,
+    SUBMITTER_ID_RECORD_NAME_filled INT,
+    BILL_TO_SUBMITTER_C_NAME_filled INT,
+    SUBMITTER_ACCT_ID_filled INT,
+    LB_BLNG_ENC_SRVC_DT_filled INT,
+    ECHKIN_STATUS_C_NAME_filled INT,
+    PB_VISIT_HAR_ID_filled INT,
+    TECHNICAL_REFERRAL_ID_filled INT,
+    CR_CLIENT_REF_IDNT_filled INT,
+    CR_BENEFIT_REF_IDNT_filled INT,
+    CR_MESSAGE_ENGLISH_filled INT,
+    CR_MESSAGE_SPANISH_filled INT,
+    CR_QUERY_SENT_UTC_DTTM_filled INT,
+    CR_RESP_RECVD_UTC_DTTM_filled INT,
+    CR_QUERY_ERROR_filled INT,
+    COPAY_REDUCTION_AMT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_008 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, FAMILY_SIZE_filled, VISIT_NUMBER_filled, PAT_CNCT_IND_C_NAME_filled, DENTAL_STUDENT_ID_PROV_NAME_filled, LOC_VISIT_ID_LOC_NAME_filled, COPAY_NOT_COVERED_C_NAME_filled, COPAY_COLL_FLAG_YN_filled, COPAY_COLL_PERSON_filled, COPAY_WAIVE_RSN_C_NAME_filled, COPAY_MIN_VALUE_filled, COPAY_RECEIPT_NUM_filled, BEN_ADJ_COINS_AMT_filled, BEN_ADJ_DEDUCT_AMT_filled, PAT_HOMELESS_YN_filled, PAT_HOMELESS_TYP_C_NAME_filled, PERCENTAGE_OF_FPL_filled, MSG_RECEIVED_DTTM_filled, TOBACCO_USE_VRFY_YN_filled, CR_TX_TYPE_C_NAME_filled, ORIG_ENC_CSN_filled, PHYS_BP_COMMENTS_filled, PHYS_TEMP_COMMENTS_filled, PHYS_TEMPSRC_COMNTS_filled, PHYS_PULSE_COMMENTS_filled, PHYS_WEIGHT_COMNTS_filled, PHYS_HEIGHT_COMNTS_filled, PHYS_RESP_COMMENTS_filled, PHYS_SPO2_COMMENTS_filled, PHYS_PF_COMMENTS_filled, INTERPRT_ASGN_CMT_filled, PAT_HOUSING_STAT_C_NAME_filled, BCRA_AGE_filled, BCRA_MENARCHE_AGE_C_NAME_filled, BCRA_FST_LIVBIRTH_C_NAME_filled, BCRA_FST_DEG_REL_C_NAME_filled, BCRA_NUM_BIOPSY_C_NAME_filled, BCRA_ATYP_HYPLSA_C_NAME_filled, BCRA_RACE_C_NAME_filled, LB_ENC_START_DT_filled, LB_ENC_END_DT_filled, WAITING_LIST_ID_filled, SUBMITTER_ID_filled, SUBMITTER_ID_RECORD_NAME_filled, BILL_TO_SUBMITTER_C_NAME_filled, SUBMITTER_ACCT_ID_filled, LB_BLNG_ENC_SRVC_DT_filled, ECHKIN_STATUS_C_NAME_filled, PB_VISIT_HAR_ID_filled, TECHNICAL_REFERRAL_ID_filled, CR_CLIENT_REF_IDNT_filled, CR_BENEFIT_REF_IDNT_filled, CR_MESSAGE_ENGLISH_filled, CR_MESSAGE_SPANISH_filled, CR_QUERY_SENT_UTC_DTTM_filled, CR_RESP_RECVD_UTC_DTTM_filled, CR_QUERY_ERROR_filled, COPAY_REDUCTION_AMT_filled, query_error)
 SELECT
     YEAR(LB_ENC_START_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -663,11 +972,11 @@ SELECT
     COUNT(CR_QUERY_ERROR) AS CR_QUERY_ERROR_filled,
     COUNT(COPAY_REDUCTION_AMT) AS COPAY_REDUCTION_AMT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_008
 FROM PAT_ENC_4
 GROUP BY YEAR(LB_ENC_START_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_008 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, FAMILY_SIZE_filled, VISIT_NUMBER_filled, PAT_CNCT_IND_C_NAME_filled, DENTAL_STUDENT_ID_PROV_NAME_filled, LOC_VISIT_ID_LOC_NAME_filled, COPAY_NOT_COVERED_C_NAME_filled, COPAY_COLL_FLAG_YN_filled, COPAY_COLL_PERSON_filled, COPAY_WAIVE_RSN_C_NAME_filled, COPAY_MIN_VALUE_filled, COPAY_RECEIPT_NUM_filled, BEN_ADJ_COINS_AMT_filled, BEN_ADJ_DEDUCT_AMT_filled, PAT_HOMELESS_YN_filled, PAT_HOMELESS_TYP_C_NAME_filled, PERCENTAGE_OF_FPL_filled, MSG_RECEIVED_DTTM_filled, TOBACCO_USE_VRFY_YN_filled, CR_TX_TYPE_C_NAME_filled, ORIG_ENC_CSN_filled, PHYS_BP_COMMENTS_filled, PHYS_TEMP_COMMENTS_filled, PHYS_TEMPSRC_COMNTS_filled, PHYS_PULSE_COMMENTS_filled, PHYS_WEIGHT_COMNTS_filled, PHYS_HEIGHT_COMNTS_filled, PHYS_RESP_COMMENTS_filled, PHYS_SPO2_COMMENTS_filled, PHYS_PF_COMMENTS_filled, INTERPRT_ASGN_CMT_filled, PAT_HOUSING_STAT_C_NAME_filled, BCRA_AGE_filled, BCRA_MENARCHE_AGE_C_NAME_filled, BCRA_FST_LIVBIRTH_C_NAME_filled, BCRA_FST_DEG_REL_C_NAME_filled, BCRA_NUM_BIOPSY_C_NAME_filled, BCRA_ATYP_HYPLSA_C_NAME_filled, BCRA_RACE_C_NAME_filled, LB_ENC_START_DT_filled, LB_ENC_END_DT_filled, WAITING_LIST_ID_filled, SUBMITTER_ID_filled, SUBMITTER_ID_RECORD_NAME_filled, BILL_TO_SUBMITTER_C_NAME_filled, SUBMITTER_ACCT_ID_filled, LB_BLNG_ENC_SRVC_DT_filled, ECHKIN_STATUS_C_NAME_filled, PB_VISIT_HAR_ID_filled, TECHNICAL_REFERRAL_ID_filled, CR_CLIENT_REF_IDNT_filled, CR_BENEFIT_REF_IDNT_filled, CR_MESSAGE_ENGLISH_filled, CR_MESSAGE_SPANISH_filled, CR_QUERY_SENT_UTC_DTTM_filled, CR_RESP_RECVD_UTC_DTTM_filled, CR_QUERY_ERROR_filled, COPAY_REDUCTION_AMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -729,14 +1038,53 @@ SELECT
     CAST(NULL AS INT) AS CR_RESP_RECVD_UTC_DTTM_filled,
     CAST(NULL AS INT) AS CR_QUERY_ERROR_filled,
     CAST(NULL AS INT) AS COPAY_REDUCTION_AMT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_008;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_009 <- PAT_ENC_5 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, and PAT_ENC_4 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_009 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    PUBLIC_HOUSING_YN_filled INT,
+    PVT_HOSP_ENC_C_NAME_filled INT,
+    LINK_INS_TYPE_C_NAME_filled INT,
+    PAT_VER_HCA_C_NAME_filled INT,
+    EXT_GRP_IDNT_filled INT,
+    EXT_GRP_SRC_C_NAME_filled INT,
+    PREPAY_SET_BY_USER_YN_filled INT,
+    PREPAY_UPDATE_USER_ID_filled INT,
+    PREPAY_UPDATE_USER_ID_NAME_filled INT,
+    PREPAY_UPDATE_INST_DTTM_filled INT,
+    PREPAY_CALC_SCENARIO_filled INT,
+    AUTHCERT_ID_filled INT,
+    ED_REF_CALLBAK_YN_filled INT,
+    ED_REF_CALLBAK_P_ID_PROV_NAME_filled INT,
+    ED_REF_CALLBAK_C_ID_LOC_NAME_filled INT,
+    ED_REF_CALLBAK_NUM_filled INT,
+    IS_ON_DEMAND_VV_YN_filled INT,
+    ATTR_DEPARTMENT_ID_EXTERNAL_NAME_filled INT,
+    PAT_DTREE_ANSWER_ID_filled INT,
+    PREPAY_DISCNT_AMT_filled INT,
+    PREPAY_DISCNT_PCT_filled INT,
+    PREPAY_PROPOSED_DISCNT_AMT_filled INT,
+    PREPAY_DISCNT_CALC_RULE_ID_filled INT,
+    PREPAY_DISCNT_CALC_RULE_ID_RULE_NAME_filled INT,
+    PREPAY_DISCNT_CALC_PCT_filled INT,
+    PREPAY_DISCNT_OVRIDE_AMT_filled INT,
+    PREPAY_DISCNT_OVRIDE_PCT_filled INT,
+    PREPAY_DISCNT_OVRIDE_USER_ID_filled INT,
+    PREPAY_DISCNT_OVRIDE_USER_ID_NAME_filled INT,
+    PREPAY_DISCNT_OVRIDE_CMT_filled INT,
+    PREPAY_DISCNT_OVRIDE_DTTM_filled INT,
+    EVISIT_STATUS_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_009 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, PUBLIC_HOUSING_YN_filled, PVT_HOSP_ENC_C_NAME_filled, LINK_INS_TYPE_C_NAME_filled, PAT_VER_HCA_C_NAME_filled, EXT_GRP_IDNT_filled, EXT_GRP_SRC_C_NAME_filled, PREPAY_SET_BY_USER_YN_filled, PREPAY_UPDATE_USER_ID_filled, PREPAY_UPDATE_USER_ID_NAME_filled, PREPAY_UPDATE_INST_DTTM_filled, PREPAY_CALC_SCENARIO_filled, AUTHCERT_ID_filled, ED_REF_CALLBAK_YN_filled, ED_REF_CALLBAK_P_ID_PROV_NAME_filled, ED_REF_CALLBAK_C_ID_LOC_NAME_filled, ED_REF_CALLBAK_NUM_filled, IS_ON_DEMAND_VV_YN_filled, ATTR_DEPARTMENT_ID_EXTERNAL_NAME_filled, PAT_DTREE_ANSWER_ID_filled, PREPAY_DISCNT_AMT_filled, PREPAY_DISCNT_PCT_filled, PREPAY_PROPOSED_DISCNT_AMT_filled, PREPAY_DISCNT_CALC_RULE_ID_filled, PREPAY_DISCNT_CALC_RULE_ID_RULE_NAME_filled, PREPAY_DISCNT_CALC_PCT_filled, PREPAY_DISCNT_OVRIDE_AMT_filled, PREPAY_DISCNT_OVRIDE_PCT_filled, PREPAY_DISCNT_OVRIDE_USER_ID_filled, PREPAY_DISCNT_OVRIDE_USER_ID_NAME_filled, PREPAY_DISCNT_OVRIDE_CMT_filled, PREPAY_DISCNT_OVRIDE_DTTM_filled, EVISIT_STATUS_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -775,11 +1123,11 @@ SELECT
     COUNT(PREPAY_DISCNT_OVRIDE_DTTM) AS PREPAY_DISCNT_OVRIDE_DTTM_filled,
     COUNT(EVISIT_STATUS_C_NAME) AS EVISIT_STATUS_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_009
 FROM PAT_ENC_5
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_009 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, PUBLIC_HOUSING_YN_filled, PVT_HOSP_ENC_C_NAME_filled, LINK_INS_TYPE_C_NAME_filled, PAT_VER_HCA_C_NAME_filled, EXT_GRP_IDNT_filled, EXT_GRP_SRC_C_NAME_filled, PREPAY_SET_BY_USER_YN_filled, PREPAY_UPDATE_USER_ID_filled, PREPAY_UPDATE_USER_ID_NAME_filled, PREPAY_UPDATE_INST_DTTM_filled, PREPAY_CALC_SCENARIO_filled, AUTHCERT_ID_filled, ED_REF_CALLBAK_YN_filled, ED_REF_CALLBAK_P_ID_PROV_NAME_filled, ED_REF_CALLBAK_C_ID_LOC_NAME_filled, ED_REF_CALLBAK_NUM_filled, IS_ON_DEMAND_VV_YN_filled, ATTR_DEPARTMENT_ID_EXTERNAL_NAME_filled, PAT_DTREE_ANSWER_ID_filled, PREPAY_DISCNT_AMT_filled, PREPAY_DISCNT_PCT_filled, PREPAY_PROPOSED_DISCNT_AMT_filled, PREPAY_DISCNT_CALC_RULE_ID_filled, PREPAY_DISCNT_CALC_RULE_ID_RULE_NAME_filled, PREPAY_DISCNT_CALC_PCT_filled, PREPAY_DISCNT_OVRIDE_AMT_filled, PREPAY_DISCNT_OVRIDE_PCT_filled, PREPAY_DISCNT_OVRIDE_USER_ID_filled, PREPAY_DISCNT_OVRIDE_USER_ID_NAME_filled, PREPAY_DISCNT_OVRIDE_CMT_filled, PREPAY_DISCNT_OVRIDE_DTTM_filled, EVISIT_STATUS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -817,14 +1165,73 @@ SELECT
     CAST(NULL AS INT) AS PREPAY_DISCNT_OVRIDE_CMT_filled,
     CAST(NULL AS INT) AS PREPAY_DISCNT_OVRIDE_DTTM_filled,
     CAST(NULL AS INT) AS EVISIT_STATUS_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_009;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_010 <- PAT_ENC_6 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, and PAT_ENC_5 tables. It contains additional information related to patient encounters or appointments.
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_010 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    LINKED_ENC_CSN_filled INT,
+    LMP_PRECISION_C_NAME_filled INT,
+    PLANNED_BILL_AREA_ID_filled INT,
+    PLANNED_BILL_AREA_ID_BILL_AREA_NAME_filled INT,
+    BCRA_BRCA_GENE_MUT_C_NAME_filled INT,
+    SVC_TARGET_EFFORT_YN_filled INT,
+    OUTPAT_VISIT_GRP_C_NAME_filled INT,
+    PSYCH_ARRIVAL_C_NAME_filled INT,
+    PLAN_RECUR_TREAT_YN_filled INT,
+    HUS_VISIT_TYPE_C_NAME_filled INT,
+    SOCIAL_SRVC_AREA_C_NAME_filled INT,
+    EXT_LTC_PAT_YN_filled INT,
+    VETERAN_ENC_MED_CVG_C_NAME_filled INT,
+    VETERAN_BILLING_CODE_C_NAME_filled INT,
+    ED_REF_CALLBAK_D_ID_EXTERNAL_NAME_filled INT,
+    RFV_USED_TO_SCHED_C_NAME_filled INT,
+    BMI_PERCENTILE_filled INT,
+    CREATION_ORD_ID_filled INT,
+    EXT_TX_STATUS_C_NAME_filled INT,
+    EXT_TX_STATUS_CMT_filled INT,
+    EXT_ACCM_STATUS_C_NAME_filled INT,
+    EXT_ACCM_STATUS_CMT_filled INT,
+    SG_AT_RISK_IND_C_NAME_filled INT,
+    SG_FC_STATUS_C_NAME_filled INT,
+    ELIG_PLAN_SELECT_YN_filled INT,
+    SG_MOH_URGENCY_C_NAME_filled INT,
+    SG_NAMED_REFERRAL_YN_filled INT,
+    SG_PAT_REQUEST_YN_filled INT,
+    SG_TREATMENT_PROG_C_NAME_filled INT,
+    SG_APPT_RATIONALE_C_NAME_filled INT,
+    EVISIT_RFV_C_NAME_filled INT,
+    EVISIT_YN_filled INT,
+    EVISIT_TLH_ALLOWED_SUBLOC_C_NAME_filled INT,
+    EVISIT_TLH_ALLOWED_LOC_C_NAME_filled INT,
+    APPT_AUTH_STATUS_C_NAME_filled INT,
+    EVISIT_NEW_STATUS_C_NAME_filled INT,
+    LAB_RESP_USER_ID_filled INT,
+    LAB_RESP_USER_ID_NAME_filled INT,
+    EXT_MEDS_UPD_INST_UTC_DTTM_filled INT,
+    INTF_PRIMARY_PAT_ENC_CSN_ID_filled INT,
+    OVERRIDE_BCRA_NUM_BIOPSY_C_NAME_filled INT,
+    OVERRIDE_BCRA_RACE_C_NAME_filled INT,
+    OVERRIDE_GAIL_FACTOR_USER_ID_filled INT,
+    OVERRIDE_GAIL_FACTOR_USER_ID_NAME_filled INT,
+    OVERRIDE_GAIL_FACTOR_DTTM_filled INT,
+    VETERAN_COVERAGE_ENC_YN_filled INT,
+    ADJUD_TO_PHARMACY_COVERAGE_YN_filled INT,
+    TLH_APRV_SUBLOC_C_NAME_filled INT,
+    TLH_APRV_LOC_C_NAME_filled INT,
+    ENC_CLOSE_UTC_DTTM_filled INT,
+    SPLIT_FILING_ORDER_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_010 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, LINKED_ENC_CSN_filled, LMP_PRECISION_C_NAME_filled, PLANNED_BILL_AREA_ID_filled, PLANNED_BILL_AREA_ID_BILL_AREA_NAME_filled, BCRA_BRCA_GENE_MUT_C_NAME_filled, SVC_TARGET_EFFORT_YN_filled, OUTPAT_VISIT_GRP_C_NAME_filled, PSYCH_ARRIVAL_C_NAME_filled, PLAN_RECUR_TREAT_YN_filled, HUS_VISIT_TYPE_C_NAME_filled, SOCIAL_SRVC_AREA_C_NAME_filled, EXT_LTC_PAT_YN_filled, VETERAN_ENC_MED_CVG_C_NAME_filled, VETERAN_BILLING_CODE_C_NAME_filled, ED_REF_CALLBAK_D_ID_EXTERNAL_NAME_filled, RFV_USED_TO_SCHED_C_NAME_filled, BMI_PERCENTILE_filled, CREATION_ORD_ID_filled, EXT_TX_STATUS_C_NAME_filled, EXT_TX_STATUS_CMT_filled, EXT_ACCM_STATUS_C_NAME_filled, EXT_ACCM_STATUS_CMT_filled, SG_AT_RISK_IND_C_NAME_filled, SG_FC_STATUS_C_NAME_filled, ELIG_PLAN_SELECT_YN_filled, SG_MOH_URGENCY_C_NAME_filled, SG_NAMED_REFERRAL_YN_filled, SG_PAT_REQUEST_YN_filled, SG_TREATMENT_PROG_C_NAME_filled, SG_APPT_RATIONALE_C_NAME_filled, EVISIT_RFV_C_NAME_filled, EVISIT_YN_filled, EVISIT_TLH_ALLOWED_SUBLOC_C_NAME_filled, EVISIT_TLH_ALLOWED_LOC_C_NAME_filled, APPT_AUTH_STATUS_C_NAME_filled, EVISIT_NEW_STATUS_C_NAME_filled, LAB_RESP_USER_ID_filled, LAB_RESP_USER_ID_NAME_filled, EXT_MEDS_UPD_INST_UTC_DTTM_filled, INTF_PRIMARY_PAT_ENC_CSN_ID_filled, OVERRIDE_BCRA_NUM_BIOPSY_C_NAME_filled, OVERRIDE_BCRA_RACE_C_NAME_filled, OVERRIDE_GAIL_FACTOR_USER_ID_filled, OVERRIDE_GAIL_FACTOR_USER_ID_NAME_filled, OVERRIDE_GAIL_FACTOR_DTTM_filled, VETERAN_COVERAGE_ENC_YN_filled, ADJUD_TO_PHARMACY_COVERAGE_YN_filled, TLH_APRV_SUBLOC_C_NAME_filled, TLH_APRV_LOC_C_NAME_filled, ENC_CLOSE_UTC_DTTM_filled, SPLIT_FILING_ORDER_YN_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -883,11 +1290,11 @@ SELECT
     COUNT(ENC_CLOSE_UTC_DTTM) AS ENC_CLOSE_UTC_DTTM_filled,
     COUNT(SPLIT_FILING_ORDER_YN) AS SPLIT_FILING_ORDER_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_010
 FROM PAT_ENC_6
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_010 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, LINKED_ENC_CSN_filled, LMP_PRECISION_C_NAME_filled, PLANNED_BILL_AREA_ID_filled, PLANNED_BILL_AREA_ID_BILL_AREA_NAME_filled, BCRA_BRCA_GENE_MUT_C_NAME_filled, SVC_TARGET_EFFORT_YN_filled, OUTPAT_VISIT_GRP_C_NAME_filled, PSYCH_ARRIVAL_C_NAME_filled, PLAN_RECUR_TREAT_YN_filled, HUS_VISIT_TYPE_C_NAME_filled, SOCIAL_SRVC_AREA_C_NAME_filled, EXT_LTC_PAT_YN_filled, VETERAN_ENC_MED_CVG_C_NAME_filled, VETERAN_BILLING_CODE_C_NAME_filled, ED_REF_CALLBAK_D_ID_EXTERNAL_NAME_filled, RFV_USED_TO_SCHED_C_NAME_filled, BMI_PERCENTILE_filled, CREATION_ORD_ID_filled, EXT_TX_STATUS_C_NAME_filled, EXT_TX_STATUS_CMT_filled, EXT_ACCM_STATUS_C_NAME_filled, EXT_ACCM_STATUS_CMT_filled, SG_AT_RISK_IND_C_NAME_filled, SG_FC_STATUS_C_NAME_filled, ELIG_PLAN_SELECT_YN_filled, SG_MOH_URGENCY_C_NAME_filled, SG_NAMED_REFERRAL_YN_filled, SG_PAT_REQUEST_YN_filled, SG_TREATMENT_PROG_C_NAME_filled, SG_APPT_RATIONALE_C_NAME_filled, EVISIT_RFV_C_NAME_filled, EVISIT_YN_filled, EVISIT_TLH_ALLOWED_SUBLOC_C_NAME_filled, EVISIT_TLH_ALLOWED_LOC_C_NAME_filled, APPT_AUTH_STATUS_C_NAME_filled, EVISIT_NEW_STATUS_C_NAME_filled, LAB_RESP_USER_ID_filled, LAB_RESP_USER_ID_NAME_filled, EXT_MEDS_UPD_INST_UTC_DTTM_filled, INTF_PRIMARY_PAT_ENC_CSN_ID_filled, OVERRIDE_BCRA_NUM_BIOPSY_C_NAME_filled, OVERRIDE_BCRA_RACE_C_NAME_filled, OVERRIDE_GAIL_FACTOR_USER_ID_filled, OVERRIDE_GAIL_FACTOR_USER_ID_NAME_filled, OVERRIDE_GAIL_FACTOR_DTTM_filled, VETERAN_COVERAGE_ENC_YN_filled, ADJUD_TO_PHARMACY_COVERAGE_YN_filled, TLH_APRV_SUBLOC_C_NAME_filled, TLH_APRV_LOC_C_NAME_filled, ENC_CLOSE_UTC_DTTM_filled, SPLIT_FILING_ORDER_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -945,14 +1352,57 @@ SELECT
     CAST(NULL AS INT) AS TLH_APRV_LOC_C_NAME_filled,
     CAST(NULL AS INT) AS ENC_CLOSE_UTC_DTTM_filled,
     CAST(NULL AS INT) AS SPLIT_FILING_ORDER_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_010;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_011 <- PAT_ENC_7 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, PAT_ENC_5, and PAT_ENC_6 tables. It contains additional information related to patient encounters or appointmen
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_011 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    NOTIFY_REP_ADMSN_C_NAME_filled INT,
+    REP_NOTIFIED_C_NAME_filled INT,
+    NOTIFY_REP_COMMENTS_filled INT,
+    NOTIFY_PCP_ADMSN_C_NAME_filled INT,
+    PCP_NOTIFIED_C_NAME_filled INT,
+    NOTIFY_PCP_COMMENTS_filled INT,
+    ROC_PLANNING_PAT_ENC_CSN_ID_filled INT,
+    NUM_PREV_EPSD_C_NAME_filled INT,
+    SPEC_ORD_RSLT_NOT_AUTO_RLS_YN_filled INT,
+    RECENTLY_AT_SCHOOL_C_NAME_filled INT,
+    LMP_COMMENT_filled INT,
+    CONTACT_NUM_filled INT,
+    ABN_REQUIRED_YN_filled INT,
+    IS_ABN_SIGNED_C_NAME_filled INT,
+    MSP_IS_MEDICARE_HMO_C_NAME_filled INT,
+    REG_COMMENTS_DATE_filled INT,
+    AUTO_MSG_DISABLED_YN_filled INT,
+    DONT_AUTO_LINK_YN_filled INT,
+    RSN_FOR_NO_INC_MSG_C_NAME_filled INT,
+    HAS_HORMONE_DATA_YN_filled INT,
+    MEDS_REQUEST_LWS_ID_WORKSTATION_NAME_filled INT,
+    EVISIT_SUBMITTED_DTTM_filled INT,
+    EVISIT_TURNAROUND_IN_MINUTES_filled INT,
+    PREGNANCY_INTENTION_C_NAME_filled INT,
+    PREGNANCY_COUNSELED_YN_filled INT,
+    BIRTH_CONTROL_COUNSELED_YN_filled INT,
+    RSN_NO_BCM_COUNSELING_C_NAME_filled INT,
+    INTAKE_RSN_NO_CONTRACEPTIVE_C_NAME_filled INT,
+    CONTRACEPTIVE_DELIVERY_C_NAME_filled INT,
+    EXIT_RSN_NO_CONTRACEPTIVE_C_NAME_filled INT,
+    IS_VAP_DECLINED_YN_filled INT,
+    EPISODE_UPDATE_EFF_DATE_filled INT,
+    EPISODE_UPD_CREAT_RSN_C_NAME_filled INT,
+    VISIT_MSG_DECLINE_YN_filled INT,
+    BILL_FOR_DENIAL_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_011 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, NOTIFY_REP_ADMSN_C_NAME_filled, REP_NOTIFIED_C_NAME_filled, NOTIFY_REP_COMMENTS_filled, NOTIFY_PCP_ADMSN_C_NAME_filled, PCP_NOTIFIED_C_NAME_filled, NOTIFY_PCP_COMMENTS_filled, ROC_PLANNING_PAT_ENC_CSN_ID_filled, NUM_PREV_EPSD_C_NAME_filled, SPEC_ORD_RSLT_NOT_AUTO_RLS_YN_filled, RECENTLY_AT_SCHOOL_C_NAME_filled, LMP_COMMENT_filled, CONTACT_NUM_filled, ABN_REQUIRED_YN_filled, IS_ABN_SIGNED_C_NAME_filled, MSP_IS_MEDICARE_HMO_C_NAME_filled, REG_COMMENTS_DATE_filled, AUTO_MSG_DISABLED_YN_filled, DONT_AUTO_LINK_YN_filled, RSN_FOR_NO_INC_MSG_C_NAME_filled, HAS_HORMONE_DATA_YN_filled, MEDS_REQUEST_LWS_ID_WORKSTATION_NAME_filled, EVISIT_SUBMITTED_DTTM_filled, EVISIT_TURNAROUND_IN_MINUTES_filled, PREGNANCY_INTENTION_C_NAME_filled, PREGNANCY_COUNSELED_YN_filled, BIRTH_CONTROL_COUNSELED_YN_filled, RSN_NO_BCM_COUNSELING_C_NAME_filled, INTAKE_RSN_NO_CONTRACEPTIVE_C_NAME_filled, CONTRACEPTIVE_DELIVERY_C_NAME_filled, EXIT_RSN_NO_CONTRACEPTIVE_C_NAME_filled, IS_VAP_DECLINED_YN_filled, EPISODE_UPDATE_EFF_DATE_filled, EPISODE_UPD_CREAT_RSN_C_NAME_filled, VISIT_MSG_DECLINE_YN_filled, BILL_FOR_DENIAL_YN_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -995,11 +1445,11 @@ SELECT
     COUNT(VISIT_MSG_DECLINE_YN) AS VISIT_MSG_DECLINE_YN_filled,
     COUNT(BILL_FOR_DENIAL_YN) AS BILL_FOR_DENIAL_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_011
 FROM PAT_ENC_7
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_011 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, NOTIFY_REP_ADMSN_C_NAME_filled, REP_NOTIFIED_C_NAME_filled, NOTIFY_REP_COMMENTS_filled, NOTIFY_PCP_ADMSN_C_NAME_filled, PCP_NOTIFIED_C_NAME_filled, NOTIFY_PCP_COMMENTS_filled, ROC_PLANNING_PAT_ENC_CSN_ID_filled, NUM_PREV_EPSD_C_NAME_filled, SPEC_ORD_RSLT_NOT_AUTO_RLS_YN_filled, RECENTLY_AT_SCHOOL_C_NAME_filled, LMP_COMMENT_filled, CONTACT_NUM_filled, ABN_REQUIRED_YN_filled, IS_ABN_SIGNED_C_NAME_filled, MSP_IS_MEDICARE_HMO_C_NAME_filled, REG_COMMENTS_DATE_filled, AUTO_MSG_DISABLED_YN_filled, DONT_AUTO_LINK_YN_filled, RSN_FOR_NO_INC_MSG_C_NAME_filled, HAS_HORMONE_DATA_YN_filled, MEDS_REQUEST_LWS_ID_WORKSTATION_NAME_filled, EVISIT_SUBMITTED_DTTM_filled, EVISIT_TURNAROUND_IN_MINUTES_filled, PREGNANCY_INTENTION_C_NAME_filled, PREGNANCY_COUNSELED_YN_filled, BIRTH_CONTROL_COUNSELED_YN_filled, RSN_NO_BCM_COUNSELING_C_NAME_filled, INTAKE_RSN_NO_CONTRACEPTIVE_C_NAME_filled, CONTRACEPTIVE_DELIVERY_C_NAME_filled, EXIT_RSN_NO_CONTRACEPTIVE_C_NAME_filled, IS_VAP_DECLINED_YN_filled, EPISODE_UPDATE_EFF_DATE_filled, EPISODE_UPD_CREAT_RSN_C_NAME_filled, VISIT_MSG_DECLINE_YN_filled, BILL_FOR_DENIAL_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1041,14 +1491,46 @@ SELECT
     CAST(NULL AS INT) AS EPISODE_UPD_CREAT_RSN_C_NAME_filled,
     CAST(NULL AS INT) AS VISIT_MSG_DECLINE_YN_filled,
     CAST(NULL AS INT) AS BILL_FOR_DENIAL_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_011;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_012 <- PAT_ENC_8 ----
 -- This table supplements the PAT_ENC, PAT_ENC_2, PAT_ENC_3, PAT_ENC_4, PAT_ENC_5, PAT_ENC_6, and PAT_ENC_7 tables. It contains additional information related to patient encounters or
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_012 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    PAT_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    EST_PREPAY_CALC_PP_PROPOSED_YN_filled INT,
+    EST_PREPAY_CALC_ELIG_C_NAME_filled INT,
+    PMT_PLAN_AGRMT_SCHED_PMT_ID_filled INT,
+    RSLT_FOL_UP_CREAT_SRC_C_NAME_filled INT,
+    BILL_DECIS_FIN_ASST_TRACKER_ID_filled INT,
+    NO_FOLLOW_UP_YN_filled INT,
+    MCAID_INCARCERATION_BILL_CODE_filled INT,
+    MCAID_INCAR_BILL_START_DATE_filled INT,
+    MEDICARE_CHANGE_C_NAME_filled INT,
+    MSP_RTE_VERI_STAT_C_NAME_filled INT,
+    MSP_COMP_REALTIME_TX_CSN_ID_filled INT,
+    MSP_RTE_COMP_PAT_ENC_CSN_ID_filled INT,
+    TAKING_PULL_REJECTED_YN_filled INT,
+    HOSP_SERV_C_NAME_filled INT,
+    LEVEL_OF_CARE_C_NAME_filled INT,
+    ACCOMMODATION_C_NAME_filled INT,
+    ACCOM_REASON_C_NAME_filled INT,
+    APPT_NEEDS_BED_C_NAME_filled INT,
+    APPT_BED_PREDEPT_ID_EXTERNAL_NAME_filled INT,
+    APPT_BED_HOSP_SERV_C_NAME_filled INT,
+    APPT_BED_POST_LEVEL_OF_CARE_C_NAME_filled INT,
+    APPT_BED_CMT_S_filled INT,
+    SEPARATED_GROUP_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_012 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, EST_PREPAY_CALC_PP_PROPOSED_YN_filled, EST_PREPAY_CALC_ELIG_C_NAME_filled, PMT_PLAN_AGRMT_SCHED_PMT_ID_filled, RSLT_FOL_UP_CREAT_SRC_C_NAME_filled, BILL_DECIS_FIN_ASST_TRACKER_ID_filled, NO_FOLLOW_UP_YN_filled, MCAID_INCARCERATION_BILL_CODE_filled, MCAID_INCAR_BILL_START_DATE_filled, MEDICARE_CHANGE_C_NAME_filled, MSP_RTE_VERI_STAT_C_NAME_filled, MSP_COMP_REALTIME_TX_CSN_ID_filled, MSP_RTE_COMP_PAT_ENC_CSN_ID_filled, TAKING_PULL_REJECTED_YN_filled, HOSP_SERV_C_NAME_filled, LEVEL_OF_CARE_C_NAME_filled, ACCOMMODATION_C_NAME_filled, ACCOM_REASON_C_NAME_filled, APPT_NEEDS_BED_C_NAME_filled, APPT_BED_PREDEPT_ID_EXTERNAL_NAME_filled, APPT_BED_HOSP_SERV_C_NAME_filled, APPT_BED_POST_LEVEL_OF_CARE_C_NAME_filled, APPT_BED_CMT_S_filled, SEPARATED_GROUP_YN_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1080,11 +1562,11 @@ SELECT
     COUNT(APPT_BED_CMT_S) AS APPT_BED_CMT_S_filled,
     COUNT(SEPARATED_GROUP_YN) AS SEPARATED_GROUP_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_012
 FROM PAT_ENC_8
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_012 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, EST_PREPAY_CALC_PP_PROPOSED_YN_filled, EST_PREPAY_CALC_ELIG_C_NAME_filled, PMT_PLAN_AGRMT_SCHED_PMT_ID_filled, RSLT_FOL_UP_CREAT_SRC_C_NAME_filled, BILL_DECIS_FIN_ASST_TRACKER_ID_filled, NO_FOLLOW_UP_YN_filled, MCAID_INCARCERATION_BILL_CODE_filled, MCAID_INCAR_BILL_START_DATE_filled, MEDICARE_CHANGE_C_NAME_filled, MSP_RTE_VERI_STAT_C_NAME_filled, MSP_COMP_REALTIME_TX_CSN_ID_filled, MSP_RTE_COMP_PAT_ENC_CSN_ID_filled, TAKING_PULL_REJECTED_YN_filled, HOSP_SERV_C_NAME_filled, LEVEL_OF_CARE_C_NAME_filled, ACCOMMODATION_C_NAME_filled, ACCOM_REASON_C_NAME_filled, APPT_NEEDS_BED_C_NAME_filled, APPT_BED_PREDEPT_ID_EXTERNAL_NAME_filled, APPT_BED_HOSP_SERV_C_NAME_filled, APPT_BED_POST_LEVEL_OF_CARE_C_NAME_filled, APPT_BED_CMT_S_filled, SEPARATED_GROUP_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1115,14 +1597,25 @@ SELECT
     CAST(NULL AS INT) AS APPT_BED_POST_LEVEL_OF_CARE_C_NAME_filled,
     CAST(NULL AS INT) AS APPT_BED_CMT_S_filled,
     CAST(NULL AS INT) AS SEPARATED_GROUP_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_012;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_013 <- PAT_ENC_APPT ----
 -- The PAT_ENC_APPT table contains basic information about the appointment records in your system. Since one patient encounter can be an appointment with multiple providers and resour
 -- Bucket(s): Appointment / scheduling status
+CREATE TABLE #fc_013 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DEPARTMENT_ID_EXTERNAL_NAME_filled INT,
+    PROV_START_TIME_filled INT,
+    APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_013 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, CONTACT_DATE_filled, DEPARTMENT_ID_EXTERNAL_NAME_filled, PROV_START_TIME_filled, APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1133,11 +1626,11 @@ SELECT
     COUNT(PROV_START_TIME) AS PROV_START_TIME_filled,
     COUNT(APPT_PROV_PRIMARY_SPECIALTY_C_NAME) AS APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_013
 FROM PAT_ENC_APPT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_013 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, CONTACT_DATE_filled, DEPARTMENT_ID_EXTERNAL_NAME_filled, PROV_START_TIME_filled, APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1147,14 +1640,108 @@ SELECT
     CAST(NULL AS INT) AS DEPARTMENT_ID_EXTERNAL_NAME_filled,
     CAST(NULL AS INT) AS PROV_START_TIME_filled,
     CAST(NULL AS INT) AS APPT_PROV_PRIMARY_SPECIALTY_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_013;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_014 <- PAT_ENC_HSP ----
 -- This table is the primary table for hospital encounter information. A hospital encounter is a contact in the patient record created through an ADT workflow such as preadmission, ad
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_014 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    ADT_PAT_CLASS_C_NAME_filled INT,
+    ADT_PATIENT_STAT_C_NAME_filled INT,
+    LEVEL_OF_CARE_C_NAME_filled INT,
+    PENDING_DISCH_TIME_filled INT,
+    DISCH_CODE_C_NAME_filled INT,
+    ADT_ATHCRT_STAT_C_NAME_filled INT,
+    PREADM_UNDO_RSN_C_NAME_filled INT,
+    EXP_ADMISSION_TIME_filled INT,
+    EXP_LEN_OF_STAY_filled INT,
+    EXP_DISCHARGE_DATE_filled INT,
+    ADMIT_CATEGORY_C_NAME_filled INT,
+    ADMIT_SOURCE_C_NAME_filled INT,
+    TYPE_OF_ROOM_C_NAME_filled INT,
+    TYPE_OF_BED_C_NAME_filled INT,
+    RSN_FOR_BED_C_NAME_filled INT,
+    DELIVERY_TYPE_C_NAME_filled INT,
+    LABOR_STATUS_C_NAME_filled INT,
+    ER_INJURY_filled INT,
+    ADT_ARRIVAL_TIME_filled INT,
+    ADT_ARRIVAL_STS_C_NAME_filled INT,
+    HOSP_ADMSN_TIME_filled INT,
+    ADMIT_CONF_STAT_C_NAME_filled INT,
+    HOSP_DISCH_TIME_filled INT,
+    HOSP_ADMSN_TYPE_C_NAME_filled INT,
+    ROOM_ID_ROOM_NAME_filled INT,
+    HOSP_SERV_C_NAME_filled INT,
+    MEANS_OF_DEPART_C_NAME_filled INT,
+    DISCH_DISP_C_NAME_filled INT,
+    DISCH_DEST_C_NAME_filled INT,
+    TRANSFER_FROM_C_NAME_filled INT,
+    MEANS_OF_ARRV_C_NAME_filled INT,
+    ACUITY_LEVEL_C_NAME_filled INT,
+    HOSPIST_NEEDED_YN_filled INT,
+    ACCOMMODATION_C_NAME_filled INT,
+    ACCOM_REASON_C_NAME_filled INT,
+    INPATIENT_DATA_ID_filled INT,
+    PVT_HSP_ENC_C_NAME_filled INT,
+    ED_EPISODE_ID_filled INT,
+    ED_DISPOSITION_C_NAME_filled INT,
+    ED_DISP_TIME_filled INT,
+    FOLLOWUP_PROV_ID_PROV_NAME_filled INT,
+    PROV_CONT_INFO_filled INT,
+    OSHPD_ADMSN_SRC_C_NAME_filled INT,
+    OSHPD_LICENSURE_C_NAME_filled INT,
+    OSHPD_ROUTE_C_NAME_filled INT,
+    INP_ADM_DATE_filled INT,
+    COPY_TO_PCP_YN_filled INT,
+    ADOPTION_CASE_YN_filled INT,
+    PREOP_TEACHING_C_NAME_filled INT,
+    PREOP_PRN_EVAL_C_NAME_filled INT,
+    PREOP_PH_SCREEN_C_NAME_filled INT,
+    LABOR_ACT_BIRTH_C_NAME_filled INT,
+    LABOR_FEED_TYPE_C_NAME_filled INT,
+    PROC_SERV_C_NAME_filled INT,
+    ED_DEPARTURE_TIME_filled INT,
+    TRIAGE_DATETIME_filled INT,
+    TRIAGE_STATUS_C_NAME_filled INT,
+    INP_ADM_EVENT_ID_filled INT,
+    INP_ADM_EVENT_DATE_filled INT,
+    INP_DWNGRD_EVNT_ID_filled INT,
+    INP_DWNGRD_DATE_filled INT,
+    INP_DWNGRD_EVNT_DT_filled INT,
+    OP_ADM_DATE_filled INT,
+    EMER_ADM_DATE_filled INT,
+    OP_ADM_EVENT_ID_filled INT,
+    EMER_ADM_EVENT_ID_filled INT,
+    PREREG_SOURCE_C_NAME_filled INT,
+    HOV_CONF_STATUS_C_NAME_filled INT,
+    RELIG_NEEDS_VISIT_C_NAME_filled INT,
+    DISCHARGE_CAT_C_NAME_filled INT,
+    EXP_DISCHARGE_TIME_filled INT,
+    BILL_ATTEND_PROV_ID_PROV_NAME_filled INT,
+    OB_LD_LABORING_YN_filled INT,
+    OB_LD_LABOR_TM_filled INT,
+    TRIAGE_ID_TAG_filled INT,
+    TRIAGE_ID_TAG_CMT_filled INT,
+    TPLNT_BILL_STAT_C_NAME_filled INT,
+    ACTL_DELIVRY_METH_C_NAME_filled INT,
+    PRENATAL_CARE_C_NAME_filled INT,
+    AMBULANCE_CODE_C_NAME_filled INT,
+    MSE_DATE_filled INT,
+    ADMIT_PROV_TEXT_filled INT,
+    ATTEND_PROV_TEXT_filled INT,
+    PROV_PRIM_TEXT_filled INT,
+    PROV_PRIM_TEXT_PHON_filled INT,
+    HOSPITAL_AREA_ID_LOC_NAME_filled INT,
+    CHIEF_COMPLAINT_C_NAME_filled INT,
+    NEED_FIN_CLR_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_014 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, ADT_PAT_CLASS_C_NAME_filled, ADT_PATIENT_STAT_C_NAME_filled, LEVEL_OF_CARE_C_NAME_filled, PENDING_DISCH_TIME_filled, DISCH_CODE_C_NAME_filled, ADT_ATHCRT_STAT_C_NAME_filled, PREADM_UNDO_RSN_C_NAME_filled, EXP_ADMISSION_TIME_filled, EXP_LEN_OF_STAY_filled, EXP_DISCHARGE_DATE_filled, ADMIT_CATEGORY_C_NAME_filled, ADMIT_SOURCE_C_NAME_filled, TYPE_OF_ROOM_C_NAME_filled, TYPE_OF_BED_C_NAME_filled, RSN_FOR_BED_C_NAME_filled, DELIVERY_TYPE_C_NAME_filled, LABOR_STATUS_C_NAME_filled, ER_INJURY_filled, ADT_ARRIVAL_TIME_filled, ADT_ARRIVAL_STS_C_NAME_filled, HOSP_ADMSN_TIME_filled, ADMIT_CONF_STAT_C_NAME_filled, HOSP_DISCH_TIME_filled, HOSP_ADMSN_TYPE_C_NAME_filled, ROOM_ID_ROOM_NAME_filled, HOSP_SERV_C_NAME_filled, MEANS_OF_DEPART_C_NAME_filled, DISCH_DISP_C_NAME_filled, DISCH_DEST_C_NAME_filled, TRANSFER_FROM_C_NAME_filled, MEANS_OF_ARRV_C_NAME_filled, ACUITY_LEVEL_C_NAME_filled, HOSPIST_NEEDED_YN_filled, ACCOMMODATION_C_NAME_filled, ACCOM_REASON_C_NAME_filled, INPATIENT_DATA_ID_filled, PVT_HSP_ENC_C_NAME_filled, ED_EPISODE_ID_filled, ED_DISPOSITION_C_NAME_filled, ED_DISP_TIME_filled, FOLLOWUP_PROV_ID_PROV_NAME_filled, PROV_CONT_INFO_filled, OSHPD_ADMSN_SRC_C_NAME_filled, OSHPD_LICENSURE_C_NAME_filled, OSHPD_ROUTE_C_NAME_filled, INP_ADM_DATE_filled, COPY_TO_PCP_YN_filled, ADOPTION_CASE_YN_filled, PREOP_TEACHING_C_NAME_filled, PREOP_PRN_EVAL_C_NAME_filled, PREOP_PH_SCREEN_C_NAME_filled, LABOR_ACT_BIRTH_C_NAME_filled, LABOR_FEED_TYPE_C_NAME_filled, PROC_SERV_C_NAME_filled, ED_DEPARTURE_TIME_filled, TRIAGE_DATETIME_filled, TRIAGE_STATUS_C_NAME_filled, INP_ADM_EVENT_ID_filled, INP_ADM_EVENT_DATE_filled, INP_DWNGRD_EVNT_ID_filled, INP_DWNGRD_DATE_filled, INP_DWNGRD_EVNT_DT_filled, OP_ADM_DATE_filled, EMER_ADM_DATE_filled, OP_ADM_EVENT_ID_filled, EMER_ADM_EVENT_ID_filled, PREREG_SOURCE_C_NAME_filled, HOV_CONF_STATUS_C_NAME_filled, RELIG_NEEDS_VISIT_C_NAME_filled, DISCHARGE_CAT_C_NAME_filled, EXP_DISCHARGE_TIME_filled, BILL_ATTEND_PROV_ID_PROV_NAME_filled, OB_LD_LABORING_YN_filled, OB_LD_LABOR_TM_filled, TRIAGE_ID_TAG_filled, TRIAGE_ID_TAG_CMT_filled, TPLNT_BILL_STAT_C_NAME_filled, ACTL_DELIVRY_METH_C_NAME_filled, PRENATAL_CARE_C_NAME_filled, AMBULANCE_CODE_C_NAME_filled, MSE_DATE_filled, ADMIT_PROV_TEXT_filled, ATTEND_PROV_TEXT_filled, PROV_PRIM_TEXT_filled, PROV_PRIM_TEXT_PHON_filled, HOSPITAL_AREA_ID_LOC_NAME_filled, CHIEF_COMPLAINT_C_NAME_filled, NEED_FIN_CLR_YN_filled, query_error)
 SELECT
     YEAR(EXP_DISCHARGE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1248,11 +1835,11 @@ SELECT
     COUNT(CHIEF_COMPLAINT_C_NAME) AS CHIEF_COMPLAINT_C_NAME_filled,
     COUNT(NEED_FIN_CLR_YN) AS NEED_FIN_CLR_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_014
 FROM PAT_ENC_HSP
 GROUP BY YEAR(EXP_DISCHARGE_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_014 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, ADT_PAT_CLASS_C_NAME_filled, ADT_PATIENT_STAT_C_NAME_filled, LEVEL_OF_CARE_C_NAME_filled, PENDING_DISCH_TIME_filled, DISCH_CODE_C_NAME_filled, ADT_ATHCRT_STAT_C_NAME_filled, PREADM_UNDO_RSN_C_NAME_filled, EXP_ADMISSION_TIME_filled, EXP_LEN_OF_STAY_filled, EXP_DISCHARGE_DATE_filled, ADMIT_CATEGORY_C_NAME_filled, ADMIT_SOURCE_C_NAME_filled, TYPE_OF_ROOM_C_NAME_filled, TYPE_OF_BED_C_NAME_filled, RSN_FOR_BED_C_NAME_filled, DELIVERY_TYPE_C_NAME_filled, LABOR_STATUS_C_NAME_filled, ER_INJURY_filled, ADT_ARRIVAL_TIME_filled, ADT_ARRIVAL_STS_C_NAME_filled, HOSP_ADMSN_TIME_filled, ADMIT_CONF_STAT_C_NAME_filled, HOSP_DISCH_TIME_filled, HOSP_ADMSN_TYPE_C_NAME_filled, ROOM_ID_ROOM_NAME_filled, HOSP_SERV_C_NAME_filled, MEANS_OF_DEPART_C_NAME_filled, DISCH_DISP_C_NAME_filled, DISCH_DEST_C_NAME_filled, TRANSFER_FROM_C_NAME_filled, MEANS_OF_ARRV_C_NAME_filled, ACUITY_LEVEL_C_NAME_filled, HOSPIST_NEEDED_YN_filled, ACCOMMODATION_C_NAME_filled, ACCOM_REASON_C_NAME_filled, INPATIENT_DATA_ID_filled, PVT_HSP_ENC_C_NAME_filled, ED_EPISODE_ID_filled, ED_DISPOSITION_C_NAME_filled, ED_DISP_TIME_filled, FOLLOWUP_PROV_ID_PROV_NAME_filled, PROV_CONT_INFO_filled, OSHPD_ADMSN_SRC_C_NAME_filled, OSHPD_LICENSURE_C_NAME_filled, OSHPD_ROUTE_C_NAME_filled, INP_ADM_DATE_filled, COPY_TO_PCP_YN_filled, ADOPTION_CASE_YN_filled, PREOP_TEACHING_C_NAME_filled, PREOP_PRN_EVAL_C_NAME_filled, PREOP_PH_SCREEN_C_NAME_filled, LABOR_ACT_BIRTH_C_NAME_filled, LABOR_FEED_TYPE_C_NAME_filled, PROC_SERV_C_NAME_filled, ED_DEPARTURE_TIME_filled, TRIAGE_DATETIME_filled, TRIAGE_STATUS_C_NAME_filled, INP_ADM_EVENT_ID_filled, INP_ADM_EVENT_DATE_filled, INP_DWNGRD_EVNT_ID_filled, INP_DWNGRD_DATE_filled, INP_DWNGRD_EVNT_DT_filled, OP_ADM_DATE_filled, EMER_ADM_DATE_filled, OP_ADM_EVENT_ID_filled, EMER_ADM_EVENT_ID_filled, PREREG_SOURCE_C_NAME_filled, HOV_CONF_STATUS_C_NAME_filled, RELIG_NEEDS_VISIT_C_NAME_filled, DISCHARGE_CAT_C_NAME_filled, EXP_DISCHARGE_TIME_filled, BILL_ATTEND_PROV_ID_PROV_NAME_filled, OB_LD_LABORING_YN_filled, OB_LD_LABOR_TM_filled, TRIAGE_ID_TAG_filled, TRIAGE_ID_TAG_CMT_filled, TPLNT_BILL_STAT_C_NAME_filled, ACTL_DELIVRY_METH_C_NAME_filled, PRENATAL_CARE_C_NAME_filled, AMBULANCE_CODE_C_NAME_filled, MSE_DATE_filled, ADMIT_PROV_TEXT_filled, ATTEND_PROV_TEXT_filled, PROV_PRIM_TEXT_filled, PROV_PRIM_TEXT_PHON_filled, HOSPITAL_AREA_ID_LOC_NAME_filled, CHIEF_COMPLAINT_C_NAME_filled, NEED_FIN_CLR_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1345,14 +1932,73 @@ SELECT
     CAST(NULL AS INT) AS HOSPITAL_AREA_ID_LOC_NAME_filled,
     CAST(NULL AS INT) AS CHIEF_COMPLAINT_C_NAME_filled,
     CAST(NULL AS INT) AS NEED_FIN_CLR_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_014;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_015 <- PAT_ENC_HSP_2 ----
 -- The PAT_ENC_HSP_2 table is the subsequent table for the PAT_ENC_HSP table, which is the primary table for hospital encounter information. Each record in this table is based on a pa
 -- Bucket(s): Encounter / visit record
+CREATE TABLE #fc_015 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    EX_DIS_DT_ENTR_DTTM_filled INT,
+    EX_DIS_TM_ENTR_DTTM_filled INT,
+    CONTRACT_REG_FLAG_filled INT,
+    CONTRACT_CODE_C_NAME_filled INT,
+    ACCEPTS_BLOOD_C_NAME_filled INT,
+    ED_ARRIVAL_DETAILS_filled INT,
+    CONS_SEDATION_C_NAME_filled INT,
+    RESTRAINT_SECLUS_C_NAME_filled INT,
+    MULTI_PREG_YN_filled INT,
+    DISASTER_NUM_filled INT,
+    SRC_PATTERN_CSN_ID_filled INT,
+    ENC_CLOSED_OR_COMPLETED_DATE_filled INT,
+    ED_DISPO_PAT_COND_C_NAME_filled INT,
+    ADOPTION_TYPE_C_NAME_filled INT,
+    PRI_PROBLEM_ID_filled INT,
+    EXPECTED_DISCHRG_APPROX_TIME_C_NAME_filled INT,
+    DISCH_MILEST_KICKOFF_UTC_DTTM_filled INT,
+    DISCH_MILEST_AUTO_MANAGED_YN_filled INT,
+    PREDICTED_LOS_filled INT,
+    EXP_LOS_UPD_SRC_C_NAME_filled INT,
+    ED_ENC_SRC_C_NAME_filled INT,
+    ED_DEPART_UTC_DTTM_filled INT,
+    ADT_ARRIVAL_UTC_DTTM_filled INT,
+    HOSP_DISCH_UTC_DTTM_filled INT,
+    HOSP_ADMSN_UTC_DTTM_filled INT,
+    INP_ADMSN_UTC_DTTM_filled INT,
+    ED_HISTORICAL_YN_filled INT,
+    PATIENT_TASK_COMPLETION_RATE_filled INT,
+    START_MED_REM_DISCHG_YN_filled INT,
+    EXPECTED_DISCHARGE_UNKNOWN_YN_filled INT,
+    DUAL_ADMISSION_CSN_filled INT,
+    LOA_PAT_ENC_CSN_ID_filled INT,
+    INITIAL_ADT_PAT_STAT_C_NAME_filled INT,
+    NOTIFICATION_SENT_FIRST_IP_YN_filled INT,
+    NOTIFICATION_SENT_OBS_ADMSN_YN_filled INT,
+    IB_ALERT_LENGTH_OF_STAY_MSG_ID_filled INT,
+    INITIAL_ADMIT_CONF_STAT_C_NAME_filled INT,
+    TRANSFER_COMMENTS_filled INT,
+    MED_READINESS_DTTM_filled INT,
+    MED_READINESS_TIMEFRAM_C_NAME_filled INT,
+    MED_READINESS_YN_filled INT,
+    MED_READINESS_INST_ENTRY_DTTM_filled INT,
+    MED_READINESS_USER_ID_filled INT,
+    MED_READINESS_USER_ID_NAME_filled INT,
+    MED_READINESS_SOURCE_C_NAME_filled INT,
+    EXPECTED_DISCH_DISP_C_NAME_filled INT,
+    EXP_DISCH_DISP_USER_ID_filled INT,
+    EXP_DISCH_DISP_USER_ID_NAME_filled INT,
+    EXP_DISCH_DISP_ENTRY_UTC_DTTM_filled INT,
+    PRIMARY_LINKED_PAT_ENC_CSN_ID_filled INT,
+    TODO_ADM_DISCLAIMER_ACTIVE_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_015 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, EX_DIS_DT_ENTR_DTTM_filled, EX_DIS_TM_ENTR_DTTM_filled, CONTRACT_REG_FLAG_filled, CONTRACT_CODE_C_NAME_filled, ACCEPTS_BLOOD_C_NAME_filled, ED_ARRIVAL_DETAILS_filled, CONS_SEDATION_C_NAME_filled, RESTRAINT_SECLUS_C_NAME_filled, MULTI_PREG_YN_filled, DISASTER_NUM_filled, SRC_PATTERN_CSN_ID_filled, ENC_CLOSED_OR_COMPLETED_DATE_filled, ED_DISPO_PAT_COND_C_NAME_filled, ADOPTION_TYPE_C_NAME_filled, PRI_PROBLEM_ID_filled, EXPECTED_DISCHRG_APPROX_TIME_C_NAME_filled, DISCH_MILEST_KICKOFF_UTC_DTTM_filled, DISCH_MILEST_AUTO_MANAGED_YN_filled, PREDICTED_LOS_filled, EXP_LOS_UPD_SRC_C_NAME_filled, ED_ENC_SRC_C_NAME_filled, ED_DEPART_UTC_DTTM_filled, ADT_ARRIVAL_UTC_DTTM_filled, HOSP_DISCH_UTC_DTTM_filled, HOSP_ADMSN_UTC_DTTM_filled, INP_ADMSN_UTC_DTTM_filled, ED_HISTORICAL_YN_filled, PATIENT_TASK_COMPLETION_RATE_filled, START_MED_REM_DISCHG_YN_filled, EXPECTED_DISCHARGE_UNKNOWN_YN_filled, DUAL_ADMISSION_CSN_filled, LOA_PAT_ENC_CSN_ID_filled, INITIAL_ADT_PAT_STAT_C_NAME_filled, NOTIFICATION_SENT_FIRST_IP_YN_filled, NOTIFICATION_SENT_OBS_ADMSN_YN_filled, IB_ALERT_LENGTH_OF_STAY_MSG_ID_filled, INITIAL_ADMIT_CONF_STAT_C_NAME_filled, TRANSFER_COMMENTS_filled, MED_READINESS_DTTM_filled, MED_READINESS_TIMEFRAM_C_NAME_filled, MED_READINESS_YN_filled, MED_READINESS_INST_ENTRY_DTTM_filled, MED_READINESS_USER_ID_filled, MED_READINESS_USER_ID_NAME_filled, MED_READINESS_SOURCE_C_NAME_filled, EXPECTED_DISCH_DISP_C_NAME_filled, EXP_DISCH_DISP_USER_ID_filled, EXP_DISCH_DISP_USER_ID_NAME_filled, EXP_DISCH_DISP_ENTRY_UTC_DTTM_filled, PRIMARY_LINKED_PAT_ENC_CSN_ID_filled, TODO_ADM_DISCLAIMER_ACTIVE_YN_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1411,11 +2057,11 @@ SELECT
     COUNT(PRIMARY_LINKED_PAT_ENC_CSN_ID) AS PRIMARY_LINKED_PAT_ENC_CSN_ID_filled,
     COUNT(TODO_ADM_DISCLAIMER_ACTIVE_YN) AS TODO_ADM_DISCLAIMER_ACTIVE_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_015
 FROM PAT_ENC_HSP_2
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_015 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, EX_DIS_DT_ENTR_DTTM_filled, EX_DIS_TM_ENTR_DTTM_filled, CONTRACT_REG_FLAG_filled, CONTRACT_CODE_C_NAME_filled, ACCEPTS_BLOOD_C_NAME_filled, ED_ARRIVAL_DETAILS_filled, CONS_SEDATION_C_NAME_filled, RESTRAINT_SECLUS_C_NAME_filled, MULTI_PREG_YN_filled, DISASTER_NUM_filled, SRC_PATTERN_CSN_ID_filled, ENC_CLOSED_OR_COMPLETED_DATE_filled, ED_DISPO_PAT_COND_C_NAME_filled, ADOPTION_TYPE_C_NAME_filled, PRI_PROBLEM_ID_filled, EXPECTED_DISCHRG_APPROX_TIME_C_NAME_filled, DISCH_MILEST_KICKOFF_UTC_DTTM_filled, DISCH_MILEST_AUTO_MANAGED_YN_filled, PREDICTED_LOS_filled, EXP_LOS_UPD_SRC_C_NAME_filled, ED_ENC_SRC_C_NAME_filled, ED_DEPART_UTC_DTTM_filled, ADT_ARRIVAL_UTC_DTTM_filled, HOSP_DISCH_UTC_DTTM_filled, HOSP_ADMSN_UTC_DTTM_filled, INP_ADMSN_UTC_DTTM_filled, ED_HISTORICAL_YN_filled, PATIENT_TASK_COMPLETION_RATE_filled, START_MED_REM_DISCHG_YN_filled, EXPECTED_DISCHARGE_UNKNOWN_YN_filled, DUAL_ADMISSION_CSN_filled, LOA_PAT_ENC_CSN_ID_filled, INITIAL_ADT_PAT_STAT_C_NAME_filled, NOTIFICATION_SENT_FIRST_IP_YN_filled, NOTIFICATION_SENT_OBS_ADMSN_YN_filled, IB_ALERT_LENGTH_OF_STAY_MSG_ID_filled, INITIAL_ADMIT_CONF_STAT_C_NAME_filled, TRANSFER_COMMENTS_filled, MED_READINESS_DTTM_filled, MED_READINESS_TIMEFRAM_C_NAME_filled, MED_READINESS_YN_filled, MED_READINESS_INST_ENTRY_DTTM_filled, MED_READINESS_USER_ID_filled, MED_READINESS_USER_ID_NAME_filled, MED_READINESS_SOURCE_C_NAME_filled, EXPECTED_DISCH_DISP_C_NAME_filled, EXP_DISCH_DISP_USER_ID_filled, EXP_DISCH_DISP_USER_ID_NAME_filled, EXP_DISCH_DISP_ENTRY_UTC_DTTM_filled, PRIMARY_LINKED_PAT_ENC_CSN_ID_filled, TODO_ADM_DISCLAIMER_ACTIVE_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1473,15 +2119,24 @@ SELECT
     CAST(NULL AS INT) AS EXP_DISCH_DISP_ENTRY_UTC_DTTM_filled,
     CAST(NULL AS INT) AS PRIMARY_LINKED_PAT_ENC_CSN_ID_filled,
     CAST(NULL AS INT) AS TODO_ADM_DISCLAIMER_ACTIVE_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_015;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_016 <- PAT_ENC_NO_SHOW ----
 -- This table contains no-show documentation. When patients do not arrive for an appointment, they are marked as a no-show. Each no-show can have an associated action, outcome and com
 -- Bucket(s): Appointment / scheduling status
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_016 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ID_filled INT,
+    NO_SHOW_COMMENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_016 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, NO_SHOW_COMMENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1490,10 +2145,10 @@ SELECT
     COUNT(PAT_ID) AS PAT_ID_filled,
     COUNT(NO_SHOW_COMMENT) AS NO_SHOW_COMMENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_016
 FROM PAT_ENC_NO_SHOW;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_016 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, NO_SHOW_COMMENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1501,8 +2156,7 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PAT_ID_filled,
     CAST(NULL AS INT) AS NO_SHOW_COMMENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_016;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ============================== PHASE 2 ==============================

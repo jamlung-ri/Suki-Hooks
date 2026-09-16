@@ -10,12 +10,12 @@ Each `.sql` file is a mechanically generated battery that checks, for every fiel
 
 ## Is this safe to run against our system?
 
-- **Read-only in effect.** Every statement is either a `SELECT`, or a `SELECT ... INTO` that populates a session-scoped temporary table from an aggregate query. Nothing here ever inserts into, updates, or deletes from any table that already exists in your system.
+- **Read-only in effect.** Every statement is either a `SELECT`, or a `CREATE TABLE`/`INSERT INTO` against a session-scoped temporary table populated from an aggregate query. Nothing here ever inserts into, updates, or deletes from any table that already exists in your system.
 - **No patient-level or row-level data is ever read out.** Every query is `COUNT(*)` and `COUNT(<column>)` aggregates only, grouped by year — never `SELECT *`, never an individual row. The result set that comes back is counts, not records.
 - **Nothing persists.** The `#fc_NNN`-prefixed staging tables are standard SQL Server local temporary tables: scoped to your session and automatically destroyed when your connection closes. No permanent object is created anywhere. (On Oracle/SAS, see the dialect note in each `.sql` file — those platforms don't have the same auto-temp mechanism, so a commented-out cleanup block is provided.)
-- **Uniform and auditable.** Every block in a script's Phase 1 has the exact same shape: an aggregate `SELECT` into a staging table, nothing else. If you or your security/DBA team want to verify the script before running it, skim the first two or three blocks, every remaining block (there may be dozens to hundreds) follows the identical pattern.
+- **Uniform and auditable.** Every block in a script's Phase 1 has the exact same shape: create a staging table, then insert one aggregate `SELECT`'s results into it, nothing else. If you or your security/DBA team want to verify the script before running it, skim the first two or three blocks, every remaining block (there may be dozens to hundreds) follows the identical pattern.
 - **No dynamic SQL, no system-catalog access, no cross-database or linked-server calls.**
-- **A missing table or column can't break the run.** Every Phase 1 block is wrapped in its own `BEGIN TRY`/`BEGIN CATCH`. If a candidate table or column doesn't exist in your build, that block's staging table is still created, just with NULL counts and a `query_error` message instead of data. One table not existing never stops the script or affects any other table's results, and Phase 2 always returns its one grid regardless of how many individual tables failed.
+- **A missing table or column can't break the run.** Every Phase 1 block first `CREATE TABLE`s its own staging table, then attempts the real query inside its own `BEGIN TRY`/`BEGIN CATCH` as an `INSERT INTO` that table. If a candidate table or column doesn't exist in your build, the `CATCH` branch inserts NULL counts and a `query_error` message instead of data. One table not existing never stops the script or affects any other table's results, and Phase 2 always returns its one grid regardless of how many individual tables failed.
 - **Standard due diligence still applies.** Run this against your Clarity reporting layer rather than a live transactional system if your environment distinguishes the two, and route it through whatever review your organization normally requires for a new read-only report query. This document is meant to make that review fast, not to replace it.
 
 ## How to run
@@ -31,7 +31,7 @@ If you need to re-run the script in the same session, run the commented-out clea
 ## Dialect
 
 Written for SQL Server T-SQL by default. On Oracle or in SAS PROC SQL, two mechanical swaps, noted at the top of every `.sql` file:
-1. `SELECT ... INTO #fc_NNN FROM ...` → `CREATE TABLE fc_NNN AS SELECT ... FROM ...`
+1. Drop the `#` prefix on every `#fc_NNN` (Oracle has no session-temp-table shorthand; use an ordinary table, or a global temporary table, and see the cleanup block at the end of each file).
 2. `YEAR(<col>)` → `EXTRACT(YEAR FROM <col>)` (Oracle only; SAS PROC SQL supports `YEAR()` natively)
 
 If a column name happens to collide with a reserved word in your platform, quote it (`[COL]` on SQL Server, `"COL"` on Oracle).

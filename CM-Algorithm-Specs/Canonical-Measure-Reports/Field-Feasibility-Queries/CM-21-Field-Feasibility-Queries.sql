@@ -7,27 +7,35 @@
 -- It produces exactly ONE result grid, at the very end. Export that grid
 -- to CSV and send it back -- that is the entire ask.
 --
--- ERROR HANDLING: each Phase 1 block is wrapped in BEGIN TRY / BEGIN
--- CATCH. If a candidate table or column doesn't exist in your build,
--- that block's staging table is still created, just with NULL counts
--- and a query_error message (e.g. "Invalid object name 'X'."). A
--- missing table never stops the script or requires you to debug or fix
--- anything -- it just shows up as an extra column on that table's rows
--- in the final grid. Please don't spend time troubleshooting individual
--- failures; just run the whole thing top to bottom and send back
--- whatever comes out the other end.
+-- ERROR HANDLING: each Phase 1 block first CREATE TABLEs its own
+-- staging table, then attempts the real query inside BEGIN TRY / BEGIN
+-- CATCH as an INSERT INTO that same table. If a candidate table or
+-- column doesn't exist in your build, the CATCH branch inserts NULL
+-- counts and a query_error message (e.g. "Invalid object name 'X'.")
+-- instead. A missing table never stops the script or requires you to
+-- debug or fix anything -- it just shows up as an extra column on that
+-- table's rows in the final grid. Please don't spend time
+-- troubleshooting individual failures; just run the whole thing top to
+-- bottom and send back whatever comes out the other end. (Earlier
+-- versions of this script used `SELECT ... INTO` for both the TRY and
+-- CATCH branches, which SQL Server rejects at compile time -- you can't
+-- target the same temp table from two SELECT INTOs in one batch, even
+-- in mutually exclusive branches. The explicit CREATE TABLE + INSERT
+-- INTO structure below avoids that.)
 --
 -- Written for SQL Server T-SQL. On Oracle or in SAS PROC SQL, two swaps:
---   1. Replace `SELECT ... INTO #fc_NNN FROM ...` with
---      `CREATE TABLE fc_NNN AS SELECT ... FROM ...`
+--   1. Drop the `#` prefix on every `#fc_NNN` (Oracle has no session-temp-
+--      table shorthand; use an ordinary table, or a global temporary
+--      table, and see the cleanup block at the end of this file).
 --   2. Replace `YEAR(<col>)` with `EXTRACT(YEAR FROM <col>)` (Oracle only --
 --      SAS PROC SQL supports YEAR() natively).
 -- BEGIN TRY/BEGIN CATCH (see ERROR HANDLING note above) is SQL Server
 -- syntax and does not translate mechanically. On Oracle, the equivalent
 -- is a PL/SQL block per table (BEGIN ... EXCEPTION WHEN OTHERS THEN ...
--- END;). SAS PROC SQL has no per-statement equivalent at all -- if you're
--- on SAS, run this through a native SQL Server/Oracle client instead of
--- PROC SQL, or ask us for a PROC SQL-safe variant before running it.
+-- END;) wrapped around the same INSERT INTO. SAS PROC SQL has no per-
+-- statement equivalent at all -- if you're on SAS, run this through a
+-- native SQL Server/Oracle client instead of PROC SQL, or ask us for a
+-- PROC SQL-safe variant before running it.
 -- SQL Server's #-prefixed temp tables are session-scoped and auto-dropped
 -- when your connection closes -- nothing persists. On Oracle/SAS, staging
 -- tables are ordinary tables and will need the cleanup block at the end of
@@ -57,7 +65,16 @@
 -- This table contains diagnoses attached to a claim when an accumulation occurred.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_001 (
+    activity_year INT,
+    total_rows INT,
+    ACCUMULATION_ID_filled INT,
+    LINE_filled INT,
+    CLAIM_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_001 (activity_year, total_rows, ACCUMULATION_ID_filled, LINE_filled, CLAIM_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -65,25 +82,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CLAIM_DX_ID_DX_NAME) AS CLAIM_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_001
 FROM ACCUM_CLAIM_DIAGNOSES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_001 (activity_year, total_rows, ACCUMULATION_ID_filled, LINE_filled, CLAIM_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ACCUMULATION_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CLAIM_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_001;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_002 <- ACCUM_SERVICE_DIAGNOSES ----
 -- This table contains diagnoses associated with a service at the time an accumulation occurred.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_002 (
+    activity_year INT,
+    total_rows INT,
+    ACCUMULATION_ID_filled INT,
+    LINE_filled INT,
+    ASSOCIATED_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_002 (activity_year, total_rows, ACCUMULATION_ID_filled, LINE_filled, ASSOCIATED_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -91,25 +116,38 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ASSOCIATED_DX_ID_DX_NAME) AS ASSOCIATED_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_002
 FROM ACCUM_SERVICE_DIAGNOSES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_002 (activity_year, total_rows, ACCUMULATION_ID_filled, LINE_filled, ASSOCIATED_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ACCUMULATION_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ASSOCIATED_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_002;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_003 <- ADDITIONAL_EM_CODE ----
 -- This table holds all information related to additional evaluation and management (E/M) codes.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_003 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    EM_CODE_ADDL_ID_PROC_NAME_filled INT,
+    EM_CODE_MOD_ID_filled INT,
+    EM_CODE_BILPROV_ID_PROV_NAME_filled INT,
+    EM_CODE_UNIQUE_NUM_filled INT,
+    EM_NO_CHG_REASON_C_NAME_filled INT,
+    AR_EM_CODE_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_003 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, EM_CODE_ADDL_ID_PROC_NAME_filled, EM_CODE_MOD_ID_filled, EM_CODE_BILPROV_ID_PROV_NAME_filled, EM_CODE_UNIQUE_NUM_filled, EM_NO_CHG_REASON_C_NAME_filled, AR_EM_CODE_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -122,10 +160,10 @@ SELECT
     COUNT(EM_NO_CHG_REASON_C_NAME) AS EM_NO_CHG_REASON_C_NAME_filled,
     COUNT(AR_EM_CODE_DX) AS AR_EM_CODE_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_003
 FROM ADDITIONAL_EM_CODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_003 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, EM_CODE_ADDL_ID_PROC_NAME_filled, EM_CODE_MOD_ID_filled, EM_CODE_BILPROV_ID_PROV_NAME_filled, EM_CODE_UNIQUE_NUM_filled, EM_NO_CHG_REASON_C_NAME_filled, AR_EM_CODE_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -137,14 +175,24 @@ SELECT
     CAST(NULL AS INT) AS EM_CODE_UNIQUE_NUM_filled,
     CAST(NULL AS INT) AS EM_NO_CHG_REASON_C_NAME_filled,
     CAST(NULL AS INT) AS AR_EM_CODE_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_003;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_004 <- ALT_PRC_DIAGNOSES ----
 -- Diagnoses that are associated with Drug-Disease alerts.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_004 (
+    activity_year INT,
+    total_rows INT,
+    ALERT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    PRC_DIAGNOSES_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_004 (activity_year, total_rows, ALERT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, PRC_DIAGNOSES_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -154,11 +202,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(PRC_DIAGNOSES_ID_DX_NAME) AS PRC_DIAGNOSES_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_004
 FROM ALT_PRC_DIAGNOSES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_004 (activity_year, total_rows, ALERT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, PRC_DIAGNOSES_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -167,15 +215,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS PRC_DIAGNOSES_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_004;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_005 <- ANTICOAG_TRTMNT_DX ----
 -- This table tracks anticoagulation therapy medications taken prior to diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_005 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_LIST_ID_filled INT,
+    LINE_filled INT,
+    ANTICOAG_PRE_DX_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_005 (activity_year, total_rows, PROBLEM_LIST_ID_filled, LINE_filled, ANTICOAG_PRE_DX_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -183,25 +239,133 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ANTICOAG_PRE_DX_C_NAME) AS ANTICOAG_PRE_DX_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_005
 FROM ANTICOAG_TRTMNT_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_005 (activity_year, total_rows, PROBLEM_LIST_ID_filled, LINE_filled, ANTICOAG_PRE_DX_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS PROBLEM_LIST_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ANTICOAG_PRE_DX_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_005;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_006 <- APPEAL_GRV ----
 -- This table contains information about an individual appeal or grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_006 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    CM_LOG_OWNER_ID_filled INT,
+    RECORD_STATUS_C_NAME_filled INT,
+    APPEAL_GRV_TYPE_C_NAME_filled INT,
+    SERIES_IDENTIFIER_filled INT,
+    EXTERNAL_IDENTIFIER_filled INT,
+    INITIATED_BY_TYPE_C_NAME_filled INT,
+    INITIATING_PROV_ID_PROV_NAME_filled INT,
+    INITIATING_REP_MEM_RESP_GUID_filled INT,
+    SUBMISSION_METHOD_C_NAME_filled INT,
+    REVIEW_LEVEL_C_NAME_filled INT,
+    PAT_ID_filled INT,
+    APPEAL_SUBJECT_TYPE_C_NAME_filled INT,
+    SUBJECT_AUTH_REQUEST_ID_filled INT,
+    SUBJECT_CLAIM_ID_filled INT,
+    RESULT_AUTH_REQUEST_ID_filled INT,
+    RESULT_CLAIM_ID_filled INT,
+    RECORD_CREATE_UTC_DTTM_filled INT,
+    RECORD_CREATE_USER_ID_filled INT,
+    RECORD_CREATE_USER_ID_NAME_filled INT,
+    URGENCY_C_NAME_filled INT,
+    SUBMISSION_OVRIDE_UTC_DTTM_filled INT,
+    DECISION_SYS_UTC_DTTM_filled INT,
+    DECISION_USER_ID_filled INT,
+    DECISION_USER_ID_NAME_filled INT,
+    DECISION_OVRIDE_UTC_DTTM_filled INT,
+    APPEAL_DECISION_C_NAME_filled INT,
+    TIMEFRAME_START_UTC_DTTM_filled INT,
+    SUBMISSION_RPT_UTC_DTTM_filled INT,
+    SUBMISSION_SYS_UTC_DTTM_filled INT,
+    EXP_REQ_REC_UTC_DTTM_filled INT,
+    WAS_UPGRADED_TO_EXP_YN_filled INT,
+    EXP_REQ_DEC_UTC_DTTM_filled INT,
+    EXT_REQ_REC_UTC_DTTM_filled INT,
+    EXT_DAYS_filled INT,
+    EXT_REQ_DEC_UTC_DTTM_filled INT,
+    EXT_MAX_DAYS_filled INT,
+    EFFECT_SYS_UTC_DTTM_filled INT,
+    EFFECT_OVR_UTC_DTTM_filled INT,
+    EFFECT_RPT_UTC_DTTM_filled INT,
+    EFFECT_DUE_UTC_DTTM_filled INT,
+    OVERALL_DUE_UTC_DTTM_filled INT,
+    DECISION_RPT_UTC_DTTM_filled INT,
+    DECISION_DUE_UTC_DTTM_filled INT,
+    TAT_SYS_TIME_ZONE_C_NAME_filled INT,
+    TAT_OVR_TIME_ZONE_C_NAME_filled INT,
+    TAT_RPT_TIME_ZONE_C_NAME_filled INT,
+    TIMEFRAME_START_LOCAL_DTTM_filled INT,
+    SUBMISSION_SYS_LOCAL_DTTM_filled INT,
+    SUBMISSION_OVR_LOCAL_DTTM_filled INT,
+    SUBMISSION_RPT_LOCAL_DTTM_filled INT,
+    EXP_REQ_REC_LOCAL_DTTM_filled INT,
+    EXP_DEC_LOCAL_DTTM_filled INT,
+    EXT_REQ_LOCAL_DTTM_filled INT,
+    EXT_DEC_LOCAL_DTTM_filled INT,
+    EFFECT_SYS_LOCAL_DTTM_filled INT,
+    EFFECT_OVR_LOCAL_DTTM_filled INT,
+    EFFECT_RPT_LOCAL_DTTM_filled INT,
+    EFFECT_DUE_LOCAL_DTTM_filled INT,
+    OVERALL_DUE_LOCAL_DTTM_filled INT,
+    DECISION_LOCAL_DTTM_filled INT,
+    DECISION_OVR_LOCAL_DTTM_filled INT,
+    DECISION_RPT_LOCAL_DTTM_filled INT,
+    DECISION_DUE_LOCAL_DTTM_filled INT,
+    GRIEVANCE_SUBJECT_TYPE_C_NAME_filled INT,
+    REASON_FOR_GRIEVANCE_C_NAME_filled INT,
+    SUBJECT_APPEAL_APPEAL_GRV_ID_filled INT,
+    SUBJECT_GRIEVANC_APPEAL_GRV_ID_filled INT,
+    SUBJECT_PROV_ID_PROV_NAME_filled INT,
+    SUBJECT_FACILITY_ID_LOC_NAME_filled INT,
+    SUBJECT_EMPLOYEE_USER_ID_filled INT,
+    SUBJECT_EMPLOYEE_USER_ID_NAME_filled INT,
+    SUBJECT_RESOURCE_PROV_ID_PROV_NAME_filled INT,
+    SUBJECT_LOC_ID_LOC_NAME_filled INT,
+    SUBJECT_POS_ID_LOC_NAME_filled INT,
+    SUBJECT_BUS_SEG_POS_ID_LOC_NAME_filled INT,
+    SUBJECT_REGION_ID_LOC_NAME_filled INT,
+    SUBJECT_GROUP_ID_LOC_NAME_filled INT,
+    SUBJECT_COVERAGE_ID_filled INT,
+    GRIEVANCE_INCIDENT_UTC_DTTM_filled INT,
+    GRIEVANCE_INCIDENT_LOCAL_DTTM_filled INT,
+    EXTENSION_INITIATED_BY_TYPE_C_NAME_filled INT,
+    DECISION_OVR_USER_ID_filled INT,
+    DECISION_OVR_USER_ID_NAME_filled INT,
+    DECISION_RPT_USER_ID_filled INT,
+    DECISION_RPT_USER_ID_NAME_filled INT,
+    LATE_FILING_RCV_UTC_DTTM_filled INT,
+    FILED_ON_TIME_C_NAME_filled INT,
+    AG_REVIEW_TYPE_C_NAME_filled INT,
+    REVIEW_AGENCY_ID_filled INT,
+    REVIEW_AGENCY_ID_AGENCY_NAME_filled INT,
+    CASE_SENT_REVW_ENTITY_UTC_DTTM_filled INT,
+    CASE_SENT_REVW_ENTY_LOCAL_DTTM_filled INT,
+    COVERAGE_ID_filled INT,
+    PAYER_ID_PAYOR_NAME_filled INT,
+    BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled INT,
+    LOB_ID_filled INT,
+    LOB_ID_LOB_NAME_filled INT,
+    MC_PEER_GROUP_C_NAME_filled INT,
+    REGION_ID_LOC_NAME_filled INT,
+    MEDICAL_GROUP_ID_LOC_NAME_filled INT,
+    SUBJECT_FREE_TEXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_006 (activity_year, total_rows, APPEAL_GRV_ID_filled, CM_PHY_OWNER_ID_filled, CM_LOG_OWNER_ID_filled, RECORD_STATUS_C_NAME_filled, APPEAL_GRV_TYPE_C_NAME_filled, SERIES_IDENTIFIER_filled, EXTERNAL_IDENTIFIER_filled, INITIATED_BY_TYPE_C_NAME_filled, INITIATING_PROV_ID_PROV_NAME_filled, INITIATING_REP_MEM_RESP_GUID_filled, SUBMISSION_METHOD_C_NAME_filled, REVIEW_LEVEL_C_NAME_filled, PAT_ID_filled, APPEAL_SUBJECT_TYPE_C_NAME_filled, SUBJECT_AUTH_REQUEST_ID_filled, SUBJECT_CLAIM_ID_filled, RESULT_AUTH_REQUEST_ID_filled, RESULT_CLAIM_ID_filled, RECORD_CREATE_UTC_DTTM_filled, RECORD_CREATE_USER_ID_filled, RECORD_CREATE_USER_ID_NAME_filled, URGENCY_C_NAME_filled, SUBMISSION_OVRIDE_UTC_DTTM_filled, DECISION_SYS_UTC_DTTM_filled, DECISION_USER_ID_filled, DECISION_USER_ID_NAME_filled, DECISION_OVRIDE_UTC_DTTM_filled, APPEAL_DECISION_C_NAME_filled, TIMEFRAME_START_UTC_DTTM_filled, SUBMISSION_RPT_UTC_DTTM_filled, SUBMISSION_SYS_UTC_DTTM_filled, EXP_REQ_REC_UTC_DTTM_filled, WAS_UPGRADED_TO_EXP_YN_filled, EXP_REQ_DEC_UTC_DTTM_filled, EXT_REQ_REC_UTC_DTTM_filled, EXT_DAYS_filled, EXT_REQ_DEC_UTC_DTTM_filled, EXT_MAX_DAYS_filled, EFFECT_SYS_UTC_DTTM_filled, EFFECT_OVR_UTC_DTTM_filled, EFFECT_RPT_UTC_DTTM_filled, EFFECT_DUE_UTC_DTTM_filled, OVERALL_DUE_UTC_DTTM_filled, DECISION_RPT_UTC_DTTM_filled, DECISION_DUE_UTC_DTTM_filled, TAT_SYS_TIME_ZONE_C_NAME_filled, TAT_OVR_TIME_ZONE_C_NAME_filled, TAT_RPT_TIME_ZONE_C_NAME_filled, TIMEFRAME_START_LOCAL_DTTM_filled, SUBMISSION_SYS_LOCAL_DTTM_filled, SUBMISSION_OVR_LOCAL_DTTM_filled, SUBMISSION_RPT_LOCAL_DTTM_filled, EXP_REQ_REC_LOCAL_DTTM_filled, EXP_DEC_LOCAL_DTTM_filled, EXT_REQ_LOCAL_DTTM_filled, EXT_DEC_LOCAL_DTTM_filled, EFFECT_SYS_LOCAL_DTTM_filled, EFFECT_OVR_LOCAL_DTTM_filled, EFFECT_RPT_LOCAL_DTTM_filled, EFFECT_DUE_LOCAL_DTTM_filled, OVERALL_DUE_LOCAL_DTTM_filled, DECISION_LOCAL_DTTM_filled, DECISION_OVR_LOCAL_DTTM_filled, DECISION_RPT_LOCAL_DTTM_filled, DECISION_DUE_LOCAL_DTTM_filled, GRIEVANCE_SUBJECT_TYPE_C_NAME_filled, REASON_FOR_GRIEVANCE_C_NAME_filled, SUBJECT_APPEAL_APPEAL_GRV_ID_filled, SUBJECT_GRIEVANC_APPEAL_GRV_ID_filled, SUBJECT_PROV_ID_PROV_NAME_filled, SUBJECT_FACILITY_ID_LOC_NAME_filled, SUBJECT_EMPLOYEE_USER_ID_filled, SUBJECT_EMPLOYEE_USER_ID_NAME_filled, SUBJECT_RESOURCE_PROV_ID_PROV_NAME_filled, SUBJECT_LOC_ID_LOC_NAME_filled, SUBJECT_POS_ID_LOC_NAME_filled, SUBJECT_BUS_SEG_POS_ID_LOC_NAME_filled, SUBJECT_REGION_ID_LOC_NAME_filled, SUBJECT_GROUP_ID_LOC_NAME_filled, SUBJECT_COVERAGE_ID_filled, GRIEVANCE_INCIDENT_UTC_DTTM_filled, GRIEVANCE_INCIDENT_LOCAL_DTTM_filled, EXTENSION_INITIATED_BY_TYPE_C_NAME_filled, DECISION_OVR_USER_ID_filled, DECISION_OVR_USER_ID_NAME_filled, DECISION_RPT_USER_ID_filled, DECISION_RPT_USER_ID_NAME_filled, LATE_FILING_RCV_UTC_DTTM_filled, FILED_ON_TIME_C_NAME_filled, AG_REVIEW_TYPE_C_NAME_filled, REVIEW_AGENCY_ID_filled, REVIEW_AGENCY_ID_AGENCY_NAME_filled, CASE_SENT_REVW_ENTITY_UTC_DTTM_filled, CASE_SENT_REVW_ENTY_LOCAL_DTTM_filled, COVERAGE_ID_filled, PAYER_ID_PAYOR_NAME_filled, BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled, LOB_ID_filled, LOB_ID_LOB_NAME_filled, MC_PEER_GROUP_C_NAME_filled, REGION_ID_LOC_NAME_filled, MEDICAL_GROUP_ID_LOC_NAME_filled, SUBJECT_FREE_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -309,10 +473,10 @@ SELECT
     COUNT(MEDICAL_GROUP_ID_LOC_NAME) AS MEDICAL_GROUP_ID_LOC_NAME_filled,
     COUNT(SUBJECT_FREE_TEXT) AS SUBJECT_FREE_TEXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_006
 FROM APPEAL_GRV;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_006 (activity_year, total_rows, APPEAL_GRV_ID_filled, CM_PHY_OWNER_ID_filled, CM_LOG_OWNER_ID_filled, RECORD_STATUS_C_NAME_filled, APPEAL_GRV_TYPE_C_NAME_filled, SERIES_IDENTIFIER_filled, EXTERNAL_IDENTIFIER_filled, INITIATED_BY_TYPE_C_NAME_filled, INITIATING_PROV_ID_PROV_NAME_filled, INITIATING_REP_MEM_RESP_GUID_filled, SUBMISSION_METHOD_C_NAME_filled, REVIEW_LEVEL_C_NAME_filled, PAT_ID_filled, APPEAL_SUBJECT_TYPE_C_NAME_filled, SUBJECT_AUTH_REQUEST_ID_filled, SUBJECT_CLAIM_ID_filled, RESULT_AUTH_REQUEST_ID_filled, RESULT_CLAIM_ID_filled, RECORD_CREATE_UTC_DTTM_filled, RECORD_CREATE_USER_ID_filled, RECORD_CREATE_USER_ID_NAME_filled, URGENCY_C_NAME_filled, SUBMISSION_OVRIDE_UTC_DTTM_filled, DECISION_SYS_UTC_DTTM_filled, DECISION_USER_ID_filled, DECISION_USER_ID_NAME_filled, DECISION_OVRIDE_UTC_DTTM_filled, APPEAL_DECISION_C_NAME_filled, TIMEFRAME_START_UTC_DTTM_filled, SUBMISSION_RPT_UTC_DTTM_filled, SUBMISSION_SYS_UTC_DTTM_filled, EXP_REQ_REC_UTC_DTTM_filled, WAS_UPGRADED_TO_EXP_YN_filled, EXP_REQ_DEC_UTC_DTTM_filled, EXT_REQ_REC_UTC_DTTM_filled, EXT_DAYS_filled, EXT_REQ_DEC_UTC_DTTM_filled, EXT_MAX_DAYS_filled, EFFECT_SYS_UTC_DTTM_filled, EFFECT_OVR_UTC_DTTM_filled, EFFECT_RPT_UTC_DTTM_filled, EFFECT_DUE_UTC_DTTM_filled, OVERALL_DUE_UTC_DTTM_filled, DECISION_RPT_UTC_DTTM_filled, DECISION_DUE_UTC_DTTM_filled, TAT_SYS_TIME_ZONE_C_NAME_filled, TAT_OVR_TIME_ZONE_C_NAME_filled, TAT_RPT_TIME_ZONE_C_NAME_filled, TIMEFRAME_START_LOCAL_DTTM_filled, SUBMISSION_SYS_LOCAL_DTTM_filled, SUBMISSION_OVR_LOCAL_DTTM_filled, SUBMISSION_RPT_LOCAL_DTTM_filled, EXP_REQ_REC_LOCAL_DTTM_filled, EXP_DEC_LOCAL_DTTM_filled, EXT_REQ_LOCAL_DTTM_filled, EXT_DEC_LOCAL_DTTM_filled, EFFECT_SYS_LOCAL_DTTM_filled, EFFECT_OVR_LOCAL_DTTM_filled, EFFECT_RPT_LOCAL_DTTM_filled, EFFECT_DUE_LOCAL_DTTM_filled, OVERALL_DUE_LOCAL_DTTM_filled, DECISION_LOCAL_DTTM_filled, DECISION_OVR_LOCAL_DTTM_filled, DECISION_RPT_LOCAL_DTTM_filled, DECISION_DUE_LOCAL_DTTM_filled, GRIEVANCE_SUBJECT_TYPE_C_NAME_filled, REASON_FOR_GRIEVANCE_C_NAME_filled, SUBJECT_APPEAL_APPEAL_GRV_ID_filled, SUBJECT_GRIEVANC_APPEAL_GRV_ID_filled, SUBJECT_PROV_ID_PROV_NAME_filled, SUBJECT_FACILITY_ID_LOC_NAME_filled, SUBJECT_EMPLOYEE_USER_ID_filled, SUBJECT_EMPLOYEE_USER_ID_NAME_filled, SUBJECT_RESOURCE_PROV_ID_PROV_NAME_filled, SUBJECT_LOC_ID_LOC_NAME_filled, SUBJECT_POS_ID_LOC_NAME_filled, SUBJECT_BUS_SEG_POS_ID_LOC_NAME_filled, SUBJECT_REGION_ID_LOC_NAME_filled, SUBJECT_GROUP_ID_LOC_NAME_filled, SUBJECT_COVERAGE_ID_filled, GRIEVANCE_INCIDENT_UTC_DTTM_filled, GRIEVANCE_INCIDENT_LOCAL_DTTM_filled, EXTENSION_INITIATED_BY_TYPE_C_NAME_filled, DECISION_OVR_USER_ID_filled, DECISION_OVR_USER_ID_NAME_filled, DECISION_RPT_USER_ID_filled, DECISION_RPT_USER_ID_NAME_filled, LATE_FILING_RCV_UTC_DTTM_filled, FILED_ON_TIME_C_NAME_filled, AG_REVIEW_TYPE_C_NAME_filled, REVIEW_AGENCY_ID_filled, REVIEW_AGENCY_ID_AGENCY_NAME_filled, CASE_SENT_REVW_ENTITY_UTC_DTTM_filled, CASE_SENT_REVW_ENTY_LOCAL_DTTM_filled, COVERAGE_ID_filled, PAYER_ID_PAYOR_NAME_filled, BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled, LOB_ID_filled, LOB_ID_LOB_NAME_filled, MC_PEER_GROUP_C_NAME_filled, REGION_ID_LOC_NAME_filled, MEDICAL_GROUP_ID_LOC_NAME_filled, SUBJECT_FREE_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -419,15 +583,84 @@ SELECT
     CAST(NULL AS INT) AS REGION_ID_LOC_NAME_filled,
     CAST(NULL AS INT) AS MEDICAL_GROUP_ID_LOC_NAME_filled,
     CAST(NULL AS INT) AS SUBJECT_FREE_TEXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_006;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_007 <- APPEAL_GRV_2 ----
 -- This table contains information about an individual appeal or grievance as an extension of APPEAL_GRV.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_007 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    NEXT_OUTST_DECISION_UTC_DTTM_filled INT,
+    NEXT_OUTST_DECISION_LOCAL_DTTM_filled INT,
+    NEXT_OUTST_EFFECT_UTC_DTTM_filled INT,
+    NEXT_OUTST_EFFECT_LOCAL_DTTM_filled INT,
+    NEXT_OUTST_NOTIF_UTC_DTTM_filled INT,
+    NEXT_OUTST_NOTIF_LOCAL_DTTM_filled INT,
+    REQUIREMENTS_COMP_UTC_DTTM_filled INT,
+    REQUIREMENTS_COMP_LOCAL_DTTM_filled INT,
+    DECISION_ON_TIME_C_NAME_filled INT,
+    EFFECTUATION_ON_TIME_C_NAME_filled INT,
+    NOTIFICATIONS_ON_TIME_C_NAME_filled INT,
+    OVERALL_ON_TIME_C_NAME_filled INT,
+    APPEAL_GRV_WKFL_STEP_C_NAME_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    FILED_LATE_EXCPTNS_ALLOWED_YN_filled INT,
+    FILED_LATE_OVERRIDE_YN_filled INT,
+    DISMISSED_YN_filled INT,
+    NEXT_OUTST_ACTION_UTC_DTTM_filled INT,
+    NEXT_OUTST_ACTION_LOCAL_DTTM_filled INT,
+    CURRENT_REQUESTED_URGENCY_C_NAME_filled INT,
+    REQUESTED_EXP_PROCESSED_STD_YN_filled INT,
+    MEM_OUT_ORAL_NOTIF_UTC_DTTM_filled INT,
+    MEM_OUT_ORAL_NOTIF_LOCAL_DTTM_filled INT,
+    MEM_OUT_WRIT_NOTIF_UTC_DTTM_filled INT,
+    MEM_OUT_WRIT_NOTIF_LOCAL_DTTM_filled INT,
+    QUEUED_COMPLETE_USER_ID_filled INT,
+    QUEUED_COMPLETE_USER_ID_NAME_filled INT,
+    COMPLETED_UTC_DTTM_filled INT,
+    COMPLETED_LOCAL_DTTM_filled INT,
+    PROCESSING_TYPE_C_NAME_filled INT,
+    AG_CREATION_METHOD_C_NAME_filled INT,
+    REQ_ADDL_REVIEW_C_NAME_filled INT,
+    SUGGESTED_APPEAL_DECISION_C_NAME_filled INT,
+    SUGGESTED_DECISION_USER_ID_filled INT,
+    SUGGESTED_DECISION_USER_ID_NAME_filled INT,
+    SUGGESTED_DECISION_UTC_DTTM_filled INT,
+    SUGGESTED_DECISION_LOCAL_DTTM_filled INT,
+    EDITED_AFTER_COMPLETION_YN_filled INT,
+    DECISION_LOGIN_DEPARTMENT_ID_EXTERNAL_NAME_filled INT,
+    SUGGESTED_DECISION_DEPT_ID_EXTERNAL_NAME_filled INT,
+    MEDICARE_CVG_TYP_C_NAME_filled INT,
+    IS_PART_B_DRUG_YN_filled INT,
+    LATE_FILING_RCV_LOCAL_DTTM_filled INT,
+    REQUESTING_REP_DOCUMENT_REQ_YN_filled INT,
+    CASE_FILE_DUE_UTC_DTTM_filled INT,
+    CASE_FILE_DUE_LOCAL_DTTM_filled INT,
+    APPEAL_ORIG_DENIAL_RSN_C_NAME_filled INT,
+    NEXT_OUTST_CASE_FWD_UTC_DTTM_filled INT,
+    NEXT_OUTST_CASE_FWD_LOCAL_DTTM_filled INT,
+    CASE_FILE_ON_TIME_C_NAME_filled INT,
+    FILED_LATE_REPORTABLE_YN_filled INT,
+    RECORD_CREATE_LOCAL_DTTM_filled INT,
+    PROCESS_AS_FORMAL_GRIEVANCE_YN_filled INT,
+    UPGRADE_TO_FORMAL_UTC_DTTM_filled INT,
+    UPGRADE_TO_FORMAL_LOCAL_DTTM_filled INT,
+    AG_FORMALITY_C_NAME_filled INT,
+    UPGRD_FRML_OCCR_UTC_DTTM_filled INT,
+    UPGRD_FRML_OCCR_LOC_DTTM_filled INT,
+    TAG_SOURCE_TYPE_C_NAME_filled INT,
+    APPEAL_EXCEPTION_TYPE_C_NAME_filled INT,
+    INITIATING_POS_ID_LOC_NAME_filled INT,
+    REQUESTING_PROV_ADDRESSID_filled INT,
+    SUBJECT_PROV_ADDRESSID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_007 (activity_year, total_rows, APPEAL_GRV_ID_filled, NEXT_OUTST_DECISION_UTC_DTTM_filled, NEXT_OUTST_DECISION_LOCAL_DTTM_filled, NEXT_OUTST_EFFECT_UTC_DTTM_filled, NEXT_OUTST_EFFECT_LOCAL_DTTM_filled, NEXT_OUTST_NOTIF_UTC_DTTM_filled, NEXT_OUTST_NOTIF_LOCAL_DTTM_filled, REQUIREMENTS_COMP_UTC_DTTM_filled, REQUIREMENTS_COMP_LOCAL_DTTM_filled, DECISION_ON_TIME_C_NAME_filled, EFFECTUATION_ON_TIME_C_NAME_filled, NOTIFICATIONS_ON_TIME_C_NAME_filled, OVERALL_ON_TIME_C_NAME_filled, APPEAL_GRV_WKFL_STEP_C_NAME_filled, PAT_ENC_CSN_ID_filled, FILED_LATE_EXCPTNS_ALLOWED_YN_filled, FILED_LATE_OVERRIDE_YN_filled, DISMISSED_YN_filled, NEXT_OUTST_ACTION_UTC_DTTM_filled, NEXT_OUTST_ACTION_LOCAL_DTTM_filled, CURRENT_REQUESTED_URGENCY_C_NAME_filled, REQUESTED_EXP_PROCESSED_STD_YN_filled, MEM_OUT_ORAL_NOTIF_UTC_DTTM_filled, MEM_OUT_ORAL_NOTIF_LOCAL_DTTM_filled, MEM_OUT_WRIT_NOTIF_UTC_DTTM_filled, MEM_OUT_WRIT_NOTIF_LOCAL_DTTM_filled, QUEUED_COMPLETE_USER_ID_filled, QUEUED_COMPLETE_USER_ID_NAME_filled, COMPLETED_UTC_DTTM_filled, COMPLETED_LOCAL_DTTM_filled, PROCESSING_TYPE_C_NAME_filled, AG_CREATION_METHOD_C_NAME_filled, REQ_ADDL_REVIEW_C_NAME_filled, SUGGESTED_APPEAL_DECISION_C_NAME_filled, SUGGESTED_DECISION_USER_ID_filled, SUGGESTED_DECISION_USER_ID_NAME_filled, SUGGESTED_DECISION_UTC_DTTM_filled, SUGGESTED_DECISION_LOCAL_DTTM_filled, EDITED_AFTER_COMPLETION_YN_filled, DECISION_LOGIN_DEPARTMENT_ID_EXTERNAL_NAME_filled, SUGGESTED_DECISION_DEPT_ID_EXTERNAL_NAME_filled, MEDICARE_CVG_TYP_C_NAME_filled, IS_PART_B_DRUG_YN_filled, LATE_FILING_RCV_LOCAL_DTTM_filled, REQUESTING_REP_DOCUMENT_REQ_YN_filled, CASE_FILE_DUE_UTC_DTTM_filled, CASE_FILE_DUE_LOCAL_DTTM_filled, APPEAL_ORIG_DENIAL_RSN_C_NAME_filled, NEXT_OUTST_CASE_FWD_UTC_DTTM_filled, NEXT_OUTST_CASE_FWD_LOCAL_DTTM_filled, CASE_FILE_ON_TIME_C_NAME_filled, FILED_LATE_REPORTABLE_YN_filled, RECORD_CREATE_LOCAL_DTTM_filled, PROCESS_AS_FORMAL_GRIEVANCE_YN_filled, UPGRADE_TO_FORMAL_UTC_DTTM_filled, UPGRADE_TO_FORMAL_LOCAL_DTTM_filled, AG_FORMALITY_C_NAME_filled, UPGRD_FRML_OCCR_UTC_DTTM_filled, UPGRD_FRML_OCCR_LOC_DTTM_filled, TAG_SOURCE_TYPE_C_NAME_filled, APPEAL_EXCEPTION_TYPE_C_NAME_filled, INITIATING_POS_ID_LOC_NAME_filled, REQUESTING_PROV_ADDRESSID_filled, SUBJECT_PROV_ADDRESSID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -496,10 +729,10 @@ SELECT
     COUNT(REQUESTING_PROV_ADDRESSID) AS REQUESTING_PROV_ADDRESSID_filled,
     COUNT(SUBJECT_PROV_ADDRESSID) AS SUBJECT_PROV_ADDRESSID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_007
 FROM APPEAL_GRV_2;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_007 (activity_year, total_rows, APPEAL_GRV_ID_filled, NEXT_OUTST_DECISION_UTC_DTTM_filled, NEXT_OUTST_DECISION_LOCAL_DTTM_filled, NEXT_OUTST_EFFECT_UTC_DTTM_filled, NEXT_OUTST_EFFECT_LOCAL_DTTM_filled, NEXT_OUTST_NOTIF_UTC_DTTM_filled, NEXT_OUTST_NOTIF_LOCAL_DTTM_filled, REQUIREMENTS_COMP_UTC_DTTM_filled, REQUIREMENTS_COMP_LOCAL_DTTM_filled, DECISION_ON_TIME_C_NAME_filled, EFFECTUATION_ON_TIME_C_NAME_filled, NOTIFICATIONS_ON_TIME_C_NAME_filled, OVERALL_ON_TIME_C_NAME_filled, APPEAL_GRV_WKFL_STEP_C_NAME_filled, PAT_ENC_CSN_ID_filled, FILED_LATE_EXCPTNS_ALLOWED_YN_filled, FILED_LATE_OVERRIDE_YN_filled, DISMISSED_YN_filled, NEXT_OUTST_ACTION_UTC_DTTM_filled, NEXT_OUTST_ACTION_LOCAL_DTTM_filled, CURRENT_REQUESTED_URGENCY_C_NAME_filled, REQUESTED_EXP_PROCESSED_STD_YN_filled, MEM_OUT_ORAL_NOTIF_UTC_DTTM_filled, MEM_OUT_ORAL_NOTIF_LOCAL_DTTM_filled, MEM_OUT_WRIT_NOTIF_UTC_DTTM_filled, MEM_OUT_WRIT_NOTIF_LOCAL_DTTM_filled, QUEUED_COMPLETE_USER_ID_filled, QUEUED_COMPLETE_USER_ID_NAME_filled, COMPLETED_UTC_DTTM_filled, COMPLETED_LOCAL_DTTM_filled, PROCESSING_TYPE_C_NAME_filled, AG_CREATION_METHOD_C_NAME_filled, REQ_ADDL_REVIEW_C_NAME_filled, SUGGESTED_APPEAL_DECISION_C_NAME_filled, SUGGESTED_DECISION_USER_ID_filled, SUGGESTED_DECISION_USER_ID_NAME_filled, SUGGESTED_DECISION_UTC_DTTM_filled, SUGGESTED_DECISION_LOCAL_DTTM_filled, EDITED_AFTER_COMPLETION_YN_filled, DECISION_LOGIN_DEPARTMENT_ID_EXTERNAL_NAME_filled, SUGGESTED_DECISION_DEPT_ID_EXTERNAL_NAME_filled, MEDICARE_CVG_TYP_C_NAME_filled, IS_PART_B_DRUG_YN_filled, LATE_FILING_RCV_LOCAL_DTTM_filled, REQUESTING_REP_DOCUMENT_REQ_YN_filled, CASE_FILE_DUE_UTC_DTTM_filled, CASE_FILE_DUE_LOCAL_DTTM_filled, APPEAL_ORIG_DENIAL_RSN_C_NAME_filled, NEXT_OUTST_CASE_FWD_UTC_DTTM_filled, NEXT_OUTST_CASE_FWD_LOCAL_DTTM_filled, CASE_FILE_ON_TIME_C_NAME_filled, FILED_LATE_REPORTABLE_YN_filled, RECORD_CREATE_LOCAL_DTTM_filled, PROCESS_AS_FORMAL_GRIEVANCE_YN_filled, UPGRADE_TO_FORMAL_UTC_DTTM_filled, UPGRADE_TO_FORMAL_LOCAL_DTTM_filled, AG_FORMALITY_C_NAME_filled, UPGRD_FRML_OCCR_UTC_DTTM_filled, UPGRD_FRML_OCCR_LOC_DTTM_filled, TAG_SOURCE_TYPE_C_NAME_filled, APPEAL_EXCEPTION_TYPE_C_NAME_filled, INITIATING_POS_ID_LOC_NAME_filled, REQUESTING_PROV_ADDRESSID_filled, SUBJECT_PROV_ADDRESSID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -567,15 +800,23 @@ SELECT
     CAST(NULL AS INT) AS INITIATING_POS_ID_LOC_NAME_filled,
     CAST(NULL AS INT) AS REQUESTING_PROV_ADDRESSID_filled,
     CAST(NULL AS INT) AS SUBJECT_PROV_ADDRESSID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_007;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_008 <- APPEAL_GRV_APPEAL_REASONS ----
 -- The reasons for which an appeal was initiated.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_008 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    APPEAL_CREATE_REASONS_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_008 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, APPEAL_CREATE_REASONS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -583,25 +824,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(APPEAL_CREATE_REASONS_C_NAME) AS APPEAL_CREATE_REASONS_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_008
 FROM APPEAL_GRV_APPEAL_REASONS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_008 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, APPEAL_CREATE_REASONS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS APPEAL_CREATE_REASONS_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_008;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_009 <- APPEAL_GRV_AUDIT_TRAIL ----
 -- This table contains the audit trail of item value changes for an appeal/grievance record.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_009 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    AUDIT_TRAIL_TYPE_C_NAME_filled INT,
+    DOCUMENT_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_009 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, AUDIT_TRAIL_TYPE_C_NAME_filled, DOCUMENT_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -610,10 +860,10 @@ SELECT
     COUNT(AUDIT_TRAIL_TYPE_C_NAME) AS AUDIT_TRAIL_TYPE_C_NAME_filled,
     COUNT(DOCUMENT_ID) AS DOCUMENT_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_009
 FROM APPEAL_GRV_AUDIT_TRAIL;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_009 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, AUDIT_TRAIL_TYPE_C_NAME_filled, DOCUMENT_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -621,15 +871,28 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS AUDIT_TRAIL_TYPE_C_NAME_filled,
     CAST(NULL AS INT) AS DOCUMENT_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_009;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_010 <- APPEAL_GRV_CHANGE_URGENCY ----
 -- Stores the change urgency requests for an appeal/grievance. Each row represents a change urgency request.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_010 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    REQUESTED_URGENCY_C_NAME_filled INT,
+    REQUEST_UTC_DTTM_filled INT,
+    REQUEST_LOCAL_DTTM_filled INT,
+    INITIATED_BY_TYPE_C_NAME_filled INT,
+    URGENCY_COMMENTS_filled INT,
+    URGENCY_DECISION_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_010 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, REQUESTED_URGENCY_C_NAME_filled, REQUEST_UTC_DTTM_filled, REQUEST_LOCAL_DTTM_filled, INITIATED_BY_TYPE_C_NAME_filled, URGENCY_COMMENTS_filled, URGENCY_DECISION_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -642,10 +905,10 @@ SELECT
     COUNT(URGENCY_COMMENTS) AS URGENCY_COMMENTS_filled,
     COUNT(URGENCY_DECISION_C_NAME) AS URGENCY_DECISION_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_010
 FROM APPEAL_GRV_CHANGE_URGENCY;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_010 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, REQUESTED_URGENCY_C_NAME_filled, REQUEST_UTC_DTTM_filled, REQUEST_LOCAL_DTTM_filled, INITIATED_BY_TYPE_C_NAME_filled, URGENCY_COMMENTS_filled, URGENCY_DECISION_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -657,15 +920,23 @@ SELECT
     CAST(NULL AS INT) AS INITIATED_BY_TYPE_C_NAME_filled,
     CAST(NULL AS INT) AS URGENCY_COMMENTS_filled,
     CAST(NULL AS INT) AS URGENCY_DECISION_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_010;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_011 <- APPEAL_GRV_DSMISS_REASONS ----
 -- Stores the reasons an appeal or grievance was dismissed.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_011 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    DISMISS_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_011 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, DISMISS_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -673,25 +944,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DISMISS_REASON_C_NAME) AS DISMISS_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_011
 FROM APPEAL_GRV_DSMISS_REASONS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_011 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, DISMISS_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DISMISS_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_011;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_012 <- APPEAL_GRV_LATE_FILE_RSNS ----
 -- Stores the reasons for late filing for an appeal/grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_012 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    LATE_FILING_RSN_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_012 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, LATE_FILING_RSN_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -699,25 +978,79 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(LATE_FILING_RSN_C_NAME) AS LATE_FILING_RSN_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_012
 FROM APPEAL_GRV_LATE_FILE_RSNS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_012 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, LATE_FILING_RSN_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS LATE_FILING_RSN_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_012;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_013 <- APPEAL_GRV_LETTER ----
 -- Letters that were sent or were attempted to have been sent from an appeal or grievance record.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_013 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    LETTER_SENT_DOCUMENT_ID_filled INT,
+    APPEAL_GRV_LETTER_STS_C_NAME_filled INT,
+    LETTER_GUID_filled INT,
+    APPEAL_GRV_LETTER_TYPE_C_NAME_filled INT,
+    RECIPIENT_CLASS_EVENT_ID_filled INT,
+    RECIPIENT_CLASS_EVENT_ID_EVENT_NAME_filled INT,
+    RESOLVED_FEV_SEND_TO_C_NAME_filled INT,
+    RESOLVED_RECIPIENT_INI_filled INT,
+    RESOLVED_RECIPIENT_ID_filled INT,
+    RESOLVED_RECIPIENT_GUID_filled INT,
+    DELIVERY_LOGIC_C_NAME_filled INT,
+    RESOLVED_FEV_DLVR_MTHD_C_NAME_filled INT,
+    BATCH_PRINT_LTR_HX_JOB_TYPE_C_NAME_filled INT,
+    BODY_SMARTTEXT_ID_filled INT,
+    BODY_SMARTTEXT_ID_SMARTTEXT_NAME_filled INT,
+    COVER_SMARTTEXT_ID_filled INT,
+    COVER_SMARTTEXT_ID_SMARTTEXT_NAME_filled INT,
+    BACK_SMARTTEXT_ID_filled INT,
+    BACK_SMARTTEXT_ID_SMARTTEXT_NAME_filled INT,
+    RESOLVED_IB_POOL_ID_filled INT,
+    RESOLVED_IB_POOL_ID_REGISTRY_NAME_filled INT,
+    RESOLVED_PROV_ADDR_UNIQUE_ID_filled INT,
+    CITY_filled INT,
+    STATE_C_NAME_filled INT,
+    ZIP_filled INT,
+    DISTRICT_C_NAME_filled INT,
+    COUNTY_C_NAME_filled INT,
+    COUNTRY_C_NAME_filled INT,
+    BUILDING_NUMBER_filled INT,
+    RECIPIENT_NAME_filled INT,
+    SENT_SYS_UTC_DTTM_filled INT,
+    SENT_SYS_LOCAL_DTTM_filled INT,
+    SENT_OVD_UTC_DTTM_filled INT,
+    SENT_OVD_LOCAL_DTTM_filled INT,
+    SENT_RPT_UTC_DTTM_filled INT,
+    SENT_RPT_LOCAL_DTTM_filled INT,
+    MAILED_SYS_UTC_DTTM_filled INT,
+    MAILED_SYS_LOCAL_DTTM_filled INT,
+    MAILED_OVR_UTC_DTTM_filled INT,
+    MAILED_OVR_LOCAL_DTTM_filled INT,
+    MAILED_RPT_UTC_DTTM_filled INT,
+    MAILED_RPT_LOCAL_DTTM_filled INT,
+    BODY_NOTE_ID_filled INT,
+    COVER_SHEET_NOTE_ID_filled INT,
+    BACK_NOTE_ID_filled INT,
+    FAX_FACE_SHEET_NOTE_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_013 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, CM_PHY_OWNER_ID_filled, LETTER_SENT_DOCUMENT_ID_filled, APPEAL_GRV_LETTER_STS_C_NAME_filled, LETTER_GUID_filled, APPEAL_GRV_LETTER_TYPE_C_NAME_filled, RECIPIENT_CLASS_EVENT_ID_filled, RECIPIENT_CLASS_EVENT_ID_EVENT_NAME_filled, RESOLVED_FEV_SEND_TO_C_NAME_filled, RESOLVED_RECIPIENT_INI_filled, RESOLVED_RECIPIENT_ID_filled, RESOLVED_RECIPIENT_GUID_filled, DELIVERY_LOGIC_C_NAME_filled, RESOLVED_FEV_DLVR_MTHD_C_NAME_filled, BATCH_PRINT_LTR_HX_JOB_TYPE_C_NAME_filled, BODY_SMARTTEXT_ID_filled, BODY_SMARTTEXT_ID_SMARTTEXT_NAME_filled, COVER_SMARTTEXT_ID_filled, COVER_SMARTTEXT_ID_SMARTTEXT_NAME_filled, BACK_SMARTTEXT_ID_filled, BACK_SMARTTEXT_ID_SMARTTEXT_NAME_filled, RESOLVED_IB_POOL_ID_filled, RESOLVED_IB_POOL_ID_REGISTRY_NAME_filled, RESOLVED_PROV_ADDR_UNIQUE_ID_filled, CITY_filled, STATE_C_NAME_filled, ZIP_filled, DISTRICT_C_NAME_filled, COUNTY_C_NAME_filled, COUNTRY_C_NAME_filled, BUILDING_NUMBER_filled, RECIPIENT_NAME_filled, SENT_SYS_UTC_DTTM_filled, SENT_SYS_LOCAL_DTTM_filled, SENT_OVD_UTC_DTTM_filled, SENT_OVD_LOCAL_DTTM_filled, SENT_RPT_UTC_DTTM_filled, SENT_RPT_LOCAL_DTTM_filled, MAILED_SYS_UTC_DTTM_filled, MAILED_SYS_LOCAL_DTTM_filled, MAILED_OVR_UTC_DTTM_filled, MAILED_OVR_LOCAL_DTTM_filled, MAILED_RPT_UTC_DTTM_filled, MAILED_RPT_LOCAL_DTTM_filled, BODY_NOTE_ID_filled, COVER_SHEET_NOTE_ID_filled, BACK_NOTE_ID_filled, FAX_FACE_SHEET_NOTE_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -771,10 +1104,10 @@ SELECT
     COUNT(BACK_NOTE_ID) AS BACK_NOTE_ID_filled,
     COUNT(FAX_FACE_SHEET_NOTE_ID) AS FAX_FACE_SHEET_NOTE_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_013
 FROM APPEAL_GRV_LETTER;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_013 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, CM_PHY_OWNER_ID_filled, LETTER_SENT_DOCUMENT_ID_filled, APPEAL_GRV_LETTER_STS_C_NAME_filled, LETTER_GUID_filled, APPEAL_GRV_LETTER_TYPE_C_NAME_filled, RECIPIENT_CLASS_EVENT_ID_filled, RECIPIENT_CLASS_EVENT_ID_EVENT_NAME_filled, RESOLVED_FEV_SEND_TO_C_NAME_filled, RESOLVED_RECIPIENT_INI_filled, RESOLVED_RECIPIENT_ID_filled, RESOLVED_RECIPIENT_GUID_filled, DELIVERY_LOGIC_C_NAME_filled, RESOLVED_FEV_DLVR_MTHD_C_NAME_filled, BATCH_PRINT_LTR_HX_JOB_TYPE_C_NAME_filled, BODY_SMARTTEXT_ID_filled, BODY_SMARTTEXT_ID_SMARTTEXT_NAME_filled, COVER_SMARTTEXT_ID_filled, COVER_SMARTTEXT_ID_SMARTTEXT_NAME_filled, BACK_SMARTTEXT_ID_filled, BACK_SMARTTEXT_ID_SMARTTEXT_NAME_filled, RESOLVED_IB_POOL_ID_filled, RESOLVED_IB_POOL_ID_REGISTRY_NAME_filled, RESOLVED_PROV_ADDR_UNIQUE_ID_filled, CITY_filled, STATE_C_NAME_filled, ZIP_filled, DISTRICT_C_NAME_filled, COUNTY_C_NAME_filled, COUNTRY_C_NAME_filled, BUILDING_NUMBER_filled, RECIPIENT_NAME_filled, SENT_SYS_UTC_DTTM_filled, SENT_SYS_LOCAL_DTTM_filled, SENT_OVD_UTC_DTTM_filled, SENT_OVD_LOCAL_DTTM_filled, SENT_RPT_UTC_DTTM_filled, SENT_RPT_LOCAL_DTTM_filled, MAILED_SYS_UTC_DTTM_filled, MAILED_SYS_LOCAL_DTTM_filled, MAILED_OVR_UTC_DTTM_filled, MAILED_OVR_LOCAL_DTTM_filled, MAILED_RPT_UTC_DTTM_filled, MAILED_RPT_LOCAL_DTTM_filled, BODY_NOTE_ID_filled, COVER_SHEET_NOTE_ID_filled, BACK_NOTE_ID_filled, FAX_FACE_SHEET_NOTE_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -827,15 +1160,24 @@ SELECT
     CAST(NULL AS INT) AS COVER_SHEET_NOTE_ID_filled,
     CAST(NULL AS INT) AS BACK_NOTE_ID_filled,
     CAST(NULL AS INT) AS FAX_FACE_SHEET_NOTE_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_013;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_014 <- APPEAL_GRV_LETTER_ADDRESS ----
 -- The address of this letter's recipient. An address may be recorded, even if the letter was not mailed.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_014 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    STREET_ADDRESS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_014 (activity_year, total_rows, APPEAL_GRV_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, STREET_ADDRESS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -844,10 +1186,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(STREET_ADDRESS) AS STREET_ADDRESS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_014
 FROM APPEAL_GRV_LETTER_ADDRESS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_014 (activity_year, total_rows, APPEAL_GRV_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, STREET_ADDRESS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -855,15 +1197,30 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS STREET_ADDRESS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_014;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_015 <- APPEAL_GRV_LETTER_GEN_HX ----
 -- All successes, failures, and intermediate actions that occurred while generating letters.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_015 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    HISTORY_KEY_filled INT,
+    LETTER_HX_GUID_filled INT,
+    APPEAL_GRV_LETTER_ACT_C_NAME_filled INT,
+    OCCUR_UTC_DTTM_filled INT,
+    COMMITTING_USER_ID_filled INT,
+    COMMITTING_USER_ID_NAME_filled INT,
+    LETTER_HX_COMMENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_015 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, CM_PHY_OWNER_ID_filled, HISTORY_KEY_filled, LETTER_HX_GUID_filled, APPEAL_GRV_LETTER_ACT_C_NAME_filled, OCCUR_UTC_DTTM_filled, COMMITTING_USER_ID_filled, COMMITTING_USER_ID_NAME_filled, LETTER_HX_COMMENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -878,10 +1235,10 @@ SELECT
     COUNT(COMMITTING_USER_ID_NAME) AS COMMITTING_USER_ID_NAME_filled,
     COUNT(LETTER_HX_COMMENT) AS LETTER_HX_COMMENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_015
 FROM APPEAL_GRV_LETTER_GEN_HX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_015 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, CM_PHY_OWNER_ID_filled, HISTORY_KEY_filled, LETTER_HX_GUID_filled, APPEAL_GRV_LETTER_ACT_C_NAME_filled, OCCUR_UTC_DTTM_filled, COMMITTING_USER_ID_filled, COMMITTING_USER_ID_NAME_filled, LETTER_HX_COMMENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -895,15 +1252,24 @@ SELECT
     CAST(NULL AS INT) AS COMMITTING_USER_ID_filled,
     CAST(NULL AS INT) AS COMMITTING_USER_ID_NAME_filled,
     CAST(NULL AS INT) AS LETTER_HX_COMMENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_015;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_016 <- APPEAL_GRV_MAX_EXTENSION ----
 -- This table contains information about the maximum extensions that can be taken for an appeal or grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_016 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    EXTENSION_TAT_TIME_STANDARD_C_NAME_filled INT,
+    MAX_EXTENSION_DAYS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_016 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, EXTENSION_TAT_TIME_STANDARD_C_NAME_filled, MAX_EXTENSION_DAYS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -912,10 +1278,10 @@ SELECT
     COUNT(EXTENSION_TAT_TIME_STANDARD_C_NAME) AS EXTENSION_TAT_TIME_STANDARD_C_NAME_filled,
     COUNT(MAX_EXTENSION_DAYS) AS MAX_EXTENSION_DAYS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_016
 FROM APPEAL_GRV_MAX_EXTENSION;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_016 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, EXTENSION_TAT_TIME_STANDARD_C_NAME_filled, MAX_EXTENSION_DAYS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -923,15 +1289,33 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS EXTENSION_TAT_TIME_STANDARD_C_NAME_filled,
     CAST(NULL AS INT) AS MAX_EXTENSION_DAYS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_016;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_017 <- APPEAL_GRV_NOTIF_TAT ----
 -- This table holds information about notifications that complete required turnaround time events for appeals and grievances. Each row corresponds to an individual turnaround time req
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_017 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    NOTIF_TAT_TIME_STANDARD_C_NAME_filled INT,
+    APPEAL_GRV_LETTER_TYPE_C_NAME_filled INT,
+    NOTIF_TAT_RECIP_CLASS_ID_filled INT,
+    NOTIF_TAT_RECIP_CLASS_ID_EVENT_NAME_filled INT,
+    NOTIF_TAT_METHOD_C_NAME_filled INT,
+    NOTIF_TAT_DUE_UTC_DTTM_filled INT,
+    NOTIF_TAT_OCCUR_UTC_DTTM_filled INT,
+    NOTIF_LETTER_filled INT,
+    NOTIF_CALL_COMM_ID_filled INT,
+    NOTIF_TAT_DUE_LOCAL_DTTM_filled INT,
+    NOTIF_TAT_OCCUR_LOCAL_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_017 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, NOTIF_TAT_TIME_STANDARD_C_NAME_filled, APPEAL_GRV_LETTER_TYPE_C_NAME_filled, NOTIF_TAT_RECIP_CLASS_ID_filled, NOTIF_TAT_RECIP_CLASS_ID_EVENT_NAME_filled, NOTIF_TAT_METHOD_C_NAME_filled, NOTIF_TAT_DUE_UTC_DTTM_filled, NOTIF_TAT_OCCUR_UTC_DTTM_filled, NOTIF_LETTER_filled, NOTIF_CALL_COMM_ID_filled, NOTIF_TAT_DUE_LOCAL_DTTM_filled, NOTIF_TAT_OCCUR_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -949,10 +1333,10 @@ SELECT
     COUNT(NOTIF_TAT_DUE_LOCAL_DTTM) AS NOTIF_TAT_DUE_LOCAL_DTTM_filled,
     COUNT(NOTIF_TAT_OCCUR_LOCAL_DTTM) AS NOTIF_TAT_OCCUR_LOCAL_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_017
 FROM APPEAL_GRV_NOTIF_TAT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_017 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, NOTIF_TAT_TIME_STANDARD_C_NAME_filled, APPEAL_GRV_LETTER_TYPE_C_NAME_filled, NOTIF_TAT_RECIP_CLASS_ID_filled, NOTIF_TAT_RECIP_CLASS_ID_EVENT_NAME_filled, NOTIF_TAT_METHOD_C_NAME_filled, NOTIF_TAT_DUE_UTC_DTTM_filled, NOTIF_TAT_OCCUR_UTC_DTTM_filled, NOTIF_LETTER_filled, NOTIF_CALL_COMM_ID_filled, NOTIF_TAT_DUE_LOCAL_DTTM_filled, NOTIF_TAT_OCCUR_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -969,15 +1353,23 @@ SELECT
     CAST(NULL AS INT) AS NOTIF_CALL_COMM_ID_filled,
     CAST(NULL AS INT) AS NOTIF_TAT_DUE_LOCAL_DTTM_filled,
     CAST(NULL AS INT) AS NOTIF_TAT_OCCUR_LOCAL_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_017;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_018 <- APPEAL_GRV_OUTCOMES ----
 -- This table stores the outcomes of a grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_018 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    GRIEVANCE_OUTCOME_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_018 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, GRIEVANCE_OUTCOME_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -985,25 +1377,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(GRIEVANCE_OUTCOME_C_NAME) AS GRIEVANCE_OUTCOME_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_018
 FROM APPEAL_GRV_OUTCOMES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_018 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, GRIEVANCE_OUTCOME_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS GRIEVANCE_OUTCOME_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_018;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_019 <- APPEAL_GRV_OVRTRN_REASONS ----
 -- Stores the reasons why the original decision was overturned for an appeal.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_019 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    OVERTURN_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_019 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, OVERTURN_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1011,25 +1411,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(OVERTURN_REASON_C_NAME) AS OVERTURN_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_019
 FROM APPEAL_GRV_OVRTRN_REASONS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_019 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, OVERTURN_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS OVERTURN_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_019;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_020 <- APPEAL_GRV_POST_APL_UPD ----
 -- This table stores the table of updates to authorizations that are the subject of an appeal that has not yet finalized its decision.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_020 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    UPDATE_INST_UTC_DTTM_filled INT,
+    UPDATE_REALTIME_TX_CSN_ID_filled INT,
+    UPDATE_ACK_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_020 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, UPDATE_INST_UTC_DTTM_filled, UPDATE_REALTIME_TX_CSN_ID_filled, UPDATE_ACK_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1039,10 +1449,10 @@ SELECT
     COUNT(UPDATE_REALTIME_TX_CSN_ID) AS UPDATE_REALTIME_TX_CSN_ID_filled,
     COUNT(UPDATE_ACK_YN) AS UPDATE_ACK_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_020
 FROM APPEAL_GRV_POST_APL_UPD;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_020 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, UPDATE_INST_UTC_DTTM_filled, UPDATE_REALTIME_TX_CSN_ID_filled, UPDATE_ACK_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1051,15 +1461,27 @@ SELECT
     CAST(NULL AS INT) AS UPDATE_INST_UTC_DTTM_filled,
     CAST(NULL AS INT) AS UPDATE_REALTIME_TX_CSN_ID_filled,
     CAST(NULL AS INT) AS UPDATE_ACK_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_020;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_021 <- APPEAL_GRV_REC_STAT_HX ----
 -- This table contains information about changes to the Chronicles record status/soft-delete flag (SDFL item) of the appeal/grievance record. Only records that have had their record s
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_021 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    SDFL_EDIT_INSTANT_DTTM_filled INT,
+    SDFL_EDIT_USER_ID_filled INT,
+    SDFL_EDIT_USER_ID_NAME_filled INT,
+    SDFL_EDIT_ACTI_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_021 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, CM_PHY_OWNER_ID_filled, SDFL_EDIT_INSTANT_DTTM_filled, SDFL_EDIT_USER_ID_filled, SDFL_EDIT_USER_ID_NAME_filled, SDFL_EDIT_ACTI_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1071,10 +1493,10 @@ SELECT
     COUNT(SDFL_EDIT_USER_ID_NAME) AS SDFL_EDIT_USER_ID_NAME_filled,
     COUNT(SDFL_EDIT_ACTI_C_NAME) AS SDFL_EDIT_ACTI_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_021
 FROM APPEAL_GRV_REC_STAT_HX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_021 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, CM_PHY_OWNER_ID_filled, SDFL_EDIT_INSTANT_DTTM_filled, SDFL_EDIT_USER_ID_filled, SDFL_EDIT_USER_ID_NAME_filled, SDFL_EDIT_ACTI_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1085,15 +1507,23 @@ SELECT
     CAST(NULL AS INT) AS SDFL_EDIT_USER_ID_filled,
     CAST(NULL AS INT) AS SDFL_EDIT_USER_ID_NAME_filled,
     CAST(NULL AS INT) AS SDFL_EDIT_ACTI_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_021;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_022 <- APPEAL_GRV_REOPEN_REASONS ----
 -- Stores the reasons for reopening an appeal.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_022 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    REOPEN_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_022 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, REOPEN_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1101,25 +1531,38 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(REOPEN_REASON_C_NAME) AS REOPEN_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_022
 FROM APPEAL_GRV_REOPEN_REASONS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_022 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, REOPEN_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS REOPEN_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_022;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_023 <- APPEAL_GRV_REQ_ATTACHMENT ----
 -- This table holds information about documents that are required to be attached to appeals and grievances. Each row corresponds to an individual document requirement and the document
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_023 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    TAT_TIME_STANDARD_C_NAME_filled INT,
+    DOC_INFO_TYPE_C_NAME_filled INT,
+    ATTACHMENT_SUBMIT_UTC_DTTM_filled INT,
+    APPEAL_GRV_WKFL_STEP_C_NAME_filled INT,
+    REQUIRED_FOR_TAT_YN_filled INT,
+    ATTACHMENT_SUBMIT_LOCAL_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_023 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, TAT_TIME_STANDARD_C_NAME_filled, DOC_INFO_TYPE_C_NAME_filled, ATTACHMENT_SUBMIT_UTC_DTTM_filled, APPEAL_GRV_WKFL_STEP_C_NAME_filled, REQUIRED_FOR_TAT_YN_filled, ATTACHMENT_SUBMIT_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1132,10 +1575,10 @@ SELECT
     COUNT(REQUIRED_FOR_TAT_YN) AS REQUIRED_FOR_TAT_YN_filled,
     COUNT(ATTACHMENT_SUBMIT_LOCAL_DTTM) AS ATTACHMENT_SUBMIT_LOCAL_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_023
 FROM APPEAL_GRV_REQ_ATTACHMENT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_023 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, TAT_TIME_STANDARD_C_NAME_filled, DOC_INFO_TYPE_C_NAME_filled, ATTACHMENT_SUBMIT_UTC_DTTM_filled, APPEAL_GRV_WKFL_STEP_C_NAME_filled, REQUIRED_FOR_TAT_YN_filled, ATTACHMENT_SUBMIT_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1147,15 +1590,23 @@ SELECT
     CAST(NULL AS INT) AS APPEAL_GRV_WKFL_STEP_C_NAME_filled,
     CAST(NULL AS INT) AS REQUIRED_FOR_TAT_YN_filled,
     CAST(NULL AS INT) AS ATTACHMENT_SUBMIT_LOCAL_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_023;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_024 <- APPEAL_GRV_ROOT_CAUSES ----
 -- This table stores the root causes of a grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_024 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    GRIEVANCE_ROOT_CAUSE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_024 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, GRIEVANCE_ROOT_CAUSE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1163,25 +1614,37 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(GRIEVANCE_ROOT_CAUSE_C_NAME) AS GRIEVANCE_ROOT_CAUSE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_024
 FROM APPEAL_GRV_ROOT_CAUSES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_024 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, GRIEVANCE_ROOT_CAUSE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS GRIEVANCE_ROOT_CAUSE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_024;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_025 <- APPEAL_GRV_STEP_COMPLETE ----
 -- This table contains information about when workflow steps were completed for a given appeal or grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_025 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    APPEAL_GRV_WKFL_STEP_C_NAME_filled INT,
+    COMPLETED_USER_ID_filled INT,
+    COMPLETED_USER_ID_NAME_filled INT,
+    COMPLETED_UTC_DTTM_filled INT,
+    COMPLETED_LOCAL_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_025 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, APPEAL_GRV_WKFL_STEP_C_NAME_filled, COMPLETED_USER_ID_filled, COMPLETED_USER_ID_NAME_filled, COMPLETED_UTC_DTTM_filled, COMPLETED_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1193,10 +1656,10 @@ SELECT
     COUNT(COMPLETED_UTC_DTTM) AS COMPLETED_UTC_DTTM_filled,
     COUNT(COMPLETED_LOCAL_DTTM) AS COMPLETED_LOCAL_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_025
 FROM APPEAL_GRV_STEP_COMPLETE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_025 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, APPEAL_GRV_WKFL_STEP_C_NAME_filled, COMPLETED_USER_ID_filled, COMPLETED_USER_ID_NAME_filled, COMPLETED_UTC_DTTM_filled, COMPLETED_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1207,15 +1670,33 @@ SELECT
     CAST(NULL AS INT) AS COMPLETED_USER_ID_NAME_filled,
     CAST(NULL AS INT) AS COMPLETED_UTC_DTTM_filled,
     CAST(NULL AS INT) AS COMPLETED_LOCAL_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_025;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_026 <- APPEAL_GRV_SUBJECT_RESULT ----
 -- This table contains information about the subject and result of an appeal.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_026 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    SUBJECT_CLAIM_ID_filled INT,
+    RESULT_CLAIM_ID_filled INT,
+    APPEAL_DECISION_C_NAME_filled INT,
+    RESULT_FREE_TEXT_filled INT,
+    SUBJECT_FREE_TEXT_filled INT,
+    IND_EFFEC_INST_UTC_DTTM_filled INT,
+    IND_EFFEC_INST_LOCAL_DTTM_filled INT,
+    PAYMENT_AUTH_UTC_DTTM_filled INT,
+    PAYMENT_AUTH_LOC_DTTM_filled INT,
+    PAYMENT_RECIPIENT_C_NAME_filled INT,
+    NO_PAYMENT_REQ_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_026 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, SUBJECT_CLAIM_ID_filled, RESULT_CLAIM_ID_filled, APPEAL_DECISION_C_NAME_filled, RESULT_FREE_TEXT_filled, SUBJECT_FREE_TEXT_filled, IND_EFFEC_INST_UTC_DTTM_filled, IND_EFFEC_INST_LOCAL_DTTM_filled, PAYMENT_AUTH_UTC_DTTM_filled, PAYMENT_AUTH_LOC_DTTM_filled, PAYMENT_RECIPIENT_C_NAME_filled, NO_PAYMENT_REQ_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1233,10 +1714,10 @@ SELECT
     COUNT(PAYMENT_RECIPIENT_C_NAME) AS PAYMENT_RECIPIENT_C_NAME_filled,
     COUNT(NO_PAYMENT_REQ_YN) AS NO_PAYMENT_REQ_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_026
 FROM APPEAL_GRV_SUBJECT_RESULT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_026 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, SUBJECT_CLAIM_ID_filled, RESULT_CLAIM_ID_filled, APPEAL_DECISION_C_NAME_filled, RESULT_FREE_TEXT_filled, SUBJECT_FREE_TEXT_filled, IND_EFFEC_INST_UTC_DTTM_filled, IND_EFFEC_INST_LOCAL_DTTM_filled, PAYMENT_AUTH_UTC_DTTM_filled, PAYMENT_AUTH_LOC_DTTM_filled, PAYMENT_RECIPIENT_C_NAME_filled, NO_PAYMENT_REQ_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1253,15 +1734,26 @@ SELECT
     CAST(NULL AS INT) AS PAYMENT_AUTH_LOC_DTTM_filled,
     CAST(NULL AS INT) AS PAYMENT_RECIPIENT_C_NAME_filled,
     CAST(NULL AS INT) AS NO_PAYMENT_REQ_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_026;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_027 <- APPEAL_GRV_TAT_MILESTONES ----
 -- This table holds information about turnaround time milestones for appeals and grievances. Each row corresponds to an individual milestone and the date and time associated with the 
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_027 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    TAT_TIME_STANDARD_C_NAME_filled INT,
+    TAT_MILESTONE_C_NAME_filled INT,
+    TAT_MILE_INST_UTC_DTTM_filled INT,
+    TAT_MILE_DUE_LOCAL_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_027 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, TAT_TIME_STANDARD_C_NAME_filled, TAT_MILESTONE_C_NAME_filled, TAT_MILE_INST_UTC_DTTM_filled, TAT_MILE_DUE_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1272,10 +1764,10 @@ SELECT
     COUNT(TAT_MILE_INST_UTC_DTTM) AS TAT_MILE_INST_UTC_DTTM_filled,
     COUNT(TAT_MILE_DUE_LOCAL_DTTM) AS TAT_MILE_DUE_LOCAL_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_027
 FROM APPEAL_GRV_TAT_MILESTONES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_027 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, TAT_TIME_STANDARD_C_NAME_filled, TAT_MILESTONE_C_NAME_filled, TAT_MILE_INST_UTC_DTTM_filled, TAT_MILE_DUE_LOCAL_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1285,15 +1777,23 @@ SELECT
     CAST(NULL AS INT) AS TAT_MILESTONE_C_NAME_filled,
     CAST(NULL AS INT) AS TAT_MILE_INST_UTC_DTTM_filled,
     CAST(NULL AS INT) AS TAT_MILE_DUE_LOCAL_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_027;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_028 <- APPEAL_GRV_UPHOLD_REASONS ----
 -- Stores the reasons why the original decision was upheld for an appeal.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_028 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    UPHOLD_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_028 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, UPHOLD_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1301,25 +1801,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(UPHOLD_REASON_C_NAME) AS UPHOLD_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_028
 FROM APPEAL_GRV_UPHOLD_REASONS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_028 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, UPHOLD_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS UPHOLD_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_028;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_029 <- APPEAL_GRV_VACATE_REASONS ----
 -- Stores the reasons for reviewing the dismissal of an appeal or grievance.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_029 (
+    activity_year INT,
+    total_rows INT,
+    APPEAL_GRV_ID_filled INT,
+    LINE_filled INT,
+    VACATE_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_029 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, VACATE_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1327,24 +1835,162 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(VACATE_REASON_C_NAME) AS VACATE_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_029
 FROM APPEAL_GRV_VACATE_REASONS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_029 (activity_year, total_rows, APPEAL_GRV_ID_filled, LINE_filled, VACATE_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS APPEAL_GRV_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS VACATE_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_029;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_030 <- AP_CLAIM ----
 -- The AP_CLAIM table contains one record for each claim in the managed care system's AP Claims module.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_030 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    ORIG_CLAIM_NUM_filled INT,
+    STATUS_C_NAME_filled INT,
+    AP_STS_C_NAME_filled INT,
+    DATE_RECEIVED_filled INT,
+    ADMISSION_DATE_filled INT,
+    ADMISSION_HOUR_filled INT,
+    ENTRY_DATE_filled INT,
+    SERV_AREA_ID_LOC_NAME_filled INT,
+    NUM_PROC_filled INT,
+    TOT_BILLED_AMT_filled INT,
+    TOT_PAT_PORTION_filled INT,
+    TOT_NET_PAYABLE_filled INT,
+    COVERAGE_ID_filled INT,
+    SERV_DATE_filled INT,
+    ASSOC_SPEC_C_NAME_filled INT,
+    PAT_STATUS_C_NAME_filled INT,
+    PROV_ID_PROV_NAME_filled INT,
+    ADMISSION_SOURCE_C_NAME_filled INT,
+    EXTERNAL_CLAIM_ID_filled INT,
+    PAY_BY_DATE_filled INT,
+    NETWORK_ID_filled INT,
+    NETWORK_ID_NETWORK_NAME_filled INT,
+    METH_TO_PAY_CLM_C_NAME_filled INT,
+    TOT_PRIM_INS_AMT_filled INT,
+    TOT_PRIM_PAT_PORT_filled INT,
+    TOT_ADJUSTMENT_filled INT,
+    ADMISSION_TYPE_C_NAME_filled INT,
+    TOT_INSURANCE_AMT_filled INT,
+    ADMISSION_DX_ID_DX_NAME_filled INT,
+    TOT_NET_INSURANCE_filled INT,
+    E_CODE_ID_DX_NAME_filled INT,
+    TYPE_OF_BILL_filled INT,
+    RCVD_BY_CARRIER_DT_filled INT,
+    HCFA_UNCLEAN_YN_filled INT,
+    ORIG_REV_CLM_ID_filled INT,
+    ADJST_CLM_ID_filled INT,
+    ORIG_ADJST_CLM_ID_filled INT,
+    REF_PROV_ID_PROV_NAME_filled INT,
+    TOT_U_AND_C_AMT_filled INT,
+    TOT_DISALLOW_AMT_filled INT,
+    TOT_NOT_COVD_AMT_filled INT,
+    TOT_DEDUCTIBLE_filled INT,
+    TOT_COPAY_filled INT,
+    TOT_COINS_filled INT,
+    TOT_PAT_TOTAL_filled INT,
+    TOT_BBEN_PNLTY_filled INT,
+    TOT_EXD_BEN_AMT_filled INT,
+    IN_OUT_NET_C_NAME_filled INT,
+    RKP_ID_filled INT,
+    RKP_ID_RISK_PANEL_NAME_filled INT,
+    CLM_LOB_ID_filled INT,
+    CLM_LOB_ID_LOB_NAME_filled INT,
+    WORKFLOW_C_NAME_filled INT,
+    SENSITIVITY_C_NAME_filled INT,
+    SERVICE_START_DATE_filled INT,
+    SERVICE_END_DATE_filled INT,
+    TOT_COB_SAVING_filled INT,
+    TOT_PAT_OUT_PCKT_filled INT,
+    SHADOW_RECON_AMT_filled INT,
+    DRG_ID_filled INT,
+    DRG_ID_DRG_NAME_filled INT,
+    TIF_NUM_filled INT,
+    LIFEMAX_AMT_IN_filled INT,
+    LIFEMAX_AMT_OUT_filled INT,
+    CLAIM_FORMAT_C_NAME_filled INT,
+    OTHER_PROV_ID_PROV_NAME_filled INT,
+    OPERATING_PROV_ID_PROV_NAME_filled INT,
+    ADJ_TIME_filled INT,
+    ATTEND_PROV_ID_PROV_NAME_filled INT,
+    TOT_COB_SV_PAYOUT_filled INT,
+    LOC_ID_LOC_NAME_filled INT,
+    TOT_SEC_DIS_filled INT,
+    TOT_PRIM_FAC_filled INT,
+    TOT_CODE_EDIT_SAV_filled INT,
+    INTEREST_AMT_OVRD_filled INT,
+    RTF_EOB_NOTE_ID_filled INT,
+    INFO_CVG_ID_filled INT,
+    CLM_PRIM_INS_AMT_filled INT,
+    CLM_PRIM_PAT_AMT_filled INT,
+    STATUS_DATE_filled INT,
+    PEND_TYPE_C_NAME_filled INT,
+    CL_DEN_PEND_EXAM_ID_filled INT,
+    CL_DEN_PEND_EXAM_ID_NAME_filled INT,
+    CL_DEN_PEND_DTTM_filled INT,
+    VOID_EXAMINER_ID_filled INT,
+    VOID_EXAMINER_ID_NAME_filled INT,
+    VOID_CHNG_DATETIME_filled INT,
+    ACCIDENT_DT_filled INT,
+    ER_ENTRY_DATETIME_filled INT,
+    IN_NET_ADJUD_OVRD_C_NAME_filled INT,
+    DRG_PRICING_YN_filled INT,
+    WORKFLOW_PAYOR_ID_PAYOR_NAME_filled INT,
+    TOT_BILLED_ENT_filled INT,
+    TOT_ALLOWED_AMT_filled INT,
+    TOT_WITHHOLDING_filled INT,
+    TOT_DISCOUNT_filled INT,
+    ADJ_NET_PAID_filled INT,
+    ADJ_PAT_PORTION_filled INT,
+    MEM_PRIMARY_NET_ID_filled INT,
+    MEM_PRIMARY_NET_ID_NETWORK_NAME_filled INT,
+    LIFEMAX_ETR_DATA_filled INT,
+    INBASKET_MESSAGE_ID_filled INT,
+    STMT_COV_FROM_DATE_filled INT,
+    STMT_COV_TO_DATE_filled INT,
+    MSP_YN_filled INT,
+    CLM_REPRICER_ID_filled INT,
+    CLM_REPRICER_ID_RUL_NAME_filled INT,
+    COVERED_DAYS_filled INT,
+    NONCOVERED_DAYS_filled INT,
+    COINS_DAYS_filled INT,
+    LIFETIME_RESRV_DAYS_filled INT,
+    ILL_INJ_LMP_DATE_filled INT,
+    INTEREST_TO_DT_filled INT,
+    DISCHRG_HR_UB92_FMT_filled INT,
+    ADJUSTMENT_USER_ID_filled INT,
+    ADJUSTMENT_USER_ID_NAME_filled INT,
+    ADJST_CREATE_DATE_filled INT,
+    REFUNDED_FLAG_YN_filled INT,
+    EMPY_RELATED_YN_filled INT,
+    AUTO_ACDNT_STATE_C_NAME_filled INT,
+    DISABILITY_FROM_DT_filled INT,
+    DISABILITY_TO_DT_filled INT,
+    DISCHARGE_DATE_filled INT,
+    OUTSIDE_LAB_YN_filled INT,
+    OUTSIDE_LAB_CHARGE_filled INT,
+    RELATED_CONDITION_C_NAME_filled INT,
+    WGT_BED_DAYS_filled INT,
+    TOT_CONV_DAYS_RFL_filled INT,
+    BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled INT,
+    PLAN_GROUP_ID_filled INT,
+    PLAN_GROUP_ID_PLAN_GRP_NAME_filled INT,
+    ENTRY_INSTANT_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_030 (activity_year, total_rows, CLAIM_ID_filled, ORIG_CLAIM_NUM_filled, STATUS_C_NAME_filled, AP_STS_C_NAME_filled, DATE_RECEIVED_filled, ADMISSION_DATE_filled, ADMISSION_HOUR_filled, ENTRY_DATE_filled, SERV_AREA_ID_LOC_NAME_filled, NUM_PROC_filled, TOT_BILLED_AMT_filled, TOT_PAT_PORTION_filled, TOT_NET_PAYABLE_filled, COVERAGE_ID_filled, SERV_DATE_filled, ASSOC_SPEC_C_NAME_filled, PAT_STATUS_C_NAME_filled, PROV_ID_PROV_NAME_filled, ADMISSION_SOURCE_C_NAME_filled, EXTERNAL_CLAIM_ID_filled, PAY_BY_DATE_filled, NETWORK_ID_filled, NETWORK_ID_NETWORK_NAME_filled, METH_TO_PAY_CLM_C_NAME_filled, TOT_PRIM_INS_AMT_filled, TOT_PRIM_PAT_PORT_filled, TOT_ADJUSTMENT_filled, ADMISSION_TYPE_C_NAME_filled, TOT_INSURANCE_AMT_filled, ADMISSION_DX_ID_DX_NAME_filled, TOT_NET_INSURANCE_filled, E_CODE_ID_DX_NAME_filled, TYPE_OF_BILL_filled, RCVD_BY_CARRIER_DT_filled, HCFA_UNCLEAN_YN_filled, ORIG_REV_CLM_ID_filled, ADJST_CLM_ID_filled, ORIG_ADJST_CLM_ID_filled, REF_PROV_ID_PROV_NAME_filled, TOT_U_AND_C_AMT_filled, TOT_DISALLOW_AMT_filled, TOT_NOT_COVD_AMT_filled, TOT_DEDUCTIBLE_filled, TOT_COPAY_filled, TOT_COINS_filled, TOT_PAT_TOTAL_filled, TOT_BBEN_PNLTY_filled, TOT_EXD_BEN_AMT_filled, IN_OUT_NET_C_NAME_filled, RKP_ID_filled, RKP_ID_RISK_PANEL_NAME_filled, CLM_LOB_ID_filled, CLM_LOB_ID_LOB_NAME_filled, WORKFLOW_C_NAME_filled, SENSITIVITY_C_NAME_filled, SERVICE_START_DATE_filled, SERVICE_END_DATE_filled, TOT_COB_SAVING_filled, TOT_PAT_OUT_PCKT_filled, SHADOW_RECON_AMT_filled, DRG_ID_filled, DRG_ID_DRG_NAME_filled, TIF_NUM_filled, LIFEMAX_AMT_IN_filled, LIFEMAX_AMT_OUT_filled, CLAIM_FORMAT_C_NAME_filled, OTHER_PROV_ID_PROV_NAME_filled, OPERATING_PROV_ID_PROV_NAME_filled, ADJ_TIME_filled, ATTEND_PROV_ID_PROV_NAME_filled, TOT_COB_SV_PAYOUT_filled, LOC_ID_LOC_NAME_filled, TOT_SEC_DIS_filled, TOT_PRIM_FAC_filled, TOT_CODE_EDIT_SAV_filled, INTEREST_AMT_OVRD_filled, RTF_EOB_NOTE_ID_filled, INFO_CVG_ID_filled, CLM_PRIM_INS_AMT_filled, CLM_PRIM_PAT_AMT_filled, STATUS_DATE_filled, PEND_TYPE_C_NAME_filled, CL_DEN_PEND_EXAM_ID_filled, CL_DEN_PEND_EXAM_ID_NAME_filled, CL_DEN_PEND_DTTM_filled, VOID_EXAMINER_ID_filled, VOID_EXAMINER_ID_NAME_filled, VOID_CHNG_DATETIME_filled, ACCIDENT_DT_filled, ER_ENTRY_DATETIME_filled, IN_NET_ADJUD_OVRD_C_NAME_filled, DRG_PRICING_YN_filled, WORKFLOW_PAYOR_ID_PAYOR_NAME_filled, TOT_BILLED_ENT_filled, TOT_ALLOWED_AMT_filled, TOT_WITHHOLDING_filled, TOT_DISCOUNT_filled, ADJ_NET_PAID_filled, ADJ_PAT_PORTION_filled, MEM_PRIMARY_NET_ID_filled, MEM_PRIMARY_NET_ID_NETWORK_NAME_filled, LIFEMAX_ETR_DATA_filled, INBASKET_MESSAGE_ID_filled, STMT_COV_FROM_DATE_filled, STMT_COV_TO_DATE_filled, MSP_YN_filled, CLM_REPRICER_ID_filled, CLM_REPRICER_ID_RUL_NAME_filled, COVERED_DAYS_filled, NONCOVERED_DAYS_filled, COINS_DAYS_filled, LIFETIME_RESRV_DAYS_filled, ILL_INJ_LMP_DATE_filled, INTEREST_TO_DT_filled, DISCHRG_HR_UB92_FMT_filled, ADJUSTMENT_USER_ID_filled, ADJUSTMENT_USER_ID_NAME_filled, ADJST_CREATE_DATE_filled, REFUNDED_FLAG_YN_filled, EMPY_RELATED_YN_filled, AUTO_ACDNT_STATE_C_NAME_filled, DISABILITY_FROM_DT_filled, DISABILITY_TO_DT_filled, DISCHARGE_DATE_filled, OUTSIDE_LAB_YN_filled, OUTSIDE_LAB_CHARGE_filled, RELATED_CONDITION_C_NAME_filled, WGT_BED_DAYS_filled, TOT_CONV_DAYS_RFL_filled, BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled, PLAN_GROUP_ID_filled, PLAN_GROUP_ID_PLAN_GRP_NAME_filled, ENTRY_INSTANT_DTTM_filled, query_error)
 SELECT
     YEAR(DATE_RECEIVED) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1482,11 +2128,11 @@ SELECT
     COUNT(PLAN_GROUP_ID_PLAN_GRP_NAME) AS PLAN_GROUP_ID_PLAN_GRP_NAME_filled,
     COUNT(ENTRY_INSTANT_DTTM) AS ENTRY_INSTANT_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_030
 FROM AP_CLAIM
 GROUP BY YEAR(DATE_RECEIVED);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_030 (activity_year, total_rows, CLAIM_ID_filled, ORIG_CLAIM_NUM_filled, STATUS_C_NAME_filled, AP_STS_C_NAME_filled, DATE_RECEIVED_filled, ADMISSION_DATE_filled, ADMISSION_HOUR_filled, ENTRY_DATE_filled, SERV_AREA_ID_LOC_NAME_filled, NUM_PROC_filled, TOT_BILLED_AMT_filled, TOT_PAT_PORTION_filled, TOT_NET_PAYABLE_filled, COVERAGE_ID_filled, SERV_DATE_filled, ASSOC_SPEC_C_NAME_filled, PAT_STATUS_C_NAME_filled, PROV_ID_PROV_NAME_filled, ADMISSION_SOURCE_C_NAME_filled, EXTERNAL_CLAIM_ID_filled, PAY_BY_DATE_filled, NETWORK_ID_filled, NETWORK_ID_NETWORK_NAME_filled, METH_TO_PAY_CLM_C_NAME_filled, TOT_PRIM_INS_AMT_filled, TOT_PRIM_PAT_PORT_filled, TOT_ADJUSTMENT_filled, ADMISSION_TYPE_C_NAME_filled, TOT_INSURANCE_AMT_filled, ADMISSION_DX_ID_DX_NAME_filled, TOT_NET_INSURANCE_filled, E_CODE_ID_DX_NAME_filled, TYPE_OF_BILL_filled, RCVD_BY_CARRIER_DT_filled, HCFA_UNCLEAN_YN_filled, ORIG_REV_CLM_ID_filled, ADJST_CLM_ID_filled, ORIG_ADJST_CLM_ID_filled, REF_PROV_ID_PROV_NAME_filled, TOT_U_AND_C_AMT_filled, TOT_DISALLOW_AMT_filled, TOT_NOT_COVD_AMT_filled, TOT_DEDUCTIBLE_filled, TOT_COPAY_filled, TOT_COINS_filled, TOT_PAT_TOTAL_filled, TOT_BBEN_PNLTY_filled, TOT_EXD_BEN_AMT_filled, IN_OUT_NET_C_NAME_filled, RKP_ID_filled, RKP_ID_RISK_PANEL_NAME_filled, CLM_LOB_ID_filled, CLM_LOB_ID_LOB_NAME_filled, WORKFLOW_C_NAME_filled, SENSITIVITY_C_NAME_filled, SERVICE_START_DATE_filled, SERVICE_END_DATE_filled, TOT_COB_SAVING_filled, TOT_PAT_OUT_PCKT_filled, SHADOW_RECON_AMT_filled, DRG_ID_filled, DRG_ID_DRG_NAME_filled, TIF_NUM_filled, LIFEMAX_AMT_IN_filled, LIFEMAX_AMT_OUT_filled, CLAIM_FORMAT_C_NAME_filled, OTHER_PROV_ID_PROV_NAME_filled, OPERATING_PROV_ID_PROV_NAME_filled, ADJ_TIME_filled, ATTEND_PROV_ID_PROV_NAME_filled, TOT_COB_SV_PAYOUT_filled, LOC_ID_LOC_NAME_filled, TOT_SEC_DIS_filled, TOT_PRIM_FAC_filled, TOT_CODE_EDIT_SAV_filled, INTEREST_AMT_OVRD_filled, RTF_EOB_NOTE_ID_filled, INFO_CVG_ID_filled, CLM_PRIM_INS_AMT_filled, CLM_PRIM_PAT_AMT_filled, STATUS_DATE_filled, PEND_TYPE_C_NAME_filled, CL_DEN_PEND_EXAM_ID_filled, CL_DEN_PEND_EXAM_ID_NAME_filled, CL_DEN_PEND_DTTM_filled, VOID_EXAMINER_ID_filled, VOID_EXAMINER_ID_NAME_filled, VOID_CHNG_DATETIME_filled, ACCIDENT_DT_filled, ER_ENTRY_DATETIME_filled, IN_NET_ADJUD_OVRD_C_NAME_filled, DRG_PRICING_YN_filled, WORKFLOW_PAYOR_ID_PAYOR_NAME_filled, TOT_BILLED_ENT_filled, TOT_ALLOWED_AMT_filled, TOT_WITHHOLDING_filled, TOT_DISCOUNT_filled, ADJ_NET_PAID_filled, ADJ_PAT_PORTION_filled, MEM_PRIMARY_NET_ID_filled, MEM_PRIMARY_NET_ID_NETWORK_NAME_filled, LIFEMAX_ETR_DATA_filled, INBASKET_MESSAGE_ID_filled, STMT_COV_FROM_DATE_filled, STMT_COV_TO_DATE_filled, MSP_YN_filled, CLM_REPRICER_ID_filled, CLM_REPRICER_ID_RUL_NAME_filled, COVERED_DAYS_filled, NONCOVERED_DAYS_filled, COINS_DAYS_filled, LIFETIME_RESRV_DAYS_filled, ILL_INJ_LMP_DATE_filled, INTEREST_TO_DT_filled, DISCHRG_HR_UB92_FMT_filled, ADJUSTMENT_USER_ID_filled, ADJUSTMENT_USER_ID_NAME_filled, ADJST_CREATE_DATE_filled, REFUNDED_FLAG_YN_filled, EMPY_RELATED_YN_filled, AUTO_ACDNT_STATE_C_NAME_filled, DISABILITY_FROM_DT_filled, DISABILITY_TO_DT_filled, DISCHARGE_DATE_filled, OUTSIDE_LAB_YN_filled, OUTSIDE_LAB_CHARGE_filled, RELATED_CONDITION_C_NAME_filled, WGT_BED_DAYS_filled, TOT_CONV_DAYS_RFL_filled, BENEFIT_PLAN_ID_BENEFIT_PLAN_NAME_filled, PLAN_GROUP_ID_filled, PLAN_GROUP_ID_PLAN_GRP_NAME_filled, ENTRY_INSTANT_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1623,14 +2269,85 @@ SELECT
     CAST(NULL AS INT) AS PLAN_GROUP_ID_filled,
     CAST(NULL AS INT) AS PLAN_GROUP_ID_PLAN_GRP_NAME_filled,
     CAST(NULL AS INT) AS ENTRY_INSTANT_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_030;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_031 <- AP_CLAIM_2 ----
 -- The AP_CLAIM_2 table contains one record for each claim in Tapestry's Accounts Payable module.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_031 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    E_CODE_POA_C_NAME_filled INT,
+    READY_FOR_AP_MGR_ID_MEM_GRP_NAME_filled INT,
+    TOT_REFD_RECVD_filled INT,
+    TOTAL_COB_AMOUNT_filled INT,
+    EPSDT_YN_filled INT,
+    RENDERING_PROV_ID_PROV_NAME_filled INT,
+    TOTAL_MOB_AMOUNT_filled INT,
+    PMT_INFO_MAP_LN_filled INT,
+    PMT_INFO_GRPR_ID_filled INT,
+    PMT_INFO_GRPR_ID_RULE_NAME_filled INT,
+    PMT_INFO_RULE_ID_filled INT,
+    PMT_INFO_RULE_ID_RULE_NAME_filled INT,
+    PMT_INFO_SPLIT_ID_filled INT,
+    PMT_INFO_SPLIT_ID_SPLIT_DEF_NAME_filled INT,
+    SPECIALTY_SOURCE_C_NAME_filled INT,
+    CASE_MGMT_CREAT_ID_filled INT,
+    CVG_FILTER_EPP_ID_BENEFIT_PLAN_NAME_filled INT,
+    PMT_INFO_STOP_COND_filled INT,
+    NO_MEM_GRP_YN_filled INT,
+    INTEREST_TOTAL_filled INT,
+    PROV_ACPT_ASGN_C_NAME_filled INT,
+    BEN_ASGN_IND_C_NAME_filled INT,
+    OVRD_SUB_POLICY_YN_filled INT,
+    OVRD_SUB_POL_RSN_C_NAME_filled INT,
+    CLM_TRAIT_1_C_NAME_filled INT,
+    CLM_TRAIT_2_C_NAME_filled INT,
+    CLM_TRAIT_3_C_NAME_filled INT,
+    CLM_TRAIT_4_C_NAME_filled INT,
+    CLM_TRAIT_5_C_NAME_filled INT,
+    TP_INFO_837_SEND_ID_filled INT,
+    TP_INFO_837_SEND_ID_TRADING_PARTNR_NAME_filled INT,
+    TP_INFO_837_RCVR_ID_filled INT,
+    TP_INFO_837_RCVR_ID_TRADING_PARTNR_NAME_filled INT,
+    APPLIANCE_PLACE_DT_filled INT,
+    DNTL_SVC_FROM_DT_filled INT,
+    DNTL_SVC_TO_DT_filled INT,
+    ORTHO_SVCS_YN_filled INT,
+    ORTHO_TOT_MONTHS_filled INT,
+    ORTHO_MNTHS_REMAIN_filled INT,
+    ASSIST_SURGEON_ID_PROV_NAME_filled INT,
+    DENTAL_INFO_YN_filled INT,
+    LMP_DATE_filled INT,
+    CHIR_FRST_TRT_DT_filled INT,
+    FROM_OCR_YN_filled INT,
+    CLM_PRICER_IDENT_C_NAME_filled INT,
+    TOTAL_HRA_AMOUNT_filled INT,
+    ORIG_ACT_ADJ_CLM_ID_filled INT,
+    REF_CLM_filled INT,
+    MGR_ASSOC_EXT_VAL_C_NAME_filled INT,
+    AMBU_TRAN_REASON_C_NAME_filled INT,
+    AMBU_TRAN_DIST_filled INT,
+    AMBU_TXPORT_WT_filled INT,
+    AMBU_COND_YN_filled INT,
+    AMBU_PICK_UP_CITY_filled INT,
+    AMBU_PICK_UP_ST_C_NAME_filled INT,
+    AMBU_PICK_UP_ZIP_filled INT,
+    AMBU_DROP_OFF_CITY_filled INT,
+    AMBU_DROP_OFF_ST_C_NAME_filled INT,
+    AMBU_DROP_OFF_ZIP_filled INT,
+    AMBU_DROP_OFF_NM_filled INT,
+    PAYEE_C_NAME_filled INT,
+    ESRD_ONSET_DATE_filled INT,
+    PAYOR_SEQ_NUMBER_C_NAME_filled INT,
+    CLM_FREQ_CODE_C_NAME_filled INT,
+    DENY_CLM_SRC_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_031 (activity_year, total_rows, CLAIM_ID_filled, E_CODE_POA_C_NAME_filled, READY_FOR_AP_MGR_ID_MEM_GRP_NAME_filled, TOT_REFD_RECVD_filled, TOTAL_COB_AMOUNT_filled, EPSDT_YN_filled, RENDERING_PROV_ID_PROV_NAME_filled, TOTAL_MOB_AMOUNT_filled, PMT_INFO_MAP_LN_filled, PMT_INFO_GRPR_ID_filled, PMT_INFO_GRPR_ID_RULE_NAME_filled, PMT_INFO_RULE_ID_filled, PMT_INFO_RULE_ID_RULE_NAME_filled, PMT_INFO_SPLIT_ID_filled, PMT_INFO_SPLIT_ID_SPLIT_DEF_NAME_filled, SPECIALTY_SOURCE_C_NAME_filled, CASE_MGMT_CREAT_ID_filled, CVG_FILTER_EPP_ID_BENEFIT_PLAN_NAME_filled, PMT_INFO_STOP_COND_filled, NO_MEM_GRP_YN_filled, INTEREST_TOTAL_filled, PROV_ACPT_ASGN_C_NAME_filled, BEN_ASGN_IND_C_NAME_filled, OVRD_SUB_POLICY_YN_filled, OVRD_SUB_POL_RSN_C_NAME_filled, CLM_TRAIT_1_C_NAME_filled, CLM_TRAIT_2_C_NAME_filled, CLM_TRAIT_3_C_NAME_filled, CLM_TRAIT_4_C_NAME_filled, CLM_TRAIT_5_C_NAME_filled, TP_INFO_837_SEND_ID_filled, TP_INFO_837_SEND_ID_TRADING_PARTNR_NAME_filled, TP_INFO_837_RCVR_ID_filled, TP_INFO_837_RCVR_ID_TRADING_PARTNR_NAME_filled, APPLIANCE_PLACE_DT_filled, DNTL_SVC_FROM_DT_filled, DNTL_SVC_TO_DT_filled, ORTHO_SVCS_YN_filled, ORTHO_TOT_MONTHS_filled, ORTHO_MNTHS_REMAIN_filled, ASSIST_SURGEON_ID_PROV_NAME_filled, DENTAL_INFO_YN_filled, LMP_DATE_filled, CHIR_FRST_TRT_DT_filled, FROM_OCR_YN_filled, CLM_PRICER_IDENT_C_NAME_filled, TOTAL_HRA_AMOUNT_filled, ORIG_ACT_ADJ_CLM_ID_filled, REF_CLM_filled, MGR_ASSOC_EXT_VAL_C_NAME_filled, AMBU_TRAN_REASON_C_NAME_filled, AMBU_TRAN_DIST_filled, AMBU_TXPORT_WT_filled, AMBU_COND_YN_filled, AMBU_PICK_UP_CITY_filled, AMBU_PICK_UP_ST_C_NAME_filled, AMBU_PICK_UP_ZIP_filled, AMBU_DROP_OFF_CITY_filled, AMBU_DROP_OFF_ST_C_NAME_filled, AMBU_DROP_OFF_ZIP_filled, AMBU_DROP_OFF_NM_filled, PAYEE_C_NAME_filled, ESRD_ONSET_DATE_filled, PAYOR_SEQ_NUMBER_C_NAME_filled, CLM_FREQ_CODE_C_NAME_filled, DENY_CLM_SRC_C_NAME_filled, query_error)
 SELECT
     YEAR(APPLIANCE_PLACE_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1701,11 +2418,11 @@ SELECT
     COUNT(CLM_FREQ_CODE_C_NAME) AS CLM_FREQ_CODE_C_NAME_filled,
     COUNT(DENY_CLM_SRC_C_NAME) AS DENY_CLM_SRC_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_031
 FROM AP_CLAIM_2
 GROUP BY YEAR(APPLIANCE_PLACE_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_031 (activity_year, total_rows, CLAIM_ID_filled, E_CODE_POA_C_NAME_filled, READY_FOR_AP_MGR_ID_MEM_GRP_NAME_filled, TOT_REFD_RECVD_filled, TOTAL_COB_AMOUNT_filled, EPSDT_YN_filled, RENDERING_PROV_ID_PROV_NAME_filled, TOTAL_MOB_AMOUNT_filled, PMT_INFO_MAP_LN_filled, PMT_INFO_GRPR_ID_filled, PMT_INFO_GRPR_ID_RULE_NAME_filled, PMT_INFO_RULE_ID_filled, PMT_INFO_RULE_ID_RULE_NAME_filled, PMT_INFO_SPLIT_ID_filled, PMT_INFO_SPLIT_ID_SPLIT_DEF_NAME_filled, SPECIALTY_SOURCE_C_NAME_filled, CASE_MGMT_CREAT_ID_filled, CVG_FILTER_EPP_ID_BENEFIT_PLAN_NAME_filled, PMT_INFO_STOP_COND_filled, NO_MEM_GRP_YN_filled, INTEREST_TOTAL_filled, PROV_ACPT_ASGN_C_NAME_filled, BEN_ASGN_IND_C_NAME_filled, OVRD_SUB_POLICY_YN_filled, OVRD_SUB_POL_RSN_C_NAME_filled, CLM_TRAIT_1_C_NAME_filled, CLM_TRAIT_2_C_NAME_filled, CLM_TRAIT_3_C_NAME_filled, CLM_TRAIT_4_C_NAME_filled, CLM_TRAIT_5_C_NAME_filled, TP_INFO_837_SEND_ID_filled, TP_INFO_837_SEND_ID_TRADING_PARTNR_NAME_filled, TP_INFO_837_RCVR_ID_filled, TP_INFO_837_RCVR_ID_TRADING_PARTNR_NAME_filled, APPLIANCE_PLACE_DT_filled, DNTL_SVC_FROM_DT_filled, DNTL_SVC_TO_DT_filled, ORTHO_SVCS_YN_filled, ORTHO_TOT_MONTHS_filled, ORTHO_MNTHS_REMAIN_filled, ASSIST_SURGEON_ID_PROV_NAME_filled, DENTAL_INFO_YN_filled, LMP_DATE_filled, CHIR_FRST_TRT_DT_filled, FROM_OCR_YN_filled, CLM_PRICER_IDENT_C_NAME_filled, TOTAL_HRA_AMOUNT_filled, ORIG_ACT_ADJ_CLM_ID_filled, REF_CLM_filled, MGR_ASSOC_EXT_VAL_C_NAME_filled, AMBU_TRAN_REASON_C_NAME_filled, AMBU_TRAN_DIST_filled, AMBU_TXPORT_WT_filled, AMBU_COND_YN_filled, AMBU_PICK_UP_CITY_filled, AMBU_PICK_UP_ST_C_NAME_filled, AMBU_PICK_UP_ZIP_filled, AMBU_DROP_OFF_CITY_filled, AMBU_DROP_OFF_ST_C_NAME_filled, AMBU_DROP_OFF_ZIP_filled, AMBU_DROP_OFF_NM_filled, PAYEE_C_NAME_filled, ESRD_ONSET_DATE_filled, PAYOR_SEQ_NUMBER_C_NAME_filled, CLM_FREQ_CODE_C_NAME_filled, DENY_CLM_SRC_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1775,14 +2492,89 @@ SELECT
     CAST(NULL AS INT) AS PAYOR_SEQ_NUMBER_C_NAME_filled,
     CAST(NULL AS INT) AS CLM_FREQ_CODE_C_NAME_filled,
     CAST(NULL AS INT) AS DENY_CLM_SRC_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_031;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_032 <- AP_CLAIM_3 ----
 -- The AP_CLAIM_3 table contains one record for each claim in Tapestry's Accounts Payable module.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_032 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    TOT_PRIM_PAT_NOTCOV_filled INT,
+    TOT_PRIM_PAT_DED_filled INT,
+    TOT_PRIM_PAT_COPAY_filled INT,
+    TOT_PRIM_PAT_COINS_filled INT,
+    SUBMITTER_CREAT_DATE_filled INT,
+    INTERCHANGE_DATE_filled INT,
+    FUNC_GROUP_DATE_filled INT,
+    TOTAL_RESP_AMOUNT_filled INT,
+    TOTAL_ADJ_PAT_OOP_filled INT,
+    TERMED_CVG_YN_filled INT,
+    IS_INPATIENT_YN_filled INT,
+    DRG_CODE_filled INT,
+    DRG_ID_TYPE_ID_filled INT,
+    DRG_ID_TYPE_ID_ID_TYPE_NAME_filled INT,
+    PERM_ORIG_OF_REV_CLAIM_ID_filled INT,
+    PERM_ORIG_OF_CORR_CLAIM_ID_filled INT,
+    PERM_ORIG_OF_ADJST_CLAIM_ID_filled INT,
+    INVOICE_AMT_REM_filled INT,
+    ADJST_ACTION_TYPE_C_NAME_filled INT,
+    CLAIM_EFFECTIVE_DATE_filled INT,
+    VENDOR_TAXONOMY_filled INT,
+    PROVIDER_TAXONOMY_filled INT,
+    ADJST_REASON_C_NAME_filled INT,
+    AMBU_PICK_UP_COUNTY_C_NAME_filled INT,
+    AMBU_PICK_UP_DISTRICT_C_NAME_filled INT,
+    AMBU_PICK_UP_HOUSE_NUM_filled INT,
+    AMBU_DROP_OFF_COUNTY_C_NAME_filled INT,
+    AMBU_DROP_OFF_DISTRICT_C_NAME_filled INT,
+    AMBU_DROP_OFF_HOUSE_NUM_filled INT,
+    SUPERVISING_PROV_ID_PROV_NAME_filled INT,
+    CLAIM_SVC_CLASS_CTX_C_NAME_filled INT,
+    CLAIM_SVC_CLASS_C_NAME_filled INT,
+    IS_SUBROGATION_DEMAND_CLAIM_YN_filled INT,
+    TOT_SUBROGATION_DEMAND_AMT_filled INT,
+    TOT_SUBROGATION_ADJ_AMT_filled INT,
+    CONTRACT_SEL_MTHD_C_NAME_filled INT,
+    IS_CLINICALLY_VALID_YN_filled INT,
+    PRIM_PAYOR_ID_PAYOR_NAME_filled INT,
+    BCDA_GROUP_IDENT_filled INT,
+    CLIA_NUMBER_filled INT,
+    CLIN_FILTER_UTC_DTTM_filled INT,
+    CLIN_FILTER_DTTM_filled INT,
+    TOT_PI_REDUCT_AMT_filled INT,
+    MOST_RECENT_INCOMING_CEV_ID_filled INT,
+    PAT_REL_TO_COVERED_MEM_C_NAME_filled INT,
+    CLIN_FILTER_TXP_YN_filled INT,
+    KLCTCEV_RECORD_ID_filled INT,
+    SOURCE_ORG_ID_filled INT,
+    SOURCE_ORG_ID_EXTERNAL_NAME_filled INT,
+    LOOP_OR_SPLIT_YN_filled INT,
+    IS_INVLD_ADJ_SEQ_YN_filled INT,
+    CLAIM_PAID_DATE_filled INT,
+    CLAIM_NAT_KEY_HASH_filled INT,
+    CLAIM_NAT_KEY_ORDER_filled INT,
+    CLM_ADJ_TYPE_C_NAME_filled INT,
+    NAT_KEY_FINAL_YN_filled INT,
+    TTL_APL_U_AND_C_AMT_filled INT,
+    TTL_APL_CNTRCT_AMT_filled INT,
+    SUBMITTER_C_NAME_filled INT,
+    SUBMITTER_AUTHORIZED_REP_GUID_filled INT,
+    TOTAL_DENIED_AMOUNT_filled INT,
+    TOTAL_DENIED_TO_PAT_filled INT,
+    REC_OWN_BUS_SEGMENT_POS_ID_LOC_NAME_filled INT,
+    REGION_ID_LOC_NAME_filled INT,
+    MEDICAL_GROUP_ID_LOC_NAME_filled INT,
+    PRICER_MSG_ID_filled INT,
+    OUT_NET_ADJUD_OV_C_NAME_filled INT,
+    RECV_CLAIM_RECON_ID_filled INT,
+    CMS_NATURAL_KEY_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_032 (activity_year, total_rows, CLAIM_ID_filled, TOT_PRIM_PAT_NOTCOV_filled, TOT_PRIM_PAT_DED_filled, TOT_PRIM_PAT_COPAY_filled, TOT_PRIM_PAT_COINS_filled, SUBMITTER_CREAT_DATE_filled, INTERCHANGE_DATE_filled, FUNC_GROUP_DATE_filled, TOTAL_RESP_AMOUNT_filled, TOTAL_ADJ_PAT_OOP_filled, TERMED_CVG_YN_filled, IS_INPATIENT_YN_filled, DRG_CODE_filled, DRG_ID_TYPE_ID_filled, DRG_ID_TYPE_ID_ID_TYPE_NAME_filled, PERM_ORIG_OF_REV_CLAIM_ID_filled, PERM_ORIG_OF_CORR_CLAIM_ID_filled, PERM_ORIG_OF_ADJST_CLAIM_ID_filled, INVOICE_AMT_REM_filled, ADJST_ACTION_TYPE_C_NAME_filled, CLAIM_EFFECTIVE_DATE_filled, VENDOR_TAXONOMY_filled, PROVIDER_TAXONOMY_filled, ADJST_REASON_C_NAME_filled, AMBU_PICK_UP_COUNTY_C_NAME_filled, AMBU_PICK_UP_DISTRICT_C_NAME_filled, AMBU_PICK_UP_HOUSE_NUM_filled, AMBU_DROP_OFF_COUNTY_C_NAME_filled, AMBU_DROP_OFF_DISTRICT_C_NAME_filled, AMBU_DROP_OFF_HOUSE_NUM_filled, SUPERVISING_PROV_ID_PROV_NAME_filled, CLAIM_SVC_CLASS_CTX_C_NAME_filled, CLAIM_SVC_CLASS_C_NAME_filled, IS_SUBROGATION_DEMAND_CLAIM_YN_filled, TOT_SUBROGATION_DEMAND_AMT_filled, TOT_SUBROGATION_ADJ_AMT_filled, CONTRACT_SEL_MTHD_C_NAME_filled, IS_CLINICALLY_VALID_YN_filled, PRIM_PAYOR_ID_PAYOR_NAME_filled, BCDA_GROUP_IDENT_filled, CLIA_NUMBER_filled, CLIN_FILTER_UTC_DTTM_filled, CLIN_FILTER_DTTM_filled, TOT_PI_REDUCT_AMT_filled, MOST_RECENT_INCOMING_CEV_ID_filled, PAT_REL_TO_COVERED_MEM_C_NAME_filled, CLIN_FILTER_TXP_YN_filled, KLCTCEV_RECORD_ID_filled, SOURCE_ORG_ID_filled, SOURCE_ORG_ID_EXTERNAL_NAME_filled, LOOP_OR_SPLIT_YN_filled, IS_INVLD_ADJ_SEQ_YN_filled, CLAIM_PAID_DATE_filled, CLAIM_NAT_KEY_HASH_filled, CLAIM_NAT_KEY_ORDER_filled, CLM_ADJ_TYPE_C_NAME_filled, NAT_KEY_FINAL_YN_filled, TTL_APL_U_AND_C_AMT_filled, TTL_APL_CNTRCT_AMT_filled, SUBMITTER_C_NAME_filled, SUBMITTER_AUTHORIZED_REP_GUID_filled, TOTAL_DENIED_AMOUNT_filled, TOTAL_DENIED_TO_PAT_filled, REC_OWN_BUS_SEGMENT_POS_ID_LOC_NAME_filled, REGION_ID_LOC_NAME_filled, MEDICAL_GROUP_ID_LOC_NAME_filled, PRICER_MSG_ID_filled, OUT_NET_ADJUD_OV_C_NAME_filled, RECV_CLAIM_RECON_ID_filled, CMS_NATURAL_KEY_filled, query_error)
 SELECT
     YEAR(SUBMITTER_CREAT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1857,11 +2649,11 @@ SELECT
     COUNT(RECV_CLAIM_RECON_ID) AS RECV_CLAIM_RECON_ID_filled,
     COUNT(CMS_NATURAL_KEY) AS CMS_NATURAL_KEY_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_032
 FROM AP_CLAIM_3
 GROUP BY YEAR(SUBMITTER_CREAT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_032 (activity_year, total_rows, CLAIM_ID_filled, TOT_PRIM_PAT_NOTCOV_filled, TOT_PRIM_PAT_DED_filled, TOT_PRIM_PAT_COPAY_filled, TOT_PRIM_PAT_COINS_filled, SUBMITTER_CREAT_DATE_filled, INTERCHANGE_DATE_filled, FUNC_GROUP_DATE_filled, TOTAL_RESP_AMOUNT_filled, TOTAL_ADJ_PAT_OOP_filled, TERMED_CVG_YN_filled, IS_INPATIENT_YN_filled, DRG_CODE_filled, DRG_ID_TYPE_ID_filled, DRG_ID_TYPE_ID_ID_TYPE_NAME_filled, PERM_ORIG_OF_REV_CLAIM_ID_filled, PERM_ORIG_OF_CORR_CLAIM_ID_filled, PERM_ORIG_OF_ADJST_CLAIM_ID_filled, INVOICE_AMT_REM_filled, ADJST_ACTION_TYPE_C_NAME_filled, CLAIM_EFFECTIVE_DATE_filled, VENDOR_TAXONOMY_filled, PROVIDER_TAXONOMY_filled, ADJST_REASON_C_NAME_filled, AMBU_PICK_UP_COUNTY_C_NAME_filled, AMBU_PICK_UP_DISTRICT_C_NAME_filled, AMBU_PICK_UP_HOUSE_NUM_filled, AMBU_DROP_OFF_COUNTY_C_NAME_filled, AMBU_DROP_OFF_DISTRICT_C_NAME_filled, AMBU_DROP_OFF_HOUSE_NUM_filled, SUPERVISING_PROV_ID_PROV_NAME_filled, CLAIM_SVC_CLASS_CTX_C_NAME_filled, CLAIM_SVC_CLASS_C_NAME_filled, IS_SUBROGATION_DEMAND_CLAIM_YN_filled, TOT_SUBROGATION_DEMAND_AMT_filled, TOT_SUBROGATION_ADJ_AMT_filled, CONTRACT_SEL_MTHD_C_NAME_filled, IS_CLINICALLY_VALID_YN_filled, PRIM_PAYOR_ID_PAYOR_NAME_filled, BCDA_GROUP_IDENT_filled, CLIA_NUMBER_filled, CLIN_FILTER_UTC_DTTM_filled, CLIN_FILTER_DTTM_filled, TOT_PI_REDUCT_AMT_filled, MOST_RECENT_INCOMING_CEV_ID_filled, PAT_REL_TO_COVERED_MEM_C_NAME_filled, CLIN_FILTER_TXP_YN_filled, KLCTCEV_RECORD_ID_filled, SOURCE_ORG_ID_filled, SOURCE_ORG_ID_EXTERNAL_NAME_filled, LOOP_OR_SPLIT_YN_filled, IS_INVLD_ADJ_SEQ_YN_filled, CLAIM_PAID_DATE_filled, CLAIM_NAT_KEY_HASH_filled, CLAIM_NAT_KEY_ORDER_filled, CLM_ADJ_TYPE_C_NAME_filled, NAT_KEY_FINAL_YN_filled, TTL_APL_U_AND_C_AMT_filled, TTL_APL_CNTRCT_AMT_filled, SUBMITTER_C_NAME_filled, SUBMITTER_AUTHORIZED_REP_GUID_filled, TOTAL_DENIED_AMOUNT_filled, TOTAL_DENIED_TO_PAT_filled, REC_OWN_BUS_SEGMENT_POS_ID_LOC_NAME_filled, REGION_ID_LOC_NAME_filled, MEDICAL_GROUP_ID_LOC_NAME_filled, PRICER_MSG_ID_filled, OUT_NET_ADJUD_OV_C_NAME_filled, RECV_CLAIM_RECON_ID_filled, CMS_NATURAL_KEY_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1935,14 +2727,37 @@ SELECT
     CAST(NULL AS INT) AS OUT_NET_ADJUD_OV_C_NAME_filled,
     CAST(NULL AS INT) AS RECV_CLAIM_RECON_ID_filled,
     CAST(NULL AS INT) AS CMS_NATURAL_KEY_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_032;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_033 <- AP_CLAIM_4 ----
 -- The AP_CLAIM_4 table contains one record for each claim in the managed care system's AP Claims module.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_033 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    TOT_ADDL_ADJ_filled INT,
+    AP_CLAIM_IMPORT_SOURCE_C_NAME_filled INT,
+    SOURCE_GROUP_ID_LOC_NAME_filled INT,
+    SERVICE_DATE_FROM_LINE_YN_filled INT,
+    NCH_CLAIM_TYPE_C_NAME_filled INT,
+    PAID_CLM_FILE_INTEREST_AMT_filled INT,
+    PAID_CLM_FILE_PENALTY_AMT_filled INT,
+    BLK_DTA_MESSAGE_ID_filled INT,
+    REFUND_REASON_filled INT,
+    PAYER_CLM_IDENT_filled INT,
+    AP_CLM_AR_STATUS_C_NAME_filled INT,
+    CLAIM_CHECK_MAIL_SENT_DATE_filled INT,
+    CAPITAL_IME_AMOUNT_filled INT,
+    OPERATING_IME_AMOUNT_filled INT,
+    CAPITAL_DSH_AMOUNT_filled INT,
+    UNCOMPENSATED_CARE_AMOUNT_filled INT,
+    OPERATING_DSH_AMOUNT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_033 (activity_year, total_rows, CLAIM_ID_filled, TOT_ADDL_ADJ_filled, AP_CLAIM_IMPORT_SOURCE_C_NAME_filled, SOURCE_GROUP_ID_LOC_NAME_filled, SERVICE_DATE_FROM_LINE_YN_filled, NCH_CLAIM_TYPE_C_NAME_filled, PAID_CLM_FILE_INTEREST_AMT_filled, PAID_CLM_FILE_PENALTY_AMT_filled, BLK_DTA_MESSAGE_ID_filled, REFUND_REASON_filled, PAYER_CLM_IDENT_filled, AP_CLM_AR_STATUS_C_NAME_filled, CLAIM_CHECK_MAIL_SENT_DATE_filled, CAPITAL_IME_AMOUNT_filled, OPERATING_IME_AMOUNT_filled, CAPITAL_DSH_AMOUNT_filled, UNCOMPENSATED_CARE_AMOUNT_filled, OPERATING_DSH_AMOUNT_filled, query_error)
 SELECT
     YEAR(CLAIM_CHECK_MAIL_SENT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -1965,11 +2780,11 @@ SELECT
     COUNT(UNCOMPENSATED_CARE_AMOUNT) AS UNCOMPENSATED_CARE_AMOUNT_filled,
     COUNT(OPERATING_DSH_AMOUNT) AS OPERATING_DSH_AMOUNT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_033
 FROM AP_CLAIM_4
 GROUP BY YEAR(CLAIM_CHECK_MAIL_SENT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_033 (activity_year, total_rows, CLAIM_ID_filled, TOT_ADDL_ADJ_filled, AP_CLAIM_IMPORT_SOURCE_C_NAME_filled, SOURCE_GROUP_ID_LOC_NAME_filled, SERVICE_DATE_FROM_LINE_YN_filled, NCH_CLAIM_TYPE_C_NAME_filled, PAID_CLM_FILE_INTEREST_AMT_filled, PAID_CLM_FILE_PENALTY_AMT_filled, BLK_DTA_MESSAGE_ID_filled, REFUND_REASON_filled, PAYER_CLM_IDENT_filled, AP_CLM_AR_STATUS_C_NAME_filled, CLAIM_CHECK_MAIL_SENT_DATE_filled, CAPITAL_IME_AMOUNT_filled, OPERATING_IME_AMOUNT_filled, CAPITAL_DSH_AMOUNT_filled, UNCOMPENSATED_CARE_AMOUNT_filled, OPERATING_DSH_AMOUNT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -1991,15 +2806,31 @@ SELECT
     CAST(NULL AS INT) AS CAPITAL_DSH_AMOUNT_filled,
     CAST(NULL AS INT) AS UNCOMPENSATED_CARE_AMOUNT_filled,
     CAST(NULL AS INT) AS OPERATING_DSH_AMOUNT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_033;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_034 <- AP_CLAIM_CHANGE_HX ----
 -- The AP_CLAIM_CHANGE_HX table contains the change history of an accounts payable claim.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_034 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    CHANGE_TIME_filled INT,
+    ACTION_C_NAME_filled INT,
+    CHANGE_HX_CMT_filled INT,
+    CHANGE_HX_USER_ID_filled INT,
+    CHANGE_HX_USER_ID_NAME_filled INT,
+    CHANGE_HX_CODEEDIT_filled INT,
+    CHANGE_HX_TX_ID_filled INT,
+    CHANGE_HX_PREV_REC_OR_CAT_filled INT,
+    CHANGE_HX_NEW_REC_OR_CAT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_034 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, CHANGE_TIME_filled, ACTION_C_NAME_filled, CHANGE_HX_CMT_filled, CHANGE_HX_USER_ID_filled, CHANGE_HX_USER_ID_NAME_filled, CHANGE_HX_CODEEDIT_filled, CHANGE_HX_TX_ID_filled, CHANGE_HX_PREV_REC_OR_CAT_filled, CHANGE_HX_NEW_REC_OR_CAT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2015,10 +2846,10 @@ SELECT
     COUNT(CHANGE_HX_PREV_REC_OR_CAT) AS CHANGE_HX_PREV_REC_OR_CAT_filled,
     COUNT(CHANGE_HX_NEW_REC_OR_CAT) AS CHANGE_HX_NEW_REC_OR_CAT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_034
 FROM AP_CLAIM_CHANGE_HX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_034 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, CHANGE_TIME_filled, ACTION_C_NAME_filled, CHANGE_HX_CMT_filled, CHANGE_HX_USER_ID_filled, CHANGE_HX_USER_ID_NAME_filled, CHANGE_HX_CODEEDIT_filled, CHANGE_HX_TX_ID_filled, CHANGE_HX_PREV_REC_OR_CAT_filled, CHANGE_HX_NEW_REC_OR_CAT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2033,15 +2864,28 @@ SELECT
     CAST(NULL AS INT) AS CHANGE_HX_TX_ID_filled,
     CAST(NULL AS INT) AS CHANGE_HX_PREV_REC_OR_CAT_filled,
     CAST(NULL AS INT) AS CHANGE_HX_NEW_REC_OR_CAT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_034;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_035 <- AP_CLAIM_DX ----
 -- The AP_CLAIM_DX table contains one record for each diagnosis on an accounts payable claim.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_035 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    AP_DX_NUM_filled INT,
+    AP_DX_QUALIFIER_C_NAME_filled INT,
+    AP_DX_POA_C_NAME_filled INT,
+    AP_DX_RANK_filled INT,
+    CLAIM_DX_FROM_HEADER_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_035 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, AP_DX_NUM_filled, AP_DX_QUALIFIER_C_NAME_filled, AP_DX_POA_C_NAME_filled, AP_DX_RANK_filled, CLAIM_DX_FROM_HEADER_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2054,10 +2898,10 @@ SELECT
     COUNT(AP_DX_RANK) AS AP_DX_RANK_filled,
     COUNT(CLAIM_DX_FROM_HEADER_YN) AS CLAIM_DX_FROM_HEADER_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_035
 FROM AP_CLAIM_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_035 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, AP_DX_NUM_filled, AP_DX_QUALIFIER_C_NAME_filled, AP_DX_POA_C_NAME_filled, AP_DX_RANK_filled, CLAIM_DX_FROM_HEADER_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2069,14 +2913,25 @@ SELECT
     CAST(NULL AS INT) AS AP_DX_POA_C_NAME_filled,
     CAST(NULL AS INT) AS AP_DX_RANK_filled,
     CAST(NULL AS INT) AS CLAIM_DX_FROM_HEADER_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_035;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_036 <- AP_CLAIM_ICD_PROC ----
 -- The AP_CLAIM_ICD_PROC table contains the ICD-9 Procedure information on an accounts payable claim.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_036 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    ICD_PX_ID_filled INT,
+    ICD_PX_ID_ICD_PX_NAME_filled INT,
+    ICD_PX_DT_filled INT,
+    ICD_PX_RANK_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_036 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, ICD_PX_ID_filled, ICD_PX_ID_ICD_PX_NAME_filled, ICD_PX_DT_filled, ICD_PX_RANK_filled, query_error)
 SELECT
     YEAR(ICD_PX_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2087,11 +2942,11 @@ SELECT
     COUNT(ICD_PX_DT) AS ICD_PX_DT_filled,
     COUNT(ICD_PX_RANK) AS ICD_PX_RANK_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_036
 FROM AP_CLAIM_ICD_PROC
 GROUP BY YEAR(ICD_PX_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_036 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, ICD_PX_ID_filled, ICD_PX_ID_ICD_PX_NAME_filled, ICD_PX_DT_filled, ICD_PX_RANK_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2101,15 +2956,24 @@ SELECT
     CAST(NULL AS INT) AS ICD_PX_ID_ICD_PX_NAME_filled,
     CAST(NULL AS INT) AS ICD_PX_DT_filled,
     CAST(NULL AS INT) AS ICD_PX_RANK_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_036;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_037 <- AP_CLAIM_IF_ACE_DX_DISP ----
 -- This table contains Ambulatory Code Editor (ACE) DX Highest Diagnosis Disposition value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_037 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    HIGHEST_DX_DISP_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_037 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, HIGHEST_DX_DISP_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2118,10 +2982,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(HIGHEST_DX_DISP) AS HIGHEST_DX_DISP_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_037
 FROM AP_CLAIM_IF_ACE_DX_DISP;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_037 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, HIGHEST_DX_DISP_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2129,15 +2993,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS HIGHEST_DX_DISP_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_037;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_038 <- AP_CLAIM_IF_ACE_DX_ERR ----
 -- This table contains the Ambulatory Code Editor (ACE) DX Diagnosis Errors value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_038 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    ACE_DX_ERR_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_038 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ACE_DX_ERR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2146,10 +3019,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ACE_DX_ERR) AS ACE_DX_ERR_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_038
 FROM AP_CLAIM_IF_ACE_DX_ERR;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_038 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ACE_DX_ERR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2157,15 +3030,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS ACE_DX_ERR_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_038;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_039 <- AP_CLAIM_IF_ACE_DX_NERR ----
 -- This table contains Ambulatory Code Editor (ACE) DX Number of Errors for this Diagnosis value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_039 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    NUM_ERR_THIS_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_039 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, NUM_ERR_THIS_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2174,10 +3056,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(NUM_ERR_THIS_DX) AS NUM_ERR_THIS_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_039
 FROM AP_CLAIM_IF_ACE_DX_NERR;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_039 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, NUM_ERR_THIS_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2185,15 +3067,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS NUM_ERR_THIS_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_039;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_040 <- AP_CLAIM_IF_ADMIT_DX_EDIT ----
 -- Admit diagnosis edits returned from the grouper/pricer.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_040 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    ADMIT_DX_EDIT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_040 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ADMIT_DX_EDIT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2202,10 +3093,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ADMIT_DX_EDIT) AS ADMIT_DX_EDIT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_040
 FROM AP_CLAIM_IF_ADMIT_DX_EDIT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_040 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ADMIT_DX_EDIT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2213,15 +3104,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS ADMIT_DX_EDIT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_040;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_041 <- AP_CLAIM_IF_ADM_DX_ECODE ----
 -- Admit Diagnosis Ecode/ Manifestation Code.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_041 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    ADM_DX_ECODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_041 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ADM_DX_ECODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2230,10 +3130,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ADM_DX_ECODE) AS ADM_DX_ECODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_041
 FROM AP_CLAIM_IF_ADM_DX_ECODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_041 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ADM_DX_ECODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2241,15 +3141,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS ADM_DX_ECODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_041;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_042 <- AP_CLAIM_IF_AGE_SX_DX_FLG ----
 -- Age/sex diagnosis error flag.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_042 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    AGE_SEX_DX_FLAG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_042 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, AGE_SEX_DX_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2258,10 +3167,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(AGE_SEX_DX_FLAG) AS AGE_SEX_DX_FLAG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_042
 FROM AP_CLAIM_IF_AGE_SX_DX_FLG;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_042 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, AGE_SEX_DX_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2269,15 +3178,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS AGE_SEX_DX_FLAG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_042;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_043 <- AP_CLAIM_IF_DUP_DX_FLAG ----
 -- Duplicate diagnosis error flag.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_043 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DUP_DX_FLAG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_043 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DUP_DX_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2286,10 +3204,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DUP_DX_FLAG) AS DUP_DX_FLAG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_043
 FROM AP_CLAIM_IF_DUP_DX_FLAG;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_043 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DUP_DX_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2297,15 +3215,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DUP_DX_FLAG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_043;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_044 <- AP_CLAIM_IF_DUP_SEC_DX ----
 -- Duplicate secondary diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_044 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DUP_SEC_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_044 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DUP_SEC_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2314,10 +3241,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DUP_SEC_DX) AS DUP_SEC_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_044
 FROM AP_CLAIM_IF_DUP_SEC_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_044 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DUP_SEC_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2325,15 +3252,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DUP_SEC_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_044;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_045 <- AP_CLAIM_IF_DX_ADMIT_ROM ----
 -- This table stores diagnosis risk of mortality (ROM) at admission.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_045 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_ADMISSION_ROM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_045 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_ADMISSION_ROM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2342,10 +3278,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_ADMISSION_ROM) AS DX_ADMISSION_ROM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_045
 FROM AP_CLAIM_IF_DX_ADMIT_ROM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_045 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_ADMISSION_ROM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2353,15 +3289,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_ADMISSION_ROM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_045;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_046 <- AP_CLAIM_IF_DX_ADMIT_SOI ----
 -- This table stores the diagnosis severity of illness (SOI) at admission.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_046 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_ADMISSION_SOI_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_046 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_ADMISSION_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2370,10 +3315,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_ADMISSION_SOI) AS DX_ADMISSION_SOI_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_046
 FROM AP_CLAIM_IF_DX_ADMIT_SOI;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_046 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_ADMISSION_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2381,15 +3326,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_ADMISSION_SOI_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_046;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_047 <- AP_CLAIM_IF_DX_AF_DRG_FLG ----
 -- Flags that indicate whether the diagnosis affects the Diagnosis Related Grouper (DRG) selection.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_047 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFFECT_DRG_FLAG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_047 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFFECT_DRG_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2398,10 +3352,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFFECT_DRG_FLAG) AS DX_AFFECT_DRG_FLAG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_047
 FROM AP_CLAIM_IF_DX_AF_DRG_FLG;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_047 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFFECT_DRG_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2409,15 +3363,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFFECT_DRG_FLAG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_047;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_048 <- AP_CLAIM_IF_DX_AF_HAC_DRG ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Adjust DRG Flg (I CLM 21846) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_048 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFF_HAC_ADJ_DRG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_048 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ADJ_DRG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2426,10 +3389,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ADJ_DRG) AS DX_AFF_HAC_ADJ_DRG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_048
 FROM AP_CLAIM_IF_DX_AF_HAC_DRG;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_048 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ADJ_DRG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2437,15 +3400,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFF_HAC_ADJ_DRG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_048;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_049 <- AP_CLAIM_IF_DX_AF_HAC_ROM ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Adjust ROM Flg (I CLM 21847) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_049 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFF_HAC_ADJ_ROM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_049 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ADJ_ROM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2454,10 +3426,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ADJ_ROM) AS DX_AFF_HAC_ADJ_ROM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_049
 FROM AP_CLAIM_IF_DX_AF_HAC_ROM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_049 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ADJ_ROM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2465,15 +3437,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFF_HAC_ADJ_ROM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_049;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_050 <- AP_CLAIM_IF_DX_AF_HAC_SOI ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Adjust SOI Flg (I CLM 21848) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_050 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFF_HAC_ADJ_SOI_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_050 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ADJ_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2482,10 +3463,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ADJ_SOI) AS DX_AFF_HAC_ADJ_SOI_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_050
 FROM AP_CLAIM_IF_DX_AF_HAC_SOI;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_050 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ADJ_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2493,15 +3474,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFF_HAC_ADJ_SOI_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_050;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_051 <- AP_CLAIM_IF_DX_COMP_IND ----
 -- This table contains a code which indicates if a diagnosis increased the complexity of the visit.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_051 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    COMPLEXITY_INDICATOR_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_051 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, COMPLEXITY_INDICATOR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2510,10 +3500,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(COMPLEXITY_INDICATOR) AS COMPLEXITY_INDICATOR_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_051
 FROM AP_CLAIM_IF_DX_COMP_IND;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_051 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, COMPLEXITY_INDICATOR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2521,15 +3511,34 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS COMPLEXITY_INDICATOR_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_051;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_052 <- AP_CLAIM_IF_DX_EDIT ----
 -- Diagnosis edits returned by the grouper/pricer.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_052 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_EDIT_filled INT,
+    DX_EDIT_1_filled INT,
+    DX_EDIT_2_filled INT,
+    DX_EDIT_3_filled INT,
+    DX_EDIT_4_filled INT,
+    DX_EDIT_5_filled INT,
+    DX_EDIT_6_filled INT,
+    DX_EDIT_7_filled INT,
+    DX_EDIT_8_filled INT,
+    DX_EDIT_9_filled INT,
+    DX_EDIT_10_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_052 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_EDIT_filled, DX_EDIT_1_filled, DX_EDIT_2_filled, DX_EDIT_3_filled, DX_EDIT_4_filled, DX_EDIT_5_filled, DX_EDIT_6_filled, DX_EDIT_7_filled, DX_EDIT_8_filled, DX_EDIT_9_filled, DX_EDIT_10_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2548,10 +3557,10 @@ SELECT
     COUNT(DX_EDIT_9) AS DX_EDIT_9_filled,
     COUNT(DX_EDIT_10) AS DX_EDIT_10_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_052
 FROM AP_CLAIM_IF_DX_EDIT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_052 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_EDIT_filled, DX_EDIT_1_filled, DX_EDIT_2_filled, DX_EDIT_3_filled, DX_EDIT_4_filled, DX_EDIT_5_filled, DX_EDIT_6_filled, DX_EDIT_7_filled, DX_EDIT_8_filled, DX_EDIT_9_filled, DX_EDIT_10_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2569,15 +3578,25 @@ SELECT
     CAST(NULL AS INT) AS DX_EDIT_8_filled,
     CAST(NULL AS INT) AS DX_EDIT_9_filled,
     CAST(NULL AS INT) AS DX_EDIT_10_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_052;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_053 <- AP_CLAIM_IF_DX_EDIT_DESC ----
 -- This table contains description of diagnosis edits returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_053 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    DX_EDIT_DESCRIPTION_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_053 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CM_PHY_OWNER_ID_filled, DX_EDIT_DESCRIPTION_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2587,10 +3606,10 @@ SELECT
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
     COUNT(DX_EDIT_DESCRIPTION) AS DX_EDIT_DESCRIPTION_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_053
 FROM AP_CLAIM_IF_DX_EDIT_DESC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_053 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CM_PHY_OWNER_ID_filled, DX_EDIT_DESCRIPTION_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2599,15 +3618,24 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CM_PHY_OWNER_ID_filled,
     CAST(NULL AS INT) AS DX_EDIT_DESCRIPTION_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_053;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_054 <- AP_CLAIM_IF_DX_EXCL_HAC ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Excl Frm HAC Adj Grouping (I CLM 21852) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_054 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_EXCL_HAC_GRPING_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_054 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_EXCL_HAC_GRPING_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2616,10 +3644,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_EXCL_HAC_GRPING) AS DX_EXCL_HAC_GRPING_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_054
 FROM AP_CLAIM_IF_DX_EXCL_HAC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_054 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_EXCL_HAC_GRPING_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2627,15 +3655,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_EXCL_HAC_GRPING_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_054;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_055 <- AP_CLAIM_IF_DX_HAC_AJ_ROM ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - HAC Adjusted ROM (I CLM 21853) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_055 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_HAC_ADJ_ROM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_055 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_ADJ_ROM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2644,10 +3681,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_ADJ_ROM) AS DX_HAC_ADJ_ROM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_055
 FROM AP_CLAIM_IF_DX_HAC_AJ_ROM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_055 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_ADJ_ROM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2655,15 +3692,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_HAC_ADJ_ROM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_055;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_056 <- AP_CLAIM_IF_DX_HAC_AJ_SOI ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - HAC Adjusted SOI Flag (I CLM 21854) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_056 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_HAC_ADJ_SOI_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_056 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_ADJ_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2672,10 +3718,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_ADJ_SOI) AS DX_HAC_ADJ_SOI_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_056
 FROM AP_CLAIM_IF_DX_HAC_AJ_SOI;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_056 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_ADJ_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2683,15 +3729,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_HAC_ADJ_SOI_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_056;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_057 <- AP_CLAIM_IF_DX_HAC_ASGN ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect HAC Assignment (I CLM 21849) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_057 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFF_HAC_ASGN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_057 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ASGN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2700,10 +3755,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFF_HAC_ASGN) AS DX_AFF_HAC_ASGN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_057
 FROM AP_CLAIM_IF_DX_HAC_ASGN;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_057 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFF_HAC_ASGN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2711,15 +3766,29 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFF_HAC_ASGN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_057;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_058 <- AP_CLAIM_IF_DX_HAC_CAT ----
 -- The diagnosis hospital-acquired condition (HAC) categories.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_058 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_HAC_CAT_filled INT,
+    DX_HAC_CAT_1_filled INT,
+    DX_HAC_CAT_2_filled INT,
+    DX_HAC_CAT_3_filled INT,
+    DX_HAC_CAT_4_filled INT,
+    DX_HAC_CAT_5_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_058 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_CAT_filled, DX_HAC_CAT_1_filled, DX_HAC_CAT_2_filled, DX_HAC_CAT_3_filled, DX_HAC_CAT_4_filled, DX_HAC_CAT_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2733,10 +3802,10 @@ SELECT
     COUNT(DX_HAC_CAT_4) AS DX_HAC_CAT_4_filled,
     COUNT(DX_HAC_CAT_5) AS DX_HAC_CAT_5_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_058
 FROM AP_CLAIM_IF_DX_HAC_CAT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_058 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_CAT_filled, DX_HAC_CAT_1_filled, DX_HAC_CAT_2_filled, DX_HAC_CAT_3_filled, DX_HAC_CAT_4_filled, DX_HAC_CAT_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2749,15 +3818,24 @@ SELECT
     CAST(NULL AS INT) AS DX_HAC_CAT_3_filled,
     CAST(NULL AS INT) AS DX_HAC_CAT_4_filled,
     CAST(NULL AS INT) AS DX_HAC_CAT_5_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_058;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_059 <- AP_CLAIM_IF_DX_HAC_IND ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - HAC Indicator (I CLM 21855) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_059 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_HAC_INDICATOR_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_059 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_INDICATOR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2766,10 +3844,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_INDICATOR) AS DX_HAC_INDICATOR_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_059
 FROM AP_CLAIM_IF_DX_HAC_IND;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_059 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_INDICATOR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2777,15 +3855,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_HAC_INDICATOR_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_059;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_060 <- AP_CLAIM_IF_DX_HAC_ROM_FL ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect ROM Flag (I CLM 21850) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_060 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFFECT_ROM_FLAG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_060 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFFECT_ROM_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2794,10 +3881,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFFECT_ROM_FLAG) AS DX_AFFECT_ROM_FLAG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_060
 FROM AP_CLAIM_IF_DX_HAC_ROM_FL;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_060 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFFECT_ROM_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2805,15 +3892,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFFECT_ROM_FLAG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_060;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_061 <- AP_CLAIM_IF_DX_HAC_SOI_FL ----
 -- This table extracts the related multiple response Interface Info - Grouper Dx - Affect SOI Flag (I CLM 21851) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_061 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AFFECT_SOI_FLAG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_061 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFFECT_SOI_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2822,10 +3918,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AFFECT_SOI_FLAG) AS DX_AFFECT_SOI_FLAG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_061
 FROM AP_CLAIM_IF_DX_HAC_SOI_FL;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_061 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AFFECT_SOI_FLAG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2833,15 +3929,29 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AFFECT_SOI_FLAG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_061;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_062 <- AP_CLAIM_IF_DX_HAC_USAGE ----
 -- Indicates if the diagnosis code and present on admission (POA) value combination were used in grouper processing.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_062 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_HAC_USAGE_filled INT,
+    DX_HAC_USAGE_1_filled INT,
+    DX_HAC_USAGE_2_filled INT,
+    DX_HAC_USAGE_3_filled INT,
+    DX_HAC_USAGE_4_filled INT,
+    DX_HAC_USAGE_5_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_062 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_USAGE_filled, DX_HAC_USAGE_1_filled, DX_HAC_USAGE_2_filled, DX_HAC_USAGE_3_filled, DX_HAC_USAGE_4_filled, DX_HAC_USAGE_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2855,10 +3965,10 @@ SELECT
     COUNT(DX_HAC_USAGE_4) AS DX_HAC_USAGE_4_filled,
     COUNT(DX_HAC_USAGE_5) AS DX_HAC_USAGE_5_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_062
 FROM AP_CLAIM_IF_DX_HAC_USAGE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_062 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_USAGE_filled, DX_HAC_USAGE_1_filled, DX_HAC_USAGE_2_filled, DX_HAC_USAGE_3_filled, DX_HAC_USAGE_4_filled, DX_HAC_USAGE_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2871,15 +3981,24 @@ SELECT
     CAST(NULL AS INT) AS DX_HAC_USAGE_3_filled,
     CAST(NULL AS INT) AS DX_HAC_USAGE_4_filled,
     CAST(NULL AS INT) AS DX_HAC_USAGE_5_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_062;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_063 <- AP_CLAIM_IF_DX_INVALID ----
 -- This table returns an Optum-defined code indicating why a diagnosis code is considered invalid.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_063 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_INVALID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_063 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_INVALID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2888,10 +4007,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_INVALID) AS DX_INVALID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_063
 FROM AP_CLAIM_IF_DX_INVALID;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_063 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_INVALID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2899,15 +4018,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_INVALID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_063;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_064 <- AP_CLAIM_IF_DX_POA_BYPASS ----
 -- This table extracts data received from PPS pricer for a claim in DX 'Present on Admission Bypassed'.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_064 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_PRSNT_ADM_BYPASS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_064 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_PRSNT_ADM_BYPASS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2916,10 +4044,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_PRSNT_ADM_BYPASS) AS DX_PRSNT_ADM_BYPASS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_064
 FROM AP_CLAIM_IF_DX_POA_BYPASS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_064 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_PRSNT_ADM_BYPASS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2927,15 +4055,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_PRSNT_ADM_BYPASS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_064;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_065 <- AP_CLAIM_IF_DX_POA_ERR_CD ----
 -- Indicates how the Present On Admission (POA) values submitted impacted grouper logic.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_065 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_POA_ERROR_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_065 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_POA_ERROR_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2944,10 +4081,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_POA_ERROR_CODE) AS DX_POA_ERROR_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_065
 FROM AP_CLAIM_IF_DX_POA_ERR_CD;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_065 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_POA_ERROR_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2955,15 +4092,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_POA_ERROR_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_065;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_066 <- AP_CLAIM_IF_DX_POA_USED ----
 -- The present on admission (POA) value used during processing.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_066 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_POA_USED_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_066 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_POA_USED_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -2972,10 +4118,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_POA_USED) AS DX_POA_USED_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_066
 FROM AP_CLAIM_IF_DX_POA_USED;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_066 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_POA_USED_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -2983,15 +4129,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_POA_USED_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_066;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_067 <- AP_CLAIM_IF_DX_PSCA ----
 -- This table contains the PSCA (Proportional Standard Cost Allocation) assigned to each diagnosis on the claim, taking into consideration the age and gender of the patient.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_067 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PSCA_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_067 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PSCA_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3000,10 +4155,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PSCA) AS PSCA_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_067
 FROM AP_CLAIM_IF_DX_PSCA;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_067 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PSCA_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3011,15 +4166,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS PSCA_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_067;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_068 <- AP_CLAIM_IF_DX_SUG_SURG ----
 -- Diagnosis suggests surgery.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_068 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_SUGGST_SURG_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_068 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_SUGGST_SURG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3028,10 +4192,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_SUGGST_SURG) AS DX_SUGGST_SURG_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_068
 FROM AP_CLAIM_IF_DX_SUG_SURG;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_068 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_SUGGST_SURG_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3039,15 +4203,29 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_SUGGST_SURG_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_068;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_069 <- AP_CLAIM_IF_DX_USED ----
 -- The diagnosis code(s) that was used during processing; may be the entered or the mapped code.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_069 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_USED_filled INT,
+    DX_USED_1_filled INT,
+    DX_USED_2_filled INT,
+    DX_USED_3_filled INT,
+    DX_USED_4_filled INT,
+    DX_USED_5_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_069 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_USED_filled, DX_USED_1_filled, DX_USED_2_filled, DX_USED_3_filled, DX_USED_4_filled, DX_USED_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3061,10 +4239,10 @@ SELECT
     COUNT(DX_USED_4) AS DX_USED_4_filled,
     COUNT(DX_USED_5) AS DX_USED_5_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_069
 FROM AP_CLAIM_IF_DX_USED;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_069 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_USED_filled, DX_USED_1_filled, DX_USED_2_filled, DX_USED_3_filled, DX_USED_4_filled, DX_USED_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3077,15 +4255,25 @@ SELECT
     CAST(NULL AS INT) AS DX_USED_3_filled,
     CAST(NULL AS INT) AS DX_USED_4_filled,
     CAST(NULL AS INT) AS DX_USED_5_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_069;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_070 <- AP_CLAIM_IF_DX_USED_DESC ----
 -- This table contains description of the diagnosis used for pricing as returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_070 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    DX_USED_DESCRIPTION_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_070 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CM_PHY_OWNER_ID_filled, DX_USED_DESCRIPTION_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3095,10 +4283,10 @@ SELECT
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
     COUNT(DX_USED_DESCRIPTION) AS DX_USED_DESCRIPTION_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_070
 FROM AP_CLAIM_IF_DX_USED_DESC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_070 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CM_PHY_OWNER_ID_filled, DX_USED_DESCRIPTION_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3107,15 +4295,29 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CM_PHY_OWNER_ID_filled,
     CAST(NULL AS INT) AS DX_USED_DESCRIPTION_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_070;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_071 <- AP_CLAIM_IF_DX_USED_HAC ----
 -- This table extracts the related multiple response Interface Info - Grouper - Dx Used for HAC Processing (I CLM 21856) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_071 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_USED_HAC_PROCESS_filled INT,
+    DX_USED_HAC_PROCESS_1_filled INT,
+    DX_USED_HAC_PROCESS_2_filled INT,
+    DX_USED_HAC_PROCESS_3_filled INT,
+    DX_USED_HAC_PROCESS_4_filled INT,
+    DX_USED_HAC_PROCESS_5_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_071 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_USED_HAC_PROCESS_filled, DX_USED_HAC_PROCESS_1_filled, DX_USED_HAC_PROCESS_2_filled, DX_USED_HAC_PROCESS_3_filled, DX_USED_HAC_PROCESS_4_filled, DX_USED_HAC_PROCESS_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3129,10 +4331,10 @@ SELECT
     COUNT(DX_USED_HAC_PROCESS_4) AS DX_USED_HAC_PROCESS_4_filled,
     COUNT(DX_USED_HAC_PROCESS_5) AS DX_USED_HAC_PROCESS_5_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_071
 FROM AP_CLAIM_IF_DX_USED_HAC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_071 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_USED_HAC_PROCESS_filled, DX_USED_HAC_PROCESS_1_filled, DX_USED_HAC_PROCESS_2_filled, DX_USED_HAC_PROCESS_3_filled, DX_USED_HAC_PROCESS_4_filled, DX_USED_HAC_PROCESS_5_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3145,15 +4347,25 @@ SELECT
     CAST(NULL AS INT) AS DX_USED_HAC_PROCESS_3_filled,
     CAST(NULL AS INT) AS DX_USED_HAC_PROCESS_4_filled,
     CAST(NULL AS INT) AS DX_USED_HAC_PROCESS_5_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_071;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_072 <- AP_CLAIM_IF_GRP_DX_HAC ----
 -- This table contains hospital-acquired condition diagnosis (DX HAC) Processing Description returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_072 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CM_PHY_OWNER_ID_filled INT,
+    DX_HAC_PROCESSING_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_072 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CM_PHY_OWNER_ID_filled, DX_HAC_PROCESSING_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3163,10 +4375,10 @@ SELECT
     COUNT(CM_PHY_OWNER_ID) AS CM_PHY_OWNER_ID_filled,
     COUNT(DX_HAC_PROCESSING_DESC) AS DX_HAC_PROCESSING_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_072
 FROM AP_CLAIM_IF_GRP_DX_HAC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_072 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CM_PHY_OWNER_ID_filled, DX_HAC_PROCESSING_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3175,15 +4387,24 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CM_PHY_OWNER_ID_filled,
     CAST(NULL AS INT) AS DX_HAC_PROCESSING_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_072;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_073 <- AP_CLAIM_IF_OUT_DX ----
 -- This table contains diagnosis code of the claim the system sends out to the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_073 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    OUT_DX_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_073 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, OUT_DX_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3192,10 +4413,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(OUT_DX_CODE) AS OUT_DX_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_073
 FROM AP_CLAIM_IF_OUT_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_073 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, OUT_DX_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3203,15 +4424,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS OUT_DX_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_073;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_074 <- AP_CLAIM_IF_OUT_ICDPX_DT ----
 -- This table contains the ICD procedure date of the claim the system sends out to APC interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_074 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    OUT_ICDPX_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_074 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, OUT_ICDPX_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3220,10 +4450,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(OUT_ICDPX_DATE) AS OUT_ICDPX_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_074
 FROM AP_CLAIM_IF_OUT_ICDPX_DT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_074 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, OUT_ICDPX_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3231,15 +4461,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS OUT_ICDPX_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_074;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_075 <- AP_CLAIM_IF_OUT_RFV_DX ----
 -- This table contains reason for visit diagnosis code of the claim the system sends out to the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_075 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    OUT_RFV_DX_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_075 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, OUT_RFV_DX_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3248,10 +4487,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(OUT_RFV_DX_CODE) AS OUT_RFV_DX_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_075
 FROM AP_CLAIM_IF_OUT_RFV_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_075 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, OUT_RFV_DX_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3259,15 +4498,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS OUT_RFV_DX_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_075;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_076 <- AP_CLAIM_IF_PRC_AD_DX_EDT ----
 -- This table contains the description of the admission diagnosis edit value returned from the third party interface.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_076 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    ADMIT_DX_EDIT_DESCRIPTION_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_076 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ADMIT_DX_EDIT_DESCRIPTION_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3276,10 +4524,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ADMIT_DX_EDIT_DESCRIPTION) AS ADMIT_DX_EDIT_DESCRIPTION_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_076
 FROM AP_CLAIM_IF_PRC_AD_DX_EDT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_076 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ADMIT_DX_EDIT_DESCRIPTION_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3287,15 +4535,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS ADMIT_DX_EDIT_DESCRIPTION_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_076;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_077 <- AP_CLAIM_IF_PRIN_DX_ERRS ----
 -- Principal Diagnosis Errors.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_077 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PRIN_DX_ERRORS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_077 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PRIN_DX_ERRORS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3304,10 +4561,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PRIN_DX_ERRORS) AS PRIN_DX_ERRORS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_077
 FROM AP_CLAIM_IF_PRIN_DX_ERRS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_077 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PRIN_DX_ERRORS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3315,15 +4572,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS PRIN_DX_ERRORS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_077;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_078 <- AP_CLAIM_IF_SEC_DX_SEQ ----
 -- Numerical values representing the secondary diagnosis codes (submitted and/or mapped); not the actual diagnosis codes themselves.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_078 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    SEC_DX_SEQUENCE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_078 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, SEC_DX_SEQUENCE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3332,10 +4598,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(SEC_DX_SEQUENCE) AS SEC_DX_SEQUENCE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_078
 FROM AP_CLAIM_IF_SEC_DX_SEQ;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_078 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, SEC_DX_SEQUENCE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3343,15 +4609,31 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS SEC_DX_SEQUENCE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_078;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_079 <- AP_CLAIM_REVIEW ----
 -- The AP_CLAIM_REVIEW table contains a row for each review on a claim.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_079 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    AP_CLAIM_REVIEW_TYPE_C_NAME_filled INT,
+    ATTACH_COMMENT_filled INT,
+    AP_CLAIM_REVIEW_STATUS_C_NAME_filled INT,
+    ATTACH_DTTM_filled INT,
+    COMPLETION_COMMENT_filled INT,
+    COMPLETION_DTTM_filled INT,
+    REJECTION_EOB_CODE_ID_EOB_CODE_NAME_filled INT,
+    ADDED_MANUALLY_YN_filled INT,
+    REVIEW_STATUS_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_079 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, AP_CLAIM_REVIEW_TYPE_C_NAME_filled, ATTACH_COMMENT_filled, AP_CLAIM_REVIEW_STATUS_C_NAME_filled, ATTACH_DTTM_filled, COMPLETION_COMMENT_filled, COMPLETION_DTTM_filled, REJECTION_EOB_CODE_ID_EOB_CODE_NAME_filled, ADDED_MANUALLY_YN_filled, REVIEW_STATUS_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3367,10 +4649,10 @@ SELECT
     COUNT(ADDED_MANUALLY_YN) AS ADDED_MANUALLY_YN_filled,
     COUNT(REVIEW_STATUS_REASON_C_NAME) AS REVIEW_STATUS_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_079
 FROM AP_CLAIM_REVIEW;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_079 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, AP_CLAIM_REVIEW_TYPE_C_NAME_filled, ATTACH_COMMENT_filled, AP_CLAIM_REVIEW_STATUS_C_NAME_filled, ATTACH_DTTM_filled, COMPLETION_COMMENT_filled, COMPLETION_DTTM_filled, REJECTION_EOB_CODE_ID_EOB_CODE_NAME_filled, ADDED_MANUALLY_YN_filled, REVIEW_STATUS_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3385,15 +4667,24 @@ SELECT
     CAST(NULL AS INT) AS REJECTION_EOB_CODE_ID_EOB_CODE_NAME_filled,
     CAST(NULL AS INT) AS ADDED_MANUALLY_YN_filled,
     CAST(NULL AS INT) AS REVIEW_STATUS_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_079;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_080 <- AP_CLM_IF_MOE_DX_CODE_TYP ----
 -- Diagnosis code types received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_080 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MOE_DX_CODE_TYPE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_080 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_DX_CODE_TYPE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3402,10 +4693,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_DX_CODE_TYPE) AS MOE_DX_CODE_TYPE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_080
 FROM AP_CLM_IF_MOE_DX_CODE_TYP;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_080 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_DX_CODE_TYPE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3413,15 +4704,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MOE_DX_CODE_TYPE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_080;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_081 <- AP_CLM_IF_MOE_DX_ERRORS ----
 -- Diagnosis errors received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple response item CLM-223
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_081 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MOE_DX_ERRORS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_081 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_DX_ERRORS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3430,10 +4730,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_DX_ERRORS) AS MOE_DX_ERRORS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_081
 FROM AP_CLM_IF_MOE_DX_ERRORS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_081 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_DX_ERRORS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3441,15 +4741,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MOE_DX_ERRORS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_081;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_082 <- AP_CLM_IF_MOE_DX_ERR_NUM ----
 -- The number of diagnosis code errors received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple re
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_082 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MOE_PER_DX_ERR_NUM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_082 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_PER_DX_ERR_NUM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3458,10 +4767,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_PER_DX_ERR_NUM) AS MOE_PER_DX_ERR_NUM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_082
 FROM AP_CLM_IF_MOE_DX_ERR_NUM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_082 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_PER_DX_ERR_NUM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3469,15 +4778,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MOE_PER_DX_ERR_NUM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_082;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_083 <- AP_CLM_IF_MOE_DX_HI_DISP ----
 -- The highest diagnosis dispositions received by prospective payment systems (PPS) pricers that use the Medicaid Outpatient Editor (MOE). This table extracts the related multiple res
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_083 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MOE_HIGH_DX_DISP_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_083 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_HIGH_DX_DISP_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3486,10 +4804,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MOE_HIGH_DX_DISP) AS MOE_HIGH_DX_DISP_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_083
 FROM AP_CLM_IF_MOE_DX_HI_DISP;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_083 (activity_year, total_rows, CLAIM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MOE_HIGH_DX_DISP_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3497,15 +4815,23 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MOE_HIGH_DX_DISP_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_083;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_084 <- AP_CLM_VST_RSN_DX ----
 -- This table stores the diagnoses that formed the reason for the patient's visit.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_084 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    VST_RSN_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_084 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, VST_RSN_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3513,25 +4839,36 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(VST_RSN_DX_ID_DX_NAME) AS VST_RSN_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_084
 FROM AP_CLM_VST_RSN_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_084 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, VST_RSN_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CLAIM_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS VST_RSN_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_084;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_085 <- AP_PROC_ASSOC_DX ----
 -- This table summarizes diagnoses associated with AP claim service lines. To link this table’s service line information back to a claim header, join this table to AP_CLAIM_PROC_IDS o
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_085 (
+    activity_year INT,
+    total_rows INT,
+    ETR_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUAL_C_NAME_filled INT,
+    DX_NUM_filled INT,
+    DX_RANK_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_085 (activity_year, total_rows, ETR_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUAL_C_NAME_filled, DX_NUM_filled, DX_RANK_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3542,10 +4879,10 @@ SELECT
     COUNT(DX_NUM) AS DX_NUM_filled,
     COUNT(DX_RANK) AS DX_RANK_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_085
 FROM AP_PROC_ASSOC_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_085 (activity_year, total_rows, ETR_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUAL_C_NAME_filled, DX_NUM_filled, DX_RANK_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3555,15 +4892,24 @@ SELECT
     CAST(NULL AS INT) AS DX_QUAL_C_NAME_filled,
     CAST(NULL AS INT) AS DX_NUM_filled,
     CAST(NULL AS INT) AS DX_RANK_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_085;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_086 <- ARPB_CHG_ENTRY_DX ----
 -- The table lists all diagnoses on a charge entry session in which the charge was posted.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_086 (
+    activity_year INT,
+    total_rows INT,
+    TX_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUALIFIER_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_086 (activity_year, total_rows, TX_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3572,10 +4918,10 @@ SELECT
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUALIFIER_C_NAME) AS DX_QUALIFIER_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_086
 FROM ARPB_CHG_ENTRY_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_086 (activity_year, total_rows, TX_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3583,15 +4929,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DX_QUALIFIER_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_086;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_087 <- ARPB_CHG_ENTRY_DX_ALT ----
 -- The table lists all diagnoses entered in a charge entry, from the alternative diagnosis code set.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_087 (
+    activity_year INT,
+    total_rows INT,
+    TX_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUALIFIER_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_087 (activity_year, total_rows, TX_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3600,10 +4955,10 @@ SELECT
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUALIFIER_C_NAME) AS DX_QUALIFIER_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_087
 FROM ARPB_CHG_ENTRY_DX_ALT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_087 (activity_year, total_rows, TX_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3611,15 +4966,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DX_QUALIFIER_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_087;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_088 <- ARPB_PMT_RELATED_DENIALS ----
 -- Denial records associated with this payment for evaluating denial rate metrics.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_088 (
+    activity_year INT,
+    total_rows INT,
+    TX_ID_filled INT,
+    LINE_filled INT,
+    RELATED_BDC_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_088 (activity_year, total_rows, TX_ID_filled, LINE_filled, RELATED_BDC_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3627,25 +4990,36 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(RELATED_BDC_ID) AS RELATED_BDC_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_088
 FROM ARPB_PMT_RELATED_DENIALS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_088 (activity_year, total_rows, TX_ID_filled, LINE_filled, RELATED_BDC_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS TX_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS RELATED_BDC_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_088;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_089 <- ASSOCIATED_DX ----
 -- Diagnoses associated with treatment plans.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_089 (
+    activity_year INT,
+    total_rows INT,
+    TREATMENT_PLAN_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    SPECIFIC_DX_ID_DX_NAME_filled INT,
+    PROBLEM_LIST_ID_filled INT,
+    PROBLEM_LINKED_TO_PLAN_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_089 (activity_year, total_rows, TREATMENT_PLAN_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, SPECIFIC_DX_ID_DX_NAME_filled, PROBLEM_LIST_ID_filled, PROBLEM_LINKED_TO_PLAN_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3656,10 +5030,10 @@ SELECT
     COUNT(PROBLEM_LIST_ID) AS PROBLEM_LIST_ID_filled,
     COUNT(PROBLEM_LINKED_TO_PLAN_YN) AS PROBLEM_LINKED_TO_PLAN_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_089
 FROM ASSOCIATED_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_089 (activity_year, total_rows, TREATMENT_PLAN_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, SPECIFIC_DX_ID_DX_NAME_filled, PROBLEM_LIST_ID_filled, PROBLEM_LINKED_TO_PLAN_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3669,15 +5043,23 @@ SELECT
     CAST(NULL AS INT) AS SPECIFIC_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS PROBLEM_LIST_ID_filled,
     CAST(NULL AS INT) AS PROBLEM_LINKED_TO_PLAN_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_089;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_090 <- ATB_AUTH_DENIAL_RSNS ----
 -- This table contains the reasons for denial when the authorization decision is denied.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_090 (
+    activity_year INT,
+    total_rows INT,
+    AUTH_BUNDLE_ID_filled INT,
+    LINE_filled INT,
+    AUTH_PYR_DENIAL_REASON_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_090 (activity_year, total_rows, AUTH_BUNDLE_ID_filled, LINE_filled, AUTH_PYR_DENIAL_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3685,24 +5067,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(AUTH_PYR_DENIAL_REASON_C_NAME) AS AUTH_PYR_DENIAL_REASON_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_090
 FROM ATB_AUTH_DENIAL_RSNS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_090 (activity_year, total_rows, AUTH_BUNDLE_ID_filled, LINE_filled, AUTH_PYR_DENIAL_REASON_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS AUTH_BUNDLE_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS AUTH_PYR_DENIAL_REASON_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_090;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_091 <- ATB_AUTH_DIAGNOSES ----
 -- This table contains information pertaining to the diagnosis information for an Auth Bundle.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_091 (
+    activity_year INT,
+    total_rows INT,
+    AUTH_BUNDLE_ID_filled INT,
+    LINE_filled INT,
+    AUTH_DX_REF_ID_filled INT,
+    AUTH_DX_ID_DX_NAME_filled INT,
+    AUTH_PA_DX_TYPE_C_NAME_filled INT,
+    AUTH_DX_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_091 (activity_year, total_rows, AUTH_BUNDLE_ID_filled, LINE_filled, AUTH_DX_REF_ID_filled, AUTH_DX_ID_DX_NAME_filled, AUTH_PA_DX_TYPE_C_NAME_filled, AUTH_DX_DATE_filled, query_error)
 SELECT
     YEAR(AUTH_DX_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3713,11 +5106,11 @@ SELECT
     COUNT(AUTH_PA_DX_TYPE_C_NAME) AS AUTH_PA_DX_TYPE_C_NAME_filled,
     COUNT(AUTH_DX_DATE) AS AUTH_DX_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_091
 FROM ATB_AUTH_DIAGNOSES
 GROUP BY YEAR(AUTH_DX_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_091 (activity_year, total_rows, AUTH_BUNDLE_ID_filled, LINE_filled, AUTH_DX_REF_ID_filled, AUTH_DX_ID_DX_NAME_filled, AUTH_PA_DX_TYPE_C_NAME_filled, AUTH_DX_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3727,14 +5120,116 @@ SELECT
     CAST(NULL AS INT) AS AUTH_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS AUTH_PA_DX_TYPE_C_NAME_filled,
     CAST(NULL AS INT) AS AUTH_DX_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_091;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_092 <- AUTHORIZATIONS ----
 -- This table contains information about authorization records. This includes links to the patient, referral, and coverage/payer.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_092 (
+    activity_year INT,
+    total_rows INT,
+    AUTH_ID_filled INT,
+    AUTH_FROM_DT_filled INT,
+    AUTH_TO_DT_filled INT,
+    PAT_ID_filled INT,
+    REFERRAL_ID_filled INT,
+    AUTH_TYPE_C_NAME_filled INT,
+    NUM_SVCS_APPROVED_filled INT,
+    NUM_SVCS_REQUESTED_filled INT,
+    CVG_ID_filled INT,
+    AUTH_NUM_filled INT,
+    AUTH_COMMENTS_filled INT,
+    RECORD_CREATION_DT_filled INT,
+    CHARGE_COUNTS_filled INT,
+    AUTH_REF_NUMBER_filled INT,
+    AP_CLAIM_COUNT_filled INT,
+    INTER_NUM_SVCS_APRV_filled INT,
+    INTER_NUM_SVCS_REQ_filled INT,
+    INTER_APRV_FREQ_ID_filled INT,
+    INTER_APRV_FREQ_ID_FREQ_NAME_filled INT,
+    INTER_REQ_FREQ_ID_filled INT,
+    INTER_REQ_FREQ_ID_FREQ_NAME_filled INT,
+    INTER_NUM_APRV_filled INT,
+    INTER_NUM_REQ_filled INT,
+    PARENT_AUTH_ID_filled INT,
+    AP_CLAIM_COUNT_METHOD_C_NAME_filled INT,
+    UM_STATUS_C_NAME_filled INT,
+    UM_APPROVED_RSN_C_NAME_filled INT,
+    UM_PART_APRV_RSN_C_NAME_filled INT,
+    UM_DENIED_RSN_C_NAME_filled INT,
+    UM_DISMISSED_RSN_C_NAME_filled INT,
+    UM_NOT_REQUIRED_RSN_C_NAME_filled INT,
+    UM_PENDING_RSN_C_NAME_filled INT,
+    UM_CANCELED_RSN_C_NAME_filled INT,
+    UM_DECISION_DTTM_filled INT,
+    NON_UM_AUTH_ID_filled INT,
+    UM_AUTH_REQUEST_ID_filled INT,
+    NON_UM_ORDER_ID_filled INT,
+    ORDER_ENTRY_ORDER_ID_filled INT,
+    UM_CLOSED_RSN_C_NAME_filled INT,
+    UM_FINALIZE_USER_ID_filled INT,
+    UM_FINALIZE_USER_ID_NAME_filled INT,
+    FINAL_UM_STATUS_CHANGE_SRC_C_NAME_filled INT,
+    AUTH_STATUS_C_NAME_filled INT,
+    UM_MED_DIR_REV_USER_ID_filled INT,
+    UM_MED_DIR_REV_USER_ID_NAME_filled INT,
+    UM_PEND_MED_DIRECTOR_DTTM_filled INT,
+    UM_PEND_MED_DIRECTOR_UTC_DTTM_filled INT,
+    FIRST_PAT_ENC_CSN_ID_filled INT,
+    LAST_PAT_ENC_CSN_ID_filled INT,
+    APPEALED_SERVICE_AUTH_ID_filled INT,
+    LAST_CVG_GUIDANCE_C_NAME_filled INT,
+    UM_CVG_GUIDANCE_SOURCE_C_NAME_filled INT,
+    UM_CVG_GDNC_REALTIME_TX_CSN_ID_filled INT,
+    UM_CVG_GUIDANCE_PA_SVC_LN_IDNT_filled INT,
+    UM_CVG_GUIDANCE_C_NAME_filled INT,
+    UM_CVG_GUIDANCE_FROM_PROV_ID_PROV_NAME_filled INT,
+    UM_CVG_GUIDANCE_REQ_DATE_filled INT,
+    UM_CVG_GUIDANCE_REQ_LOC_ID_LOC_NAME_filled INT,
+    UM_CVG_GUIDANCE_REQ_VENDOR_ID_VENDOR_NAME_filled INT,
+    UM_CVG_GUIDANCE_REQ_DEPT_ID_EXTERNAL_NAME_filled INT,
+    UM_CVG_GUIDANCE_REQUEST_NOTE_filled INT,
+    UM_CVG_GUIDANCE_LOB_ID_filled INT,
+    UM_CVG_GUIDANCE_LOB_ID_LOB_NAME_filled INT,
+    UM_CVG_GUIDANCE_PAYER_ID_PAYOR_NAME_filled INT,
+    UM_CVG_GUIDANCE_PLAN_ID_BENEFIT_PLAN_NAME_filled INT,
+    UM_CVG_GUIDANCE_CREATE_USER_ID_filled INT,
+    UM_CVG_GUIDANCE_CREATE_USER_ID_NAME_filled INT,
+    DENIAL_REASON_C_NAME_filled INT,
+    AUTH_BED_DAY_TYPE_ID_filled INT,
+    AUTH_BED_DAY_TYPE_ID_BED_DAY_TYPE_NAME_filled INT,
+    NUM_DAYS_APPROVED_filled INT,
+    NUM_NIGHTS_APPROVED_filled INT,
+    EXT_SVC_MSG_filled INT,
+    EXT_SVC_REF_NUM_filled INT,
+    EXT_SVC_AUTH_NUM_filled INT,
+    UM_CVG_GUIDANCE_RESP_AGENCY_ID_filled INT,
+    UM_CVG_GUIDANCE_RESP_AGENCY_ID_AGENCY_NAME_filled INT,
+    AUTH_BED_DAY_TX_STATUS_C_NAME_filled INT,
+    UM_REQ_RX_QTY_filled INT,
+    UM_REQ_RX_DISP_QTYUNIT_C_NAME_filled INT,
+    UM_REQ_RX_DAYS_filled INT,
+    REQ_UM_MED_TIER_C_NAME_filled INT,
+    UM_MEDICATION_ID_MEDICATION_NAME_filled INT,
+    UM_NDC_ID_filled INT,
+    UM_NDC_ID_NDC_CODE_filled INT,
+    UM_APRV_RX_QTY_filled INT,
+    UM_APRV_RX_DISP_QTYUNIT_C_NAME_filled INT,
+    UM_APRV_RX_DAYS_filled INT,
+    APRV_UM_MED_TIER_C_NAME_filled INT,
+    UM_CVG_GUIDANCE_POS_TYPE_C_NAME_filled INT,
+    UM_FORMULARY_QL_QUANTITY_filled INT,
+    UM_FORMULARY_QL_DISP_QTYUNIT_C_NAME_filled INT,
+    UM_FORMULARY_QL_DAYS_filled INT,
+    UM_FORMULARY_UM_MED_TIER_C_NAME_filled INT,
+    UM_FINAL_STS_CHANGE_LOCAL_DTTM_filled INT,
+    UM_FINAL_STS_CHANGE_UTC_DTTM_filled INT,
+    UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_092 (activity_year, total_rows, AUTH_ID_filled, AUTH_FROM_DT_filled, AUTH_TO_DT_filled, PAT_ID_filled, REFERRAL_ID_filled, AUTH_TYPE_C_NAME_filled, NUM_SVCS_APPROVED_filled, NUM_SVCS_REQUESTED_filled, CVG_ID_filled, AUTH_NUM_filled, AUTH_COMMENTS_filled, RECORD_CREATION_DT_filled, CHARGE_COUNTS_filled, AUTH_REF_NUMBER_filled, AP_CLAIM_COUNT_filled, INTER_NUM_SVCS_APRV_filled, INTER_NUM_SVCS_REQ_filled, INTER_APRV_FREQ_ID_filled, INTER_APRV_FREQ_ID_FREQ_NAME_filled, INTER_REQ_FREQ_ID_filled, INTER_REQ_FREQ_ID_FREQ_NAME_filled, INTER_NUM_APRV_filled, INTER_NUM_REQ_filled, PARENT_AUTH_ID_filled, AP_CLAIM_COUNT_METHOD_C_NAME_filled, UM_STATUS_C_NAME_filled, UM_APPROVED_RSN_C_NAME_filled, UM_PART_APRV_RSN_C_NAME_filled, UM_DENIED_RSN_C_NAME_filled, UM_DISMISSED_RSN_C_NAME_filled, UM_NOT_REQUIRED_RSN_C_NAME_filled, UM_PENDING_RSN_C_NAME_filled, UM_CANCELED_RSN_C_NAME_filled, UM_DECISION_DTTM_filled, NON_UM_AUTH_ID_filled, UM_AUTH_REQUEST_ID_filled, NON_UM_ORDER_ID_filled, ORDER_ENTRY_ORDER_ID_filled, UM_CLOSED_RSN_C_NAME_filled, UM_FINALIZE_USER_ID_filled, UM_FINALIZE_USER_ID_NAME_filled, FINAL_UM_STATUS_CHANGE_SRC_C_NAME_filled, AUTH_STATUS_C_NAME_filled, UM_MED_DIR_REV_USER_ID_filled, UM_MED_DIR_REV_USER_ID_NAME_filled, UM_PEND_MED_DIRECTOR_DTTM_filled, UM_PEND_MED_DIRECTOR_UTC_DTTM_filled, FIRST_PAT_ENC_CSN_ID_filled, LAST_PAT_ENC_CSN_ID_filled, APPEALED_SERVICE_AUTH_ID_filled, LAST_CVG_GUIDANCE_C_NAME_filled, UM_CVG_GUIDANCE_SOURCE_C_NAME_filled, UM_CVG_GDNC_REALTIME_TX_CSN_ID_filled, UM_CVG_GUIDANCE_PA_SVC_LN_IDNT_filled, UM_CVG_GUIDANCE_C_NAME_filled, UM_CVG_GUIDANCE_FROM_PROV_ID_PROV_NAME_filled, UM_CVG_GUIDANCE_REQ_DATE_filled, UM_CVG_GUIDANCE_REQ_LOC_ID_LOC_NAME_filled, UM_CVG_GUIDANCE_REQ_VENDOR_ID_VENDOR_NAME_filled, UM_CVG_GUIDANCE_REQ_DEPT_ID_EXTERNAL_NAME_filled, UM_CVG_GUIDANCE_REQUEST_NOTE_filled, UM_CVG_GUIDANCE_LOB_ID_filled, UM_CVG_GUIDANCE_LOB_ID_LOB_NAME_filled, UM_CVG_GUIDANCE_PAYER_ID_PAYOR_NAME_filled, UM_CVG_GUIDANCE_PLAN_ID_BENEFIT_PLAN_NAME_filled, UM_CVG_GUIDANCE_CREATE_USER_ID_filled, UM_CVG_GUIDANCE_CREATE_USER_ID_NAME_filled, DENIAL_REASON_C_NAME_filled, AUTH_BED_DAY_TYPE_ID_filled, AUTH_BED_DAY_TYPE_ID_BED_DAY_TYPE_NAME_filled, NUM_DAYS_APPROVED_filled, NUM_NIGHTS_APPROVED_filled, EXT_SVC_MSG_filled, EXT_SVC_REF_NUM_filled, EXT_SVC_AUTH_NUM_filled, UM_CVG_GUIDANCE_RESP_AGENCY_ID_filled, UM_CVG_GUIDANCE_RESP_AGENCY_ID_AGENCY_NAME_filled, AUTH_BED_DAY_TX_STATUS_C_NAME_filled, UM_REQ_RX_QTY_filled, UM_REQ_RX_DISP_QTYUNIT_C_NAME_filled, UM_REQ_RX_DAYS_filled, REQ_UM_MED_TIER_C_NAME_filled, UM_MEDICATION_ID_MEDICATION_NAME_filled, UM_NDC_ID_filled, UM_NDC_ID_NDC_CODE_filled, UM_APRV_RX_QTY_filled, UM_APRV_RX_DISP_QTYUNIT_C_NAME_filled, UM_APRV_RX_DAYS_filled, APRV_UM_MED_TIER_C_NAME_filled, UM_CVG_GUIDANCE_POS_TYPE_C_NAME_filled, UM_FORMULARY_QL_QUANTITY_filled, UM_FORMULARY_QL_DISP_QTYUNIT_C_NAME_filled, UM_FORMULARY_QL_DAYS_filled, UM_FORMULARY_UM_MED_TIER_C_NAME_filled, UM_FINAL_STS_CHANGE_LOCAL_DTTM_filled, UM_FINAL_STS_CHANGE_UTC_DTTM_filled, UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled, query_error)
 SELECT
     YEAR(AUTH_FROM_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3836,11 +5331,11 @@ SELECT
     COUNT(UM_FINAL_STS_CHANGE_UTC_DTTM) AS UM_FINAL_STS_CHANGE_UTC_DTTM_filled,
     COUNT(UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME) AS UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_092
 FROM AUTHORIZATIONS
 GROUP BY YEAR(AUTH_FROM_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_092 (activity_year, total_rows, AUTH_ID_filled, AUTH_FROM_DT_filled, AUTH_TO_DT_filled, PAT_ID_filled, REFERRAL_ID_filled, AUTH_TYPE_C_NAME_filled, NUM_SVCS_APPROVED_filled, NUM_SVCS_REQUESTED_filled, CVG_ID_filled, AUTH_NUM_filled, AUTH_COMMENTS_filled, RECORD_CREATION_DT_filled, CHARGE_COUNTS_filled, AUTH_REF_NUMBER_filled, AP_CLAIM_COUNT_filled, INTER_NUM_SVCS_APRV_filled, INTER_NUM_SVCS_REQ_filled, INTER_APRV_FREQ_ID_filled, INTER_APRV_FREQ_ID_FREQ_NAME_filled, INTER_REQ_FREQ_ID_filled, INTER_REQ_FREQ_ID_FREQ_NAME_filled, INTER_NUM_APRV_filled, INTER_NUM_REQ_filled, PARENT_AUTH_ID_filled, AP_CLAIM_COUNT_METHOD_C_NAME_filled, UM_STATUS_C_NAME_filled, UM_APPROVED_RSN_C_NAME_filled, UM_PART_APRV_RSN_C_NAME_filled, UM_DENIED_RSN_C_NAME_filled, UM_DISMISSED_RSN_C_NAME_filled, UM_NOT_REQUIRED_RSN_C_NAME_filled, UM_PENDING_RSN_C_NAME_filled, UM_CANCELED_RSN_C_NAME_filled, UM_DECISION_DTTM_filled, NON_UM_AUTH_ID_filled, UM_AUTH_REQUEST_ID_filled, NON_UM_ORDER_ID_filled, ORDER_ENTRY_ORDER_ID_filled, UM_CLOSED_RSN_C_NAME_filled, UM_FINALIZE_USER_ID_filled, UM_FINALIZE_USER_ID_NAME_filled, FINAL_UM_STATUS_CHANGE_SRC_C_NAME_filled, AUTH_STATUS_C_NAME_filled, UM_MED_DIR_REV_USER_ID_filled, UM_MED_DIR_REV_USER_ID_NAME_filled, UM_PEND_MED_DIRECTOR_DTTM_filled, UM_PEND_MED_DIRECTOR_UTC_DTTM_filled, FIRST_PAT_ENC_CSN_ID_filled, LAST_PAT_ENC_CSN_ID_filled, APPEALED_SERVICE_AUTH_ID_filled, LAST_CVG_GUIDANCE_C_NAME_filled, UM_CVG_GUIDANCE_SOURCE_C_NAME_filled, UM_CVG_GDNC_REALTIME_TX_CSN_ID_filled, UM_CVG_GUIDANCE_PA_SVC_LN_IDNT_filled, UM_CVG_GUIDANCE_C_NAME_filled, UM_CVG_GUIDANCE_FROM_PROV_ID_PROV_NAME_filled, UM_CVG_GUIDANCE_REQ_DATE_filled, UM_CVG_GUIDANCE_REQ_LOC_ID_LOC_NAME_filled, UM_CVG_GUIDANCE_REQ_VENDOR_ID_VENDOR_NAME_filled, UM_CVG_GUIDANCE_REQ_DEPT_ID_EXTERNAL_NAME_filled, UM_CVG_GUIDANCE_REQUEST_NOTE_filled, UM_CVG_GUIDANCE_LOB_ID_filled, UM_CVG_GUIDANCE_LOB_ID_LOB_NAME_filled, UM_CVG_GUIDANCE_PAYER_ID_PAYOR_NAME_filled, UM_CVG_GUIDANCE_PLAN_ID_BENEFIT_PLAN_NAME_filled, UM_CVG_GUIDANCE_CREATE_USER_ID_filled, UM_CVG_GUIDANCE_CREATE_USER_ID_NAME_filled, DENIAL_REASON_C_NAME_filled, AUTH_BED_DAY_TYPE_ID_filled, AUTH_BED_DAY_TYPE_ID_BED_DAY_TYPE_NAME_filled, NUM_DAYS_APPROVED_filled, NUM_NIGHTS_APPROVED_filled, EXT_SVC_MSG_filled, EXT_SVC_REF_NUM_filled, EXT_SVC_AUTH_NUM_filled, UM_CVG_GUIDANCE_RESP_AGENCY_ID_filled, UM_CVG_GUIDANCE_RESP_AGENCY_ID_AGENCY_NAME_filled, AUTH_BED_DAY_TX_STATUS_C_NAME_filled, UM_REQ_RX_QTY_filled, UM_REQ_RX_DISP_QTYUNIT_C_NAME_filled, UM_REQ_RX_DAYS_filled, REQ_UM_MED_TIER_C_NAME_filled, UM_MEDICATION_ID_MEDICATION_NAME_filled, UM_NDC_ID_filled, UM_NDC_ID_NDC_CODE_filled, UM_APRV_RX_QTY_filled, UM_APRV_RX_DISP_QTYUNIT_C_NAME_filled, UM_APRV_RX_DAYS_filled, APRV_UM_MED_TIER_C_NAME_filled, UM_CVG_GUIDANCE_POS_TYPE_C_NAME_filled, UM_FORMULARY_QL_QUANTITY_filled, UM_FORMULARY_QL_DISP_QTYUNIT_C_NAME_filled, UM_FORMULARY_QL_DAYS_filled, UM_FORMULARY_UM_MED_TIER_C_NAME_filled, UM_FINAL_STS_CHANGE_LOCAL_DTTM_filled, UM_FINAL_STS_CHANGE_UTC_DTTM_filled, UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -3941,15 +5436,23 @@ SELECT
     CAST(NULL AS INT) AS UM_FINAL_STS_CHANGE_LOCAL_DTTM_filled,
     CAST(NULL AS INT) AS UM_FINAL_STS_CHANGE_UTC_DTTM_filled,
     CAST(NULL AS INT) AS UM_CVG_GDNC_CVRD_MEM_BENEFIT_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_092;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_093 <- AUTH_UM_CVG_GUIDANCE_DX ----
 -- This table contains diagnosis information associated with a coverage guidance request.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_093 (
+    activity_year INT,
+    total_rows INT,
+    AUTH_ID_filled INT,
+    LINE_filled INT,
+    UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_093 (activity_year, total_rows, AUTH_ID_filled, LINE_filled, UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3957,25 +5460,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(UM_CVG_GUIDANCE_DX_ID_DX_NAME) AS UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_093
 FROM AUTH_UM_CVG_GUIDANCE_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_093 (activity_year, total_rows, AUTH_ID_filled, LINE_filled, UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS AUTH_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS UM_CVG_GUIDANCE_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_093;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_094 <- BDC_ADDL_CLAIM_STS_CSN ----
 -- This table contains information of contributing claim status messages for a claim status follow-up record.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_094 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    ADDL_CLAIM_RECON_CSN_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_094 (activity_year, total_rows, BDC_ID_filled, LINE_filled, ADDL_CLAIM_RECON_CSN_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -3983,25 +5494,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ADDL_CLAIM_RECON_CSN_ID) AS ADDL_CLAIM_RECON_CSN_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_094
 FROM BDC_ADDL_CLAIM_STS_CSN;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_094 (activity_year, total_rows, BDC_ID_filled, LINE_filled, ADDL_CLAIM_RECON_CSN_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ADDL_CLAIM_RECON_CSN_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_094;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_095 <- BDC_ASSOC_REMARK_CODES ----
 -- This table lists the remark codes associated with a Denial/Correspondence (BDC) record.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_095 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    REMARK_CODE_ID_filled INT,
+    REMARK_CODE_ID_REMIT_CODE_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_095 (activity_year, total_rows, BDC_ID_filled, LINE_filled, REMARK_CODE_ID_filled, REMARK_CODE_ID_REMIT_CODE_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4010,10 +5530,10 @@ SELECT
     COUNT(REMARK_CODE_ID) AS REMARK_CODE_ID_filled,
     COUNT(REMARK_CODE_ID_REMIT_CODE_NAME) AS REMARK_CODE_ID_REMIT_CODE_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_095
 FROM BDC_ASSOC_REMARK_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_095 (activity_year, total_rows, BDC_ID_filled, LINE_filled, REMARK_CODE_ID_filled, REMARK_CODE_ID_REMIT_CODE_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4021,15 +5541,25 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS REMARK_CODE_ID_filled,
     CAST(NULL AS INT) AS REMARK_CODE_ID_REMIT_CODE_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_095;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_096 <- BDC_CLAIM_STATUS ----
 -- This table contains information about the claim status for claim status follow-up (BDC) records, including claim status reason codes and claim status codes.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_096 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    CLAIM_STAT_RSN_C_NAME_filled INT,
+    CLM_STATUS_CODE_C_NAME_filled INT,
+    CLM_STATUS_DATA_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_096 (activity_year, total_rows, BDC_ID_filled, LINE_filled, CLAIM_STAT_RSN_C_NAME_filled, CLM_STATUS_CODE_C_NAME_filled, CLM_STATUS_DATA_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4039,10 +5569,10 @@ SELECT
     COUNT(CLM_STATUS_CODE_C_NAME) AS CLM_STATUS_CODE_C_NAME_filled,
     COUNT(CLM_STATUS_DATA) AS CLM_STATUS_DATA_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_096
 FROM BDC_CLAIM_STATUS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_096 (activity_year, total_rows, BDC_ID_filled, LINE_filled, CLAIM_STAT_RSN_C_NAME_filled, CLM_STATUS_CODE_C_NAME_filled, CLM_STATUS_DATA_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4051,14 +5581,70 @@ SELECT
     CAST(NULL AS INT) AS CLAIM_STAT_RSN_C_NAME_filled,
     CAST(NULL AS INT) AS CLM_STATUS_CODE_C_NAME_filled,
     CAST(NULL AS INT) AS CLM_STATUS_DATA_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_096;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_097 <- BDC_INFO ----
 -- This table contains Denial/Remark/Correspondence/Variance/Claim Status Follow-Up information from the Denial/Correspondence (BDC) master file. It includes information about the den
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_097 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    BDC_NAME_filled INT,
+    RECORD_TYPE_C_NAME_filled INT,
+    BUCKET_ID_filled INT,
+    RECORD_STATUS_C_NAME_filled INT,
+    RECORD_SOURCE_C_NAME_filled INT,
+    CLAIM_PRINT_ID_filled INT,
+    INVOICE_NUMBER_filled INT,
+    GRP_CODE_C_NAME_filled INT,
+    REMIT_CODE_ID_filled INT,
+    REMIT_CODE_ID_REMIT_CODE_NAME_filled INT,
+    EXTERNAL_CODE_filled INT,
+    INV_END_DATE_filled INT,
+    SOURCE_PMT_HB_TX_ID_filled INT,
+    EXP_ALLOW_AMT_filled INT,
+    RESOLVE_REASON_C_NAME_filled INT,
+    RESOLVE_COMMENTS_filled INT,
+    BDC_RECEIVE_DATE_filled INT,
+    BDC_COMPLETE_VOID_DATE_filled INT,
+    BDC_REOPEN_DATE_filled INT,
+    PB_INVOICE_ID_filled INT,
+    GUARANTOR_ID_filled INT,
+    DOC_INFO_ID_filled INT,
+    WRITE_OFF_AMT_SYS_filled INT,
+    WRITE_OFF_AMT_CALC_filled INT,
+    DISCREPANCY_AMT_SYS_filled INT,
+    CLM_EXT_VAL_ID_filled INT,
+    BILLING_DRG_filled INT,
+    PAYER_RECOMMENDED_DRG_filled INT,
+    FINAL_RESOLUTION_DRG_filled INT,
+    EXPECTED_RECOVERY_AMT_filled INT,
+    ACTUAL_RECOVERY_AMT_USER_filled INT,
+    WRITE_OFF_AMT_USER_filled INT,
+    EXT_PAT_NAME_filled INT,
+    EXT_PAT_MRN_filled INT,
+    EXT_ADMIT_DATE_filled INT,
+    EXT_DISCHARGE_DATE_filled INT,
+    EXT_CLAIM_NUM_filled INT,
+    EXT_PAT_BIRTH_DATE_filled INT,
+    SOURCE_PMT_PB_TX_ID_filled INT,
+    DFLT_CLASS_USES_REMARK_CODE_ID_filled INT,
+    DFLT_CLASS_USES_REMARK_CODE_ID_REMIT_CODE_NAME_filled INT,
+    APPEAL_DEADLINE_DATE_filled INT,
+    PAYER_DOWNGRADE_TYPE_C_NAME_filled INT,
+    PAYER_DOWNGRADE_OUTCOME_C_NAME_filled INT,
+    RECONCILE_CLAIM_STATUS_C_NAME_filled INT,
+    INT_CONTROL_NUMBER_filled INT,
+    CLAIM_RECON_ID_filled INT,
+    CLAIM_RECON_CSN_ID_filled INT,
+    FOLLOW_UP_CONTEXT_C_NAME_filled INT,
+    APPEAL_LLM_TEXT_GENERATED_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_097 (activity_year, total_rows, BDC_ID_filled, BDC_NAME_filled, RECORD_TYPE_C_NAME_filled, BUCKET_ID_filled, RECORD_STATUS_C_NAME_filled, RECORD_SOURCE_C_NAME_filled, CLAIM_PRINT_ID_filled, INVOICE_NUMBER_filled, GRP_CODE_C_NAME_filled, REMIT_CODE_ID_filled, REMIT_CODE_ID_REMIT_CODE_NAME_filled, EXTERNAL_CODE_filled, INV_END_DATE_filled, SOURCE_PMT_HB_TX_ID_filled, EXP_ALLOW_AMT_filled, RESOLVE_REASON_C_NAME_filled, RESOLVE_COMMENTS_filled, BDC_RECEIVE_DATE_filled, BDC_COMPLETE_VOID_DATE_filled, BDC_REOPEN_DATE_filled, PB_INVOICE_ID_filled, GUARANTOR_ID_filled, DOC_INFO_ID_filled, WRITE_OFF_AMT_SYS_filled, WRITE_OFF_AMT_CALC_filled, DISCREPANCY_AMT_SYS_filled, CLM_EXT_VAL_ID_filled, BILLING_DRG_filled, PAYER_RECOMMENDED_DRG_filled, FINAL_RESOLUTION_DRG_filled, EXPECTED_RECOVERY_AMT_filled, ACTUAL_RECOVERY_AMT_USER_filled, WRITE_OFF_AMT_USER_filled, EXT_PAT_NAME_filled, EXT_PAT_MRN_filled, EXT_ADMIT_DATE_filled, EXT_DISCHARGE_DATE_filled, EXT_CLAIM_NUM_filled, EXT_PAT_BIRTH_DATE_filled, SOURCE_PMT_PB_TX_ID_filled, DFLT_CLASS_USES_REMARK_CODE_ID_filled, DFLT_CLASS_USES_REMARK_CODE_ID_REMIT_CODE_NAME_filled, APPEAL_DEADLINE_DATE_filled, PAYER_DOWNGRADE_TYPE_C_NAME_filled, PAYER_DOWNGRADE_OUTCOME_C_NAME_filled, RECONCILE_CLAIM_STATUS_C_NAME_filled, INT_CONTROL_NUMBER_filled, CLAIM_RECON_ID_filled, CLAIM_RECON_CSN_ID_filled, FOLLOW_UP_CONTEXT_C_NAME_filled, APPEAL_LLM_TEXT_GENERATED_YN_filled, query_error)
 SELECT
     YEAR(INV_END_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4114,11 +5700,11 @@ SELECT
     COUNT(FOLLOW_UP_CONTEXT_C_NAME) AS FOLLOW_UP_CONTEXT_C_NAME_filled,
     COUNT(APPEAL_LLM_TEXT_GENERATED_YN) AS APPEAL_LLM_TEXT_GENERATED_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_097
 FROM BDC_INFO
 GROUP BY YEAR(INV_END_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_097 (activity_year, total_rows, BDC_ID_filled, BDC_NAME_filled, RECORD_TYPE_C_NAME_filled, BUCKET_ID_filled, RECORD_STATUS_C_NAME_filled, RECORD_SOURCE_C_NAME_filled, CLAIM_PRINT_ID_filled, INVOICE_NUMBER_filled, GRP_CODE_C_NAME_filled, REMIT_CODE_ID_filled, REMIT_CODE_ID_REMIT_CODE_NAME_filled, EXTERNAL_CODE_filled, INV_END_DATE_filled, SOURCE_PMT_HB_TX_ID_filled, EXP_ALLOW_AMT_filled, RESOLVE_REASON_C_NAME_filled, RESOLVE_COMMENTS_filled, BDC_RECEIVE_DATE_filled, BDC_COMPLETE_VOID_DATE_filled, BDC_REOPEN_DATE_filled, PB_INVOICE_ID_filled, GUARANTOR_ID_filled, DOC_INFO_ID_filled, WRITE_OFF_AMT_SYS_filled, WRITE_OFF_AMT_CALC_filled, DISCREPANCY_AMT_SYS_filled, CLM_EXT_VAL_ID_filled, BILLING_DRG_filled, PAYER_RECOMMENDED_DRG_filled, FINAL_RESOLUTION_DRG_filled, EXPECTED_RECOVERY_AMT_filled, ACTUAL_RECOVERY_AMT_USER_filled, WRITE_OFF_AMT_USER_filled, EXT_PAT_NAME_filled, EXT_PAT_MRN_filled, EXT_ADMIT_DATE_filled, EXT_DISCHARGE_DATE_filled, EXT_CLAIM_NUM_filled, EXT_PAT_BIRTH_DATE_filled, SOURCE_PMT_PB_TX_ID_filled, DFLT_CLASS_USES_REMARK_CODE_ID_filled, DFLT_CLASS_USES_REMARK_CODE_ID_REMIT_CODE_NAME_filled, APPEAL_DEADLINE_DATE_filled, PAYER_DOWNGRADE_TYPE_C_NAME_filled, PAYER_DOWNGRADE_OUTCOME_C_NAME_filled, RECONCILE_CLAIM_STATUS_C_NAME_filled, INT_CONTROL_NUMBER_filled, CLAIM_RECON_ID_filled, CLAIM_RECON_CSN_ID_filled, FOLLOW_UP_CONTEXT_C_NAME_filled, APPEAL_LLM_TEXT_GENERATED_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4173,15 +5759,23 @@ SELECT
     CAST(NULL AS INT) AS CLAIM_RECON_CSN_ID_filled,
     CAST(NULL AS INT) AS FOLLOW_UP_CONTEXT_C_NAME_filled,
     CAST(NULL AS INT) AS APPEAL_LLM_TEXT_GENERATED_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_097;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_098 <- BDC_LOINC_CODES ----
 -- This table contains LOINC code and mapping information that will help identify documentations needed from loading a 277 RF(A)I message.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_098 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    LOINC_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_098 (activity_year, total_rows, BDC_ID_filled, LINE_filled, LOINC_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4189,25 +5783,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(LOINC_CODE) AS LOINC_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_098
 FROM BDC_LOINC_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_098 (activity_year, total_rows, BDC_ID_filled, LINE_filled, LOINC_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS LOINC_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_098;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_099 <- BDC_PB_CHGS ----
 -- This table stores PB Denial/Correspondence (BDC) denial records and the charge transactions that were denied by that denial record.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_099 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    TX_ID_filled INT,
+    FOL_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_099 (activity_year, total_rows, BDC_ID_filled, LINE_filled, TX_ID_filled, FOL_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4216,10 +5819,10 @@ SELECT
     COUNT(TX_ID) AS TX_ID_filled,
     COUNT(FOL_ID) AS FOL_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_099
 FROM BDC_PB_CHGS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_099 (activity_year, total_rows, BDC_ID_filled, LINE_filled, TX_ID_filled, FOL_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4227,15 +5830,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS TX_ID_filled,
     CAST(NULL AS INT) AS FOL_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_099;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_100 <- BUNDLE_CHARGE_DX ----
 -- Clarity table for bundleable charge diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_100 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUAL_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_100 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4244,10 +5856,10 @@ SELECT
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUAL_C_NAME) AS DX_QUAL_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_100
 FROM BUNDLE_CHARGE_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_100 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4255,15 +5867,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DX_QUAL_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_100;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_101 <- CANCER_RISK_SCORE_AGE ----
 -- This table contains the age associated with a risk score.
 -- Bucket(s): HCC / Risk adjustment
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_101 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    SCORE_AGE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_101 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, SCORE_AGE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4272,10 +5893,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(SCORE_AGE) AS SCORE_AGE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_101
 FROM CANCER_RISK_SCORE_AGE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_101 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, SCORE_AGE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4283,15 +5904,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS SCORE_AGE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_101;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_102 <- CANCER_RISK_SCORE_DX ----
 -- This table contains the diagnoses associated with the risk scores saved to the patient encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding;HCC / Risk adjustment
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_102 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    SCORE_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_102 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, SCORE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4300,10 +5930,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(SCORE_DX_ID_DX_NAME) AS SCORE_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_102
 FROM CANCER_RISK_SCORE_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_102 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, SCORE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4311,14 +5941,26 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS SCORE_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_102;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_103 <- CANCER_RISK_SCORE_TYPE ----
 -- This table contains the types of risk scores saved to the patient encounter.
 -- Bucket(s): HCC / Risk adjustment
+CREATE TABLE #fc_103 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    CANCER_RISK_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_103 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, CANCER_RISK_TYPE_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4330,11 +5972,11 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(CANCER_RISK_TYPE_C_NAME) AS CANCER_RISK_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_103
 FROM CANCER_RISK_SCORE_TYPE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_103 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, CANCER_RISK_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4345,15 +5987,23 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS CANCER_RISK_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_103;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_104 <- CASE_DX ----
 -- The CASE_DX table allows you to report on diagnoses associated with case records.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_104 (
+    activity_year INT,
+    total_rows INT,
+    CASE_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_104 (activity_year, total_rows, CASE_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4361,25 +6011,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_104
 FROM CASE_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_104 (activity_year, total_rows, CASE_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CASE_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_104;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_105 <- CASE_ICD_PROC ----
 -- The CASE_ICD_PROC table contains information about ICD procedures associated with case records.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_105 (
+    activity_year INT,
+    total_rows INT,
+    CASE_ID_filled INT,
+    LINE_filled INT,
+    ICD_PX_ID_filled INT,
+    ICD_PX_ID_ICD_PX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_105 (activity_year, total_rows, CASE_ID_filled, LINE_filled, ICD_PX_ID_filled, ICD_PX_ID_ICD_PX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4388,10 +6047,10 @@ SELECT
     COUNT(ICD_PX_ID) AS ICD_PX_ID_filled,
     COUNT(ICD_PX_ID_ICD_PX_NAME) AS ICD_PX_ID_ICD_PX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_105
 FROM CASE_ICD_PROC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_105 (activity_year, total_rows, CASE_ID_filled, LINE_filled, ICD_PX_ID_filled, ICD_PX_ID_ICD_PX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4399,14 +6058,28 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ICD_PX_ID_filled,
     CAST(NULL AS INT) AS ICD_PX_ID_ICD_PX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_105;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_106 <- CDI_WORKING_DX ----
 -- The CDI_WORKING_DX table contains information related to working diagnoses for a Clinical Documentation Improvement (CDI) review.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_106 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    CDI_WKG_DX_ID_DX_NAME_filled INT,
+    CDI_WKG_DX_POA_C_NAME_filled INT,
+    CONTACT_SERIAL_NUM_filled INT,
+    CDI_WKG_DX_CC_C_NAME_filled INT,
+    WKG_DX_HAC_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_106 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, CDI_WKG_DX_ID_DX_NAME_filled, CDI_WKG_DX_POA_C_NAME_filled, CONTACT_SERIAL_NUM_filled, CDI_WKG_DX_CC_C_NAME_filled, WKG_DX_HAC_YN_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4420,11 +6093,11 @@ SELECT
     COUNT(CDI_WKG_DX_CC_C_NAME) AS CDI_WKG_DX_CC_C_NAME_filled,
     COUNT(WKG_DX_HAC_YN) AS WKG_DX_HAC_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_106
 FROM CDI_WORKING_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_106 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, CDI_WKG_DX_ID_DX_NAME_filled, CDI_WKG_DX_POA_C_NAME_filled, CONTACT_SERIAL_NUM_filled, CDI_WKG_DX_CC_C_NAME_filled, WKG_DX_HAC_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4437,14 +6110,25 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_SERIAL_NUM_filled,
     CAST(NULL AS INT) AS CDI_WKG_DX_CC_C_NAME_filled,
     CAST(NULL AS INT) AS WKG_DX_HAC_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_106;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_107 <- CDI_WORKING_DX_HACS ----
 -- The Hospital Acquired Conditions (HACs) associated with working review diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_107 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    WKG_DX_HAC_CAT_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_107 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, WKG_DX_HAC_CAT_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4455,11 +6139,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(WKG_DX_HAC_CAT_C_NAME) AS WKG_DX_HAC_CAT_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_107
 FROM CDI_WORKING_DX_HACS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_107 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, WKG_DX_HAC_CAT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4469,15 +6153,23 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS WKG_DX_HAC_CAT_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_107;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_108 <- CHG_REVIEW_DX ----
 -- This table contains one row for each diagnosis entered on a temporary accounts receivable (TAR) record that is or has been in a charge review workqueue. This is not the diagnosis a
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_108 (
+    activity_year INT,
+    total_rows INT,
+    TAR_ID_filled INT,
+    LINE_filled INT,
+    DX_QUAL_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_108 (activity_year, total_rows, TAR_ID_filled, LINE_filled, DX_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4485,24 +6177,167 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_QUAL_C_NAME) AS DX_QUAL_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_108
 FROM CHG_REVIEW_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_108 (activity_year, total_rows, TAR_ID_filled, LINE_filled, DX_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS TAR_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_QUAL_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_108;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_109 <- CLAIM_INFO ----
 -- This table contains information from claim info records for Hospital and Professional Billing.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_109 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    CLAIM_NAME_filled INT,
+    ACCOUNT_ID_filled INT,
+    CLAIM_TYPE_C_NAME_filled INT,
+    USER_ID_filled INT,
+    USER_ID_NAME_filled INT,
+    ENTRY_DATE_filled INT,
+    COVERAGE_ID_filled INT,
+    ADMIT_DATETIME_filled INT,
+    CLM_PAT_STATUS_C_NAME_filled INT,
+    PROV_ID_PROV_NAME_filled INT,
+    ADMISSION_SOURCE_C_NAME_filled INT,
+    ADMISSION_TYPE_C_NAME_filled INT,
+    ADMIT_DX_ID_DX_NAME_filled INT,
+    ILL_INJ_LMP_C_NAME_filled INT,
+    REL_CONDITION_C_NAME_filled INT,
+    DOC_CTRL_NUM_filled INT,
+    INJURY_DATETIME_filled INT,
+    ACCIDENT_TYPE_C_NAME_filled INT,
+    IS_EPSDT_YN_filled INT,
+    EPSDT_CODE_C_NAME_filled INT,
+    WC_CLAIM_NUM_filled INT,
+    WC_EMPLOYER_ID_filled INT,
+    WC_EMPLOYER_ID_EMPLOYER_NAME_filled INT,
+    TRAN_CODE_C_NAME_filled INT,
+    TRAN_REASON_C_NAME_filled INT,
+    TRAN_DIST_filled INT,
+    CLM_LOGIN_SA_ID_LOC_NAME_filled INT,
+    ILL_INJ_LMP_DT_filled INT,
+    AUTO_ACDNT_STATE_C_NAME_filled INT,
+    EMPY_RELATED_YN_filled INT,
+    FIRST_CONSULT_DT_filled INT,
+    PAT_CHIEF_COMPLAINT_filled INT,
+    EMERG_YN_filled INT,
+    LAST_WORKED_DT_filled INT,
+    RETURN_TO_WORK_DT_filled INT,
+    DISCHARGE_DT_filled INT,
+    OUTSIDE_LAB_NAME_C_NAME_filled INT,
+    HLTH_APPR_SCRN_YN_filled INT,
+    SIG_ON_FILE_YN_filled INT,
+    WK_COMP_CLAIM_NUM_filled INT,
+    WK_COMP_INJ_DESC_filled INT,
+    WK_COMP_APRV_CODE_filled INT,
+    WK_COMP_MED_RLS_DT_filled INT,
+    DF_DELAY_RSN_CODE_C_NAME_filled INT,
+    FIRST_NEXT_VISIT_C_NAME_filled INT,
+    MED_HX_SOC_WORKER_filled INT,
+    MED_HX_PSYCHOLOGIST_filled INT,
+    MED_HX_SUP_PROV_filled INT,
+    MED_HX_COUNSELOR_filled INT,
+    HDH_RFL_CODE_C_NAME_filled INT,
+    PHY_EXAM_CODE_C_NAME_filled INT,
+    PHY_EXAM_RFL_CODE_C_NAME_filled INT,
+    VISION_EXAM_CODE_C_NAME_filled INT,
+    VISION_RFL_CODE_C_NAME_filled INT,
+    HEARING_EXAM_CODE_C_NAME_filled INT,
+    HEARING_RFL_CODE_C_NAME_filled INT,
+    DEV_EXAM_CODE_C_NAME_filled INT,
+    DEV_RFL_CODE_C_NAME_filled INT,
+    NUTRI_EXAM_CODE_C_NAME_filled INT,
+    NUTRI_RFL_CODE_C_NAME_filled INT,
+    OTHER_TREATMNT_DT_filled INT,
+    HOSPITAL_NAME_filled INT,
+    HOSPITAL_ADDRESS_filled INT,
+    HOSPITAL_CITY_filled INT,
+    HOSPITAL_STATE_C_NAME_filled INT,
+    HOSPITAL_ZIP_filled INT,
+    HOSP_REQ_YN_filled INT,
+    ADV_RET_WORK_YN_filled INT,
+    ADV_RET_WORK_DT_filled INT,
+    REF_PHYS_NAME_filled INT,
+    REF_PHYS_ADDR_filled INT,
+    REF_PHYS_CITY_filled INT,
+    REF_PHYS_STATE_C_NAME_filled INT,
+    REF_PHYS_ZIP_filled INT,
+    REF_PHYS_SPEC_C_NAME_filled INT,
+    REF_PHYS_REASON_C_NAME_filled INT,
+    FIRST_TREAT_HOUR_TM_filled INT,
+    PAT_PREV_TREATED_YN_filled INT,
+    IDE_NUM_filled INT,
+    EST_DOB_DT_filled INT,
+    RESPONSIBLE_IND_YN_filled INT,
+    REFERRAL_SOURCE_ID_filled INT,
+    REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled INT,
+    EMERGENCY_CODE_C_NAME_filled INT,
+    DISABILITY_LEVEL_C_NAME_filled INT,
+    DISABILITY_FROM_DT_filled INT,
+    DISABILITY_TO_DT_filled INT,
+    OUTSIDE_LAB_YN_filled INT,
+    OUTSIDE_LAB_CHARGE_filled INT,
+    FAM_PLANNING_YN_filled INT,
+    SPECIAL_PROGRAM_C_NAME_filled INT,
+    PGM_FOR_HANDICAP_C_NAME_filled INT,
+    EMPLOYER_LOB_filled INT,
+    OTH_INFO_filled INT,
+    AUTH_DT_filled INT,
+    CHIR_FIRST_TREAT_DT_filled INT,
+    CHIR_X_RAY_DT_filled INT,
+    NAT_OF_COND_C_NAME_filled INT,
+    CHIR_ACUTE_MANI_DT_filled INT,
+    HBG_HCT_TEST_INCL_C_NAME_filled INT,
+    URINALYSIS_INCL_C_NAME_filled INT,
+    TUBERCULOSIS_INCL_C_NAME_filled INT,
+    LEAD_TEST_INCL_C_NAME_filled INT,
+    SICKLE_CELL_INCL_C_NAME_filled INT,
+    IMMNZTN_INCL_C_NAME_filled INT,
+    CARDIO_EXAM_CODE_C_NAME_filled INT,
+    CARDIO_RFL_CODE_C_NAME_filled INT,
+    URINARY_EXAM_CODE_C_NAME_filled INT,
+    URINARY_RFL_CODE_C_NAME_filled INT,
+    DIABETE_EXAM_CODE_C_NAME_filled INT,
+    DIABETE_RFL_CODE_C_NAME_filled INT,
+    DENTAL_EXAM_CODE_C_NAME_filled INT,
+    DENTAL_RFL_CODE_C_NAME_filled INT,
+    IMMNZTN_RFL_CODE_C_NAME_filled INT,
+    EDU_EXAM_CODE_C_NAME_filled INT,
+    EDU_RFL_CODE_C_NAME_filled INT,
+    ONLY_CAUSE_YN_filled INT,
+    PAT_BURNED_YN_filled INT,
+    XRAY_BY_WHOM_filled INT,
+    WC_XRAY_DT_filled INT,
+    POLIO_IMMNZTN_C_NAME_filled INT,
+    DPT_TD_IMMNZTN_C_NAME_filled INT,
+    MEASLES_IMMNZTN_C_NAME_filled INT,
+    MUMPS_IMMNZTN_C_NAME_filled INT,
+    RUBELLA_IMMNZTN_C_NAME_filled INT,
+    HIB_IMMNZTN_C_NAME_filled INT,
+    CHAMP_NONAVAIL_YN_filled INT,
+    CHAMP_NONAV_STMT_NO_filled INT,
+    CHAMPUS_ORG_filled INT,
+    CHAMPUS_STATION_filled INT,
+    CHAMP_MILIT_ACC_YN_filled INT,
+    ALTERNATE_CLM_ID_filled INT,
+    REF_PROVIDER_ID_PROV_NAME_filled INT,
+    MC_CLAIMS_WKFLOW_C_NAME_filled INT,
+    CLM_SENSITIVITY_C_NAME_filled INT,
+    PLACE_OF_SERVICE_ID_LOC_NAME_filled INT,
+    LOC_ID_LOC_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_109 (activity_year, total_rows, CLAIM_ID_filled, CLAIM_NAME_filled, ACCOUNT_ID_filled, CLAIM_TYPE_C_NAME_filled, USER_ID_filled, USER_ID_NAME_filled, ENTRY_DATE_filled, COVERAGE_ID_filled, ADMIT_DATETIME_filled, CLM_PAT_STATUS_C_NAME_filled, PROV_ID_PROV_NAME_filled, ADMISSION_SOURCE_C_NAME_filled, ADMISSION_TYPE_C_NAME_filled, ADMIT_DX_ID_DX_NAME_filled, ILL_INJ_LMP_C_NAME_filled, REL_CONDITION_C_NAME_filled, DOC_CTRL_NUM_filled, INJURY_DATETIME_filled, ACCIDENT_TYPE_C_NAME_filled, IS_EPSDT_YN_filled, EPSDT_CODE_C_NAME_filled, WC_CLAIM_NUM_filled, WC_EMPLOYER_ID_filled, WC_EMPLOYER_ID_EMPLOYER_NAME_filled, TRAN_CODE_C_NAME_filled, TRAN_REASON_C_NAME_filled, TRAN_DIST_filled, CLM_LOGIN_SA_ID_LOC_NAME_filled, ILL_INJ_LMP_DT_filled, AUTO_ACDNT_STATE_C_NAME_filled, EMPY_RELATED_YN_filled, FIRST_CONSULT_DT_filled, PAT_CHIEF_COMPLAINT_filled, EMERG_YN_filled, LAST_WORKED_DT_filled, RETURN_TO_WORK_DT_filled, DISCHARGE_DT_filled, OUTSIDE_LAB_NAME_C_NAME_filled, HLTH_APPR_SCRN_YN_filled, SIG_ON_FILE_YN_filled, WK_COMP_CLAIM_NUM_filled, WK_COMP_INJ_DESC_filled, WK_COMP_APRV_CODE_filled, WK_COMP_MED_RLS_DT_filled, DF_DELAY_RSN_CODE_C_NAME_filled, FIRST_NEXT_VISIT_C_NAME_filled, MED_HX_SOC_WORKER_filled, MED_HX_PSYCHOLOGIST_filled, MED_HX_SUP_PROV_filled, MED_HX_COUNSELOR_filled, HDH_RFL_CODE_C_NAME_filled, PHY_EXAM_CODE_C_NAME_filled, PHY_EXAM_RFL_CODE_C_NAME_filled, VISION_EXAM_CODE_C_NAME_filled, VISION_RFL_CODE_C_NAME_filled, HEARING_EXAM_CODE_C_NAME_filled, HEARING_RFL_CODE_C_NAME_filled, DEV_EXAM_CODE_C_NAME_filled, DEV_RFL_CODE_C_NAME_filled, NUTRI_EXAM_CODE_C_NAME_filled, NUTRI_RFL_CODE_C_NAME_filled, OTHER_TREATMNT_DT_filled, HOSPITAL_NAME_filled, HOSPITAL_ADDRESS_filled, HOSPITAL_CITY_filled, HOSPITAL_STATE_C_NAME_filled, HOSPITAL_ZIP_filled, HOSP_REQ_YN_filled, ADV_RET_WORK_YN_filled, ADV_RET_WORK_DT_filled, REF_PHYS_NAME_filled, REF_PHYS_ADDR_filled, REF_PHYS_CITY_filled, REF_PHYS_STATE_C_NAME_filled, REF_PHYS_ZIP_filled, REF_PHYS_SPEC_C_NAME_filled, REF_PHYS_REASON_C_NAME_filled, FIRST_TREAT_HOUR_TM_filled, PAT_PREV_TREATED_YN_filled, IDE_NUM_filled, EST_DOB_DT_filled, RESPONSIBLE_IND_YN_filled, REFERRAL_SOURCE_ID_filled, REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled, EMERGENCY_CODE_C_NAME_filled, DISABILITY_LEVEL_C_NAME_filled, DISABILITY_FROM_DT_filled, DISABILITY_TO_DT_filled, OUTSIDE_LAB_YN_filled, OUTSIDE_LAB_CHARGE_filled, FAM_PLANNING_YN_filled, SPECIAL_PROGRAM_C_NAME_filled, PGM_FOR_HANDICAP_C_NAME_filled, EMPLOYER_LOB_filled, OTH_INFO_filled, AUTH_DT_filled, CHIR_FIRST_TREAT_DT_filled, CHIR_X_RAY_DT_filled, NAT_OF_COND_C_NAME_filled, CHIR_ACUTE_MANI_DT_filled, HBG_HCT_TEST_INCL_C_NAME_filled, URINALYSIS_INCL_C_NAME_filled, TUBERCULOSIS_INCL_C_NAME_filled, LEAD_TEST_INCL_C_NAME_filled, SICKLE_CELL_INCL_C_NAME_filled, IMMNZTN_INCL_C_NAME_filled, CARDIO_EXAM_CODE_C_NAME_filled, CARDIO_RFL_CODE_C_NAME_filled, URINARY_EXAM_CODE_C_NAME_filled, URINARY_RFL_CODE_C_NAME_filled, DIABETE_EXAM_CODE_C_NAME_filled, DIABETE_RFL_CODE_C_NAME_filled, DENTAL_EXAM_CODE_C_NAME_filled, DENTAL_RFL_CODE_C_NAME_filled, IMMNZTN_RFL_CODE_C_NAME_filled, EDU_EXAM_CODE_C_NAME_filled, EDU_RFL_CODE_C_NAME_filled, ONLY_CAUSE_YN_filled, PAT_BURNED_YN_filled, XRAY_BY_WHOM_filled, WC_XRAY_DT_filled, POLIO_IMMNZTN_C_NAME_filled, DPT_TD_IMMNZTN_C_NAME_filled, MEASLES_IMMNZTN_C_NAME_filled, MUMPS_IMMNZTN_C_NAME_filled, RUBELLA_IMMNZTN_C_NAME_filled, HIB_IMMNZTN_C_NAME_filled, CHAMP_NONAVAIL_YN_filled, CHAMP_NONAV_STMT_NO_filled, CHAMPUS_ORG_filled, CHAMPUS_STATION_filled, CHAMP_MILIT_ACC_YN_filled, ALTERNATE_CLM_ID_filled, REF_PROVIDER_ID_PROV_NAME_filled, MC_CLAIMS_WKFLOW_C_NAME_filled, CLM_SENSITIVITY_C_NAME_filled, PLACE_OF_SERVICE_ID_LOC_NAME_filled, LOC_ID_LOC_NAME_filled, query_error)
 SELECT
     YEAR(ENTRY_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4645,11 +6480,11 @@ SELECT
     COUNT(PLACE_OF_SERVICE_ID_LOC_NAME) AS PLACE_OF_SERVICE_ID_LOC_NAME_filled,
     COUNT(LOC_ID_LOC_NAME) AS LOC_ID_LOC_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_109
 FROM CLAIM_INFO
 GROUP BY YEAR(ENTRY_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_109 (activity_year, total_rows, CLAIM_ID_filled, CLAIM_NAME_filled, ACCOUNT_ID_filled, CLAIM_TYPE_C_NAME_filled, USER_ID_filled, USER_ID_NAME_filled, ENTRY_DATE_filled, COVERAGE_ID_filled, ADMIT_DATETIME_filled, CLM_PAT_STATUS_C_NAME_filled, PROV_ID_PROV_NAME_filled, ADMISSION_SOURCE_C_NAME_filled, ADMISSION_TYPE_C_NAME_filled, ADMIT_DX_ID_DX_NAME_filled, ILL_INJ_LMP_C_NAME_filled, REL_CONDITION_C_NAME_filled, DOC_CTRL_NUM_filled, INJURY_DATETIME_filled, ACCIDENT_TYPE_C_NAME_filled, IS_EPSDT_YN_filled, EPSDT_CODE_C_NAME_filled, WC_CLAIM_NUM_filled, WC_EMPLOYER_ID_filled, WC_EMPLOYER_ID_EMPLOYER_NAME_filled, TRAN_CODE_C_NAME_filled, TRAN_REASON_C_NAME_filled, TRAN_DIST_filled, CLM_LOGIN_SA_ID_LOC_NAME_filled, ILL_INJ_LMP_DT_filled, AUTO_ACDNT_STATE_C_NAME_filled, EMPY_RELATED_YN_filled, FIRST_CONSULT_DT_filled, PAT_CHIEF_COMPLAINT_filled, EMERG_YN_filled, LAST_WORKED_DT_filled, RETURN_TO_WORK_DT_filled, DISCHARGE_DT_filled, OUTSIDE_LAB_NAME_C_NAME_filled, HLTH_APPR_SCRN_YN_filled, SIG_ON_FILE_YN_filled, WK_COMP_CLAIM_NUM_filled, WK_COMP_INJ_DESC_filled, WK_COMP_APRV_CODE_filled, WK_COMP_MED_RLS_DT_filled, DF_DELAY_RSN_CODE_C_NAME_filled, FIRST_NEXT_VISIT_C_NAME_filled, MED_HX_SOC_WORKER_filled, MED_HX_PSYCHOLOGIST_filled, MED_HX_SUP_PROV_filled, MED_HX_COUNSELOR_filled, HDH_RFL_CODE_C_NAME_filled, PHY_EXAM_CODE_C_NAME_filled, PHY_EXAM_RFL_CODE_C_NAME_filled, VISION_EXAM_CODE_C_NAME_filled, VISION_RFL_CODE_C_NAME_filled, HEARING_EXAM_CODE_C_NAME_filled, HEARING_RFL_CODE_C_NAME_filled, DEV_EXAM_CODE_C_NAME_filled, DEV_RFL_CODE_C_NAME_filled, NUTRI_EXAM_CODE_C_NAME_filled, NUTRI_RFL_CODE_C_NAME_filled, OTHER_TREATMNT_DT_filled, HOSPITAL_NAME_filled, HOSPITAL_ADDRESS_filled, HOSPITAL_CITY_filled, HOSPITAL_STATE_C_NAME_filled, HOSPITAL_ZIP_filled, HOSP_REQ_YN_filled, ADV_RET_WORK_YN_filled, ADV_RET_WORK_DT_filled, REF_PHYS_NAME_filled, REF_PHYS_ADDR_filled, REF_PHYS_CITY_filled, REF_PHYS_STATE_C_NAME_filled, REF_PHYS_ZIP_filled, REF_PHYS_SPEC_C_NAME_filled, REF_PHYS_REASON_C_NAME_filled, FIRST_TREAT_HOUR_TM_filled, PAT_PREV_TREATED_YN_filled, IDE_NUM_filled, EST_DOB_DT_filled, RESPONSIBLE_IND_YN_filled, REFERRAL_SOURCE_ID_filled, REFERRAL_SOURCE_ID_REFERRING_PROV_NAM_filled, EMERGENCY_CODE_C_NAME_filled, DISABILITY_LEVEL_C_NAME_filled, DISABILITY_FROM_DT_filled, DISABILITY_TO_DT_filled, OUTSIDE_LAB_YN_filled, OUTSIDE_LAB_CHARGE_filled, FAM_PLANNING_YN_filled, SPECIAL_PROGRAM_C_NAME_filled, PGM_FOR_HANDICAP_C_NAME_filled, EMPLOYER_LOB_filled, OTH_INFO_filled, AUTH_DT_filled, CHIR_FIRST_TREAT_DT_filled, CHIR_X_RAY_DT_filled, NAT_OF_COND_C_NAME_filled, CHIR_ACUTE_MANI_DT_filled, HBG_HCT_TEST_INCL_C_NAME_filled, URINALYSIS_INCL_C_NAME_filled, TUBERCULOSIS_INCL_C_NAME_filled, LEAD_TEST_INCL_C_NAME_filled, SICKLE_CELL_INCL_C_NAME_filled, IMMNZTN_INCL_C_NAME_filled, CARDIO_EXAM_CODE_C_NAME_filled, CARDIO_RFL_CODE_C_NAME_filled, URINARY_EXAM_CODE_C_NAME_filled, URINARY_RFL_CODE_C_NAME_filled, DIABETE_EXAM_CODE_C_NAME_filled, DIABETE_RFL_CODE_C_NAME_filled, DENTAL_EXAM_CODE_C_NAME_filled, DENTAL_RFL_CODE_C_NAME_filled, IMMNZTN_RFL_CODE_C_NAME_filled, EDU_EXAM_CODE_C_NAME_filled, EDU_RFL_CODE_C_NAME_filled, ONLY_CAUSE_YN_filled, PAT_BURNED_YN_filled, XRAY_BY_WHOM_filled, WC_XRAY_DT_filled, POLIO_IMMNZTN_C_NAME_filled, DPT_TD_IMMNZTN_C_NAME_filled, MEASLES_IMMNZTN_C_NAME_filled, MUMPS_IMMNZTN_C_NAME_filled, RUBELLA_IMMNZTN_C_NAME_filled, HIB_IMMNZTN_C_NAME_filled, CHAMP_NONAVAIL_YN_filled, CHAMP_NONAV_STMT_NO_filled, CHAMPUS_ORG_filled, CHAMPUS_STATION_filled, CHAMP_MILIT_ACC_YN_filled, ALTERNATE_CLM_ID_filled, REF_PROVIDER_ID_PROV_NAME_filled, MC_CLAIMS_WKFLOW_C_NAME_filled, CLM_SENSITIVITY_C_NAME_filled, PLACE_OF_SERVICE_ID_LOC_NAME_filled, LOC_ID_LOC_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4791,15 +6626,23 @@ SELECT
     CAST(NULL AS INT) AS CLM_SENSITIVITY_C_NAME_filled,
     CAST(NULL AS INT) AS PLACE_OF_SERVICE_ID_LOC_NAME_filled,
     CAST(NULL AS INT) AS LOC_ID_LOC_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_109;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_110 <- CLM_DIAGNOSIS ----
 -- Claim Information (CLM) diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_110 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_110 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4807,25 +6650,43 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_110
 FROM CLM_DIAGNOSIS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_110 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CLAIM_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_110;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_111 <- CLM_DX ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_DX table holds the diagnoses for the claim.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_111 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    CLM_DX_QUAL_filled INT,
+    CLM_DX_filled INT,
+    CLM_DX_POA_filled INT,
+    CLM_DX_CODE_SET_OID_filled INT,
+    CLM_DX_RANK_filled INT,
+    CLM_DX_FROM_HEADER_YN_filled INT,
+    RX_DX_QUAL_filled INT,
+    CLM_AP_DX_POA_C_NAME_filled INT,
+    DX_TYPE_filled INT,
+    DX_INFO_TYPE_filled INT,
+    CMS_DX_TYPE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_111 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, CLM_DX_QUAL_filled, CLM_DX_filled, CLM_DX_POA_filled, CLM_DX_CODE_SET_OID_filled, CLM_DX_RANK_filled, CLM_DX_FROM_HEADER_YN_filled, RX_DX_QUAL_filled, CLM_AP_DX_POA_C_NAME_filled, DX_TYPE_filled, DX_INFO_TYPE_filled, CMS_DX_TYPE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4843,10 +6704,10 @@ SELECT
     COUNT(DX_INFO_TYPE) AS DX_INFO_TYPE_filled,
     COUNT(CMS_DX_TYPE) AS CMS_DX_TYPE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_111
 FROM CLM_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_111 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, CLM_DX_QUAL_filled, CLM_DX_filled, CLM_DX_POA_filled, CLM_DX_CODE_SET_OID_filled, CLM_DX_RANK_filled, CLM_DX_FROM_HEADER_YN_filled, RX_DX_QUAL_filled, CLM_AP_DX_POA_C_NAME_filled, DX_TYPE_filled, DX_INFO_TYPE_filled, CMS_DX_TYPE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -4863,14 +6724,88 @@ SELECT
     CAST(NULL AS INT) AS DX_TYPE_filled,
     CAST(NULL AS INT) AS DX_INFO_TYPE_filled,
     CAST(NULL AS INT) AS CMS_DX_TYPE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_111;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_112 <- CLM_VALUES ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES table holds claim-level values set by the system during claims processing or by use
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_112 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    BIL_PROV_TYP_QUAL_filled INT,
+    BIL_PROV_NAM_LAST_filled INT,
+    BIL_PROV_NAM_FIRST_filled INT,
+    BIL_PROV_NAM_MID_filled INT,
+    BIL_PROV_NAM_SUF_filled INT,
+    BIL_PROV_NPI_filled INT,
+    BIL_PROV_TAXONOMY_filled INT,
+    BIL_PROV_TAXID_QUAL_filled INT,
+    BIL_PROV_TAXID_filled INT,
+    BIL_PROV_UPIN_filled INT,
+    BIL_PROV_LIC_NUM_filled INT,
+    BIL_PROV_ADDR_1_filled INT,
+    BIL_PROV_ADDR_2_filled INT,
+    BIL_PROV_CITY_filled INT,
+    BIL_PROV_STATE_filled INT,
+    BIL_PROV_ZIP_filled INT,
+    BIL_PROV_CNTRY_filled INT,
+    BIL_PROV_CNTRY_SUB_filled INT,
+    CLM_CVG_SEQ_CD_filled INT,
+    CLM_CVG_PYR_NAM_filled INT,
+    CLM_CVG_GRP_NUM_filled INT,
+    CLM_CVG_GRP_NAM_filled INT,
+    CLM_CVG_INS_TYP_filled INT,
+    CLM_CVG_FILING_IND_filled INT,
+    CLM_CVG_PYR_ID_TYP_filled INT,
+    CLM_CVG_PYR_ID_filled INT,
+    CLM_CVG_ACPT_ASGN_filled INT,
+    CLM_CVG_AUTH_PMT_filled INT,
+    CLM_CVG_REL_INFO_filled INT,
+    PYR_ADDR_1_filled INT,
+    PYR_ADDR_2_filled INT,
+    PYR_CITY_filled INT,
+    PYR_STATE_filled INT,
+    PYR_ZIP_filled INT,
+    PYR_CNTRY_filled INT,
+    PYR_CNTRY_SUB_filled INT,
+    PAT_NAM_LAST_filled INT,
+    PAT_NAM_FIRST_filled INT,
+    PAT_NAM_MID_filled INT,
+    PAT_NAM_SUF_filled INT,
+    PAT_MRN_filled INT,
+    PAT_CVG_MEM_ID_filled INT,
+    PAT_REL_TO_INS_filled INT,
+    PAT_BIRTH_DATE_filled INT,
+    PAT_SEX_filled INT,
+    PAT_SIG_ON_FILE_filled INT,
+    PAT_SIG_SRC_filled INT,
+    PAT_DEATH_DATE_filled INT,
+    PAT_WT_filled INT,
+    PAT_PREG_IND_filled INT,
+    PAT_WK_COMP_NUM_filled INT,
+    PAT_MAR_STAT_filled INT,
+    PAT_EMPY_STAT_filled INT,
+    PAT_PH_filled INT,
+    PAT_ADDR_1_filled INT,
+    PAT_ADDR_2_filled INT,
+    PAT_CITY_filled INT,
+    PAT_STATE_filled INT,
+    PAT_ZIP_filled INT,
+    PAT_CNTRY_filled INT,
+    PAT_CNTRY_SUB_filled INT,
+    INV_NUM_filled INT,
+    ICN_filled INT,
+    TTL_CHG_AMT_filled INT,
+    BILL_TYP_FAC_CD_filled INT,
+    BILL_TYP_FREQ_CD_filled INT,
+    MOMS_MRN_filled INT,
+    PAYTO_ADDR_TYP_QUAL_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_112 (activity_year, total_rows, RECORD_ID_filled, BIL_PROV_TYP_QUAL_filled, BIL_PROV_NAM_LAST_filled, BIL_PROV_NAM_FIRST_filled, BIL_PROV_NAM_MID_filled, BIL_PROV_NAM_SUF_filled, BIL_PROV_NPI_filled, BIL_PROV_TAXONOMY_filled, BIL_PROV_TAXID_QUAL_filled, BIL_PROV_TAXID_filled, BIL_PROV_UPIN_filled, BIL_PROV_LIC_NUM_filled, BIL_PROV_ADDR_1_filled, BIL_PROV_ADDR_2_filled, BIL_PROV_CITY_filled, BIL_PROV_STATE_filled, BIL_PROV_ZIP_filled, BIL_PROV_CNTRY_filled, BIL_PROV_CNTRY_SUB_filled, CLM_CVG_SEQ_CD_filled, CLM_CVG_PYR_NAM_filled, CLM_CVG_GRP_NUM_filled, CLM_CVG_GRP_NAM_filled, CLM_CVG_INS_TYP_filled, CLM_CVG_FILING_IND_filled, CLM_CVG_PYR_ID_TYP_filled, CLM_CVG_PYR_ID_filled, CLM_CVG_ACPT_ASGN_filled, CLM_CVG_AUTH_PMT_filled, CLM_CVG_REL_INFO_filled, PYR_ADDR_1_filled, PYR_ADDR_2_filled, PYR_CITY_filled, PYR_STATE_filled, PYR_ZIP_filled, PYR_CNTRY_filled, PYR_CNTRY_SUB_filled, PAT_NAM_LAST_filled, PAT_NAM_FIRST_filled, PAT_NAM_MID_filled, PAT_NAM_SUF_filled, PAT_MRN_filled, PAT_CVG_MEM_ID_filled, PAT_REL_TO_INS_filled, PAT_BIRTH_DATE_filled, PAT_SEX_filled, PAT_SIG_ON_FILE_filled, PAT_SIG_SRC_filled, PAT_DEATH_DATE_filled, PAT_WT_filled, PAT_PREG_IND_filled, PAT_WK_COMP_NUM_filled, PAT_MAR_STAT_filled, PAT_EMPY_STAT_filled, PAT_PH_filled, PAT_ADDR_1_filled, PAT_ADDR_2_filled, PAT_CITY_filled, PAT_STATE_filled, PAT_ZIP_filled, PAT_CNTRY_filled, PAT_CNTRY_SUB_filled, INV_NUM_filled, ICN_filled, TTL_CHG_AMT_filled, BILL_TYP_FAC_CD_filled, BILL_TYP_FREQ_CD_filled, MOMS_MRN_filled, PAYTO_ADDR_TYP_QUAL_filled, query_error)
 SELECT
     YEAR(PAT_BIRTH_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -4944,11 +6879,11 @@ SELECT
     COUNT(MOMS_MRN) AS MOMS_MRN_filled,
     COUNT(PAYTO_ADDR_TYP_QUAL) AS PAYTO_ADDR_TYP_QUAL_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_112
 FROM CLM_VALUES
 GROUP BY YEAR(PAT_BIRTH_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_112 (activity_year, total_rows, RECORD_ID_filled, BIL_PROV_TYP_QUAL_filled, BIL_PROV_NAM_LAST_filled, BIL_PROV_NAM_FIRST_filled, BIL_PROV_NAM_MID_filled, BIL_PROV_NAM_SUF_filled, BIL_PROV_NPI_filled, BIL_PROV_TAXONOMY_filled, BIL_PROV_TAXID_QUAL_filled, BIL_PROV_TAXID_filled, BIL_PROV_UPIN_filled, BIL_PROV_LIC_NUM_filled, BIL_PROV_ADDR_1_filled, BIL_PROV_ADDR_2_filled, BIL_PROV_CITY_filled, BIL_PROV_STATE_filled, BIL_PROV_ZIP_filled, BIL_PROV_CNTRY_filled, BIL_PROV_CNTRY_SUB_filled, CLM_CVG_SEQ_CD_filled, CLM_CVG_PYR_NAM_filled, CLM_CVG_GRP_NUM_filled, CLM_CVG_GRP_NAM_filled, CLM_CVG_INS_TYP_filled, CLM_CVG_FILING_IND_filled, CLM_CVG_PYR_ID_TYP_filled, CLM_CVG_PYR_ID_filled, CLM_CVG_ACPT_ASGN_filled, CLM_CVG_AUTH_PMT_filled, CLM_CVG_REL_INFO_filled, PYR_ADDR_1_filled, PYR_ADDR_2_filled, PYR_CITY_filled, PYR_STATE_filled, PYR_ZIP_filled, PYR_CNTRY_filled, PYR_CNTRY_SUB_filled, PAT_NAM_LAST_filled, PAT_NAM_FIRST_filled, PAT_NAM_MID_filled, PAT_NAM_SUF_filled, PAT_MRN_filled, PAT_CVG_MEM_ID_filled, PAT_REL_TO_INS_filled, PAT_BIRTH_DATE_filled, PAT_SEX_filled, PAT_SIG_ON_FILE_filled, PAT_SIG_SRC_filled, PAT_DEATH_DATE_filled, PAT_WT_filled, PAT_PREG_IND_filled, PAT_WK_COMP_NUM_filled, PAT_MAR_STAT_filled, PAT_EMPY_STAT_filled, PAT_PH_filled, PAT_ADDR_1_filled, PAT_ADDR_2_filled, PAT_CITY_filled, PAT_STATE_filled, PAT_ZIP_filled, PAT_CNTRY_filled, PAT_CNTRY_SUB_filled, INV_NUM_filled, ICN_filled, TTL_CHG_AMT_filled, BILL_TYP_FAC_CD_filled, BILL_TYP_FREQ_CD_filled, MOMS_MRN_filled, PAYTO_ADDR_TYP_QUAL_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5021,14 +6956,116 @@ SELECT
     CAST(NULL AS INT) AS BILL_TYP_FREQ_CD_filled,
     CAST(NULL AS INT) AS MOMS_MRN_filled,
     CAST(NULL AS INT) AS PAYTO_ADDR_TYP_QUAL_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_112;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_113 <- CLM_VALUES_2 ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_2 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_113 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    ADMSN_TYP_filled INT,
+    ADMSN_SRC_filled INT,
+    DISCHRG_DISP_filled INT,
+    RFL_NUM_filled INT,
+    AUTH_NUM_filled INT,
+    SPEC_PROG_IND_filled INT,
+    CLM_DELAY_RSN_filled INT,
+    AUTH_EXCEPT_CD_filled INT,
+    PAT_AMT_PAID_filled INT,
+    PAT_AMT_DUE_filled INT,
+    AUTO_ACDNT_STATE_filled INT,
+    AUTO_ACDNT_CNTRY_filled INT,
+    MAMM_CERT_NUM_filled INT,
+    CLIA_NUM_filled INT,
+    DEMO_PRJ_ID_filled INT,
+    SPINAL_MAN_COND_CD_filled INT,
+    EPSDT_CERT_APPLIES_filled INT,
+    ORTHO_TOT_MO_filled INT,
+    ORTHO_MO_REMAIN_filled INT,
+    ADMSN_DX_QUAL_filled INT,
+    ADMSN_DX_filled INT,
+    DRG_filled INT,
+    ANES_SURG_PROC_filled INT,
+    OUTSIDE_LAB_filled INT,
+    OUTSIDE_LAB_CHG_filled INT,
+    CLM_FROM_DT_filled INT,
+    CLM_TO_DT_filled INT,
+    ADMSN_DT_filled INT,
+    ADMSN_TM_filled INT,
+    DISCHG_DT_filled INT,
+    DISCHG_TM_filled INT,
+    ILL_INJ_DT_filled INT,
+    INIT_TREAT_DT_filled INT,
+    LST_SEEN_DT_filled INT,
+    ACUTE_MANIF_DT_filled INT,
+    ACDNT_DT_filled INT,
+    LMP_DT_filled INT,
+    LST_XRAY_DT_filled INT,
+    HEAR_VIS_RX_DT_filled INT,
+    DISAB_START_DT_filled INT,
+    DISAB_END_DT_filled INT,
+    LST_WK_DT_filled INT,
+    AUTH_RETURN_WK_DT_filled INT,
+    ASSUM_CARE_DT_filled INT,
+    RELINQ_CARE_DT_filled INT,
+    ORTHO_BAND_DT_filled INT,
+    DENT_SRV_DT_filled INT,
+    SIMILAR_ILL_DT_filled INT,
+    AMB_PAT_WT_filled INT,
+    AMB_TRANS_RSN_CD_filled INT,
+    AMB_TRANS_DIST_filled INT,
+    AMB_RND_TRIP_DESC_filled INT,
+    AMB_STRETCHER_DESC_filled INT,
+    CNTRCT_TYP_filled INT,
+    CNTRCT_AMT_filled INT,
+    CNTRCT_PCT_filled INT,
+    CNTRCT_CD_filled INT,
+    CNTRCT_DISCNT_PCT_filled INT,
+    CNTRCT_VERS_ID_filled INT,
+    ATT_PROV_NAM_LAST_filled INT,
+    ATT_PROV_NAM_FIRST_filled INT,
+    ATT_PROV_NAM_MID_filled INT,
+    ATT_PROV_NAM_SUF_filled INT,
+    ATT_PROV_NPI_filled INT,
+    ATT_PROV_TAXONOMY_filled INT,
+    OPER_PROV_NAM_LAST_filled INT,
+    OPER_PROV_NAM_FIRST_filled INT,
+    OPER_PROV_NAM_MID_filled INT,
+    OPER_PROV_NAM_SUF_filled INT,
+    OPER_PROV_NPI_filled INT,
+    OTH_PROV_NAM_LAST_filled INT,
+    OTH_PROV_NAM_FIRST_filled INT,
+    OTH_PROV_NAM_MID_filled INT,
+    OTH_PROV_NAM_SUF_filled INT,
+    OTH_PROV_NPI_filled INT,
+    REND_PROV_TYP_filled INT,
+    REND_PROV_NAM_LAST_filled INT,
+    REND_PROV_NAM_FIRST_filled INT,
+    REND_PROV_NAM_MID_filled INT,
+    REND_PROV_NAM_SUF_filled INT,
+    REND_PROV_NPI_filled INT,
+    REND_PROV_TAXONOMY_filled INT,
+    REF_PROV_NAM_LAST_filled INT,
+    REF_PROV_NAM_FIRST_filled INT,
+    REF_PROV_NAM_MID_filled INT,
+    REF_PROV_NAM_SUF_filled INT,
+    REF_PROV_NPI_filled INT,
+    REF_PROV_TAXONOMY_filled INT,
+    SUP_PROV_NAM_LAST_filled INT,
+    SUP_PROV_NAM_FIRST_filled INT,
+    SUP_PROV_NAM_MID_filled INT,
+    SUP_PROV_NAM_SUF_filled INT,
+    SUP_PROV_NPI_filled INT,
+    ASST_SURG_NAM_LAST_filled INT,
+    ASST_SURG_NAM_FIRST_filled INT,
+    ASST_SURG_NAM_MID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_113 (activity_year, total_rows, RECORD_ID_filled, ADMSN_TYP_filled, ADMSN_SRC_filled, DISCHRG_DISP_filled, RFL_NUM_filled, AUTH_NUM_filled, SPEC_PROG_IND_filled, CLM_DELAY_RSN_filled, AUTH_EXCEPT_CD_filled, PAT_AMT_PAID_filled, PAT_AMT_DUE_filled, AUTO_ACDNT_STATE_filled, AUTO_ACDNT_CNTRY_filled, MAMM_CERT_NUM_filled, CLIA_NUM_filled, DEMO_PRJ_ID_filled, SPINAL_MAN_COND_CD_filled, EPSDT_CERT_APPLIES_filled, ORTHO_TOT_MO_filled, ORTHO_MO_REMAIN_filled, ADMSN_DX_QUAL_filled, ADMSN_DX_filled, DRG_filled, ANES_SURG_PROC_filled, OUTSIDE_LAB_filled, OUTSIDE_LAB_CHG_filled, CLM_FROM_DT_filled, CLM_TO_DT_filled, ADMSN_DT_filled, ADMSN_TM_filled, DISCHG_DT_filled, DISCHG_TM_filled, ILL_INJ_DT_filled, INIT_TREAT_DT_filled, LST_SEEN_DT_filled, ACUTE_MANIF_DT_filled, ACDNT_DT_filled, LMP_DT_filled, LST_XRAY_DT_filled, HEAR_VIS_RX_DT_filled, DISAB_START_DT_filled, DISAB_END_DT_filled, LST_WK_DT_filled, AUTH_RETURN_WK_DT_filled, ASSUM_CARE_DT_filled, RELINQ_CARE_DT_filled, ORTHO_BAND_DT_filled, DENT_SRV_DT_filled, SIMILAR_ILL_DT_filled, AMB_PAT_WT_filled, AMB_TRANS_RSN_CD_filled, AMB_TRANS_DIST_filled, AMB_RND_TRIP_DESC_filled, AMB_STRETCHER_DESC_filled, CNTRCT_TYP_filled, CNTRCT_AMT_filled, CNTRCT_PCT_filled, CNTRCT_CD_filled, CNTRCT_DISCNT_PCT_filled, CNTRCT_VERS_ID_filled, ATT_PROV_NAM_LAST_filled, ATT_PROV_NAM_FIRST_filled, ATT_PROV_NAM_MID_filled, ATT_PROV_NAM_SUF_filled, ATT_PROV_NPI_filled, ATT_PROV_TAXONOMY_filled, OPER_PROV_NAM_LAST_filled, OPER_PROV_NAM_FIRST_filled, OPER_PROV_NAM_MID_filled, OPER_PROV_NAM_SUF_filled, OPER_PROV_NPI_filled, OTH_PROV_NAM_LAST_filled, OTH_PROV_NAM_FIRST_filled, OTH_PROV_NAM_MID_filled, OTH_PROV_NAM_SUF_filled, OTH_PROV_NPI_filled, REND_PROV_TYP_filled, REND_PROV_NAM_LAST_filled, REND_PROV_NAM_FIRST_filled, REND_PROV_NAM_MID_filled, REND_PROV_NAM_SUF_filled, REND_PROV_NPI_filled, REND_PROV_TAXONOMY_filled, REF_PROV_NAM_LAST_filled, REF_PROV_NAM_FIRST_filled, REF_PROV_NAM_MID_filled, REF_PROV_NAM_SUF_filled, REF_PROV_NPI_filled, REF_PROV_TAXONOMY_filled, SUP_PROV_NAM_LAST_filled, SUP_PROV_NAM_FIRST_filled, SUP_PROV_NAM_MID_filled, SUP_PROV_NAM_SUF_filled, SUP_PROV_NPI_filled, ASST_SURG_NAM_LAST_filled, ASST_SURG_NAM_FIRST_filled, ASST_SURG_NAM_MID_filled, query_error)
 SELECT
     YEAR(CLM_FROM_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5130,11 +7167,11 @@ SELECT
     COUNT(ASST_SURG_NAM_FIRST) AS ASST_SURG_NAM_FIRST_filled,
     COUNT(ASST_SURG_NAM_MID) AS ASST_SURG_NAM_MID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_113
 FROM CLM_VALUES_2
 GROUP BY YEAR(CLM_FROM_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_113 (activity_year, total_rows, RECORD_ID_filled, ADMSN_TYP_filled, ADMSN_SRC_filled, DISCHRG_DISP_filled, RFL_NUM_filled, AUTH_NUM_filled, SPEC_PROG_IND_filled, CLM_DELAY_RSN_filled, AUTH_EXCEPT_CD_filled, PAT_AMT_PAID_filled, PAT_AMT_DUE_filled, AUTO_ACDNT_STATE_filled, AUTO_ACDNT_CNTRY_filled, MAMM_CERT_NUM_filled, CLIA_NUM_filled, DEMO_PRJ_ID_filled, SPINAL_MAN_COND_CD_filled, EPSDT_CERT_APPLIES_filled, ORTHO_TOT_MO_filled, ORTHO_MO_REMAIN_filled, ADMSN_DX_QUAL_filled, ADMSN_DX_filled, DRG_filled, ANES_SURG_PROC_filled, OUTSIDE_LAB_filled, OUTSIDE_LAB_CHG_filled, CLM_FROM_DT_filled, CLM_TO_DT_filled, ADMSN_DT_filled, ADMSN_TM_filled, DISCHG_DT_filled, DISCHG_TM_filled, ILL_INJ_DT_filled, INIT_TREAT_DT_filled, LST_SEEN_DT_filled, ACUTE_MANIF_DT_filled, ACDNT_DT_filled, LMP_DT_filled, LST_XRAY_DT_filled, HEAR_VIS_RX_DT_filled, DISAB_START_DT_filled, DISAB_END_DT_filled, LST_WK_DT_filled, AUTH_RETURN_WK_DT_filled, ASSUM_CARE_DT_filled, RELINQ_CARE_DT_filled, ORTHO_BAND_DT_filled, DENT_SRV_DT_filled, SIMILAR_ILL_DT_filled, AMB_PAT_WT_filled, AMB_TRANS_RSN_CD_filled, AMB_TRANS_DIST_filled, AMB_RND_TRIP_DESC_filled, AMB_STRETCHER_DESC_filled, CNTRCT_TYP_filled, CNTRCT_AMT_filled, CNTRCT_PCT_filled, CNTRCT_CD_filled, CNTRCT_DISCNT_PCT_filled, CNTRCT_VERS_ID_filled, ATT_PROV_NAM_LAST_filled, ATT_PROV_NAM_FIRST_filled, ATT_PROV_NAM_MID_filled, ATT_PROV_NAM_SUF_filled, ATT_PROV_NPI_filled, ATT_PROV_TAXONOMY_filled, OPER_PROV_NAM_LAST_filled, OPER_PROV_NAM_FIRST_filled, OPER_PROV_NAM_MID_filled, OPER_PROV_NAM_SUF_filled, OPER_PROV_NPI_filled, OTH_PROV_NAM_LAST_filled, OTH_PROV_NAM_FIRST_filled, OTH_PROV_NAM_MID_filled, OTH_PROV_NAM_SUF_filled, OTH_PROV_NPI_filled, REND_PROV_TYP_filled, REND_PROV_NAM_LAST_filled, REND_PROV_NAM_FIRST_filled, REND_PROV_NAM_MID_filled, REND_PROV_NAM_SUF_filled, REND_PROV_NPI_filled, REND_PROV_TAXONOMY_filled, REF_PROV_NAM_LAST_filled, REF_PROV_NAM_FIRST_filled, REF_PROV_NAM_MID_filled, REF_PROV_NAM_SUF_filled, REF_PROV_NPI_filled, REF_PROV_TAXONOMY_filled, SUP_PROV_NAM_LAST_filled, SUP_PROV_NAM_FIRST_filled, SUP_PROV_NAM_MID_filled, SUP_PROV_NAM_SUF_filled, SUP_PROV_NPI_filled, ASST_SURG_NAM_LAST_filled, ASST_SURG_NAM_FIRST_filled, ASST_SURG_NAM_MID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5235,14 +7272,69 @@ SELECT
     CAST(NULL AS INT) AS ASST_SURG_NAM_LAST_filled,
     CAST(NULL AS INT) AS ASST_SURG_NAM_FIRST_filled,
     CAST(NULL AS INT) AS ASST_SURG_NAM_MID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_113;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_114 <- CLM_VALUES_3 ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_3 table holds claim level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_114 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    ASST_SURG_NAM_SUF_filled INT,
+    ASST_SURG_NPI_filled INT,
+    ASST_SURG_TAXONOMY_filled INT,
+    SVC_FAC_NAM_filled INT,
+    SVC_FAC_NPI_filled INT,
+    SVC_FAC_CNCT_NAM_filled INT,
+    SVC_FAC_CNCT_PH_filled INT,
+    SVC_FAC_CNCT_EXT_filled INT,
+    SVC_FAC_ADDR_1_filled INT,
+    SVC_FAC_ADDR_2_filled INT,
+    SVC_FAC_CITY_filled INT,
+    SVC_FAC_STATE_filled INT,
+    SVC_FAC_ZIP_filled INT,
+    SVC_FAC_CNTRY_filled INT,
+    SVC_FAC_CNTRY_SUB_filled INT,
+    PICK_UP_ADDR_1_filled INT,
+    PICK_UP_ADDR_2_filled INT,
+    PICK_UP_CITY_filled INT,
+    PICK_UP_STATE_filled INT,
+    PICK_UP_ZIP_filled INT,
+    PICK_UP_CNTRY_filled INT,
+    PICK_UP_CNTRY_SUB_filled INT,
+    DROP_OFF_NAM_filled INT,
+    DROP_OFF_ADDR_1_filled INT,
+    DROP_OFF_ADDR_2_filled INT,
+    DROP_OFF_CITY_filled INT,
+    DROP_OFF_STATE_filled INT,
+    DROP_OFF_ZIP_filled INT,
+    DROP_OFF_CNTRY_filled INT,
+    DROP_OFF_CNTRY_SUB_filled INT,
+    CREATE_DT_filled INT,
+    CLM_CVG_AMT_PAID_filled INT,
+    PAT_PROP_CAS_ID_TYP_filled INT,
+    PAT_PROP_CAS_ID_filled INT,
+    ADMSN_QUAL_filled INT,
+    REMARK_filled INT,
+    CLM_CVG_AMT_DUE_filled INT,
+    CLM_CVG_COMPLMT_ID_filled INT,
+    CLM_CVG_REL_INFO_DT_filled INT,
+    LOCAL_USE_CMS_filled INT,
+    DISABILITY_QUAL_filled INT,
+    DISABILITY_TM_QUAL_filled INT,
+    CAS_SRC_CEV_ID_filled INT,
+    CAS_LVL_C_NAME_filled INT,
+    CAS_CVG_LN_NUM_filled INT,
+    CAS_SVC_LN_NUM_filled INT,
+    NCPDP_RECORD_TYPE_filled INT,
+    TXST_TRANSMISSION_ACTION_filled INT,
+    TXST_SUBMISSION_NUMBER_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_114 (activity_year, total_rows, RECORD_ID_filled, ASST_SURG_NAM_SUF_filled, ASST_SURG_NPI_filled, ASST_SURG_TAXONOMY_filled, SVC_FAC_NAM_filled, SVC_FAC_NPI_filled, SVC_FAC_CNCT_NAM_filled, SVC_FAC_CNCT_PH_filled, SVC_FAC_CNCT_EXT_filled, SVC_FAC_ADDR_1_filled, SVC_FAC_ADDR_2_filled, SVC_FAC_CITY_filled, SVC_FAC_STATE_filled, SVC_FAC_ZIP_filled, SVC_FAC_CNTRY_filled, SVC_FAC_CNTRY_SUB_filled, PICK_UP_ADDR_1_filled, PICK_UP_ADDR_2_filled, PICK_UP_CITY_filled, PICK_UP_STATE_filled, PICK_UP_ZIP_filled, PICK_UP_CNTRY_filled, PICK_UP_CNTRY_SUB_filled, DROP_OFF_NAM_filled, DROP_OFF_ADDR_1_filled, DROP_OFF_ADDR_2_filled, DROP_OFF_CITY_filled, DROP_OFF_STATE_filled, DROP_OFF_ZIP_filled, DROP_OFF_CNTRY_filled, DROP_OFF_CNTRY_SUB_filled, CREATE_DT_filled, CLM_CVG_AMT_PAID_filled, PAT_PROP_CAS_ID_TYP_filled, PAT_PROP_CAS_ID_filled, ADMSN_QUAL_filled, REMARK_filled, CLM_CVG_AMT_DUE_filled, CLM_CVG_COMPLMT_ID_filled, CLM_CVG_REL_INFO_DT_filled, LOCAL_USE_CMS_filled, DISABILITY_QUAL_filled, DISABILITY_TM_QUAL_filled, CAS_SRC_CEV_ID_filled, CAS_LVL_C_NAME_filled, CAS_CVG_LN_NUM_filled, CAS_SVC_LN_NUM_filled, NCPDP_RECORD_TYPE_filled, TXST_TRANSMISSION_ACTION_filled, TXST_SUBMISSION_NUMBER_filled, query_error)
 SELECT
     YEAR(CREATE_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5297,11 +7389,11 @@ SELECT
     COUNT(TXST_TRANSMISSION_ACTION) AS TXST_TRANSMISSION_ACTION_filled,
     COUNT(TXST_SUBMISSION_NUMBER) AS TXST_SUBMISSION_NUMBER_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_114
 FROM CLM_VALUES_3
 GROUP BY YEAR(CREATE_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_114 (activity_year, total_rows, RECORD_ID_filled, ASST_SURG_NAM_SUF_filled, ASST_SURG_NPI_filled, ASST_SURG_TAXONOMY_filled, SVC_FAC_NAM_filled, SVC_FAC_NPI_filled, SVC_FAC_CNCT_NAM_filled, SVC_FAC_CNCT_PH_filled, SVC_FAC_CNCT_EXT_filled, SVC_FAC_ADDR_1_filled, SVC_FAC_ADDR_2_filled, SVC_FAC_CITY_filled, SVC_FAC_STATE_filled, SVC_FAC_ZIP_filled, SVC_FAC_CNTRY_filled, SVC_FAC_CNTRY_SUB_filled, PICK_UP_ADDR_1_filled, PICK_UP_ADDR_2_filled, PICK_UP_CITY_filled, PICK_UP_STATE_filled, PICK_UP_ZIP_filled, PICK_UP_CNTRY_filled, PICK_UP_CNTRY_SUB_filled, DROP_OFF_NAM_filled, DROP_OFF_ADDR_1_filled, DROP_OFF_ADDR_2_filled, DROP_OFF_CITY_filled, DROP_OFF_STATE_filled, DROP_OFF_ZIP_filled, DROP_OFF_CNTRY_filled, DROP_OFF_CNTRY_SUB_filled, CREATE_DT_filled, CLM_CVG_AMT_PAID_filled, PAT_PROP_CAS_ID_TYP_filled, PAT_PROP_CAS_ID_filled, ADMSN_QUAL_filled, REMARK_filled, CLM_CVG_AMT_DUE_filled, CLM_CVG_COMPLMT_ID_filled, CLM_CVG_REL_INFO_DT_filled, LOCAL_USE_CMS_filled, DISABILITY_QUAL_filled, DISABILITY_TM_QUAL_filled, CAS_SRC_CEV_ID_filled, CAS_LVL_C_NAME_filled, CAS_CVG_LN_NUM_filled, CAS_SVC_LN_NUM_filled, NCPDP_RECORD_TYPE_filled, TXST_TRANSMISSION_ACTION_filled, TXST_SUBMISSION_NUMBER_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5355,14 +7447,85 @@ SELECT
     CAST(NULL AS INT) AS NCPDP_RECORD_TYPE_filled,
     CAST(NULL AS INT) AS TXST_TRANSMISSION_ACTION_filled,
     CAST(NULL AS INT) AS TXST_SUBMISSION_NUMBER_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_114;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_115 <- CLM_VALUES_4 ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_4 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_115 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    REP_CLM_NUM_filled INT,
+    ADJ_REP_CLM_NUM_filled INT,
+    CLM_TRANS_INTMD_filled INT,
+    CLM_PRO_APP_NUM_filled INT,
+    CLM_PRICING_METHDLG_filled INT,
+    CLM_REP_ALWD_AMT_filled INT,
+    CLM_REP_SVNG_AMT_filled INT,
+    CLM_REP_ORGID_filled INT,
+    REP_PDIEM_FLTRT_AMT_filled INT,
+    REP_APRVD_DRG_CODE_filled INT,
+    REP_APPRVD_AMT_filled INT,
+    REP_APRVD_REV_CODE_filled INT,
+    REP_ASU_MSRMNT_CODE_filled INT,
+    REP_APR_SERV_CNT_filled INT,
+    PAYTO_PLAN_TAXID_filled INT,
+    FIRST_CNCT_DT_filled INT,
+    REPRICER_RECVD_DT_filled INT,
+    MCARE_XOVER_IND_filled INT,
+    CARE_PLN_NUM_filled INT,
+    HOMEBOUND_COND_QUAL_filled INT,
+    HOMEBOUND_COND_CD_filled INT,
+    DENTAL_SVC_FROM_DT_filled INT,
+    DENTAL_SVC_TO_DT_filled INT,
+    DENTAL_SVC_DT_QUAL_filled INT,
+    ORTHO_TREAT_IND_filled INT,
+    DENT_PREDET_CODE_filled INT,
+    OTH_ACC_EMER_YN_filled INT,
+    STER_ABOR_YN_filled INT,
+    PAYEE_NUM_filled INT,
+    CLM_LVL_TOS_filled INT,
+    CLM_LVL_EPSDT_YN_filled INT,
+    CLM_LVL_FAM_PLAN_YN_filled INT,
+    CLM_LVL_EMER_YN_filled INT,
+    PAT_LOCATION_IDENT_filled INT,
+    PAT_PERSONAL_IDENT_filled INT,
+    DRG_SOI_filled INT,
+    DRG_ROM_filled INT,
+    CAS_SVC_POS_NUM_filled INT,
+    CLM_RECORD_INDICATOR_filled INT,
+    LINE_OF_BUSINESS_CODE_filled INT,
+    BENEFIT_ID_filled INT,
+    PLAN_TYPE_filled INT,
+    PRESC_PROV_TAXONOMY_filled INT,
+    ADJUD_DATE_filled INT,
+    ADJUD_TM_filled INT,
+    REJECT_OVERRIDE_CODE_filled INT,
+    CROSS_REF_ICN_filled INT,
+    PAYMENT_CLARIFICATION_CODE_filled INT,
+    ADJUSTMENT_TYPE_filled INT,
+    STER_ABOR_CODE_filled INT,
+    POSSIBLE_DISABILITY_YN_filled INT,
+    PMT_SRC_MCR_INVOLVE_filled INT,
+    PMT_SRC_OTHR_INVOLV_filled INT,
+    PMT_SRC_INS_CODE_filled INT,
+    LOCATOR_CODE_filled INT,
+    MEM_SUBMIT_PMT_RELEASE_DATE_filled INT,
+    CHECK_DATE_filled INT,
+    PAT_DEM_CODE_QUAL_filled INT,
+    PAT_DEM_CODE_filled INT,
+    DRG_CODE_SET_filled INT,
+    CLM_STATUS_filled INT,
+    DRG_CODE_VERSION_filled INT,
+    IS_CLINICALLY_INVALID_IDENT_filled INT,
+    DRG_CODE_SET_IDENT_filled INT,
+    DRG_CODE_VER_IDENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_115 (activity_year, total_rows, RECORD_ID_filled, REP_CLM_NUM_filled, ADJ_REP_CLM_NUM_filled, CLM_TRANS_INTMD_filled, CLM_PRO_APP_NUM_filled, CLM_PRICING_METHDLG_filled, CLM_REP_ALWD_AMT_filled, CLM_REP_SVNG_AMT_filled, CLM_REP_ORGID_filled, REP_PDIEM_FLTRT_AMT_filled, REP_APRVD_DRG_CODE_filled, REP_APPRVD_AMT_filled, REP_APRVD_REV_CODE_filled, REP_ASU_MSRMNT_CODE_filled, REP_APR_SERV_CNT_filled, PAYTO_PLAN_TAXID_filled, FIRST_CNCT_DT_filled, REPRICER_RECVD_DT_filled, MCARE_XOVER_IND_filled, CARE_PLN_NUM_filled, HOMEBOUND_COND_QUAL_filled, HOMEBOUND_COND_CD_filled, DENTAL_SVC_FROM_DT_filled, DENTAL_SVC_TO_DT_filled, DENTAL_SVC_DT_QUAL_filled, ORTHO_TREAT_IND_filled, DENT_PREDET_CODE_filled, OTH_ACC_EMER_YN_filled, STER_ABOR_YN_filled, PAYEE_NUM_filled, CLM_LVL_TOS_filled, CLM_LVL_EPSDT_YN_filled, CLM_LVL_FAM_PLAN_YN_filled, CLM_LVL_EMER_YN_filled, PAT_LOCATION_IDENT_filled, PAT_PERSONAL_IDENT_filled, DRG_SOI_filled, DRG_ROM_filled, CAS_SVC_POS_NUM_filled, CLM_RECORD_INDICATOR_filled, LINE_OF_BUSINESS_CODE_filled, BENEFIT_ID_filled, PLAN_TYPE_filled, PRESC_PROV_TAXONOMY_filled, ADJUD_DATE_filled, ADJUD_TM_filled, REJECT_OVERRIDE_CODE_filled, CROSS_REF_ICN_filled, PAYMENT_CLARIFICATION_CODE_filled, ADJUSTMENT_TYPE_filled, STER_ABOR_CODE_filled, POSSIBLE_DISABILITY_YN_filled, PMT_SRC_MCR_INVOLVE_filled, PMT_SRC_OTHR_INVOLV_filled, PMT_SRC_INS_CODE_filled, LOCATOR_CODE_filled, MEM_SUBMIT_PMT_RELEASE_DATE_filled, CHECK_DATE_filled, PAT_DEM_CODE_QUAL_filled, PAT_DEM_CODE_filled, DRG_CODE_SET_filled, CLM_STATUS_filled, DRG_CODE_VERSION_filled, IS_CLINICALLY_INVALID_IDENT_filled, DRG_CODE_SET_IDENT_filled, DRG_CODE_VER_IDENT_filled, query_error)
 SELECT
     YEAR(FIRST_CNCT_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5433,11 +7596,11 @@ SELECT
     COUNT(DRG_CODE_SET_IDENT) AS DRG_CODE_SET_IDENT_filled,
     COUNT(DRG_CODE_VER_IDENT) AS DRG_CODE_VER_IDENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_115
 FROM CLM_VALUES_4
 GROUP BY YEAR(FIRST_CNCT_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_115 (activity_year, total_rows, RECORD_ID_filled, REP_CLM_NUM_filled, ADJ_REP_CLM_NUM_filled, CLM_TRANS_INTMD_filled, CLM_PRO_APP_NUM_filled, CLM_PRICING_METHDLG_filled, CLM_REP_ALWD_AMT_filled, CLM_REP_SVNG_AMT_filled, CLM_REP_ORGID_filled, REP_PDIEM_FLTRT_AMT_filled, REP_APRVD_DRG_CODE_filled, REP_APPRVD_AMT_filled, REP_APRVD_REV_CODE_filled, REP_ASU_MSRMNT_CODE_filled, REP_APR_SERV_CNT_filled, PAYTO_PLAN_TAXID_filled, FIRST_CNCT_DT_filled, REPRICER_RECVD_DT_filled, MCARE_XOVER_IND_filled, CARE_PLN_NUM_filled, HOMEBOUND_COND_QUAL_filled, HOMEBOUND_COND_CD_filled, DENTAL_SVC_FROM_DT_filled, DENTAL_SVC_TO_DT_filled, DENTAL_SVC_DT_QUAL_filled, ORTHO_TREAT_IND_filled, DENT_PREDET_CODE_filled, OTH_ACC_EMER_YN_filled, STER_ABOR_YN_filled, PAYEE_NUM_filled, CLM_LVL_TOS_filled, CLM_LVL_EPSDT_YN_filled, CLM_LVL_FAM_PLAN_YN_filled, CLM_LVL_EMER_YN_filled, PAT_LOCATION_IDENT_filled, PAT_PERSONAL_IDENT_filled, DRG_SOI_filled, DRG_ROM_filled, CAS_SVC_POS_NUM_filled, CLM_RECORD_INDICATOR_filled, LINE_OF_BUSINESS_CODE_filled, BENEFIT_ID_filled, PLAN_TYPE_filled, PRESC_PROV_TAXONOMY_filled, ADJUD_DATE_filled, ADJUD_TM_filled, REJECT_OVERRIDE_CODE_filled, CROSS_REF_ICN_filled, PAYMENT_CLARIFICATION_CODE_filled, ADJUSTMENT_TYPE_filled, STER_ABOR_CODE_filled, POSSIBLE_DISABILITY_YN_filled, PMT_SRC_MCR_INVOLVE_filled, PMT_SRC_OTHR_INVOLV_filled, PMT_SRC_INS_CODE_filled, LOCATOR_CODE_filled, MEM_SUBMIT_PMT_RELEASE_DATE_filled, CHECK_DATE_filled, PAT_DEM_CODE_QUAL_filled, PAT_DEM_CODE_filled, DRG_CODE_SET_filled, CLM_STATUS_filled, DRG_CODE_VERSION_filled, IS_CLINICALLY_INVALID_IDENT_filled, DRG_CODE_SET_IDENT_filled, DRG_CODE_VER_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5507,14 +7670,75 @@ SELECT
     CAST(NULL AS INT) AS IS_CLINICALLY_INVALID_IDENT_filled,
     CAST(NULL AS INT) AS DRG_CODE_SET_IDENT_filled,
     CAST(NULL AS INT) AS DRG_CODE_VER_IDENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_115;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_116 <- CLM_VALUES_5 ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_5 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_116 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    FHIR_GROUP_IDENTIFIER_filled INT,
+    DEPT_ALT_CODE_filled INT,
+    PAYER_ENTERPRISE_IDENTIFIER_filled INT,
+    ATT_PROV_SPECIALTY_filled INT,
+    NON_PAYMENT_RSN_DESC_filled INT,
+    CARRIER_PAYMENT_DNL_CD_filled INT,
+    NON_PAYMENT_RSN_CD_filled INT,
+    CARRIER_PAYMENT_DNL_DESC_filled INT,
+    BCDA_GROUP_IDENT_filled INT,
+    PRIMARY_PAYER_CD_filled INT,
+    BIL_PROV_SPEC_CODE_SET_filled INT,
+    OPER_PROV_TAXONOMY_filled INT,
+    PREDETERMIN_IDENT_filled INT,
+    ADJ_TO_CLAIM_ID_filled INT,
+    REV_TO_CLAIM_ID_filled INT,
+    ADJ_SEQUENCE_filled INT,
+    PLAN_NAME_filled INT,
+    CORPORATION_NAME_filled INT,
+    NETWORK_LEVEL_filled INT,
+    REGION_NAME_filled INT,
+    LINE_OF_BUSINESS_NAME_filled INT,
+    SVC_PROV_IN_NETWORK_filled INT,
+    MEDICARE_DRUG_CVG_CODE_filled INT,
+    SVC_FAC_CCN_filled INT,
+    PCP_REF_PROV_NAM_LAST_filled INT,
+    PCP_REF_PROV_NAM_FIRST_filled INT,
+    PCP_REF_PROV_NAM_MID_filled INT,
+    PCP_REF_PROV_NAM_SUF_filled INT,
+    PCP_REF_PROV_NPI_filled INT,
+    PCP_REF_PROV_TAXONOMY_filled INT,
+    REF_PROV_FROM_LINE_YN_filled INT,
+    REN_PROV_FROM_LINE_YN_filled INT,
+    OPER_PROV_FROM_LINE_YN_filled INT,
+    OTHOP_PROV_FROM_LINE_YN_filled INT,
+    PAT_RESIDENCE_CODE_filled INT,
+    SVC_FAC_CMS_PARTD_FLAG_filled INT,
+    BANK_IDENT_NUM_filled INT,
+    PROCESSOR_CTL_NUM_filled INT,
+    RX_PRIOR_AUTH_TYPE_filled INT,
+    PRESCRIBER_LAST_NAME_filled INT,
+    SNAPSHOT_CEV_YN_filled INT,
+    SNAPSHOT_CEV_RECORD_ID_filled INT,
+    PICK_UP_CNTY_filled INT,
+    DROP_OFF_CNTY_filled INT,
+    LAST_SRP_DATE_filled INT,
+    NCH_CLAIM_TYPE_filled INT,
+    CMS_ADJSTMT_DLTN_CD_filled INT,
+    CLAIM_TYPE_OUT_IN_filled INT,
+    COVERAGE_EXPIRY_DATE_filled INT,
+    DECEASED_INDICATOR_filled INT,
+    CLAIM_NET_AMOUNT_filled INT,
+    VALUE_ADDED_TAX_filled INT,
+    ENC_TYPE_filled INT,
+    ENC_TRANSFER_SOURCE_filled INT,
+    ENC_TRANSFER_DEST_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_116 (activity_year, total_rows, RECORD_ID_filled, FHIR_GROUP_IDENTIFIER_filled, DEPT_ALT_CODE_filled, PAYER_ENTERPRISE_IDENTIFIER_filled, ATT_PROV_SPECIALTY_filled, NON_PAYMENT_RSN_DESC_filled, CARRIER_PAYMENT_DNL_CD_filled, NON_PAYMENT_RSN_CD_filled, CARRIER_PAYMENT_DNL_DESC_filled, BCDA_GROUP_IDENT_filled, PRIMARY_PAYER_CD_filled, BIL_PROV_SPEC_CODE_SET_filled, OPER_PROV_TAXONOMY_filled, PREDETERMIN_IDENT_filled, ADJ_TO_CLAIM_ID_filled, REV_TO_CLAIM_ID_filled, ADJ_SEQUENCE_filled, PLAN_NAME_filled, CORPORATION_NAME_filled, NETWORK_LEVEL_filled, REGION_NAME_filled, LINE_OF_BUSINESS_NAME_filled, SVC_PROV_IN_NETWORK_filled, MEDICARE_DRUG_CVG_CODE_filled, SVC_FAC_CCN_filled, PCP_REF_PROV_NAM_LAST_filled, PCP_REF_PROV_NAM_FIRST_filled, PCP_REF_PROV_NAM_MID_filled, PCP_REF_PROV_NAM_SUF_filled, PCP_REF_PROV_NPI_filled, PCP_REF_PROV_TAXONOMY_filled, REF_PROV_FROM_LINE_YN_filled, REN_PROV_FROM_LINE_YN_filled, OPER_PROV_FROM_LINE_YN_filled, OTHOP_PROV_FROM_LINE_YN_filled, PAT_RESIDENCE_CODE_filled, SVC_FAC_CMS_PARTD_FLAG_filled, BANK_IDENT_NUM_filled, PROCESSOR_CTL_NUM_filled, RX_PRIOR_AUTH_TYPE_filled, PRESCRIBER_LAST_NAME_filled, SNAPSHOT_CEV_YN_filled, SNAPSHOT_CEV_RECORD_ID_filled, PICK_UP_CNTY_filled, DROP_OFF_CNTY_filled, LAST_SRP_DATE_filled, NCH_CLAIM_TYPE_filled, CMS_ADJSTMT_DLTN_CD_filled, CLAIM_TYPE_OUT_IN_filled, COVERAGE_EXPIRY_DATE_filled, DECEASED_INDICATOR_filled, CLAIM_NET_AMOUNT_filled, VALUE_ADDED_TAX_filled, ENC_TYPE_filled, ENC_TRANSFER_SOURCE_filled, ENC_TRANSFER_DEST_filled, query_error)
 SELECT
     YEAR(LAST_SRP_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5575,11 +7799,11 @@ SELECT
     COUNT(ENC_TRANSFER_SOURCE) AS ENC_TRANSFER_SOURCE_filled,
     COUNT(ENC_TRANSFER_DEST) AS ENC_TRANSFER_DEST_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_116
 FROM CLM_VALUES_5
 GROUP BY YEAR(LAST_SRP_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_116 (activity_year, total_rows, RECORD_ID_filled, FHIR_GROUP_IDENTIFIER_filled, DEPT_ALT_CODE_filled, PAYER_ENTERPRISE_IDENTIFIER_filled, ATT_PROV_SPECIALTY_filled, NON_PAYMENT_RSN_DESC_filled, CARRIER_PAYMENT_DNL_CD_filled, NON_PAYMENT_RSN_CD_filled, CARRIER_PAYMENT_DNL_DESC_filled, BCDA_GROUP_IDENT_filled, PRIMARY_PAYER_CD_filled, BIL_PROV_SPEC_CODE_SET_filled, OPER_PROV_TAXONOMY_filled, PREDETERMIN_IDENT_filled, ADJ_TO_CLAIM_ID_filled, REV_TO_CLAIM_ID_filled, ADJ_SEQUENCE_filled, PLAN_NAME_filled, CORPORATION_NAME_filled, NETWORK_LEVEL_filled, REGION_NAME_filled, LINE_OF_BUSINESS_NAME_filled, SVC_PROV_IN_NETWORK_filled, MEDICARE_DRUG_CVG_CODE_filled, SVC_FAC_CCN_filled, PCP_REF_PROV_NAM_LAST_filled, PCP_REF_PROV_NAM_FIRST_filled, PCP_REF_PROV_NAM_MID_filled, PCP_REF_PROV_NAM_SUF_filled, PCP_REF_PROV_NPI_filled, PCP_REF_PROV_TAXONOMY_filled, REF_PROV_FROM_LINE_YN_filled, REN_PROV_FROM_LINE_YN_filled, OPER_PROV_FROM_LINE_YN_filled, OTHOP_PROV_FROM_LINE_YN_filled, PAT_RESIDENCE_CODE_filled, SVC_FAC_CMS_PARTD_FLAG_filled, BANK_IDENT_NUM_filled, PROCESSOR_CTL_NUM_filled, RX_PRIOR_AUTH_TYPE_filled, PRESCRIBER_LAST_NAME_filled, SNAPSHOT_CEV_YN_filled, SNAPSHOT_CEV_RECORD_ID_filled, PICK_UP_CNTY_filled, DROP_OFF_CNTY_filled, LAST_SRP_DATE_filled, NCH_CLAIM_TYPE_filled, CMS_ADJSTMT_DLTN_CD_filled, CLAIM_TYPE_OUT_IN_filled, COVERAGE_EXPIRY_DATE_filled, DECEASED_INDICATOR_filled, CLAIM_NET_AMOUNT_filled, VALUE_ADDED_TAX_filled, ENC_TYPE_filled, ENC_TRANSFER_SOURCE_filled, ENC_TRANSFER_DEST_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5639,14 +7863,30 @@ SELECT
     CAST(NULL AS INT) AS ENC_TYPE_filled,
     CAST(NULL AS INT) AS ENC_TRANSFER_SOURCE_filled,
     CAST(NULL AS INT) AS ENC_TRANSFER_DEST_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_116;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_117 <- CLM_VALUES_6 ----
 -- All values associated with a claim are stored in the Claim External Value record. The CLM_VALUES_6 table holds claim-level values set by the system during claims processing or by u
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_117 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    RESUBMISSION_COMMENT_filled INT,
+    SUBSCR_EMPLOYER_PHONE_filled INT,
+    PAT_SEX_ASSIGNED_AT_BIRTH_filled INT,
+    ENC_START_DATE_filled INT,
+    ENC_START_TIME_TM_filled INT,
+    ENC_END_DATE_filled INT,
+    ENC_END_TIME_TM_filled INT,
+    ENC_END_TYPE_filled INT,
+    SVC_PROV_NAME_filled INT,
+    CONTRACT_NUMBER_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_117 (activity_year, total_rows, RECORD_ID_filled, RESUBMISSION_COMMENT_filled, SUBSCR_EMPLOYER_PHONE_filled, PAT_SEX_ASSIGNED_AT_BIRTH_filled, ENC_START_DATE_filled, ENC_START_TIME_TM_filled, ENC_END_DATE_filled, ENC_END_TIME_TM_filled, ENC_END_TYPE_filled, SVC_PROV_NAME_filled, CONTRACT_NUMBER_filled, query_error)
 SELECT
     YEAR(ENC_START_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5662,11 +7902,11 @@ SELECT
     COUNT(SVC_PROV_NAME) AS SVC_PROV_NAME_filled,
     COUNT(CONTRACT_NUMBER) AS CONTRACT_NUMBER_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_117
 FROM CLM_VALUES_6
 GROUP BY YEAR(ENC_START_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_117 (activity_year, total_rows, RECORD_ID_filled, RESUBMISSION_COMMENT_filled, SUBSCR_EMPLOYER_PHONE_filled, PAT_SEX_ASSIGNED_AT_BIRTH_filled, ENC_START_DATE_filled, ENC_START_TIME_TM_filled, ENC_END_DATE_filled, ENC_END_TIME_TM_filled, ENC_END_TYPE_filled, SVC_PROV_NAME_filled, CONTRACT_NUMBER_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5681,15 +7921,24 @@ SELECT
     CAST(NULL AS INT) AS ENC_END_TYPE_filled,
     CAST(NULL AS INT) AS SVC_PROV_NAME_filled,
     CAST(NULL AS INT) AS CONTRACT_NUMBER_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_117;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_118 <- CLM_VALUES_DENT_STAT ----
 -- This table contains information for dental-specific tooth statuses (Missing/To Be Extracted).
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_118 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    TOOTH_NUM_filled INT,
+    TOOTH_STAT_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_118 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, TOOTH_NUM_filled, TOOTH_STAT_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5698,10 +7947,10 @@ SELECT
     COUNT(TOOTH_NUM) AS TOOTH_NUM_filled,
     COUNT(TOOTH_STAT_CODE) AS TOOTH_STAT_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_118
 FROM CLM_VALUES_DENT_STAT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_118 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, TOOTH_NUM_filled, TOOTH_STAT_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5709,15 +7958,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS TOOTH_NUM_filled,
     CAST(NULL AS INT) AS TOOTH_STAT_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_118;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_119 <- CLM_VALUES_PAT_IDENT ----
 -- This table contains information for patient identifiers.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_119 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    PAT_IDENT_QUAL_filled INT,
+    PAT_IDENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_119 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, PAT_IDENT_QUAL_filled, PAT_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5726,10 +7984,10 @@ SELECT
     COUNT(PAT_IDENT_QUAL) AS PAT_IDENT_QUAL_filled,
     COUNT(PAT_IDENT) AS PAT_IDENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_119
 FROM CLM_VALUES_PAT_IDENT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_119 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, PAT_IDENT_QUAL_filled, PAT_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5737,15 +7995,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PAT_IDENT_QUAL_filled,
     CAST(NULL AS INT) AS PAT_IDENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_119;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_120 <- CLM_VALUES_PRESC_PROV_ID ----
 -- This table contains information for prescribing provider identifiers.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_120 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    PROV_IDENT_QUAL_filled INT,
+    PROV_IDENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_120 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, PROV_IDENT_QUAL_filled, PROV_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5754,10 +8021,10 @@ SELECT
     COUNT(PROV_IDENT_QUAL) AS PROV_IDENT_QUAL_filled,
     COUNT(PROV_IDENT) AS PROV_IDENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_120
 FROM CLM_VALUES_PRESC_PROV_ID;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_120 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, PROV_IDENT_QUAL_filled, PROV_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5765,15 +8032,25 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PROV_IDENT_QUAL_filled,
     CAST(NULL AS INT) AS PROV_IDENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_120;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_121 <- CLM_VALUES_REFERRAL_DX ----
 -- This table stores the referral diagnoses associated with the claim.
 -- Bucket(s): ICD-10 / Diagnosis coding;Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_121 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    REFERRAL_DX_filled INT,
+    REFERRAL_DX_QUAL_filled INT,
+    REFERRAL_DX_CODE_SET_OID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_121 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, REFERRAL_DX_filled, REFERRAL_DX_QUAL_filled, REFERRAL_DX_CODE_SET_OID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5783,10 +8060,10 @@ SELECT
     COUNT(REFERRAL_DX_QUAL) AS REFERRAL_DX_QUAL_filled,
     COUNT(REFERRAL_DX_CODE_SET_OID) AS REFERRAL_DX_CODE_SET_OID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_121
 FROM CLM_VALUES_REFERRAL_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_121 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, REFERRAL_DX_filled, REFERRAL_DX_QUAL_filled, REFERRAL_DX_CODE_SET_OID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5795,15 +8072,23 @@ SELECT
     CAST(NULL AS INT) AS REFERRAL_DX_filled,
     CAST(NULL AS INT) AS REFERRAL_DX_QUAL_filled,
     CAST(NULL AS INT) AS REFERRAL_DX_CODE_SET_OID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_121;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_122 <- CLM_VALUES_REJECT_CODE ----
 -- This table contains information for pharmacy claim reject codes.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_122 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    REJECT_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_122 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, REJECT_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5811,25 +8096,36 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(REJECT_CODE) AS REJECT_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_122
 FROM CLM_VALUES_REJECT_CODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_122 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, REJECT_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RECORD_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS REJECT_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_122;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_123 <- CLM_VALUES_SVC_PROV_ID ----
 -- This table contains information for service provider identifiers
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_123 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    SVC_PROV_IDENT_QUAL_filled INT,
+    SVC_PROV_IDENT_filled INT,
+    SVC_PROV_TAXONOMY_filled INT,
+    SVC_PROV_FROM_LINE_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_123 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, SVC_PROV_IDENT_QUAL_filled, SVC_PROV_IDENT_filled, SVC_PROV_TAXONOMY_filled, SVC_PROV_FROM_LINE_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5840,10 +8136,10 @@ SELECT
     COUNT(SVC_PROV_TAXONOMY) AS SVC_PROV_TAXONOMY_filled,
     COUNT(SVC_PROV_FROM_LINE_YN) AS SVC_PROV_FROM_LINE_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_123
 FROM CLM_VALUES_SVC_PROV_ID;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_123 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, SVC_PROV_IDENT_QUAL_filled, SVC_PROV_IDENT_filled, SVC_PROV_TAXONOMY_filled, SVC_PROV_FROM_LINE_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5853,15 +8149,23 @@ SELECT
     CAST(NULL AS INT) AS SVC_PROV_IDENT_filled,
     CAST(NULL AS INT) AS SVC_PROV_TAXONOMY_filled,
     CAST(NULL AS INT) AS SVC_PROV_FROM_LINE_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_123;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_124 <- CLM_WC_DIAGNOSIS ----
 -- Worker's comp diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_124 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_ID_filled INT,
+    LINE_filled INT,
+    WK_COMP_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_124 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, WK_COMP_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5869,25 +8173,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(WK_COMP_DX) AS WK_COMP_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_124
 FROM CLM_WC_DIAGNOSIS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_124 (activity_year, total_rows, CLAIM_ID_filled, LINE_filled, WK_COMP_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CLAIM_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS WK_COMP_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_124;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_125 <- CL_ICD_PX ----
 -- The CL_ICD_PX table is the master table for ICD procedures.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_125 (
+    activity_year INT,
+    total_rows INT,
+    ICD_PX_ID_filled INT,
+    ICD_PX_ID_ICD_PX_NAME_filled INT,
+    ICD_PX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_125 (activity_year, total_rows, ICD_PX_ID_filled, ICD_PX_ID_ICD_PX_NAME_filled, ICD_PX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5895,24 +8207,34 @@ SELECT
     COUNT(ICD_PX_ID_ICD_PX_NAME) AS ICD_PX_ID_ICD_PX_NAME_filled,
     COUNT(ICD_PX_NAME) AS ICD_PX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_125
 FROM CL_ICD_PX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_125 (activity_year, total_rows, ICD_PX_ID_filled, ICD_PX_ID_ICD_PX_NAME_filled, ICD_PX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ICD_PX_ID_filled,
     CAST(NULL AS INT) AS ICD_PX_ID_ICD_PX_NAME_filled,
     CAST(NULL AS INT) AS ICD_PX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_125;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_126 <- COD_ADMISSION_DX ----
 -- Admission diagnoses for the patient.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_126 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    ADMISSION_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_126 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ADMISSION_DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5922,11 +8244,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ADMISSION_DX_ID_DX_NAME) AS ADMISSION_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_126
 FROM COD_ADMISSION_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_126 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ADMISSION_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5935,14 +8257,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS ADMISSION_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_126;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_127 <- COD_ADMISSION_DX_SOURCE ----
 -- Source information about the admission diagonsis value.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_127 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_127 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5952,11 +8284,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_127
 FROM COD_ADMISSION_DX_SOURCE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_127 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5965,14 +8297,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_127;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_128 <- COD_ADMISSION_DX_SRC_REF ----
 -- Source information about the admission diagnosis value. Corresponds to line numbers in the source table.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_128 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_128 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -5982,11 +8324,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_128
 FROM COD_ADMISSION_DX_SRC_REF
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_128 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -5995,14 +8337,27 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_128;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_129 <- COD_CPT_CODE ----
 -- CPT/HCPCs codes for the patient.
 -- Bucket(s): E/M level / CPT coding
+CREATE TABLE #fc_129 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    CPT_CODE_filled INT,
+    CPT_DATE_filled INT,
+    CPT_PROV_ID_PROV_NAME_filled INT,
+    CPT_MODIFIERS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_129 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, CPT_CODE_filled, CPT_DATE_filled, CPT_PROV_ID_PROV_NAME_filled, CPT_MODIFIERS_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6015,11 +8370,11 @@ SELECT
     COUNT(CPT_PROV_ID_PROV_NAME) AS CPT_PROV_ID_PROV_NAME_filled,
     COUNT(CPT_MODIFIERS) AS CPT_MODIFIERS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_129
 FROM COD_CPT_CODE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_129 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, CPT_CODE_filled, CPT_DATE_filled, CPT_PROV_ID_PROV_NAME_filled, CPT_MODIFIERS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6031,14 +8386,24 @@ SELECT
     CAST(NULL AS INT) AS CPT_DATE_filled,
     CAST(NULL AS INT) AS CPT_PROV_ID_PROV_NAME_filled,
     CAST(NULL AS INT) AS CPT_MODIFIERS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_129;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_130 <- COD_CPT_CODE_SOURCE ----
 -- Source information about the CPT/HCPCs values.
 -- Bucket(s): E/M level / CPT coding
+CREATE TABLE #fc_130 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_130 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6048,11 +8413,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_130
 FROM COD_CPT_CODE_SOURCE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_130 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6061,14 +8426,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_130;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_131 <- COD_CPT_CODE_SRC_REFERENC ----
 -- Source information about the CPT/HCPCs values. Corresponds to line numbers in the source table.
 -- Bucket(s): E/M level / CPT coding
+CREATE TABLE #fc_131 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_131 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6078,11 +8453,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_131
 FROM COD_CPT_CODE_SRC_REFERENC
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_131 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6091,14 +8466,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_131;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_132 <- COD_ICD_PROC_SOURCE ----
 -- The source of the ICD Procedure.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_132 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_132 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6108,11 +8493,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_132
 FROM COD_ICD_PROC_SOURCE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_132 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6121,14 +8506,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_132;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_133 <- COD_ICD_PROC_SRC_REFERENC ----
 -- Source references for the ICD procedures.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_133 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_133 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6138,11 +8533,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_133
 FROM COD_ICD_PROC_SRC_REFERENC
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_133 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6151,14 +8546,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_133;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_134 <- COD_PRIMARY_DX_SOURCE ----
 -- Source information for the primary diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_134 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_134 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6168,11 +8573,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_134
 FROM COD_PRIMARY_DX_SOURCE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_134 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6181,14 +8586,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_134;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_135 <- COD_PRIM_DX_SRC_REFERENCE ----
 -- Source references for the primary diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_135 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_135 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6198,11 +8613,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_135
 FROM COD_PRIM_DX_SRC_REFERENCE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_135 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6211,15 +8626,23 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_135;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_136 <- COMPLICATION_DX_MODE ----
 -- The COMPLICATION_DX_MODE table contains the test or technique used to diagnose the patient.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_136 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_LIST_ID_filled INT,
+    LINE_filled INT,
+    MODE_OF_DX_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_136 (activity_year, total_rows, PROBLEM_LIST_ID_filled, LINE_filled, MODE_OF_DX_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6227,25 +8650,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(MODE_OF_DX_C_NAME) AS MODE_OF_DX_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_136
 FROM COMPLICATION_DX_MODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_136 (activity_year, total_rows, PROBLEM_LIST_ID_filled, LINE_filled, MODE_OF_DX_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS PROBLEM_LIST_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS MODE_OF_DX_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_136;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_137 <- CRR_SUBMISSION_DX ----
 -- This table contains the list of diagnoses for a chart review record submission.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_137 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_RECON_ID_filled INT,
+    LINE_filled INT,
+    CR_SUBMISSION_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_137 (activity_year, total_rows, CLAIM_RECON_ID_filled, LINE_filled, CR_SUBMISSION_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6253,25 +8684,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CR_SUBMISSION_DX_ID_DX_NAME) AS CR_SUBMISSION_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_137
 FROM CRR_SUBMISSION_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_137 (activity_year, total_rows, CLAIM_RECON_ID_filled, LINE_filled, CR_SUBMISSION_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CLAIM_RECON_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CR_SUBMISSION_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_137;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_138 <- CUST_SERVICE_TRANS_DX ----
 -- The CUST_SERVICE_TRANS_DX table contains diagnosis-related information collected for a transfer patient in both free text and coded form.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_138 (
+    activity_year INT,
+    total_rows INT,
+    COMM_ID_filled INT,
+    LINE_filled INT,
+    TRANS_DX_TEXT_filled INT,
+    TRANS_DX_ID_DX_NAME_filled INT,
+    TRANS_DX_CATEGORY_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_138 (activity_year, total_rows, COMM_ID_filled, LINE_filled, TRANS_DX_TEXT_filled, TRANS_DX_ID_DX_NAME_filled, TRANS_DX_CATEGORY_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6281,10 +8722,10 @@ SELECT
     COUNT(TRANS_DX_ID_DX_NAME) AS TRANS_DX_ID_DX_NAME_filled,
     COUNT(TRANS_DX_CATEGORY_C_NAME) AS TRANS_DX_CATEGORY_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_138
 FROM CUST_SERVICE_TRANS_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_138 (activity_year, total_rows, COMM_ID_filled, LINE_filled, TRANS_DX_TEXT_filled, TRANS_DX_ID_DX_NAME_filled, TRANS_DX_CATEGORY_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6293,14 +8734,27 @@ SELECT
     CAST(NULL AS INT) AS TRANS_DX_TEXT_filled,
     CAST(NULL AS INT) AS TRANS_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS TRANS_DX_CATEGORY_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_138;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_139 <- CVG_MEM_RISK_ADJ_FACT ----
 -- This table holds member level risk adjustment factor.
 -- Bucket(s): HCC / Risk adjustment
+CREATE TABLE #fc_139 (
+    activity_year INT,
+    total_rows INT,
+    CVG_ID_filled INT,
+    LINE_filled INT,
+    PAT_ID_filled INT,
+    EFF_DATE_filled INT,
+    TERM_DATE_filled INT,
+    RISK_ADJ_FACT_MODEL_C_NAME_filled INT,
+    RISK_ADJ_FACT_TYPE_C_NAME_filled INT,
+    RISK_ADJ_FACTOR_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_139 (activity_year, total_rows, CVG_ID_filled, LINE_filled, PAT_ID_filled, EFF_DATE_filled, TERM_DATE_filled, RISK_ADJ_FACT_MODEL_C_NAME_filled, RISK_ADJ_FACT_TYPE_C_NAME_filled, RISK_ADJ_FACTOR_filled, query_error)
 SELECT
     YEAR(EFF_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6313,11 +8767,11 @@ SELECT
     COUNT(RISK_ADJ_FACT_TYPE_C_NAME) AS RISK_ADJ_FACT_TYPE_C_NAME_filled,
     COUNT(RISK_ADJ_FACTOR) AS RISK_ADJ_FACTOR_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_139
 FROM CVG_MEM_RISK_ADJ_FACT
 GROUP BY YEAR(EFF_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_139 (activity_year, total_rows, CVG_ID_filled, LINE_filled, PAT_ID_filled, EFF_DATE_filled, TERM_DATE_filled, RISK_ADJ_FACT_MODEL_C_NAME_filled, RISK_ADJ_FACT_TYPE_C_NAME_filled, RISK_ADJ_FACTOR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6329,14 +8783,32 @@ SELECT
     CAST(NULL AS INT) AS RISK_ADJ_FACT_MODEL_C_NAME_filled,
     CAST(NULL AS INT) AS RISK_ADJ_FACT_TYPE_C_NAME_filled,
     CAST(NULL AS INT) AS RISK_ADJ_FACTOR_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_139;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_140 <- CVG_MEM_RISK_ADJ_FACT_HX ----
 -- The historical values of the CVG_MEM_RISK_ADJ_FACT table over time.
 -- Bucket(s): HCC / Risk adjustment
+CREATE TABLE #fc_140 (
+    activity_year INT,
+    total_rows INT,
+    CVG_ID_filled INT,
+    LINE_filled INT,
+    PAT_ID_filled INT,
+    EFF_DATE_filled INT,
+    TERM_DATE_filled INT,
+    RISK_ADJ_FACT_MODEL_C_NAME_filled INT,
+    RISK_ADJ_FACT_TYPE_C_NAME_filled INT,
+    RSK_ADJ_FACTOR_filled INT,
+    ITM_HX_START_LOCAL_DTTM_filled INT,
+    ITM_HX_START_UTC_DTTM_filled INT,
+    ITM_HX_END_LOCAL_DTTM_filled INT,
+    ITM_HX_END_UTC_DTTM_filled INT,
+    CVG_ITM_HX_REL_ACT_GUID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_140 (activity_year, total_rows, CVG_ID_filled, LINE_filled, PAT_ID_filled, EFF_DATE_filled, TERM_DATE_filled, RISK_ADJ_FACT_MODEL_C_NAME_filled, RISK_ADJ_FACT_TYPE_C_NAME_filled, RSK_ADJ_FACTOR_filled, ITM_HX_START_LOCAL_DTTM_filled, ITM_HX_START_UTC_DTTM_filled, ITM_HX_END_LOCAL_DTTM_filled, ITM_HX_END_UTC_DTTM_filled, CVG_ITM_HX_REL_ACT_GUID_filled, query_error)
 SELECT
     YEAR(EFF_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6354,11 +8826,11 @@ SELECT
     COUNT(ITM_HX_END_UTC_DTTM) AS ITM_HX_END_UTC_DTTM_filled,
     COUNT(CVG_ITM_HX_REL_ACT_GUID) AS CVG_ITM_HX_REL_ACT_GUID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_140
 FROM CVG_MEM_RISK_ADJ_FACT_HX
 GROUP BY YEAR(EFF_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_140 (activity_year, total_rows, CVG_ID_filled, LINE_filled, PAT_ID_filled, EFF_DATE_filled, TERM_DATE_filled, RISK_ADJ_FACT_MODEL_C_NAME_filled, RISK_ADJ_FACT_TYPE_C_NAME_filled, RSK_ADJ_FACTOR_filled, ITM_HX_START_LOCAL_DTTM_filled, ITM_HX_START_UTC_DTTM_filled, ITM_HX_END_LOCAL_DTTM_filled, ITM_HX_END_UTC_DTTM_filled, CVG_ITM_HX_REL_ACT_GUID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6375,15 +8847,23 @@ SELECT
     CAST(NULL AS INT) AS ITM_HX_END_LOCAL_DTTM_filled,
     CAST(NULL AS INT) AS ITM_HX_END_UTC_DTTM_filled,
     CAST(NULL AS INT) AS CVG_ITM_HX_REL_ACT_GUID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_140;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_141 <- DENTAL_PROC_DIAGNOSES ----
 -- This table contains information about associated diagnoses for a procedure.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_141 (
+    activity_year INT,
+    total_rows INT,
+    FINDING_ID_filled INT,
+    LINE_filled INT,
+    DENTAL_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_141 (activity_year, total_rows, FINDING_ID_filled, LINE_filled, DENTAL_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6391,25 +8871,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DENTAL_DX_ID_DX_NAME) AS DENTAL_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_141
 FROM DENTAL_PROC_DIAGNOSES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_141 (activity_year, total_rows, FINDING_ID_filled, LINE_filled, DENTAL_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS FINDING_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DENTAL_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_141;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_142 <- DENTAL_RES_DX_HX_RM ----
 -- This table extracts the related multiple response Dental: Associated Diagnoses History (I RES 17519) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_142 (
+    activity_year INT,
+    total_rows INT,
+    FINDING_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DENTAL_DX_HX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_142 (activity_year, total_rows, FINDING_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DENTAL_DX_HX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6418,10 +8907,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DENTAL_DX_HX_ID_DX_NAME) AS DENTAL_DX_HX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_142
 FROM DENTAL_RES_DX_HX_RM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_142 (activity_year, total_rows, FINDING_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DENTAL_DX_HX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6429,15 +8918,23 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DENTAL_DX_HX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_142;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_143 <- DIAGNOSIS_REVIEW ----
 -- This table stores the log diagnosis review status.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_143 (
+    activity_year INT,
+    total_rows INT,
+    LOG_ID_filled INT,
+    LINE_filled INT,
+    DIAGNOSIS_REVIEW_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_143 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DIAGNOSIS_REVIEW_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6445,24 +8942,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSIS_REVIEW_C_NAME) AS DIAGNOSIS_REVIEW_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_143
 FROM DIAGNOSIS_REVIEW;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_143 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DIAGNOSIS_REVIEW_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LOG_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DIAGNOSIS_REVIEW_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_143;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_144 <- DIFF_DX_MOD_TYPE ----
 -- This item stores the types of modifiers that have been applied to this diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_144 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    DDX_MODIFIER_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_144 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DDX_MODIFIER_TYPE_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6473,11 +8981,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DDX_MODIFIER_TYPE_C_NAME) AS DDX_MODIFIER_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_144
 FROM DIFF_DX_MOD_TYPE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_144 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DDX_MODIFIER_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6487,14 +8995,25 @@ SELECT
     CAST(NULL AS INT) AS PAT_ENC_DATE_REAL_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DDX_MODIFIER_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_144;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_145 <- DIFF_DX_MOD_VALUES ----
 -- This item stores the values of the modifiers selected for this diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_145 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    DDX_MODIFIER_VALS_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_145 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DDX_MODIFIER_VALS_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6505,11 +9024,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DDX_MODIFIER_VALS_C_NAME) AS DDX_MODIFIER_VALS_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_145
 FROM DIFF_DX_MOD_VALUES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_145 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DDX_MODIFIER_VALS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6519,14 +9038,45 @@ SELECT
     CAST(NULL AS INT) AS PAT_ENC_DATE_REAL_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DDX_MODIFIER_VALS_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_145;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_146 <- DOCS_RCVD_DX ----
 -- This table stores discrete diagnosis information received from outside sources.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_146 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_REF_ID_filled INT,
+    DX_ENC_ID_filled INT,
+    DX_NAME_filled INT,
+    DX_CONTEXT_C_NAME_filled INT,
+    DX_SRC_CSN_filled INT,
+    DX_START_DTTM_filled INT,
+    DX_END_DTTM_filled INT,
+    DX_EDG_ID_DX_NAME_filled INT,
+    DX_LST_UPD_INST_DTTM_filled INT,
+    DX_PRIMARY_YN_filled INT,
+    DX_FILTER_RSN_C_NAME_filled INT,
+    DX_IS_ED_YN_filled INT,
+    DX_BULK_STAT_C_NAME_filled INT,
+    DX_BULK_INCL_DATE_filled INT,
+    DX_GENERIC_NAME_filled INT,
+    DX_BEST_MATCH_DX_REFID_filled INT,
+    DX_CONFIDENCE_RANK_filled INT,
+    DX_STATE_HOLOGRAM_ID_filled INT,
+    DX_TOPIC_NAME_filled INT,
+    DX_NOTED_DATE_filled INT,
+    DX_DOCUMENTED_INST_UTC_DTTM_filled INT,
+    DX_POA_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_146 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, DX_REF_ID_filled, DX_ENC_ID_filled, DX_NAME_filled, DX_CONTEXT_C_NAME_filled, DX_SRC_CSN_filled, DX_START_DTTM_filled, DX_END_DTTM_filled, DX_EDG_ID_DX_NAME_filled, DX_LST_UPD_INST_DTTM_filled, DX_PRIMARY_YN_filled, DX_FILTER_RSN_C_NAME_filled, DX_IS_ED_YN_filled, DX_BULK_STAT_C_NAME_filled, DX_BULK_INCL_DATE_filled, DX_GENERIC_NAME_filled, DX_BEST_MATCH_DX_REFID_filled, DX_CONFIDENCE_RANK_filled, DX_STATE_HOLOGRAM_ID_filled, DX_TOPIC_NAME_filled, DX_NOTED_DATE_filled, DX_DOCUMENTED_INST_UTC_DTTM_filled, DX_POA_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6557,11 +9107,11 @@ SELECT
     COUNT(DX_DOCUMENTED_INST_UTC_DTTM) AS DX_DOCUMENTED_INST_UTC_DTTM_filled,
     COUNT(DX_POA_C_NAME) AS DX_POA_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_146
 FROM DOCS_RCVD_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_146 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, DX_REF_ID_filled, DX_ENC_ID_filled, DX_NAME_filled, DX_CONTEXT_C_NAME_filled, DX_SRC_CSN_filled, DX_START_DTTM_filled, DX_END_DTTM_filled, DX_EDG_ID_DX_NAME_filled, DX_LST_UPD_INST_DTTM_filled, DX_PRIMARY_YN_filled, DX_FILTER_RSN_C_NAME_filled, DX_IS_ED_YN_filled, DX_BULK_STAT_C_NAME_filled, DX_BULK_INCL_DATE_filled, DX_GENERIC_NAME_filled, DX_BEST_MATCH_DX_REFID_filled, DX_CONFIDENCE_RANK_filled, DX_STATE_HOLOGRAM_ID_filled, DX_TOPIC_NAME_filled, DX_NOTED_DATE_filled, DX_DOCUMENTED_INST_UTC_DTTM_filled, DX_POA_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6591,14 +9141,27 @@ SELECT
     CAST(NULL AS INT) AS DX_NOTED_DATE_filled,
     CAST(NULL AS INT) AS DX_DOCUMENTED_INST_UTC_DTTM_filled,
     CAST(NULL AS INT) AS DX_POA_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_146;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_147 <- DOCS_RCVD_DX_CD_CMPLD ----
 -- This table stores the data type, coding system, and code data received for a diagnosis reference ID.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_147 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DATA_TYPE_C_filled INT,
+    CODING_SYSTEM_filled INT,
+    CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_147 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DATA_TYPE_C_filled, CODING_SYSTEM_filled, CODE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6611,11 +9174,11 @@ SELECT
     COUNT(CODING_SYSTEM) AS CODING_SYSTEM_filled,
     COUNT(CODE) AS CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_147
 FROM DOCS_RCVD_DX_CD_CMPLD
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_147 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DATA_TYPE_C_filled, CODING_SYSTEM_filled, CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6627,14 +9190,25 @@ SELECT
     CAST(NULL AS INT) AS DATA_TYPE_C_filled,
     CAST(NULL AS INT) AS CODING_SYSTEM_filled,
     CAST(NULL AS INT) AS CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_147;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_148 <- DOCS_RCVD_DX_CD_DISPNM ----
 -- This table stores the display name of all the mapping codes for one diagnosis reference ID.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_148 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DISPLAY_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_148 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DISPLAY_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6645,11 +9219,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DISPLAY_NAME) AS DISPLAY_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_148
 FROM DOCS_RCVD_DX_CD_DISPNM
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_148 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DISPLAY_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6659,14 +9233,25 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DISPLAY_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_148;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_149 <- DOCS_RCVD_DX_CD_NLFLVR ----
 -- This table stores the nullFlavor values of all the mapping codes for one diagnosis reference ID.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_149 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    CODE_NULLFLAVOR_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_149 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, CODE_NULLFLAVOR_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6677,11 +9262,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CODE_NULLFLAVOR_C_NAME) AS CODE_NULLFLAVOR_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_149
 FROM DOCS_RCVD_DX_CD_NLFLVR
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_149 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, CODE_NULLFLAVOR_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6691,14 +9276,25 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CODE_NULLFLAVOR_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_149;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_150 <- DOCS_RCVD_DX_NOTES ----
 -- This table stores the note elements associated with a diagnosis from an external source.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_150 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_LINKED_NOTES_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_150 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DX_LINKED_NOTES_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6709,11 +9305,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_LINKED_NOTES) AS DX_LINKED_NOTES_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_150
 FROM DOCS_RCVD_DX_NOTES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_150 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DX_LINKED_NOTES_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6723,14 +9319,25 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DX_LINKED_NOTES_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_150;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_151 <- DOCS_RCVD_ENCOUNTER_DX ----
 -- This table extracts the related multiple response Event Linked Diagnosis (I DXR 8025) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_151 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    EVENT_LINKED_DX_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_151 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, EVENT_LINKED_DX_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6741,11 +9348,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(EVENT_LINKED_DX_DX_NAME) AS EVENT_LINKED_DX_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_151
 FROM DOCS_RCVD_ENCOUNTER_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_151 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, EVENT_LINKED_DX_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6755,14 +9362,28 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS EVENT_LINKED_DX_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_151;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_152 <- DOCS_RCVD_ENDO_DX_INFO ----
 -- Contains information about endoscopy procedure diagnoses extracted from customer systems for use in Cosmos.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_152 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    ENDO_DX_REF_IDENT_filled INT,
+    ENDO_DX_SRC_REFID_filled INT,
+    ENDO_DX_DDP_REFID_filled INT,
+    ENDO_DX_IND_ID_DX_NAME_filled INT,
+    ENDO_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_152 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ENDO_DX_REF_IDENT_filled, ENDO_DX_SRC_REFID_filled, ENDO_DX_DDP_REFID_filled, ENDO_DX_IND_ID_DX_NAME_filled, ENDO_DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6776,11 +9397,11 @@ SELECT
     COUNT(ENDO_DX_IND_ID_DX_NAME) AS ENDO_DX_IND_ID_DX_NAME_filled,
     COUNT(ENDO_DX_ID_DX_NAME) AS ENDO_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_152
 FROM DOCS_RCVD_ENDO_DX_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_152 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ENDO_DX_REF_IDENT_filled, ENDO_DX_SRC_REFID_filled, ENDO_DX_DDP_REFID_filled, ENDO_DX_IND_ID_DX_NAME_filled, ENDO_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6793,14 +9414,25 @@ SELECT
     CAST(NULL AS INT) AS ENDO_DX_DDP_REFID_filled,
     CAST(NULL AS INT) AS ENDO_DX_IND_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS ENDO_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_152;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_153 <- DOCS_RCVD_GENERIC_ORD_DX ----
 -- This table stores the reference IDs of external diagnosis elements associated with external generic orders.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_153 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    GENERIC_ORDER_ASSOCIATED_DXS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_153 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, GENERIC_ORDER_ASSOCIATED_DXS_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6811,11 +9443,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(GENERIC_ORDER_ASSOCIATED_DXS) AS GENERIC_ORDER_ASSOCIATED_DXS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_153
 FROM DOCS_RCVD_GENERIC_ORD_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_153 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, GENERIC_ORDER_ASSOCIATED_DXS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6825,14 +9457,25 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS GENERIC_ORDER_ASSOCIATED_DXS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_153;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_154 <- DOCS_RCVD_MEDS_ASSOC_DX ----
 -- This table stores the reference IDs of diagnoses associated with a medication from an external source.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_154 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    MEDICATION_ASSOCIATED_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_154 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, MEDICATION_ASSOCIATED_DX_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6843,11 +9486,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(MEDICATION_ASSOCIATED_DX) AS MEDICATION_ASSOCIATED_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_154
 FROM DOCS_RCVD_MEDS_ASSOC_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_154 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, MEDICATION_ASSOCIATED_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6857,14 +9500,22 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS MEDICATION_ASSOCIATED_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_154;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_155 <- DOCS_RCVD_MINOR_DENIAL ----
 -- Contains information about minor denials decisions included in a received document.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_155 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_155 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6872,25 +9523,48 @@ SELECT
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_155
 FROM DOCS_RCVD_MINOR_DENIAL
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_155 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS DOCUMENT_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_REAL_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_155;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_156 <- DOCS_RCVD_RISK_ADJ_CAT ----
 -- This table stores risk adjustment categories received from outside sources.
 -- Bucket(s): HCC / Risk adjustment
+CREATE TABLE #fc_156 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    RAD_REF_IDENT_filled INT,
+    RAD_CALC_DATE_filled INT,
+    RAD_START_DATE_filled INT,
+    RAD_END_DATE_filled INT,
+    RAD_CAT_NAME_filled INT,
+    RAD_DESCRIPTOR_filled INT,
+    RAD_STATUS_C_NAME_filled INT,
+    RAD_EVIDENCE_NOTE_ID_filled INT,
+    RAD_DX_ID_DX_NAME_filled INT,
+    RAD_EXT_DATA_FILTER_REASON_C_NAME_filled INT,
+    RAD_SRC_DOCUMENT_CSN_ID_filled INT,
+    RAD_BULK_STAT_C_NAME_filled INT,
+    RAD_LAST_UPD_UTC_DTTM_filled INT,
+    RAD_CODING_STATUS_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_156 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, RAD_REF_IDENT_filled, RAD_CALC_DATE_filled, RAD_START_DATE_filled, RAD_END_DATE_filled, RAD_CAT_NAME_filled, RAD_DESCRIPTOR_filled, RAD_STATUS_C_NAME_filled, RAD_EVIDENCE_NOTE_ID_filled, RAD_DX_ID_DX_NAME_filled, RAD_EXT_DATA_FILTER_REASON_C_NAME_filled, RAD_SRC_DOCUMENT_CSN_ID_filled, RAD_BULK_STAT_C_NAME_filled, RAD_LAST_UPD_UTC_DTTM_filled, RAD_CODING_STATUS_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6913,11 +9587,11 @@ SELECT
     COUNT(RAD_LAST_UPD_UTC_DTTM) AS RAD_LAST_UPD_UTC_DTTM_filled,
     COUNT(RAD_CODING_STATUS_C_NAME) AS RAD_CODING_STATUS_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_156
 FROM DOCS_RCVD_RISK_ADJ_CAT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_156 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, RAD_REF_IDENT_filled, RAD_CALC_DATE_filled, RAD_START_DATE_filled, RAD_END_DATE_filled, RAD_CAT_NAME_filled, RAD_DESCRIPTOR_filled, RAD_STATUS_C_NAME_filled, RAD_EVIDENCE_NOTE_ID_filled, RAD_DX_ID_DX_NAME_filled, RAD_EXT_DATA_FILTER_REASON_C_NAME_filled, RAD_SRC_DOCUMENT_CSN_ID_filled, RAD_BULK_STAT_C_NAME_filled, RAD_LAST_UPD_UTC_DTTM_filled, RAD_CODING_STATUS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6939,15 +9613,24 @@ SELECT
     CAST(NULL AS INT) AS RAD_BULK_STAT_C_NAME_filled,
     CAST(NULL AS INT) AS RAD_LAST_UPD_UTC_DTTM_filled,
     CAST(NULL AS INT) AS RAD_CODING_STATUS_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_156;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_157 <- DX_MODS_TXT ----
 -- Stores the free text associated with additional diagnoses modifiers (add code).
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_157 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_MODIFIER_TEXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_157 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_MODIFIER_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6956,10 +9639,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_MODIFIER_TEXT) AS DX_MODIFIER_TEXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_157
 FROM DX_MODS_TXT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_157 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_MODIFIER_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -6967,14 +9650,29 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_MODIFIER_TEXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_157;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_158 <- EM_CODE_CALC ----
 -- Tracks Evaluation and Management (EM) code calculations based on LOS codes. EM codes are used by physicians to report and bill medical services depending on medical history, physic
 -- Bucket(s): E/M level / CPT coding
+CREATE TABLE #fc_158 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    EM_CODE_SECTION_filled INT,
+    EM_CODE_ATTRIBUTE_filled INT,
+    EMCODE_ASSO_NOTE_ID_filled INT,
+    EMCODE_SDI_filled INT,
+    EM_CODE_SOURCE_C_NAME_filled INT,
+    EM_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_158 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, EM_CODE_SECTION_filled, EM_CODE_ATTRIBUTE_filled, EMCODE_ASSO_NOTE_ID_filled, EMCODE_SDI_filled, EM_CODE_SOURCE_C_NAME_filled, EM_CODE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -6989,11 +9687,11 @@ SELECT
     COUNT(EM_CODE_SOURCE_C_NAME) AS EM_CODE_SOURCE_C_NAME_filled,
     COUNT(EM_CODE) AS EM_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_158
 FROM EM_CODE_CALC
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_158 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, EM_CODE_SECTION_filled, EM_CODE_ATTRIBUTE_filled, EMCODE_ASSO_NOTE_ID_filled, EMCODE_SDI_filled, EM_CODE_SOURCE_C_NAME_filled, EM_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7007,14 +9705,26 @@ SELECT
     CAST(NULL AS INT) AS EMCODE_SDI_filled,
     CAST(NULL AS INT) AS EM_CODE_SOURCE_C_NAME_filled,
     CAST(NULL AS INT) AS EM_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_158;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_159 <- ENC_DX_ASSOC_AMBIENT_DX ----
 -- This table contains the unique IDs of diagnoses provided by Ambient that were finalized to Visit Diagnoses on the encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_159 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PAT_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    DX_ASSOC_AMBIENT_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_159 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, DX_ASSOC_AMBIENT_DX_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7026,11 +9736,11 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(DX_ASSOC_AMBIENT_DX) AS DX_ASSOC_AMBIENT_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_159
 FROM ENC_DX_ASSOC_AMBIENT_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_159 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, DX_ASSOC_AMBIENT_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7041,14 +9751,24 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS DX_ASSOC_AMBIENT_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_159;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_160 <- ENC_DX_ASSOC_DATA ----
 -- This table contains data related to a patient's visit diagnoses. Each row corresponds to a visit diagnosis on an encounter. The data includes linked notes, SmartSections, and Ambie
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_160 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_160 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7058,11 +9778,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_160
 FROM ENC_DX_ASSOC_DATA
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_160 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7071,14 +9791,25 @@ SELECT
     CAST(NULL AS INT) AS PAT_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_160;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_161 <- ENC_DX_ASSOC_NOTES ----
 -- This table contains information about linked notes and SmartSections for visit diagnoses that appear in a Diagnosis-Aware Note.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_161 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PAT_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_161 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7089,11 +9820,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_161
 FROM ENC_DX_ASSOC_NOTES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_161 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAT_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7103,15 +9834,26 @@ SELECT
     CAST(NULL AS INT) AS PAT_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_161;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_162 <- ENC_DX_EDIT_TRAIL ----
 -- This table stores the audit trail information for encounter diagnosis edits. In order to report on diagnosis edits, this table can be linked with PAT_ENC_DX. This linking can be do
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_162 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    DX_EDIT_CHRONIC_YN_filled INT,
+    DX_EDIT_PRIMDX_YN_filled INT,
+    DX_EDIT_STATUS_C_NAME_filled INT,
+    DX_EDIT_ED_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_162 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, DX_EDIT_CHRONIC_YN_filled, DX_EDIT_PRIMDX_YN_filled, DX_EDIT_STATUS_C_NAME_filled, DX_EDIT_ED_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7122,10 +9864,10 @@ SELECT
     COUNT(DX_EDIT_STATUS_C_NAME) AS DX_EDIT_STATUS_C_NAME_filled,
     COUNT(DX_EDIT_ED_YN) AS DX_EDIT_ED_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_162
 FROM ENC_DX_EDIT_TRAIL;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_162 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, DX_EDIT_CHRONIC_YN_filled, DX_EDIT_PRIMDX_YN_filled, DX_EDIT_STATUS_C_NAME_filled, DX_EDIT_ED_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7135,15 +9877,25 @@ SELECT
     CAST(NULL AS INT) AS DX_EDIT_PRIMDX_YN_filled,
     CAST(NULL AS INT) AS DX_EDIT_STATUS_C_NAME_filled,
     CAST(NULL AS INT) AS DX_EDIT_ED_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_162;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_163 <- EXT_CAUSE_INJ_DX ----
 -- All values associated with a claim are stored in the Claim External Value record. The EXT_CAUSE_INJ_DX table holds the diagnoses that document any accidents or other external cause
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_163 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    EXT_CAUSE_INJ_QUAL_filled INT,
+    EXT_CAUSE_INJ_DX_filled INT,
+    EXT_CAUSE_INJ_POA_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_163 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, EXT_CAUSE_INJ_QUAL_filled, EXT_CAUSE_INJ_DX_filled, EXT_CAUSE_INJ_POA_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7153,10 +9905,10 @@ SELECT
     COUNT(EXT_CAUSE_INJ_DX) AS EXT_CAUSE_INJ_DX_filled,
     COUNT(EXT_CAUSE_INJ_POA) AS EXT_CAUSE_INJ_POA_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_163
 FROM EXT_CAUSE_INJ_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_163 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, EXT_CAUSE_INJ_QUAL_filled, EXT_CAUSE_INJ_DX_filled, EXT_CAUSE_INJ_POA_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7165,14 +9917,32 @@ SELECT
     CAST(NULL AS INT) AS EXT_CAUSE_INJ_QUAL_filled,
     CAST(NULL AS INT) AS EXT_CAUSE_INJ_DX_filled,
     CAST(NULL AS INT) AS EXT_CAUSE_INJ_POA_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_163;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_164 <- HEALTH_PLAN_DX_CODING ----
 -- This table contains diagnosis coding from health plan risk adjustment review. Each line represents a diagnosis on the evidence associated with the coding record.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_164 (
+    activity_year INT,
+    total_rows INT,
+    CODING_RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_ACTION_C_NAME_filled INT,
+    DX_ACTION_COMMENT_filled INT,
+    DX_REMOVE_RSN_C_NAME_filled INT,
+    RA_SOURCE_PAT_ENC_CSN_ID_filled INT,
+    RA_SOURCE_DOCUMENT_CSN_ID_filled INT,
+    RA_SOURCE_DOCUMENT_ID_filled INT,
+    HIGH_RISK_DX_YN_filled INT,
+    HAS_AI_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_164 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, DX_ACTION_C_NAME_filled, DX_ACTION_COMMENT_filled, DX_REMOVE_RSN_C_NAME_filled, RA_SOURCE_PAT_ENC_CSN_ID_filled, RA_SOURCE_DOCUMENT_CSN_ID_filled, RA_SOURCE_DOCUMENT_ID_filled, HIGH_RISK_DX_YN_filled, HAS_AI_YN_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7190,11 +9960,11 @@ SELECT
     COUNT(HIGH_RISK_DX_YN) AS HIGH_RISK_DX_YN_filled,
     COUNT(HAS_AI_YN) AS HAS_AI_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_164
 FROM HEALTH_PLAN_DX_CODING
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_164 (activity_year, total_rows, CODING_RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, DX_ACTION_C_NAME_filled, DX_ACTION_COMMENT_filled, DX_REMOVE_RSN_C_NAME_filled, RA_SOURCE_PAT_ENC_CSN_ID_filled, RA_SOURCE_DOCUMENT_CSN_ID_filled, RA_SOURCE_DOCUMENT_ID_filled, HIGH_RISK_DX_YN_filled, HAS_AI_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7211,14 +9981,30 @@ SELECT
     CAST(NULL AS INT) AS RA_SOURCE_DOCUMENT_ID_filled,
     CAST(NULL AS INT) AS HIGH_RISK_DX_YN_filled,
     CAST(NULL AS INT) AS HAS_AI_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_164;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_165 <- HH_OASIS_ICD10_DX ----
 -- This table contains all of the clinical Outcome and Assessment Information Set (OASIS) ICD-10 diagnoses entered by a field nurse and edited in Diagnosis Review. The first diagnosis
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_165 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    OASIS_DX_ID_DX_NAME_filled INT,
+    OASIS_DX_START_DATE_filled INT,
+    OASIS_DX_SCR_C_NAME_filled INT,
+    OASIS_DX_FLAG_C_NAME_filled INT,
+    OASIS_DX_OTHER_1_ID_DX_NAME_filled INT,
+    OASIS_DX_OTHER_2_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_165 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, OASIS_DX_ID_DX_NAME_filled, OASIS_DX_START_DATE_filled, OASIS_DX_SCR_C_NAME_filled, OASIS_DX_FLAG_C_NAME_filled, OASIS_DX_OTHER_1_ID_DX_NAME_filled, OASIS_DX_OTHER_2_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7234,11 +10020,11 @@ SELECT
     COUNT(OASIS_DX_OTHER_1_ID_DX_NAME) AS OASIS_DX_OTHER_1_ID_DX_NAME_filled,
     COUNT(OASIS_DX_OTHER_2_ID_DX_NAME) AS OASIS_DX_OTHER_2_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_165
 FROM HH_OASIS_ICD10_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_165 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, OASIS_DX_ID_DX_NAME_filled, OASIS_DX_START_DATE_filled, OASIS_DX_SCR_C_NAME_filled, OASIS_DX_FLAG_C_NAME_filled, OASIS_DX_OTHER_1_ID_DX_NAME_filled, OASIS_DX_OTHER_2_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7253,14 +10039,26 @@ SELECT
     CAST(NULL AS INT) AS OASIS_DX_FLAG_C_NAME_filled,
     CAST(NULL AS INT) AS OASIS_DX_OTHER_1_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS OASIS_DX_OTHER_2_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_165;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_166 <- HH_PAT_CASE_MIX_DX ----
 -- This table contains Primary and Secondary case mix diagnoses information entered for a patient as part of a home health Outcome and Assessment Information Set (OASIS) assessment. T
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_166 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    CASE_MIX_DX_ID_DX_NAME_filled INT,
+    SEC_CASE_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_166 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, CASE_MIX_DX_ID_DX_NAME_filled, SEC_CASE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7272,11 +10070,11 @@ SELECT
     COUNT(CASE_MIX_DX_ID_DX_NAME) AS CASE_MIX_DX_ID_DX_NAME_filled,
     COUNT(SEC_CASE_DX_ID_DX_NAME) AS SEC_CASE_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_166
 FROM HH_PAT_CASE_MIX_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_166 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, CASE_MIX_DX_ID_DX_NAME_filled, SEC_CASE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7287,14 +10085,26 @@ SELECT
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS CASE_MIX_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS SEC_CASE_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_166;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_167 <- HH_PAT_CSMX_OTH_DX ----
 -- This table contains case mix diagnoses information entered for a patient as part of a home health Outcome and Assessment Information Set (OASIS) assessment. The table stores values
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_167 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    CASE_MIX_DX1_OTH_ID_DX_NAME_filled INT,
+    CASE_MIX_DX2_OTH_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_167 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, CASE_MIX_DX1_OTH_ID_DX_NAME_filled, CASE_MIX_DX2_OTH_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7306,11 +10116,11 @@ SELECT
     COUNT(CASE_MIX_DX1_OTH_ID_DX_NAME) AS CASE_MIX_DX1_OTH_ID_DX_NAME_filled,
     COUNT(CASE_MIX_DX2_OTH_ID_DX_NAME) AS CASE_MIX_DX2_OTH_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_167
 FROM HH_PAT_CSMX_OTH_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_167 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, CASE_MIX_DX1_OTH_ID_DX_NAME_filled, CASE_MIX_DX2_OTH_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7321,14 +10131,25 @@ SELECT
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS CASE_MIX_DX1_OTH_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS CASE_MIX_DX2_OTH_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_167;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_168 <- HH_PAT_IP_DX ----
 -- Contains Home Health inpatient diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_168 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    INPATIENT_DX_ID_DX_NAME_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_168 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, INPATIENT_DX_ID_DX_NAME_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7339,11 +10160,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_168
 FROM HH_PAT_IP_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_168 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, INPATIENT_DX_ID_DX_NAME_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7353,14 +10174,28 @@ SELECT
     CAST(NULL AS INT) AS PAT_ENC_CSN_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_168;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_169 <- HH_PAT_OTHER_DX ----
 -- Contains information from the Home Health Other Diagnoses grid.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_169 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    OTHER_DX_ID_DX_NAME_filled INT,
+    OTHER_DX_START_DT_filled INT,
+    OTHER_DX_SEVERITY_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    OTHER_DX_FLAG_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_169 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, OTHER_DX_ID_DX_NAME_filled, OTHER_DX_START_DT_filled, OTHER_DX_SEVERITY_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, OTHER_DX_FLAG_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7374,11 +10209,11 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(OTHER_DX_FLAG_C_NAME) AS OTHER_DX_FLAG_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_169
 FROM HH_PAT_OTHER_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_169 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, OTHER_DX_ID_DX_NAME_filled, OTHER_DX_START_DT_filled, OTHER_DX_SEVERITY_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, OTHER_DX_FLAG_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7391,14 +10226,27 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS OTHER_DX_FLAG_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_169;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_170 <- HH_PAT_PAYMENT_DX ----
 -- Contains information from the Home Health Payment Diagnoses grid.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_170 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    PAYMENT_DX_ID_DX_NAME_filled INT,
+    PAYMENT_DX_DATE_filled INT,
+    PAYMNT_DX_SEVERITY_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_170 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, PAYMENT_DX_ID_DX_NAME_filled, PAYMENT_DX_DATE_filled, PAYMNT_DX_SEVERITY_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7411,11 +10259,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_170
 FROM HH_PAT_PAYMENT_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_170 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, PAYMENT_DX_ID_DX_NAME_filled, PAYMENT_DX_DATE_filled, PAYMNT_DX_SEVERITY_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7427,14 +10275,25 @@ SELECT
     CAST(NULL AS INT) AS PAT_ENC_CSN_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_170;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_171 <- HH_PAT_REG_CHG_DX ----
 -- Contains Home Health regimen change diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_171 (
+    activity_year INT,
+    total_rows INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    REGIMEN_CHG_DX_ID_DX_NAME_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_171 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, REGIMEN_CHG_DX_ID_DX_NAME_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7445,11 +10304,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_171
 FROM HH_PAT_REG_CHG_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_171 (activity_year, total_rows, CONTACT_DATE_REAL_filled, LINE_filled, REGIMEN_CHG_DX_ID_DX_NAME_filled, PAT_ENC_CSN_ID_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7459,14 +10318,24 @@ SELECT
     CAST(NULL AS INT) AS PAT_ENC_CSN_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_171;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_172 <- HNO_ECG_DX ----
 -- This table contains the diagnosis for Electrocardiograms (ECG/EKG) that have been stored on General Use Notes (HNO) records.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_172 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_CSN_ID_filled INT,
+    LINE_filled INT,
+    NOTE_ID_filled INT,
+    CONTACT_DATE_filled INT,
+    ECG_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_172 (activity_year, total_rows, NOTE_CSN_ID_filled, LINE_filled, NOTE_ID_filled, CONTACT_DATE_filled, ECG_DX_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7476,11 +10345,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ECG_DX) AS ECG_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_172
 FROM HNO_ECG_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_172 (activity_year, total_rows, NOTE_CSN_ID_filled, LINE_filled, NOTE_ID_filled, CONTACT_DATE_filled, ECG_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7489,15 +10358,29 @@ SELECT
     CAST(NULL AS INT) AS NOTE_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS ECG_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_172;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_173 <- HOLOGRAM_AMBIENT_DX_INFO ----
 -- This table contains information about the Ambient diagnosis choices that were presented to a clinician.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_173 (
+    activity_year INT,
+    total_rows INT,
+    HOLOGRAM_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    AMBIENT_DX_SOURCE_C_NAME_filled INT,
+    AMBIENT_DX_LNK_PROB_LST_ID_filled INT,
+    AMBIENT_DX_LINKED_VDX_filled INT,
+    AMBIENT_DX_AUTO_MATCH_YN_filled INT,
+    ADD_DX_TO_PROBLIST_YN_filled INT,
+    INITIAL_DX_ID_DX_NAME_filled INT,
+    AMBIENT_PAST_DX_CSN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_173 (activity_year, total_rows, HOLOGRAM_ID_filled, CONTACT_DATE_REAL_filled, AMBIENT_DX_SOURCE_C_NAME_filled, AMBIENT_DX_LNK_PROB_LST_ID_filled, AMBIENT_DX_LINKED_VDX_filled, AMBIENT_DX_AUTO_MATCH_YN_filled, ADD_DX_TO_PROBLIST_YN_filled, INITIAL_DX_ID_DX_NAME_filled, AMBIENT_PAST_DX_CSN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7511,10 +10394,10 @@ SELECT
     COUNT(INITIAL_DX_ID_DX_NAME) AS INITIAL_DX_ID_DX_NAME_filled,
     COUNT(AMBIENT_PAST_DX_CSN) AS AMBIENT_PAST_DX_CSN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_173
 FROM HOLOGRAM_AMBIENT_DX_INFO;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_173 (activity_year, total_rows, HOLOGRAM_ID_filled, CONTACT_DATE_REAL_filled, AMBIENT_DX_SOURCE_C_NAME_filled, AMBIENT_DX_LNK_PROB_LST_ID_filled, AMBIENT_DX_LINKED_VDX_filled, AMBIENT_DX_AUTO_MATCH_YN_filled, ADD_DX_TO_PROBLIST_YN_filled, INITIAL_DX_ID_DX_NAME_filled, AMBIENT_PAST_DX_CSN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7527,15 +10410,25 @@ SELECT
     CAST(NULL AS INT) AS ADD_DX_TO_PROBLIST_YN_filled,
     CAST(NULL AS INT) AS INITIAL_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS AMBIENT_PAST_DX_CSN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_173;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_174 <- HOLO_LEVEL_OF_SERVICE_MOD ----
 -- This table contains level of service modifier information.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_174 (
+    activity_year INT,
+    total_rows INT,
+    HOLOGRAM_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    LEVEL_OF_SERVICE_MODIFIER_ID_filled INT,
+    LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_174 (activity_year, total_rows, HOLOGRAM_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, LEVEL_OF_SERVICE_MODIFIER_ID_filled, LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7545,10 +10438,10 @@ SELECT
     COUNT(LEVEL_OF_SERVICE_MODIFIER_ID) AS LEVEL_OF_SERVICE_MODIFIER_ID_filled,
     COUNT(LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME) AS LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_174
 FROM HOLO_LEVEL_OF_SERVICE_MOD;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_174 (activity_year, total_rows, HOLOGRAM_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, LEVEL_OF_SERVICE_MODIFIER_ID_filled, LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7557,14 +10450,26 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS LEVEL_OF_SERVICE_MODIFIER_ID_filled,
     CAST(NULL AS INT) AS LEVEL_OF_SERVICE_MODIFIER_ID_MODIFIER_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_174;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_175 <- HOSPICE_CODED_DX ----
 -- The table lists coded hospice diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_175 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    HOSPICE_CODED_DX_ID_DX_NAME_filled INT,
+    HOSPICE_RELATED_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_175 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, HOSPICE_CODED_DX_ID_DX_NAME_filled, HOSPICE_RELATED_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7576,11 +10481,11 @@ SELECT
     COUNT(HOSPICE_CODED_DX_ID_DX_NAME) AS HOSPICE_CODED_DX_ID_DX_NAME_filled,
     COUNT(HOSPICE_RELATED_C_NAME) AS HOSPICE_RELATED_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_175
 FROM HOSPICE_CODED_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_175 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, HOSPICE_CODED_DX_ID_DX_NAME_filled, HOSPICE_RELATED_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7591,14 +10496,25 @@ SELECT
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS HOSPICE_CODED_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS HOSPICE_RELATED_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_175;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_176 <- HOSPICE_DX ----
 -- This table holds Hospice Episode Diagnoses information.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_176 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    HOSPICE_DX_NONCODED_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_176 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, HOSPICE_DX_NONCODED_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7609,11 +10525,11 @@ SELECT
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     COUNT(HOSPICE_DX_NONCODED) AS HOSPICE_DX_NONCODED_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_176
 FROM HOSPICE_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_176 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, CM_CT_OWNER_ID_filled, HOSPICE_DX_NONCODED_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7623,15 +10539,25 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS INT) AS HOSPICE_DX_NONCODED_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_176;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_177 <- HOSPICE_DX_HX ----
 -- This table contains audit history for a patient's Hospice diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_177 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ID_filled INT,
+    ENTRY_USER_ID_filled INT,
+    ENTRY_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_177 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, ENTRY_USER_ID_filled, ENTRY_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7641,10 +10567,10 @@ SELECT
     COUNT(ENTRY_USER_ID) AS ENTRY_USER_ID_filled,
     COUNT(ENTRY_UTC_DTTM) AS ENTRY_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_177
 FROM HOSPICE_DX_HX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_177 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, ENTRY_USER_ID_filled, ENTRY_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7653,15 +10579,23 @@ SELECT
     CAST(NULL AS INT) AS PAT_ID_filled,
     CAST(NULL AS INT) AS ENTRY_USER_ID_filled,
     CAST(NULL AS INT) AS ENTRY_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_177;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_178 <- HSP_ACCT_ADDL_DX ----
 -- Additional diagnoses for reporting associated with this hospital account.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_178 (
+    activity_year INT,
+    total_rows INT,
+    ACCT_ID_filled INT,
+    LINE_filled INT,
+    ADDL_RPT_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_178 (activity_year, total_rows, ACCT_ID_filled, LINE_filled, ADDL_RPT_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7669,25 +10603,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ADDL_RPT_DX_ID_DX_NAME) AS ADDL_RPT_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_178
 FROM HSP_ACCT_ADDL_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_178 (activity_year, total_rows, ACCT_ID_filled, LINE_filled, ADDL_RPT_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ACCT_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ADDL_RPT_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_178;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_179 <- HSP_ACCT_ADMIT_DX ----
 -- This table contains hospital account admit diagnoses from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_179 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    LINE_filled INT,
+    ADMIT_DX_ID_DX_NAME_filled INT,
+    ADMIT_DX_TEXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_179 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, ADMIT_DX_ID_DX_NAME_filled, ADMIT_DX_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7696,10 +10639,10 @@ SELECT
     COUNT(ADMIT_DX_ID_DX_NAME) AS ADMIT_DX_ID_DX_NAME_filled,
     COUNT(ADMIT_DX_TEXT) AS ADMIT_DX_TEXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_179
 FROM HSP_ACCT_ADMIT_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_179 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, ADMIT_DX_ID_DX_NAME_filled, ADMIT_DX_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7707,15 +10650,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ADMIT_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS ADMIT_DX_TEXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_179;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_180 <- HSP_ACCT_CLM_CPT ----
 -- This table contains hospital account claim CPT codes information from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_180 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    LINE_filled INT,
+    CLAIM_CODE_QTY_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_180 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, CLAIM_CODE_QTY_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7723,25 +10674,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CLAIM_CODE_QTY) AS CLAIM_CODE_QTY_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_180
 FROM HSP_ACCT_CLM_CPT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_180 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, CLAIM_CODE_QTY_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS HSP_ACCOUNT_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CLAIM_CODE_QTY_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_180;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_181 <- HSP_ACCT_CPT_ASSOC_DX ----
 -- This table stores the diagnoses that are linked to a coded Current Procedural Terminology (CPT)/Healthcare Common Procedure Coding System (HCPCS) code on a hospital account.
 -- Bucket(s): ICD-10 / Diagnosis coding;E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_181 (
+    activity_year INT,
+    total_rows INT,
+    ACCT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CPT_LINKED_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_181 (activity_year, total_rows, ACCT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_LINKED_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7750,10 +10710,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_LINKED_DX_ID_DX_NAME) AS CPT_LINKED_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_181
 FROM HSP_ACCT_CPT_ASSOC_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_181 (activity_year, total_rows, ACCT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_LINKED_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7761,14 +10721,38 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CPT_LINKED_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_181;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_182 <- HSP_ACCT_CPT_CODES ----
 -- This table contains hospital account CPT(R) codes from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
+CREATE TABLE #fc_182 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    LINE_filled INT,
+    CPT_CODE_filled INT,
+    CPT_CODE_DATE_filled INT,
+    CPT_PERF_PROV_ID_PROV_NAME_filled INT,
+    CPT_EVENT_NUMBER_filled INT,
+    CPT_MODIFIERS_filled INT,
+    LMRP_CODE_filled INT,
+    CPT_CODE_DESC_filled INT,
+    PX_APC_FAC_RMB_AMT_filled INT,
+    PX_OCE_EDIT_CODE_filled INT,
+    PX_APC_CODE_filled INT,
+    PX_HCFA_PAYMT_AMT_filled INT,
+    PX_COPAY_AMT_filled INT,
+    PX_REV_CODE_ID_filled INT,
+    PX_REV_CODE_ID_REVENUE_CODE_NAME_filled INT,
+    CPT_EXCLD_RPT_YN_filled INT,
+    CPT_QUANTITY_filled INT,
+    CPT_POS_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_182 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, CPT_CODE_filled, CPT_CODE_DATE_filled, CPT_PERF_PROV_ID_PROV_NAME_filled, CPT_EVENT_NUMBER_filled, CPT_MODIFIERS_filled, LMRP_CODE_filled, CPT_CODE_DESC_filled, PX_APC_FAC_RMB_AMT_filled, PX_OCE_EDIT_CODE_filled, PX_APC_CODE_filled, PX_HCFA_PAYMT_AMT_filled, PX_COPAY_AMT_filled, PX_REV_CODE_ID_filled, PX_REV_CODE_ID_REVENUE_CODE_NAME_filled, CPT_EXCLD_RPT_YN_filled, CPT_QUANTITY_filled, CPT_POS_TYPE_C_NAME_filled, query_error)
 SELECT
     YEAR(CPT_CODE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7792,11 +10776,11 @@ SELECT
     COUNT(CPT_QUANTITY) AS CPT_QUANTITY_filled,
     COUNT(CPT_POS_TYPE_C_NAME) AS CPT_POS_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_182
 FROM HSP_ACCT_CPT_CODES
 GROUP BY YEAR(CPT_CODE_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_182 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, CPT_CODE_filled, CPT_CODE_DATE_filled, CPT_PERF_PROV_ID_PROV_NAME_filled, CPT_EVENT_NUMBER_filled, CPT_MODIFIERS_filled, LMRP_CODE_filled, CPT_CODE_DESC_filled, PX_APC_FAC_RMB_AMT_filled, PX_OCE_EDIT_CODE_filled, PX_APC_CODE_filled, PX_HCFA_PAYMT_AMT_filled, PX_COPAY_AMT_filled, PX_REV_CODE_ID_filled, PX_REV_CODE_ID_REVENUE_CODE_NAME_filled, CPT_EXCLD_RPT_YN_filled, CPT_QUANTITY_filled, CPT_POS_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7819,15 +10803,24 @@ SELECT
     CAST(NULL AS INT) AS CPT_EXCLD_RPT_YN_filled,
     CAST(NULL AS INT) AS CPT_QUANTITY_filled,
     CAST(NULL AS INT) AS CPT_POS_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_182;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_183 <- HSP_ACCT_CPT_PRVCM ----
 -- This table contains the other provider comments associated with the hospital account CPT(R)/HCPCS codes list in the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_183 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CPT_OTHER_PROV_CMNT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_183 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_OTHER_PROV_CMNT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7836,10 +10829,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_OTHER_PROV_CMNT) AS CPT_OTHER_PROV_CMNT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_183
 FROM HSP_ACCT_CPT_PRVCM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_183 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_OTHER_PROV_CMNT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7847,15 +10840,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CPT_OTHER_PROV_CMNT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_183;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_184 <- HSP_ACCT_CPT_PRVDR ----
 -- This table contains the other providers associated with the hospital account CPT(R)/HCPCS codes list in the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_184 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CPT_OTHER_PROV_ID_PROV_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_184 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_OTHER_PROV_ID_PROV_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7864,10 +10866,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_OTHER_PROV_ID_PROV_NAME) AS CPT_OTHER_PROV_ID_PROV_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_184
 FROM HSP_ACCT_CPT_PRVDR;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_184 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_OTHER_PROV_ID_PROV_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7875,15 +10877,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CPT_OTHER_PROV_ID_PROV_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_184;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_185 <- HSP_ACCT_CPT_PRVRO ----
 -- This table contains the other provider roles associated with the hospital account CPT(R)/HCPCS codes list in the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_185 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CPT_OTHER_PROV_RL_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_185 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_OTHER_PROV_RL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7892,10 +10903,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CPT_OTHER_PROV_RL_C_NAME) AS CPT_OTHER_PROV_RL_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_185
 FROM HSP_ACCT_CPT_PRVRO;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_185 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CPT_OTHER_PROV_RL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7903,15 +10914,39 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CPT_OTHER_PROV_RL_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_185;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_186 <- HSP_ACCT_DX_LIST ----
 -- This table contains hospital account final diagnosis list information from the Hospital Accounts Receivable (HAR) master file.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_186 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_AFFECTS_DRG_YN_filled INT,
+    DX_COMORBIDITY_YN_filled INT,
+    FINAL_DX_SOI_C_NAME_filled INT,
+    FINAL_DX_ROM_C_NAME_filled INT,
+    FINAL_DX_EXCLD_YN_filled INT,
+    FNL_DX_AFCT_SOI_YN_filled INT,
+    FNL_DX_AFCT_ROM_YN_filled INT,
+    FINAL_DX_POA_C_NAME_filled INT,
+    DX_COMORBIDITY_C_NAME_filled INT,
+    DX_HAC_YN_filled INT,
+    DX_COF_C_NAME_filled INT,
+    DX_COMPLEXITY_LVL_filled INT,
+    COMPLEX_DX_C_NAME_filled INT,
+    DX_CLASS_C_NAME_filled INT,
+    CAUSE_DEATH_YN_filled INT,
+    DX_CLUSTER_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_186 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_AFFECTS_DRG_YN_filled, DX_COMORBIDITY_YN_filled, FINAL_DX_SOI_C_NAME_filled, FINAL_DX_ROM_C_NAME_filled, FINAL_DX_EXCLD_YN_filled, FNL_DX_AFCT_SOI_YN_filled, FNL_DX_AFCT_ROM_YN_filled, FINAL_DX_POA_C_NAME_filled, DX_COMORBIDITY_C_NAME_filled, DX_HAC_YN_filled, DX_COF_C_NAME_filled, DX_COMPLEXITY_LVL_filled, COMPLEX_DX_C_NAME_filled, DX_CLASS_C_NAME_filled, CAUSE_DEATH_YN_filled, DX_CLUSTER_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7935,10 +10970,10 @@ SELECT
     COUNT(CAUSE_DEATH_YN) AS CAUSE_DEATH_YN_filled,
     COUNT(DX_CLUSTER) AS DX_CLUSTER_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_186
 FROM HSP_ACCT_DX_LIST;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_186 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_AFFECTS_DRG_YN_filled, DX_COMORBIDITY_YN_filled, FINAL_DX_SOI_C_NAME_filled, FINAL_DX_ROM_C_NAME_filled, FINAL_DX_EXCLD_YN_filled, FNL_DX_AFCT_SOI_YN_filled, FNL_DX_AFCT_ROM_YN_filled, FINAL_DX_POA_C_NAME_filled, DX_COMORBIDITY_C_NAME_filled, DX_HAC_YN_filled, DX_COF_C_NAME_filled, DX_COMPLEXITY_LVL_filled, COMPLEX_DX_C_NAME_filled, DX_CLASS_C_NAME_filled, CAUSE_DEATH_YN_filled, DX_CLUSTER_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7961,15 +10996,24 @@ SELECT
     CAST(NULL AS INT) AS DX_CLASS_C_NAME_filled,
     CAST(NULL AS INT) AS CAUSE_DEATH_YN_filled,
     CAST(NULL AS INT) AS DX_CLUSTER_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_186;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_187 <- HSP_ACCT_DX_LIST_AU_HACS ----
 -- The Australian Hospital Acquired Complications associated with coded diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_187 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_AU_HAC_CAT_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_187 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AU_HAC_CAT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -7978,10 +11022,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_AU_HAC_CAT_C_NAME) AS DX_AU_HAC_CAT_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_187
 FROM HSP_ACCT_DX_LIST_AU_HACS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_187 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_AU_HAC_CAT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -7989,15 +11033,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_AU_HAC_CAT_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_187;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_188 <- HSP_ACCT_DX_LIST_HACS ----
 -- The Hospital Acquired Conditions (HACs) associated with final coded diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_188 (
+    activity_year INT,
+    total_rows INT,
+    HSP_ACCOUNT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_HAC_CAT_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_188 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_CAT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8006,10 +11059,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_HAC_CAT_C_NAME) AS DX_HAC_CAT_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_188
 FROM HSP_ACCT_DX_LIST_HACS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_188 (activity_year, total_rows, HSP_ACCOUNT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_HAC_CAT_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8017,14 +11070,29 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_HAC_CAT_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_188;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_189 <- HSP_ACCT_ICDPX_ALT ----
 -- This table contains the hospital account alternate ICD procedures from the hospital account (HAR) master file. Alternate ICD procedures will be specified if hospital accounts are c
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_189 (
+    activity_year INT,
+    total_rows INT,
+    ACCT_ID_filled INT,
+    LINE_filled INT,
+    ICD_PX_ALT_ID_filled INT,
+    ICD_PX_ALT_ID_ICD_PX_NAME_filled INT,
+    ICD_PX_ALT_DATE_filled INT,
+    ICD_PX_ALT_PROV_ID_PROV_NAME_filled INT,
+    ICD_PX_ALT_EVNT_NUM_filled INT,
+    ICD_PX_ALT_EXCLD_YN_filled INT,
+    ICD_PX_ALT_AFSOI_YN_filled INT,
+    ICD_PX_ALT_AFROM_YN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_189 (activity_year, total_rows, ACCT_ID_filled, LINE_filled, ICD_PX_ALT_ID_filled, ICD_PX_ALT_ID_ICD_PX_NAME_filled, ICD_PX_ALT_DATE_filled, ICD_PX_ALT_PROV_ID_PROV_NAME_filled, ICD_PX_ALT_EVNT_NUM_filled, ICD_PX_ALT_EXCLD_YN_filled, ICD_PX_ALT_AFSOI_YN_filled, ICD_PX_ALT_AFROM_YN_filled, query_error)
 SELECT
     YEAR(ICD_PX_ALT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8039,11 +11107,11 @@ SELECT
     COUNT(ICD_PX_ALT_AFSOI_YN) AS ICD_PX_ALT_AFSOI_YN_filled,
     COUNT(ICD_PX_ALT_AFROM_YN) AS ICD_PX_ALT_AFROM_YN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_189
 FROM HSP_ACCT_ICDPX_ALT
 GROUP BY YEAR(ICD_PX_ALT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_189 (activity_year, total_rows, ACCT_ID_filled, LINE_filled, ICD_PX_ALT_ID_filled, ICD_PX_ALT_ID_ICD_PX_NAME_filled, ICD_PX_ALT_DATE_filled, ICD_PX_ALT_PROV_ID_PROV_NAME_filled, ICD_PX_ALT_EVNT_NUM_filled, ICD_PX_ALT_EXCLD_YN_filled, ICD_PX_ALT_AFSOI_YN_filled, ICD_PX_ALT_AFROM_YN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8057,14 +11125,23 @@ SELECT
     CAST(NULL AS INT) AS ICD_PX_ALT_EXCLD_YN_filled,
     CAST(NULL AS INT) AS ICD_PX_ALT_AFSOI_YN_filled,
     CAST(NULL AS INT) AS ICD_PX_ALT_AFROM_YN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_189;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_190 <- HSP_BDC_APPEAL_DATES ----
 -- This table stores Appealed Days start and end dates.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_190 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    APPEAL_START_DATE_filled INT,
+    APPEAL_END_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_190 (activity_year, total_rows, BDC_ID_filled, LINE_filled, APPEAL_START_DATE_filled, APPEAL_END_DATE_filled, query_error)
 SELECT
     YEAR(APPEAL_START_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8073,11 +11150,11 @@ SELECT
     COUNT(APPEAL_START_DATE) AS APPEAL_START_DATE_filled,
     COUNT(APPEAL_END_DATE) AS APPEAL_END_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_190
 FROM HSP_BDC_APPEAL_DATES
 GROUP BY YEAR(APPEAL_START_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_190 (activity_year, total_rows, BDC_ID_filled, LINE_filled, APPEAL_START_DATE_filled, APPEAL_END_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8085,14 +11162,30 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS APPEAL_START_DATE_filled,
     CAST(NULL AS INT) AS APPEAL_END_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_190;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_191 <- HSP_BDC_CHNG_HX ----
 -- Change History for the Denial/Correspondence (BDC) record.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_191 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_COUNT_filled INT,
+    CHNG_INSTANT_filled INT,
+    CHNG_USER_ID_filled INT,
+    CHNG_USER_ID_NAME_filled INT,
+    CHNG_TYPE_C_NAME_filled INT,
+    CHNG_SOURCE_VAL_filled INT,
+    CHNG_TARGET_VAL_filled INT,
+    CHNG_FOLLOW_UP_DT_filled INT,
+    CHNG_COMMENTS_filled INT,
+    BFH_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_191 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, CHNG_INSTANT_filled, CHNG_USER_ID_filled, CHNG_USER_ID_NAME_filled, CHNG_TYPE_C_NAME_filled, CHNG_SOURCE_VAL_filled, CHNG_TARGET_VAL_filled, CHNG_FOLLOW_UP_DT_filled, CHNG_COMMENTS_filled, BFH_ID_filled, query_error)
 SELECT
     YEAR(CHNG_FOLLOW_UP_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8108,11 +11201,11 @@ SELECT
     COUNT(CHNG_COMMENTS) AS CHNG_COMMENTS_filled,
     COUNT(BFH_ID) AS BFH_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_191
 FROM HSP_BDC_CHNG_HX
 GROUP BY YEAR(CHNG_FOLLOW_UP_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_191 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, CHNG_INSTANT_filled, CHNG_USER_ID_filled, CHNG_USER_ID_NAME_filled, CHNG_TYPE_C_NAME_filled, CHNG_SOURCE_VAL_filled, CHNG_TARGET_VAL_filled, CHNG_FOLLOW_UP_DT_filled, CHNG_COMMENTS_filled, BFH_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8127,15 +11220,23 @@ SELECT
     CAST(NULL AS INT) AS CHNG_FOLLOW_UP_DT_filled,
     CAST(NULL AS INT) AS CHNG_COMMENTS_filled,
     CAST(NULL AS INT) AS BFH_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_191;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_192 <- HSP_BDC_CONTRIB_PMT ----
 -- This table includes a list of payments that contributed to the creation of the follow-up record.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_192 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    CONTRIB_PMT_TX_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_192 (activity_year, total_rows, BDC_ID_filled, LINE_filled, CONTRIB_PMT_TX_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8143,25 +11244,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CONTRIB_PMT_TX_ID) AS CONTRIB_PMT_TX_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_192
 FROM HSP_BDC_CONTRIB_PMT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_192 (activity_year, total_rows, BDC_ID_filled, LINE_filled, CONTRIB_PMT_TX_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTRIB_PMT_TX_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_192;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_193 <- HSP_BDC_CPT_CODE ----
 -- This table contains user-entered Current Procedural Terminology (CPT) code overrides for follow-up records (that is, denials).
 -- Bucket(s): E/M level / CPT coding;Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_193 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    CPT_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_193 (activity_year, total_rows, BDC_ID_filled, LINE_filled, CPT_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8169,25 +11278,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CPT_CODE) AS CPT_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_193
 FROM HSP_BDC_CPT_CODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_193 (activity_year, total_rows, BDC_ID_filled, LINE_filled, CPT_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CPT_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_193;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_194 <- HSP_BDC_CRSPNDNCE ----
 -- Correspondence text in a Denial/Correspondence (BDC) record. Stores the lines of correspondence text received.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_194 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_COUNT_filled INT,
+    CRSPNDCE_TEXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_194 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, CRSPNDCE_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8195,24 +11312,45 @@ SELECT
     COUNT(LINE_COUNT) AS LINE_COUNT_filled,
     COUNT(CRSPNDCE_TEXT) AS CRSPNDCE_TEXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_194
 FROM HSP_BDC_CRSPNDNCE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_194 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, CRSPNDCE_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_COUNT_filled,
     CAST(NULL AS INT) AS CRSPNDCE_TEXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_194;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_195 <- HSP_BDC_DENIAL_DATA ----
 -- This table contains denial information stored in the Denial/Remark/Correspondence records in the Denial/Correspondence (BDC) master file. There can be multiple lines of data for ea
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_195 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_COUNT_filled INT,
+    LINE_ON_EOB_filled INT,
+    LINE_BILLED_AMOUNT_filled INT,
+    LINE_ALLWD_AMT_filled INT,
+    LINE_PAID_AMT_filled INT,
+    LINE_DENIED_AMT_filled INT,
+    LINE_COMMENTS_filled INT,
+    LINE_REVENUE_CODE_ID_filled INT,
+    LINE_REVENUE_CODE_ID_REVENUE_CODE_NAME_filled INT,
+    LINE_CPT_CODE_filled INT,
+    LINE_PRIMARY_CHARGE_TX_ID_filled INT,
+    LINE_SERVICE_DATE_filled INT,
+    LINE_QUANTITY_filled INT,
+    LINE_ON_CLAIM_filled INT,
+    LINE_EXPECTED_ALLOWED_AMT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_195 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, LINE_ON_EOB_filled, LINE_BILLED_AMOUNT_filled, LINE_ALLWD_AMT_filled, LINE_PAID_AMT_filled, LINE_DENIED_AMT_filled, LINE_COMMENTS_filled, LINE_REVENUE_CODE_ID_filled, LINE_REVENUE_CODE_ID_REVENUE_CODE_NAME_filled, LINE_CPT_CODE_filled, LINE_PRIMARY_CHARGE_TX_ID_filled, LINE_SERVICE_DATE_filled, LINE_QUANTITY_filled, LINE_ON_CLAIM_filled, LINE_EXPECTED_ALLOWED_AMT_filled, query_error)
 SELECT
     YEAR(LINE_SERVICE_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8233,11 +11371,11 @@ SELECT
     COUNT(LINE_ON_CLAIM) AS LINE_ON_CLAIM_filled,
     COUNT(LINE_EXPECTED_ALLOWED_AMT) AS LINE_EXPECTED_ALLOWED_AMT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_195
 FROM HSP_BDC_DENIAL_DATA
 GROUP BY YEAR(LINE_SERVICE_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_195 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, LINE_ON_EOB_filled, LINE_BILLED_AMOUNT_filled, LINE_ALLWD_AMT_filled, LINE_PAID_AMT_filled, LINE_DENIED_AMT_filled, LINE_COMMENTS_filled, LINE_REVENUE_CODE_ID_filled, LINE_REVENUE_CODE_ID_REVENUE_CODE_NAME_filled, LINE_CPT_CODE_filled, LINE_PRIMARY_CHARGE_TX_ID_filled, LINE_SERVICE_DATE_filled, LINE_QUANTITY_filled, LINE_ON_CLAIM_filled, LINE_EXPECTED_ALLOWED_AMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8257,14 +11395,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_QUANTITY_filled,
     CAST(NULL AS INT) AS LINE_ON_CLAIM_filled,
     CAST(NULL AS INT) AS LINE_EXPECTED_ALLOWED_AMT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_195;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_196 <- HSP_BDC_DENIED_DATES ----
 -- This table stores the Denied Days start and end dates.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_196 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    DENIED_START_DATE_filled INT,
+    DENIED_END_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_196 (activity_year, total_rows, BDC_ID_filled, LINE_filled, DENIED_START_DATE_filled, DENIED_END_DATE_filled, query_error)
 SELECT
     YEAR(DENIED_START_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8273,11 +11420,11 @@ SELECT
     COUNT(DENIED_START_DATE) AS DENIED_START_DATE_filled,
     COUNT(DENIED_END_DATE) AS DENIED_END_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_196
 FROM HSP_BDC_DENIED_DATES
 GROUP BY YEAR(DENIED_START_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_196 (activity_year, total_rows, BDC_ID_filled, LINE_filled, DENIED_START_DATE_filled, DENIED_END_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8285,15 +11432,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DENIED_START_DATE_filled,
     CAST(NULL AS INT) AS DENIED_END_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_196;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_197 <- HSP_BDC_DENIED_DIAGNOSES ----
 -- This table stores the list of diagnoses on the denial.
 -- Bucket(s): ICD-10 / Diagnosis coding;Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_197 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    DENIED_DIAGNOSIS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_197 (activity_year, total_rows, BDC_ID_filled, LINE_filled, DENIED_DIAGNOSIS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8301,25 +11456,36 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DENIED_DIAGNOSIS) AS DENIED_DIAGNOSIS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_197
 FROM HSP_BDC_DENIED_DIAGNOSES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_197 (activity_year, total_rows, BDC_ID_filled, LINE_filled, DENIED_DIAGNOSIS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DENIED_DIAGNOSIS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_197;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_198 <- HSP_BDC_DSC_RSN_CD ----
 -- This table contains discrepancy reason code information for records in the Denial/Correspondence (DBC) master file.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_198 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    DISCP_RMC_CODE_ID_filled INT,
+    DISCP_RMC_CODE_ID_REMIT_CODE_NAME_filled INT,
+    EXTL_DISCP_RSN_CD_filled INT,
+    DISP_GRP_CODE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_198 (activity_year, total_rows, BDC_ID_filled, LINE_filled, DISCP_RMC_CODE_ID_filled, DISCP_RMC_CODE_ID_REMIT_CODE_NAME_filled, EXTL_DISCP_RSN_CD_filled, DISP_GRP_CODE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8330,10 +11496,10 @@ SELECT
     COUNT(EXTL_DISCP_RSN_CD) AS EXTL_DISCP_RSN_CD_filled,
     COUNT(DISP_GRP_CODE_C_NAME) AS DISP_GRP_CODE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_198
 FROM HSP_BDC_DSC_RSN_CD;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_198 (activity_year, total_rows, BDC_ID_filled, LINE_filled, DISCP_RMC_CODE_ID_filled, DISCP_RMC_CODE_ID_REMIT_CODE_NAME_filled, EXTL_DISCP_RSN_CD_filled, DISP_GRP_CODE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8343,15 +11509,26 @@ SELECT
     CAST(NULL AS INT) AS DISCP_RMC_CODE_ID_REMIT_CODE_NAME_filled,
     CAST(NULL AS INT) AS EXTL_DISCP_RSN_CD_filled,
     CAST(NULL AS INT) AS DISP_GRP_CODE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_198;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_199 <- HSP_BDC_IMAGING ----
 -- This table contains related imaging information for the Denial/Correspondence (BDC) master file.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_199 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    BDC_IMAGE_MNE_C_NAME_filled INT,
+    IMAGE_KEY_filled INT,
+    IMAGE_PAGE_NUMBER_filled INT,
+    BDC_PB_IMG_MNE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_199 (activity_year, total_rows, BDC_ID_filled, LINE_filled, BDC_IMAGE_MNE_C_NAME_filled, IMAGE_KEY_filled, IMAGE_PAGE_NUMBER_filled, BDC_PB_IMG_MNE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8362,10 +11539,10 @@ SELECT
     COUNT(IMAGE_PAGE_NUMBER) AS IMAGE_PAGE_NUMBER_filled,
     COUNT(BDC_PB_IMG_MNE_C_NAME) AS BDC_PB_IMG_MNE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_199
 FROM HSP_BDC_IMAGING;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_199 (activity_year, total_rows, BDC_ID_filled, LINE_filled, BDC_IMAGE_MNE_C_NAME_filled, IMAGE_KEY_filled, IMAGE_PAGE_NUMBER_filled, BDC_PB_IMG_MNE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8375,15 +11552,26 @@ SELECT
     CAST(NULL AS INT) AS IMAGE_KEY_filled,
     CAST(NULL AS INT) AS IMAGE_PAGE_NUMBER_filled,
     CAST(NULL AS INT) AS BDC_PB_IMG_MNE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_199;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_200 <- HSP_BDC_LINE_MODIFIERS ----
 -- This table extracts the comma-delimited list of modifiers that is stored in the Line Modifier (I BDC 291) item for line-level denials. This table will contain one row for each modi
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_200 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_COUNT_filled INT,
+    MOD_LINE_filled INT,
+    EXT_MODIFIER_filled INT,
+    MODIFIER_ID_filled INT,
+    MODIFIER_ID_MODIFIER_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_200 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, MOD_LINE_filled, EXT_MODIFIER_filled, MODIFIER_ID_filled, MODIFIER_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8394,10 +11582,10 @@ SELECT
     COUNT(MODIFIER_ID) AS MODIFIER_ID_filled,
     COUNT(MODIFIER_ID_MODIFIER_NAME) AS MODIFIER_ID_MODIFIER_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_200
 FROM HSP_BDC_LINE_MODIFIERS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_200 (activity_year, total_rows, BDC_ID_filled, LINE_COUNT_filled, MOD_LINE_filled, EXT_MODIFIER_filled, MODIFIER_ID_filled, MODIFIER_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8407,15 +11595,23 @@ SELECT
     CAST(NULL AS INT) AS EXT_MODIFIER_filled,
     CAST(NULL AS INT) AS MODIFIER_ID_filled,
     CAST(NULL AS INT) AS MODIFIER_ID_MODIFIER_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_200;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_201 <- HSP_BDC_PAYOR ----
 -- Table of payors attached to denial/correspondence records. Each denial/correspondence can be associated with multiple payors.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_201 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    PAYOR_ID_PAYOR_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_201 (activity_year, total_rows, BDC_ID_filled, LINE_filled, PAYOR_ID_PAYOR_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8423,25 +11619,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(PAYOR_ID_PAYOR_NAME) AS PAYOR_ID_PAYOR_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_201
 FROM HSP_BDC_PAYOR;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_201 (activity_year, total_rows, BDC_ID_filled, LINE_filled, PAYOR_ID_PAYOR_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PAYOR_ID_PAYOR_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_201;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_202 <- HSP_BDC_PROF_INV ----
 -- Table of professional invoice numbers attached to correspondence records. Each correspondence record can be associated with multiple professional invoices.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_202 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    PROF_INVOICE_NUM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_202 (activity_year, total_rows, BDC_ID_filled, LINE_filled, PROF_INVOICE_NUM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8449,25 +11653,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(PROF_INVOICE_NUM) AS PROF_INVOICE_NUM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_202
 FROM HSP_BDC_PROF_INV;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_202 (activity_year, total_rows, BDC_ID_filled, LINE_filled, PROF_INVOICE_NUM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS BDC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PROF_INVOICE_NUM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_202;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_203 <- HSP_BDC_RECV_TX ----
 -- This table contains recovery payment information for Denial/Correspondence (BDC) records.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_203 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    RECV_PAYMENT_TX_ID_filled INT,
+    RECV_PAYMENT_TX_AMT_filled INT,
+    PB_RECV_PMT_TX_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_203 (activity_year, total_rows, BDC_ID_filled, LINE_filled, RECV_PAYMENT_TX_ID_filled, RECV_PAYMENT_TX_AMT_filled, PB_RECV_PMT_TX_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8477,10 +11691,10 @@ SELECT
     COUNT(RECV_PAYMENT_TX_AMT) AS RECV_PAYMENT_TX_AMT_filled,
     COUNT(PB_RECV_PMT_TX_ID) AS PB_RECV_PMT_TX_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_203
 FROM HSP_BDC_RECV_TX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_203 (activity_year, total_rows, BDC_ID_filled, LINE_filled, RECV_PAYMENT_TX_ID_filled, RECV_PAYMENT_TX_AMT_filled, PB_RECV_PMT_TX_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8489,15 +11703,24 @@ SELECT
     CAST(NULL AS INT) AS RECV_PAYMENT_TX_ID_filled,
     CAST(NULL AS INT) AS RECV_PAYMENT_TX_AMT_filled,
     CAST(NULL AS INT) AS PB_RECV_PMT_TX_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_203;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_204 <- HSP_BDC_REV_CODE ----
 -- This table contains the user-entered revenue code overrides for follow-up records (i.e. denials).
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_204 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    REVENUE_CODE_ID_filled INT,
+    REVENUE_CODE_ID_REVENUE_CODE_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_204 (activity_year, total_rows, BDC_ID_filled, LINE_filled, REVENUE_CODE_ID_filled, REVENUE_CODE_ID_REVENUE_CODE_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8506,10 +11729,10 @@ SELECT
     COUNT(REVENUE_CODE_ID) AS REVENUE_CODE_ID_filled,
     COUNT(REVENUE_CODE_ID_REVENUE_CODE_NAME) AS REVENUE_CODE_ID_REVENUE_CODE_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_204
 FROM HSP_BDC_REV_CODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_204 (activity_year, total_rows, BDC_ID_filled, LINE_filled, REVENUE_CODE_ID_filled, REVENUE_CODE_ID_REVENUE_CODE_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8517,15 +11740,25 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS REVENUE_CODE_ID_filled,
     CAST(NULL AS INT) AS REVENUE_CODE_ID_REVENUE_CODE_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_204;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_205 <- HSP_BDC_WO_ADJ_TX ----
 -- This table contains write-off adjustment information for Denial/Correspondence (BDC) records.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_205 (
+    activity_year INT,
+    total_rows INT,
+    BDC_ID_filled INT,
+    LINE_filled INT,
+    WRITE_OFF_ADJ_TX_ID_filled INT,
+    WRITE_OFF_ADJ_AMT_filled INT,
+    PB_WRITE_OFF_ADJ_TX_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_205 (activity_year, total_rows, BDC_ID_filled, LINE_filled, WRITE_OFF_ADJ_TX_ID_filled, WRITE_OFF_ADJ_AMT_filled, PB_WRITE_OFF_ADJ_TX_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8535,10 +11768,10 @@ SELECT
     COUNT(WRITE_OFF_ADJ_AMT) AS WRITE_OFF_ADJ_AMT_filled,
     COUNT(PB_WRITE_OFF_ADJ_TX_ID) AS PB_WRITE_OFF_ADJ_TX_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_205
 FROM HSP_BDC_WO_ADJ_TX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_205 (activity_year, total_rows, BDC_ID_filled, LINE_filled, WRITE_OFF_ADJ_TX_ID_filled, WRITE_OFF_ADJ_AMT_filled, PB_WRITE_OFF_ADJ_TX_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8547,15 +11780,27 @@ SELECT
     CAST(NULL AS INT) AS WRITE_OFF_ADJ_TX_ID_filled,
     CAST(NULL AS INT) AS WRITE_OFF_ADJ_AMT_filled,
     CAST(NULL AS INT) AS PB_WRITE_OFF_ADJ_TX_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_205;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_206 <- HSP_CLAIM_APC_GRP_DISP ----
 -- Table that holds the display data for each grouping and claim line tuple when Ambulatory Payment Classification (APC) grouping is run through Epic for a claim.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_206 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    LINE_filled INT,
+    APC_DISP_CLAIM_LINE_filled INT,
+    APC_DISP_TEXT_filled INT,
+    APC_DISP_VALUE_filled INT,
+    APC_DISP_FORMULA_filled INT,
+    APC_DISP_PMT_CLASS_GRP_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_206 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, APC_DISP_CLAIM_LINE_filled, APC_DISP_TEXT_filled, APC_DISP_VALUE_filled, APC_DISP_FORMULA_filled, APC_DISP_PMT_CLASS_GRP_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8567,10 +11812,10 @@ SELECT
     COUNT(APC_DISP_FORMULA) AS APC_DISP_FORMULA_filled,
     COUNT(APC_DISP_PMT_CLASS_GRP_C_NAME) AS APC_DISP_PMT_CLASS_GRP_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_206
 FROM HSP_CLAIM_APC_GRP_DISP;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_206 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, APC_DISP_CLAIM_LINE_filled, APC_DISP_TEXT_filled, APC_DISP_VALUE_filled, APC_DISP_FORMULA_filled, APC_DISP_PMT_CLASS_GRP_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8581,15 +11826,27 @@ SELECT
     CAST(NULL AS INT) AS APC_DISP_VALUE_filled,
     CAST(NULL AS INT) AS APC_DISP_FORMULA_filled,
     CAST(NULL AS INT) AS APC_DISP_PMT_CLASS_GRP_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_206;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_207 <- HSP_CLAIM_APC_GRP_META ----
 -- Table for Ambulatory Payment Classification (APC) grouping metadata. Holds information such as the instant of grouping, the payment classification method, and, if grouped by Epic, 
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_207 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    LINE_filled INT,
+    AMB_GROUPING_DTTM_filled INT,
+    APC_EPIC_PMT_CLASS_GRP_C_NAME_filled INT,
+    APC_EPIC_PCM_ID_filled INT,
+    APC_EPIC_PCM_ID_PCM_NAME_filled INT,
+    APC_EPIC_PMT_CLASS_RATE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_207 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, AMB_GROUPING_DTTM_filled, APC_EPIC_PMT_CLASS_GRP_C_NAME_filled, APC_EPIC_PCM_ID_filled, APC_EPIC_PCM_ID_PCM_NAME_filled, APC_EPIC_PMT_CLASS_RATE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8601,10 +11858,10 @@ SELECT
     COUNT(APC_EPIC_PCM_ID_PCM_NAME) AS APC_EPIC_PCM_ID_PCM_NAME_filled,
     COUNT(APC_EPIC_PMT_CLASS_RATE_C_NAME) AS APC_EPIC_PMT_CLASS_RATE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_207
 FROM HSP_CLAIM_APC_GRP_META;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_207 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, AMB_GROUPING_DTTM_filled, APC_EPIC_PMT_CLASS_GRP_C_NAME_filled, APC_EPIC_PCM_ID_filled, APC_EPIC_PCM_ID_PCM_NAME_filled, APC_EPIC_PMT_CLASS_RATE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8615,14 +11872,67 @@ SELECT
     CAST(NULL AS INT) AS APC_EPIC_PCM_ID_filled,
     CAST(NULL AS INT) AS APC_EPIC_PCM_ID_PCM_NAME_filled,
     CAST(NULL AS INT) AS APC_EPIC_PMT_CLASS_RATE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_207;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_208 <- HSP_CLAIM_DETAIL1 ----
 -- This table contains claim print record information for claims associated with a given hospital account or liability bucket.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_208 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    CLAIM_CAT_C_NAME_filled INT,
+    MAIL_NAME_filled INT,
+    MAIL_CITY_STATE_ZIP_filled INT,
+    MAIL_PHONE_filled INT,
+    SRC_OF_ADDR_C_NAME_filled INT,
+    LINE_SOURCE_CLP_ID_filled INT,
+    PARTIAL_CLAIM_YN_filled INT,
+    ORIG_HAR_RES_ACT_ID_filled INT,
+    EXPECTED_PYMT_filled INT,
+    DRG_ID_filled INT,
+    DRG_ID_DRG_NAME_filled INT,
+    CLAIM_BILLED_AMOUNT_filled INT,
+    CLM_CONTRACTUAL_filled INT,
+    CLM_EXPECTED_PRICE_filled INT,
+    CLAIM_PMT_METHOD_C_NAME_filled INT,
+    CLAIM_PRIM_PMT_RATE_filled INT,
+    CLM_PRIMARY_CVD_QTY_filled INT,
+    CLM_ADDL_PMT_MTHDS_filled INT,
+    CLM_ADDL_PMT_RATES_filled INT,
+    CLM_ADDL_CVD_QTY_filled INT,
+    CLM_LINE_PNLTY_PER_filled INT,
+    CLAIM_LATE_DAYS_filled INT,
+    CLM_SUB_PNLTY_PER_filled INT,
+    CLM_U_AND_C_AMT_filled INT,
+    CLAIM_INS_PORTION_filled INT,
+    CLM_PATIENT_PORTION_filled INT,
+    CLAIM_MTHD_DESC_filled INT,
+    CLAIM_TERM_DESC_filled INT,
+    OPERATING_PROV_ID_PROV_NAME_filled INT,
+    CONTRACT_ID_filled INT,
+    CONTRACT_ID_CONTRACT_NAME_filled INT,
+    CONTRACT_DATE_REAL_filled INT,
+    CONTRACT_USED_DT_filled INT,
+    CONTRACT_NOT_USED_filled INT,
+    EDITED_TOB_filled INT,
+    EDITED_EOB_filled INT,
+    MAIL_ADDR1_filled INT,
+    MAIL_ADDR2_filled INT,
+    REIMB_COST_THRESH_filled INT,
+    REIMB_COST_OUT_filled INT,
+    REIMB_DAY_THRESH_filled INT,
+    REIMB_DAY_OUT_filled INT,
+    REIMB_OTH_THRESH_filled INT,
+    REIMB_OTH_OUT_filled INT,
+    MAIL_COUNTRY_C_NAME_filled INT,
+    EXPECT_PAT_RESP_AMT_filled INT,
+    CLM_CAP_XR_REDUCT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_208 (activity_year, total_rows, CLAIM_PRINT_ID_filled, CLAIM_CAT_C_NAME_filled, MAIL_NAME_filled, MAIL_CITY_STATE_ZIP_filled, MAIL_PHONE_filled, SRC_OF_ADDR_C_NAME_filled, LINE_SOURCE_CLP_ID_filled, PARTIAL_CLAIM_YN_filled, ORIG_HAR_RES_ACT_ID_filled, EXPECTED_PYMT_filled, DRG_ID_filled, DRG_ID_DRG_NAME_filled, CLAIM_BILLED_AMOUNT_filled, CLM_CONTRACTUAL_filled, CLM_EXPECTED_PRICE_filled, CLAIM_PMT_METHOD_C_NAME_filled, CLAIM_PRIM_PMT_RATE_filled, CLM_PRIMARY_CVD_QTY_filled, CLM_ADDL_PMT_MTHDS_filled, CLM_ADDL_PMT_RATES_filled, CLM_ADDL_CVD_QTY_filled, CLM_LINE_PNLTY_PER_filled, CLAIM_LATE_DAYS_filled, CLM_SUB_PNLTY_PER_filled, CLM_U_AND_C_AMT_filled, CLAIM_INS_PORTION_filled, CLM_PATIENT_PORTION_filled, CLAIM_MTHD_DESC_filled, CLAIM_TERM_DESC_filled, OPERATING_PROV_ID_PROV_NAME_filled, CONTRACT_ID_filled, CONTRACT_ID_CONTRACT_NAME_filled, CONTRACT_DATE_REAL_filled, CONTRACT_USED_DT_filled, CONTRACT_NOT_USED_filled, EDITED_TOB_filled, EDITED_EOB_filled, MAIL_ADDR1_filled, MAIL_ADDR2_filled, REIMB_COST_THRESH_filled, REIMB_COST_OUT_filled, REIMB_DAY_THRESH_filled, REIMB_DAY_OUT_filled, REIMB_OTH_THRESH_filled, REIMB_OTH_OUT_filled, MAIL_COUNTRY_C_NAME_filled, EXPECT_PAT_RESP_AMT_filled, CLM_CAP_XR_REDUCT_filled, query_error)
 SELECT
     YEAR(CONTRACT_USED_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8675,11 +11985,11 @@ SELECT
     COUNT(EXPECT_PAT_RESP_AMT) AS EXPECT_PAT_RESP_AMT_filled,
     COUNT(CLM_CAP_XR_REDUCT) AS CLM_CAP_XR_REDUCT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_208
 FROM HSP_CLAIM_DETAIL1
 GROUP BY YEAR(CONTRACT_USED_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_208 (activity_year, total_rows, CLAIM_PRINT_ID_filled, CLAIM_CAT_C_NAME_filled, MAIL_NAME_filled, MAIL_CITY_STATE_ZIP_filled, MAIL_PHONE_filled, SRC_OF_ADDR_C_NAME_filled, LINE_SOURCE_CLP_ID_filled, PARTIAL_CLAIM_YN_filled, ORIG_HAR_RES_ACT_ID_filled, EXPECTED_PYMT_filled, DRG_ID_filled, DRG_ID_DRG_NAME_filled, CLAIM_BILLED_AMOUNT_filled, CLM_CONTRACTUAL_filled, CLM_EXPECTED_PRICE_filled, CLAIM_PMT_METHOD_C_NAME_filled, CLAIM_PRIM_PMT_RATE_filled, CLM_PRIMARY_CVD_QTY_filled, CLM_ADDL_PMT_MTHDS_filled, CLM_ADDL_PMT_RATES_filled, CLM_ADDL_CVD_QTY_filled, CLM_LINE_PNLTY_PER_filled, CLAIM_LATE_DAYS_filled, CLM_SUB_PNLTY_PER_filled, CLM_U_AND_C_AMT_filled, CLAIM_INS_PORTION_filled, CLM_PATIENT_PORTION_filled, CLAIM_MTHD_DESC_filled, CLAIM_TERM_DESC_filled, OPERATING_PROV_ID_PROV_NAME_filled, CONTRACT_ID_filled, CONTRACT_ID_CONTRACT_NAME_filled, CONTRACT_DATE_REAL_filled, CONTRACT_USED_DT_filled, CONTRACT_NOT_USED_filled, EDITED_TOB_filled, EDITED_EOB_filled, MAIL_ADDR1_filled, MAIL_ADDR2_filled, REIMB_COST_THRESH_filled, REIMB_COST_OUT_filled, REIMB_DAY_THRESH_filled, REIMB_DAY_OUT_filled, REIMB_OTH_THRESH_filled, REIMB_OTH_OUT_filled, MAIL_COUNTRY_C_NAME_filled, EXPECT_PAT_RESP_AMT_filled, CLM_CAP_XR_REDUCT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8731,14 +12041,86 @@ SELECT
     CAST(NULL AS INT) AS MAIL_COUNTRY_C_NAME_filled,
     CAST(NULL AS INT) AS EXPECT_PAT_RESP_AMT_filled,
     CAST(NULL AS INT) AS CLM_CAP_XR_REDUCT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_208;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_209 <- HSP_CLAIM_DETAIL2 ----
 -- This table contains detailed claim print record information for claims associated with the hospital liability bucket.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_209 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    SA_ID_LOC_NAME_filled INT,
+    INACTV_CLP_YN_filled INT,
+    CLAIM_ACCEPT_DTTM_filled INT,
+    SG_PAYOR_ID_PAYOR_NAME_filled INT,
+    SG_PLAN_ID_BENEFIT_PLAN_NAME_filled INT,
+    SG_CVG_ID_filled INT,
+    INVOICE_NUM_filled INT,
+    SG_PAT_ID_filled INT,
+    SG_GR_ACCT_ID_filled INT,
+    HOSPITAL_ACCT_ID_filled INT,
+    HLB_ID_filled INT,
+    SG_PROV_ID_PROV_NAME_filled INT,
+    SG_REF_SRC_ID_filled INT,
+    SG_REF_SRC_ID_REFERRING_PROV_NAM_filled INT,
+    SG_LOC_ID_LOC_NAME_filled INT,
+    SG_DEP_ID_EXTERNAL_NAME_filled INT,
+    SG_POS_ID_LOC_NAME_filled INT,
+    SG_CLM_ID_filled INT,
+    SG_RQG_ID_filled INT,
+    CLAIM_CLASS_C_NAME_filled INT,
+    CLAIM_BASE_CLASS_C_NAME_filled INT,
+    MIN_SERVICE_DT_filled INT,
+    MAX_SERVICE_DT_filled INT,
+    UB_FROM_DT_filled INT,
+    UB_THROUGH_DT_filled INT,
+    CLAIM_TYPE_C_NAME_filled INT,
+    CLAIM_FRM_TYPE_C_NAME_filled INT,
+    TTL_CHRGS_AMT_filled INT,
+    TTL_DUE_AMT_filled INT,
+    TTL_NONCVD_AMT_filled INT,
+    TTL_PMT_AMT_filled INT,
+    TTL_ADJ_AMT_filled INT,
+    UB_BILL_TYPE_filled INT,
+    HM_HLTH_BILL_TYP_C_NAME_filled INT,
+    UB_SG_GRP_NUM_filled INT,
+    CNCL_CLAIM_filled INT,
+    REPL_CLAIM_filled INT,
+    UB_CVD_DAYS_filled INT,
+    UB_COINS_DAYS_filled INT,
+    UB_NON_CVD_DAYS_filled INT,
+    UB_PRINC_DX_ID_DX_NAME_filled INT,
+    CNCL_CLAIM_CODE_filled INT,
+    REPL_CLAIM_CODE_filled INT,
+    SG_ALTPYR_CLM_YN_filled INT,
+    FILING_ORDER_C_NAME_filled INT,
+    CLM_EXT_VAL_ID_filled INT,
+    SG_TREAT_PLAN_ID_filled INT,
+    UB_COMB_CLM_TYP_C_NAME_filled INT,
+    REND_PROV_ID_PROV_NAME_filled INT,
+    RESEARCH_ID_RESEARCH_STUDY_NAME_filled INT,
+    SRC_INV_NUM_filled INT,
+    CLAIM_TAX_AMOUNT_filled INT,
+    DRG_XR_AMOUNT_filled INT,
+    DRG_TAX_AMOUNT_filled INT,
+    CLAIM_APEC_OUTLIER_filled INT,
+    SNF_CLAIM_TYPE_C_NAME_filled INT,
+    DEPT_TYPE_C_NAME_filled INT,
+    CLM_REBILL_REASON_C_NAME_filled INT,
+    CLM_REBILL_USER_ID_filled INT,
+    CLM_REBILL_USER_ID_NAME_filled INT,
+    FAC_ACTOR_TYPE_C_NAME_filled INT,
+    BENEFIT_RECORD_ID_filled INT,
+    PREDICTED_PAY_DATE_filled INT,
+    SUGGESTED_FOL_UP_DATE_filled INT,
+    CLM_CLOSED_TIMELY_YN_filled INT,
+    REIMB_DRG_SOI_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_209 (activity_year, total_rows, CLAIM_PRINT_ID_filled, SA_ID_LOC_NAME_filled, INACTV_CLP_YN_filled, CLAIM_ACCEPT_DTTM_filled, SG_PAYOR_ID_PAYOR_NAME_filled, SG_PLAN_ID_BENEFIT_PLAN_NAME_filled, SG_CVG_ID_filled, INVOICE_NUM_filled, SG_PAT_ID_filled, SG_GR_ACCT_ID_filled, HOSPITAL_ACCT_ID_filled, HLB_ID_filled, SG_PROV_ID_PROV_NAME_filled, SG_REF_SRC_ID_filled, SG_REF_SRC_ID_REFERRING_PROV_NAM_filled, SG_LOC_ID_LOC_NAME_filled, SG_DEP_ID_EXTERNAL_NAME_filled, SG_POS_ID_LOC_NAME_filled, SG_CLM_ID_filled, SG_RQG_ID_filled, CLAIM_CLASS_C_NAME_filled, CLAIM_BASE_CLASS_C_NAME_filled, MIN_SERVICE_DT_filled, MAX_SERVICE_DT_filled, UB_FROM_DT_filled, UB_THROUGH_DT_filled, CLAIM_TYPE_C_NAME_filled, CLAIM_FRM_TYPE_C_NAME_filled, TTL_CHRGS_AMT_filled, TTL_DUE_AMT_filled, TTL_NONCVD_AMT_filled, TTL_PMT_AMT_filled, TTL_ADJ_AMT_filled, UB_BILL_TYPE_filled, HM_HLTH_BILL_TYP_C_NAME_filled, UB_SG_GRP_NUM_filled, CNCL_CLAIM_filled, REPL_CLAIM_filled, UB_CVD_DAYS_filled, UB_COINS_DAYS_filled, UB_NON_CVD_DAYS_filled, UB_PRINC_DX_ID_DX_NAME_filled, CNCL_CLAIM_CODE_filled, REPL_CLAIM_CODE_filled, SG_ALTPYR_CLM_YN_filled, FILING_ORDER_C_NAME_filled, CLM_EXT_VAL_ID_filled, SG_TREAT_PLAN_ID_filled, UB_COMB_CLM_TYP_C_NAME_filled, REND_PROV_ID_PROV_NAME_filled, RESEARCH_ID_RESEARCH_STUDY_NAME_filled, SRC_INV_NUM_filled, CLAIM_TAX_AMOUNT_filled, DRG_XR_AMOUNT_filled, DRG_TAX_AMOUNT_filled, CLAIM_APEC_OUTLIER_filled, SNF_CLAIM_TYPE_C_NAME_filled, DEPT_TYPE_C_NAME_filled, CLM_REBILL_REASON_C_NAME_filled, CLM_REBILL_USER_ID_filled, CLM_REBILL_USER_ID_NAME_filled, FAC_ACTOR_TYPE_C_NAME_filled, BENEFIT_RECORD_ID_filled, PREDICTED_PAY_DATE_filled, SUGGESTED_FOL_UP_DATE_filled, CLM_CLOSED_TIMELY_YN_filled, REIMB_DRG_SOI_filled, query_error)
 SELECT
     YEAR(MIN_SERVICE_DT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8810,11 +12192,11 @@ SELECT
     COUNT(CLM_CLOSED_TIMELY_YN) AS CLM_CLOSED_TIMELY_YN_filled,
     COUNT(REIMB_DRG_SOI) AS REIMB_DRG_SOI_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_209
 FROM HSP_CLAIM_DETAIL2
 GROUP BY YEAR(MIN_SERVICE_DT);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_209 (activity_year, total_rows, CLAIM_PRINT_ID_filled, SA_ID_LOC_NAME_filled, INACTV_CLP_YN_filled, CLAIM_ACCEPT_DTTM_filled, SG_PAYOR_ID_PAYOR_NAME_filled, SG_PLAN_ID_BENEFIT_PLAN_NAME_filled, SG_CVG_ID_filled, INVOICE_NUM_filled, SG_PAT_ID_filled, SG_GR_ACCT_ID_filled, HOSPITAL_ACCT_ID_filled, HLB_ID_filled, SG_PROV_ID_PROV_NAME_filled, SG_REF_SRC_ID_filled, SG_REF_SRC_ID_REFERRING_PROV_NAM_filled, SG_LOC_ID_LOC_NAME_filled, SG_DEP_ID_EXTERNAL_NAME_filled, SG_POS_ID_LOC_NAME_filled, SG_CLM_ID_filled, SG_RQG_ID_filled, CLAIM_CLASS_C_NAME_filled, CLAIM_BASE_CLASS_C_NAME_filled, MIN_SERVICE_DT_filled, MAX_SERVICE_DT_filled, UB_FROM_DT_filled, UB_THROUGH_DT_filled, CLAIM_TYPE_C_NAME_filled, CLAIM_FRM_TYPE_C_NAME_filled, TTL_CHRGS_AMT_filled, TTL_DUE_AMT_filled, TTL_NONCVD_AMT_filled, TTL_PMT_AMT_filled, TTL_ADJ_AMT_filled, UB_BILL_TYPE_filled, HM_HLTH_BILL_TYP_C_NAME_filled, UB_SG_GRP_NUM_filled, CNCL_CLAIM_filled, REPL_CLAIM_filled, UB_CVD_DAYS_filled, UB_COINS_DAYS_filled, UB_NON_CVD_DAYS_filled, UB_PRINC_DX_ID_DX_NAME_filled, CNCL_CLAIM_CODE_filled, REPL_CLAIM_CODE_filled, SG_ALTPYR_CLM_YN_filled, FILING_ORDER_C_NAME_filled, CLM_EXT_VAL_ID_filled, SG_TREAT_PLAN_ID_filled, UB_COMB_CLM_TYP_C_NAME_filled, REND_PROV_ID_PROV_NAME_filled, RESEARCH_ID_RESEARCH_STUDY_NAME_filled, SRC_INV_NUM_filled, CLAIM_TAX_AMOUNT_filled, DRG_XR_AMOUNT_filled, DRG_TAX_AMOUNT_filled, CLAIM_APEC_OUTLIER_filled, SNF_CLAIM_TYPE_C_NAME_filled, DEPT_TYPE_C_NAME_filled, CLM_REBILL_REASON_C_NAME_filled, CLM_REBILL_USER_ID_filled, CLM_REBILL_USER_ID_NAME_filled, FAC_ACTOR_TYPE_C_NAME_filled, BENEFIT_RECORD_ID_filled, PREDICTED_PAY_DATE_filled, SUGGESTED_FOL_UP_DATE_filled, CLM_CLOSED_TIMELY_YN_filled, REIMB_DRG_SOI_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8885,14 +12267,22 @@ SELECT
     CAST(NULL AS INT) AS SUGGESTED_FOL_UP_DATE_filled,
     CAST(NULL AS INT) AS CLM_CLOSED_TIMELY_YN_filled,
     CAST(NULL AS INT) AS REIMB_DRG_SOI_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_209;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_210 <- HSP_CLAIM_DETAIL3 ----
 -- This table contains detailed claim print record information for claims associated with the hospital liability bucket.
 -- Bucket(s): Claims / Denials
+CREATE TABLE #fc_210 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    CH_SENT_DATE_filled INT,
+    PAYER_RECEIVED_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_210 (activity_year, total_rows, CLAIM_PRINT_ID_filled, CH_SENT_DATE_filled, PAYER_RECEIVED_DATE_filled, query_error)
 SELECT
     YEAR(CH_SENT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8900,26 +12290,45 @@ SELECT
     COUNT(CH_SENT_DATE) AS CH_SENT_DATE_filled,
     COUNT(PAYER_RECEIVED_DATE) AS PAYER_RECEIVED_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_210
 FROM HSP_CLAIM_DETAIL3
 GROUP BY YEAR(CH_SENT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_210 (activity_year, total_rows, CLAIM_PRINT_ID_filled, CH_SENT_DATE_filled, PAYER_RECEIVED_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CLAIM_PRINT_ID_filled,
     CAST(NULL AS INT) AS CH_SENT_DATE_filled,
     CAST(NULL AS INT) AS PAYER_RECEIVED_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_210;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_211 <- HSP_CLAIM_PAT_RESP ----
 -- This table contains information about how the patient responsibility for the claim was calculated.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_211 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    LINE_filled INT,
+    CLAIM_PX_LINE_NUM_filled INT,
+    SERVICE_TYPE_ID_filled INT,
+    SERVICE_TYPE_ID_SERVICE_TYPE_NAME_filled INT,
+    SERVICE_TYPE_SOURCE_DESC_filled INT,
+    DEDUCTIBLE_AMOUNT_filled INT,
+    COPAY_AMOUNT_filled INT,
+    COINSURANCE_AMOUNT_filled INT,
+    NON_COVERED_AMOUNT_filled INT,
+    NON_COVERED_RSN_C_NAME_filled INT,
+    ANNUAL_MOOP_CONTRIB_AMOUNT_filled INT,
+    VISIT_MOOP_CONTRIB_AMOUNT_filled INT,
+    OUT_OF_POCKET_LMT_RSN_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_211 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, CLAIM_PX_LINE_NUM_filled, SERVICE_TYPE_ID_filled, SERVICE_TYPE_ID_SERVICE_TYPE_NAME_filled, SERVICE_TYPE_SOURCE_DESC_filled, DEDUCTIBLE_AMOUNT_filled, COPAY_AMOUNT_filled, COINSURANCE_AMOUNT_filled, NON_COVERED_AMOUNT_filled, NON_COVERED_RSN_C_NAME_filled, ANNUAL_MOOP_CONTRIB_AMOUNT_filled, VISIT_MOOP_CONTRIB_AMOUNT_filled, OUT_OF_POCKET_LMT_RSN_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8938,10 +12347,10 @@ SELECT
     COUNT(VISIT_MOOP_CONTRIB_AMOUNT) AS VISIT_MOOP_CONTRIB_AMOUNT_filled,
     COUNT(OUT_OF_POCKET_LMT_RSN_C_NAME) AS OUT_OF_POCKET_LMT_RSN_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_211
 FROM HSP_CLAIM_PAT_RESP;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_211 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, CLAIM_PX_LINE_NUM_filled, SERVICE_TYPE_ID_filled, SERVICE_TYPE_ID_SERVICE_TYPE_NAME_filled, SERVICE_TYPE_SOURCE_DESC_filled, DEDUCTIBLE_AMOUNT_filled, COPAY_AMOUNT_filled, COINSURANCE_AMOUNT_filled, NON_COVERED_AMOUNT_filled, NON_COVERED_RSN_C_NAME_filled, ANNUAL_MOOP_CONTRIB_AMOUNT_filled, VISIT_MOOP_CONTRIB_AMOUNT_filled, OUT_OF_POCKET_LMT_RSN_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8959,15 +12368,24 @@ SELECT
     CAST(NULL AS INT) AS ANNUAL_MOOP_CONTRIB_AMOUNT_filled,
     CAST(NULL AS INT) AS VISIT_MOOP_CONTRIB_AMOUNT_filled,
     CAST(NULL AS INT) AS OUT_OF_POCKET_LMT_RSN_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_211;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_212 <- HSP_CLAIM_PRINT ----
 -- This table contains claim print record information for claims associated with a given hospital account or liability bucket.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_212 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    HSP_ACCOUNT_ID_filled INT,
+    CM_PHY_OWN_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_212 (activity_year, total_rows, CLAIM_PRINT_ID_filled, CONTACT_DATE_REAL_filled, HSP_ACCOUNT_ID_filled, CM_PHY_OWN_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -8976,10 +12394,10 @@ SELECT
     COUNT(HSP_ACCOUNT_ID) AS HSP_ACCOUNT_ID_filled,
     COUNT(CM_PHY_OWN_ID) AS CM_PHY_OWN_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_212
 FROM HSP_CLAIM_PRINT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_212 (activity_year, total_rows, CLAIM_PRINT_ID_filled, CONTACT_DATE_REAL_filled, HSP_ACCOUNT_ID_filled, CM_PHY_OWN_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -8987,15 +12405,25 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_REAL_filled,
     CAST(NULL AS INT) AS HSP_ACCOUNT_ID_filled,
     CAST(NULL AS INT) AS CM_PHY_OWN_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_212;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_213 <- HSP_CLAIM_XR_DISP ----
 -- This table contains the information used to display the details of calculations performed by contract pricing extensions when calculating expected reimbursement.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_213 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    LINE_filled INT,
+    XR_DISP_LINE_NUM_filled INT,
+    XR_DISP_DESCRIPTION_filled INT,
+    XR_DISP_AMT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_213 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, XR_DISP_LINE_NUM_filled, XR_DISP_DESCRIPTION_filled, XR_DISP_AMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9005,10 +12433,10 @@ SELECT
     COUNT(XR_DISP_DESCRIPTION) AS XR_DISP_DESCRIPTION_filled,
     COUNT(XR_DISP_AMT) AS XR_DISP_AMT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_213
 FROM HSP_CLAIM_XR_DISP;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_213 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, XR_DISP_LINE_NUM_filled, XR_DISP_DESCRIPTION_filled, XR_DISP_AMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9017,15 +12445,29 @@ SELECT
     CAST(NULL AS INT) AS XR_DISP_LINE_NUM_filled,
     CAST(NULL AS INT) AS XR_DISP_DESCRIPTION_filled,
     CAST(NULL AS INT) AS XR_DISP_AMT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_213;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_214 <- HSP_CLAIM_XR_VARS ----
 -- This table contains the values used by contract pricing extensions for calculating expected reimbursement.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_214 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    COST_OUT_PMT_TOTAL_filled INT,
+    COST_OUT_PMT_CAND_filled INT,
+    IMPLANT_PMT_TOTAL_filled INT,
+    PHY_TRANS_PMT_TOTAL_filled INT,
+    COST_OUT_TAX_TOTAL_filled INT,
+    ADD_ON_TAX_TOTAL_filled INT,
+    SUPPLY_ADD_ON_PMT_TOTAL_filled INT,
+    DRUG_ADD_ON_PMT_TOTAL_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_214 (activity_year, total_rows, CLAIM_PRINT_ID_filled, COST_OUT_PMT_TOTAL_filled, COST_OUT_PMT_CAND_filled, IMPLANT_PMT_TOTAL_filled, PHY_TRANS_PMT_TOTAL_filled, COST_OUT_TAX_TOTAL_filled, ADD_ON_TAX_TOTAL_filled, SUPPLY_ADD_ON_PMT_TOTAL_filled, DRUG_ADD_ON_PMT_TOTAL_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9039,10 +12481,10 @@ SELECT
     COUNT(SUPPLY_ADD_ON_PMT_TOTAL) AS SUPPLY_ADD_ON_PMT_TOTAL_filled,
     COUNT(DRUG_ADD_ON_PMT_TOTAL) AS DRUG_ADD_ON_PMT_TOTAL_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_214
 FROM HSP_CLAIM_XR_VARS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_214 (activity_year, total_rows, CLAIM_PRINT_ID_filled, COST_OUT_PMT_TOTAL_filled, COST_OUT_PMT_CAND_filled, IMPLANT_PMT_TOTAL_filled, PHY_TRANS_PMT_TOTAL_filled, COST_OUT_TAX_TOTAL_filled, ADD_ON_TAX_TOTAL_filled, SUPPLY_ADD_ON_PMT_TOTAL_filled, DRUG_ADD_ON_PMT_TOTAL_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9055,15 +12497,25 @@ SELECT
     CAST(NULL AS INT) AS ADD_ON_TAX_TOTAL_filled,
     CAST(NULL AS INT) AS SUPPLY_ADD_ON_PMT_TOTAL_filled,
     CAST(NULL AS INT) AS DRUG_ADD_ON_PMT_TOTAL_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_214;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_215 <- HSP_CLP_CMS_LINE_DX ----
 -- This table contains linkages between service lines and diagnoses for Hospital Billing claims.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_215 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    LINE_filled INT,
+    LINE_DX_SVC_LINE_filled INT,
+    LINE_DX_PIECE_filled INT,
+    LINE_DX_POINTER_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_215 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, LINE_DX_SVC_LINE_filled, LINE_DX_PIECE_filled, LINE_DX_POINTER_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9073,10 +12525,10 @@ SELECT
     COUNT(LINE_DX_PIECE) AS LINE_DX_PIECE_filled,
     COUNT(LINE_DX_POINTER) AS LINE_DX_POINTER_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_215
 FROM HSP_CLP_CMS_LINE_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_215 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, LINE_DX_SVC_LINE_filled, LINE_DX_PIECE_filled, LINE_DX_POINTER_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9085,15 +12537,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_DX_SVC_LINE_filled,
     CAST(NULL AS INT) AS LINE_DX_PIECE_filled,
     CAST(NULL AS INT) AS LINE_DX_POINTER_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_215;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_216 <- HSP_CLP_DIAGNOSIS ----
 -- This table contains diagnosis related information for claim print records associated with the hospital account/liability bucket.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_216 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_PRINT_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_POA_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_216 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_POA_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9102,10 +12563,10 @@ SELECT
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_POA_C_NAME) AS DX_POA_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_216
 FROM HSP_CLP_DIAGNOSIS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_216 (activity_year, total_rows, CLAIM_PRINT_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_POA_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9113,15 +12574,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DX_POA_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_216;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_217 <- HSP_PRE_AR_DX ----
 -- This table contains diagnosis related information for Hospital Billing temporary transactions. This table is limited to charge temporary transactions that have not yet been posted 
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_217 (
+    activity_year INT,
+    total_rows INT,
+    HTT_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUAL_HA_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_217 (activity_year, total_rows, HTT_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUAL_HA_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9130,10 +12600,10 @@ SELECT
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     COUNT(DX_QUAL_HA_C_NAME) AS DX_QUAL_HA_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_217
 FROM HSP_PRE_AR_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_217 (activity_year, total_rows, HTT_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_QUAL_HA_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9141,14 +12611,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DX_QUAL_HA_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_217;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_218 <- ICD_EVNT_INTRP_CMT ----
 -- Table for event interpretation comment item.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_218 (
+    activity_year INT,
+    total_rows INT,
+    IMPLANT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    ICD_EVENT_INTERPRET_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_218 (activity_year, total_rows, IMPLANT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ICD_EVENT_INTERPRET_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9158,11 +12638,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ICD_EVENT_INTERPRET) AS ICD_EVENT_INTERPRET_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_218
 FROM ICD_EVNT_INTRP_CMT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_218 (activity_year, total_rows, IMPLANT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ICD_EVENT_INTERPRET_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9171,14 +12651,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS ICD_EVENT_INTERPRET_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_218;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_219 <- ICD_POCKET_CMT ----
 -- Table for implantable cardioverter-defibrillator (ICD) Pocket Comment item.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_219 (
+    activity_year INT,
+    total_rows INT,
+    IMPLANT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    ICD_POCKET_CMT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_219 (activity_year, total_rows, IMPLANT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ICD_POCKET_CMT_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9188,11 +12678,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(ICD_POCKET_CMT) AS ICD_POCKET_CMT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_219
 FROM ICD_POCKET_CMT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_219 (activity_year, total_rows, IMPLANT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, ICD_POCKET_CMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9201,15 +12691,25 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS ICD_POCKET_CMT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_219;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_220 <- INV_DX_INFO ----
 -- Stores claim-level diagnosis information sent on Resolute Professional Billing claims. Diagnosis information is coming from the INV 350 related group. The Group 100 column correspo
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_220 (
+    activity_year INT,
+    total_rows INT,
+    INVOICE_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    INV_NUM_filled INT,
+    INV_NUM_100_GRP_LN_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_220 (activity_year, total_rows, INVOICE_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, INV_NUM_filled, INV_NUM_100_GRP_LN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9219,10 +12719,10 @@ SELECT
     COUNT(INV_NUM) AS INV_NUM_filled,
     COUNT(INV_NUM_100_GRP_LN) AS INV_NUM_100_GRP_LN_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_220
 FROM INV_DX_INFO;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_220 (activity_year, total_rows, INVOICE_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, INV_NUM_filled, INV_NUM_100_GRP_LN_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9231,15 +12731,23 @@ SELECT
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS INV_NUM_filled,
     CAST(NULL AS INT) AS INV_NUM_100_GRP_LN_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_220;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_221 <- LAB_CASE_RESULT_DX ----
 -- This table contains result diagnosis information for anatomic pathology cases.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_221 (
+    activity_year INT,
+    total_rows INT,
+    CASE_ID_filled INT,
+    LINE_filled INT,
+    RESULT_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_221 (activity_year, total_rows, CASE_ID_filled, LINE_filled, RESULT_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9247,24 +12755,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(RESULT_DX_ID_DX_NAME) AS RESULT_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_221
 FROM LAB_CASE_RESULT_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_221 (activity_year, total_rows, CASE_ID_filled, LINE_filled, RESULT_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CASE_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS RESULT_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_221;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_222 <- MED_ALL_DX_CODES ----
 -- This item stores all unmapped diagnosis codes associated with medications for incoming e-prescribing messages. This table is replacing columns PRIMARY_DX_CODE and SECONDARY_DX_CODE
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_222 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_222 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9274,11 +12792,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_222
 FROM MED_ALL_DX_CODES
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_222 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9287,14 +12805,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_222;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_223 <- MED_ALL_DX_CODE_SYSTEMS ----
 -- This item stores the coding systems used for all diagnoses (for example, ICD-9) for incoming e-prescribing messages. This table is replacing columns PRIMARY_DX_CODE_SYSTEM and SECO
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_223 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_223 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9304,11 +12832,11 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_223
 FROM MED_ALL_DX_CODE_SYSTEMS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_223 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9317,14 +12845,25 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_223;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_224 <- MED_ALL_DX_IDS ----
 -- All diagnoses for the medication specified within the incoming electronic prescription. This table is replacing columns MED_PRIM_DX_ID and MED_SEC_DX_ID in table DOCS_RCVD_MEDS.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_224 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    MED_ALL_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_224 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, MED_ALL_DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9335,11 +12874,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(MED_ALL_DX_ID_DX_NAME) AS MED_ALL_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_224
 FROM MED_ALL_DX_IDS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_224 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, MED_ALL_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9349,14 +12888,25 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS MED_ALL_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_224;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_225 <- MED_CVG_DX_VALUE ----
 -- This table extracts the diagnosis codes associated with a medication estimate.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_225 (
+    activity_year INT,
+    total_rows INT,
+    MED_ESTIMATE_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_225 (activity_year, total_rows, MED_ESTIMATE_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9367,11 +12917,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_225
 FROM MED_CVG_DX_VALUE
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_225 (activity_year, total_rows, MED_ESTIMATE_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9381,14 +12931,25 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_225;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_226 <- MED_DISPENSE_DX ----
 -- This table holds information about diagnoses associated with medication dispenses.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_226 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_226 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9399,11 +12960,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_226
 FROM MED_DISPENSE_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_226 (activity_year, total_rows, DOCUMENT_ID_filled, CONTACT_DATE_REAL_filled, GROUP_LINE_filled, VALUE_LINE_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9413,15 +12974,24 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_226;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_227 <- MED_DISP_ALL_DX_CODES ----
 -- All diagnosis codes for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table is repl
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_227 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MED_DISP_ALL_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_227 (activity_year, total_rows, DOCUMENT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MED_DISP_ALL_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9430,10 +13000,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MED_DISP_ALL_DX) AS MED_DISP_ALL_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_227
 FROM MED_DISP_ALL_DX_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_227 (activity_year, total_rows, DOCUMENT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MED_DISP_ALL_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9441,15 +13011,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MED_DISP_ALL_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_227;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_228 <- MED_DISP_ALL_DX_CODE_SYS ----
 -- The coding system used for all diagnosis codes for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing in
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_228 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MED_DIS_ALL_DX_SYS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_228 (activity_year, total_rows, DOCUMENT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MED_DIS_ALL_DX_SYS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9458,10 +13037,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MED_DIS_ALL_DX_SYS) AS MED_DIS_ALL_DX_SYS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_228
 FROM MED_DISP_ALL_DX_CODE_SYS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_228 (activity_year, total_rows, DOCUMENT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MED_DIS_ALL_DX_SYS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9469,15 +13048,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MED_DIS_ALL_DX_SYS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_228;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_229 <- MED_DISP_ALL_DX_IDS ----
 -- All diagnoses for the medication in the medication dispensed segment of the external e-prescription, received through the incoming e-prescribing interface. This table is replacing 
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_229 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    MED_DISP_ALL_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_229 (activity_year, total_rows, DOCUMENT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MED_DISP_ALL_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9486,10 +13074,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(MED_DISP_ALL_DX_ID_DX_NAME) AS MED_DISP_ALL_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_229
 FROM MED_DISP_ALL_DX_IDS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_229 (activity_year, total_rows, DOCUMENT_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, MED_DISP_ALL_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9497,15 +13085,25 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS MED_DISP_ALL_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_229;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_230 <- MED_THERAPY_PROB_DX ----
 -- Contains diagnosis information for the medication therapy problem.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_230 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    PROBLEM_DX_ID_DX_NAME_filled INT,
+    PROB_DIAG_SOURCE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_230 (activity_year, total_rows, PROBLEM_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, PROBLEM_DX_ID_DX_NAME_filled, PROB_DIAG_SOURCE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9515,10 +13113,10 @@ SELECT
     COUNT(PROBLEM_DX_ID_DX_NAME) AS PROBLEM_DX_ID_DX_NAME_filled,
     COUNT(PROB_DIAG_SOURCE_C_NAME) AS PROB_DIAG_SOURCE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_230
 FROM MED_THERAPY_PROB_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_230 (activity_year, total_rows, PROBLEM_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, PROBLEM_DX_ID_DX_NAME_filled, PROB_DIAG_SOURCE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9527,14 +13125,29 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PROBLEM_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS PROB_DIAG_SOURCE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_230;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_231 <- MTP_AUTO_EVAL_DIAGNOSES ----
 -- The diagnosis information obtained from the Medication Therapy Opportunities Engine.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_231 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_ID_filled INT,
+    LINE_filled INT,
+    AUTO_EVAL_DX_ID_DX_NAME_filled INT,
+    PROB_DIAG_SOURCE_C_NAME_filled INT,
+    PROBLEM_LIST_ID_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    INVOICE_ID_filled INT,
+    SURGICAL_LOG_ID_filled INT,
+    SURGICAL_CASE_ID_filled INT,
+    DX_DATE_FILED_DATE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_231 (activity_year, total_rows, PROBLEM_ID_filled, LINE_filled, AUTO_EVAL_DX_ID_DX_NAME_filled, PROB_DIAG_SOURCE_C_NAME_filled, PROBLEM_LIST_ID_filled, PAT_ENC_CSN_ID_filled, INVOICE_ID_filled, SURGICAL_LOG_ID_filled, SURGICAL_CASE_ID_filled, DX_DATE_FILED_DATE_filled, query_error)
 SELECT
     YEAR(DX_DATE_FILED_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9549,11 +13162,11 @@ SELECT
     COUNT(SURGICAL_CASE_ID) AS SURGICAL_CASE_ID_filled,
     COUNT(DX_DATE_FILED_DATE) AS DX_DATE_FILED_DATE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_231
 FROM MTP_AUTO_EVAL_DIAGNOSES
 GROUP BY YEAR(DX_DATE_FILED_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_231 (activity_year, total_rows, PROBLEM_ID_filled, LINE_filled, AUTO_EVAL_DX_ID_DX_NAME_filled, PROB_DIAG_SOURCE_C_NAME_filled, PROBLEM_LIST_ID_filled, PAT_ENC_CSN_ID_filled, INVOICE_ID_filled, SURGICAL_LOG_ID_filled, SURGICAL_CASE_ID_filled, DX_DATE_FILED_DATE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9567,15 +13180,24 @@ SELECT
     CAST(NULL AS INT) AS SURGICAL_LOG_ID_filled,
     CAST(NULL AS INT) AS SURGICAL_CASE_ID_filled,
     CAST(NULL AS INT) AS DX_DATE_FILED_DATE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_231;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_232 <- MTP_AUTO_EVAL_DX_EXT_REF ----
 -- The external data reference identifiers associated with the diagnosis identified by the medication therapy opportunities engine evaluation.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_232 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_EXT_REF_IDENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_232 (activity_year, total_rows, PROBLEM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_EXT_REF_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9584,10 +13206,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(DX_EXT_REF_IDENT) AS DX_EXT_REF_IDENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_232
 FROM MTP_AUTO_EVAL_DX_EXT_REF;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_232 (activity_year, total_rows, PROBLEM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_EXT_REF_IDENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9595,15 +13217,25 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_EXT_REF_IDENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_232;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_233 <- MTP_AUTO_EVAL_DX_SRC_ORG ----
 -- The source organizations that filed the information.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_233 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_SOURCE_ORG_ID_filled INT,
+    DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_233 (activity_year, total_rows, PROBLEM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_SOURCE_ORG_ID_filled, DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9613,10 +13245,10 @@ SELECT
     COUNT(DX_SOURCE_ORG_ID) AS DX_SOURCE_ORG_ID_filled,
     COUNT(DX_SOURCE_ORG_ID_EXTERNAL_NAME) AS DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_233
 FROM MTP_AUTO_EVAL_DX_SRC_ORG;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_233 (activity_year, total_rows, PROBLEM_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_SOURCE_ORG_ID_filled, DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9625,15 +13257,23 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_SOURCE_ORG_ID_filled,
     CAST(NULL AS INT) AS DX_SOURCE_ORG_ID_EXTERNAL_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_233;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_234 <- MULT_DISC_DX ----
 -- This table contains information on the defined multidisciplinary diagnoses/problems.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_234 (
+    activity_year INT,
+    total_rows INT,
+    PROBLEM_ID_NAME_filled INT,
+    NAME_filled INT,
+    DISPLAY_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_234 (activity_year, total_rows, PROBLEM_ID_NAME_filled, NAME_filled, DISPLAY_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9641,25 +13281,34 @@ SELECT
     COUNT(NAME) AS NAME_filled,
     COUNT(DISPLAY_NAME) AS DISPLAY_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_234
 FROM MULT_DISC_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_234 (activity_year, total_rows, PROBLEM_ID_NAME_filled, NAME_filled, DISPLAY_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS PROBLEM_ID_NAME_filled,
     CAST(NULL AS INT) AS NAME_filled,
     CAST(NULL AS INT) AS DISPLAY_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_234;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_235 <- NOTES_PROC_PRE_DX ----
 -- This table contains a list of preoperative diagnoses for ambulatory procedure notes.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_235 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    PROC_NOTE_PRE_DX_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_235 (activity_year, total_rows, NOTE_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, PROC_NOTE_PRE_DX_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9668,10 +13317,10 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(PROC_NOTE_PRE_DX_DX_NAME) AS PROC_NOTE_PRE_DX_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_235
 FROM NOTES_PROC_PRE_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_235 (activity_year, total_rows, NOTE_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, PROC_NOTE_PRE_DX_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9679,15 +13328,24 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_REAL_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PROC_NOTE_PRE_DX_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_235;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_236 <- NOTES_PROC_PST_DX ----
 -- This table contains a list of postoperative diagnoses for ambulatory procedure notes.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_236 (
+    activity_year INT,
+    total_rows INT,
+    NOTE_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    PROC_NOTE_PST_DX_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_236 (activity_year, total_rows, NOTE_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, PROC_NOTE_PST_DX_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9696,10 +13354,10 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(PROC_NOTE_PST_DX_DX_NAME) AS PROC_NOTE_PST_DX_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_236
 FROM NOTES_PROC_PST_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_236 (activity_year, total_rows, NOTE_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, PROC_NOTE_PST_DX_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9707,15 +13365,25 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_REAL_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PROC_NOTE_PST_DX_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_236;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_237 <- NSQIP_FIRST_REOP_CPT ----
 -- This table contains CPT® and procedure description related to the first reoperation.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_237 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_FST_REOP_INF_SRC_C_NAME_filled INT,
+    NSQIP_FST_REOP_CPT_filled INT,
+    NSQIP_FST_REOP_PROC_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_237 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_FST_REOP_INF_SRC_C_NAME_filled, NSQIP_FST_REOP_CPT_filled, NSQIP_FST_REOP_PROC_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9725,10 +13393,10 @@ SELECT
     COUNT(NSQIP_FST_REOP_CPT) AS NSQIP_FST_REOP_CPT_filled,
     COUNT(NSQIP_FST_REOP_PROC_DESC) AS NSQIP_FST_REOP_PROC_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_237
 FROM NSQIP_FIRST_REOP_CPT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_237 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_FST_REOP_INF_SRC_C_NAME_filled, NSQIP_FST_REOP_CPT_filled, NSQIP_FST_REOP_PROC_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9737,15 +13405,24 @@ SELECT
     CAST(NULL AS INT) AS NSQIP_FST_REOP_INF_SRC_C_NAME_filled,
     CAST(NULL AS INT) AS NSQIP_FST_REOP_CPT_filled,
     CAST(NULL AS INT) AS NSQIP_FST_REOP_PROC_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_237;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_238 <- NSQIP_FIRST_REOP_ICD10 ----
 -- This table contains ICD-10 code and diagnosis description related to the first reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_238 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_FST_REOP_ICD10_filled INT,
+    NSQIP_FST_REOP_ICD10_DX_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_238 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_FST_REOP_ICD10_filled, NSQIP_FST_REOP_ICD10_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9754,10 +13431,10 @@ SELECT
     COUNT(NSQIP_FST_REOP_ICD10) AS NSQIP_FST_REOP_ICD10_filled,
     COUNT(NSQIP_FST_REOP_ICD10_DX_DESC) AS NSQIP_FST_REOP_ICD10_DX_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_238
 FROM NSQIP_FIRST_REOP_ICD10;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_238 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_FST_REOP_ICD10_filled, NSQIP_FST_REOP_ICD10_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9765,15 +13442,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS NSQIP_FST_REOP_ICD10_filled,
     CAST(NULL AS INT) AS NSQIP_FST_REOP_ICD10_DX_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_238;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_239 <- NSQIP_FIRST_REOP_ICD9 ----
 -- This table contains ICD-9 code and diagnosis description related to the first reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_239 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_FST_REOP_ICD9_filled INT,
+    NSQIP_FST_REOP_DX_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_239 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_FST_REOP_ICD9_filled, NSQIP_FST_REOP_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9782,10 +13468,10 @@ SELECT
     COUNT(NSQIP_FST_REOP_ICD9) AS NSQIP_FST_REOP_ICD9_filled,
     COUNT(NSQIP_FST_REOP_DX_DESC) AS NSQIP_FST_REOP_DX_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_239
 FROM NSQIP_FIRST_REOP_ICD9;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_239 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_FST_REOP_ICD9_filled, NSQIP_FST_REOP_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9793,15 +13479,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS NSQIP_FST_REOP_ICD9_filled,
     CAST(NULL AS INT) AS NSQIP_FST_REOP_DX_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_239;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_240 <- NSQIP_RETURN_DX_COMMENTS ----
 -- This table contains diagnosis comments associated with unplanned returns to the OR.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_240 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_RETURN_DX_COMMENTS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_240 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_RETURN_DX_COMMENTS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9809,25 +13503,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_RETURN_DX_COMMENTS) AS NSQIP_RETURN_DX_COMMENTS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_240
 FROM NSQIP_RETURN_DX_COMMENTS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_240 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_RETURN_DX_COMMENTS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REGISTRY_DATA_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS NSQIP_RETURN_DX_COMMENTS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_240;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_241 <- NSQIP_RETURN_ICD10_CODES ----
 -- This table contains ICD-10 codes associated with unplanned returns to the OR.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_241 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_RETURN_ICD10_CODES_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_241 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_RETURN_ICD10_CODES_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9835,25 +13537,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(NSQIP_RETURN_ICD10_CODES) AS NSQIP_RETURN_ICD10_CODES_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_241
 FROM NSQIP_RETURN_ICD10_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_241 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_RETURN_ICD10_CODES_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REGISTRY_DATA_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS NSQIP_RETURN_ICD10_CODES_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_241;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_242 <- NSQIP_SECOND_REOP_CPT ----
 -- This table contains CPT® and procedure description related to the second reoperation.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_242 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_SEC_REOP_INF_SRC_C_NAME_filled INT,
+    NSQIP_SEC_REOP_CPT_filled INT,
+    NSQIP_SEC_REOP_PROC_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_242 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_SEC_REOP_INF_SRC_C_NAME_filled, NSQIP_SEC_REOP_CPT_filled, NSQIP_SEC_REOP_PROC_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9863,10 +13575,10 @@ SELECT
     COUNT(NSQIP_SEC_REOP_CPT) AS NSQIP_SEC_REOP_CPT_filled,
     COUNT(NSQIP_SEC_REOP_PROC_DESC) AS NSQIP_SEC_REOP_PROC_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_242
 FROM NSQIP_SECOND_REOP_CPT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_242 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_SEC_REOP_INF_SRC_C_NAME_filled, NSQIP_SEC_REOP_CPT_filled, NSQIP_SEC_REOP_PROC_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9875,15 +13587,24 @@ SELECT
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_INF_SRC_C_NAME_filled,
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_CPT_filled,
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_PROC_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_242;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_243 <- NSQIP_SECOND_REOP_ICD10 ----
 -- This table contains ICD-10 code and diagnosis description related to the second reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_243 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_SEC_REOP_ICD10_filled INT,
+    NSQIP_SEC_REOP_ICD10_DX_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_243 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_SEC_REOP_ICD10_filled, NSQIP_SEC_REOP_ICD10_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9892,10 +13613,10 @@ SELECT
     COUNT(NSQIP_SEC_REOP_ICD10) AS NSQIP_SEC_REOP_ICD10_filled,
     COUNT(NSQIP_SEC_REOP_ICD10_DX_DESC) AS NSQIP_SEC_REOP_ICD10_DX_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_243
 FROM NSQIP_SECOND_REOP_ICD10;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_243 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_SEC_REOP_ICD10_filled, NSQIP_SEC_REOP_ICD10_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9903,15 +13624,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_ICD10_filled,
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_ICD10_DX_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_243;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_244 <- NSQIP_SECOND_REOP_ICD9 ----
 -- This table contains ICD-9 code and diagnosis description related to the second reoperation.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_244 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    NSQIP_SEC_REOP_ICD9_filled INT,
+    NSQIP_SEC_REOP_DX_DESC_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_244 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_SEC_REOP_ICD9_filled, NSQIP_SEC_REOP_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9920,10 +13650,10 @@ SELECT
     COUNT(NSQIP_SEC_REOP_ICD9) AS NSQIP_SEC_REOP_ICD9_filled,
     COUNT(NSQIP_SEC_REOP_DX_DESC) AS NSQIP_SEC_REOP_DX_DESC_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_244
 FROM NSQIP_SECOND_REOP_ICD9;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_244 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, NSQIP_SEC_REOP_ICD9_filled, NSQIP_SEC_REOP_DX_DESC_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9931,15 +13661,28 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_ICD9_filled,
     CAST(NULL AS INT) AS NSQIP_SEC_REOP_DX_DESC_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_244;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_245 <- ORDER_DX_MED ----
 -- The ORDER_DX_MED table enables you to report on the diagnoses associated with medications ordered in clinical system (prescriptions). Since one medication order may be associated w
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_245 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_MED_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUALIFIER_C_NAME_filled INT,
+    DX_CHRONIC_YN_filled INT,
+    COMMENTS_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_245 (activity_year, total_rows, ORDER_MED_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, PAT_ENC_CSN_ID_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, DX_CHRONIC_YN_filled, COMMENTS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9952,10 +13695,10 @@ SELECT
     COUNT(DX_CHRONIC_YN) AS DX_CHRONIC_YN_filled,
     COUNT(COMMENTS) AS COMMENTS_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_245
 FROM ORDER_DX_MED;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_245 (activity_year, total_rows, ORDER_MED_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, PAT_ENC_CSN_ID_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, DX_CHRONIC_YN_filled, COMMENTS_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -9967,15 +13710,30 @@ SELECT
     CAST(NULL AS INT) AS DX_QUALIFIER_C_NAME_filled,
     CAST(NULL AS INT) AS DX_CHRONIC_YN_filled,
     CAST(NULL AS INT) AS COMMENTS_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_245;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_246 <- ORDER_DX_PROC ----
 -- The ORDER_DX_PROC table enables you to report on the diagnoses associated with procedures ordered in clinical system. Since one procedure order may be associated with multiple diag
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_246 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_PROC_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_QUALIFIER_C_NAME_filled INT,
+    COMMENTS_filled INT,
+    DX_CHRONIC_YN_filled INT,
+    ASSOC_DX_DESC_filled INT,
+    ASSOC_REQ_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_246 (activity_year, total_rows, ORDER_PROC_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, PAT_ENC_CSN_ID_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, COMMENTS_filled, DX_CHRONIC_YN_filled, ASSOC_DX_DESC_filled, ASSOC_REQ_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -9990,10 +13748,10 @@ SELECT
     COUNT(ASSOC_DX_DESC) AS ASSOC_DX_DESC_filled,
     COUNT(ASSOC_REQ_DX_ID_DX_NAME) AS ASSOC_REQ_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_246
 FROM ORDER_DX_PROC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_246 (activity_year, total_rows, ORDER_PROC_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, PAT_ENC_CSN_ID_filled, DX_ID_DX_NAME_filled, DX_QUALIFIER_C_NAME_filled, COMMENTS_filled, DX_CHRONIC_YN_filled, ASSOC_DX_DESC_filled, ASSOC_REQ_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10007,15 +13765,23 @@ SELECT
     CAST(NULL AS INT) AS DX_CHRONIC_YN_filled,
     CAST(NULL AS INT) AS ASSOC_DX_DESC_filled,
     CAST(NULL AS INT) AS ASSOC_REQ_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_246;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_247 <- ORDER_ORIG_RX_DX ----
 -- For orders representing electronic refill requests received via an interface, this item contains the diagnoses that were received in the interface message.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_247 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_ID_filled INT,
+    LINE_filled INT,
+    ORIG_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_247 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, ORIG_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10023,25 +13789,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ORIG_DX_ID_DX_NAME) AS ORIG_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_247
 FROM ORDER_ORIG_RX_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_247 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, ORIG_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ORDER_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ORIG_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_247;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_248 <- ORDER_RAD_DX ----
 -- This table contains diagnoses attached to an imaging order by the reading physician. The diagnoses are used by billing to drop charges.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_248 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_ID_filled INT,
+    LINE_filled INT,
+    RIS_DIAGNOSES_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_248 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, RIS_DIAGNOSES_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10049,25 +13823,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(RIS_DIAGNOSES_ID_DX_NAME) AS RIS_DIAGNOSES_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_248
 FROM ORDER_RAD_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_248 (activity_year, total_rows, ORDER_ID_filled, LINE_filled, RIS_DIAGNOSES_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS ORDER_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS RIS_DIAGNOSES_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_248;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_249 <- OR_CASE_CPT_TXT ----
 -- The OR_CASE_CPT_TXT table contains the list of free-text CPT(R) codes entered for a case record.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_249 (
+    activity_year INT,
+    total_rows INT,
+    CASE_ID_filled INT,
+    LINE_filled INT,
+    CPT_CODE_TXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_249 (activity_year, total_rows, CASE_ID_filled, LINE_filled, CPT_CODE_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10075,25 +13857,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(CPT_CODE_TXT) AS CPT_CODE_TXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_249
 FROM OR_CASE_CPT_TXT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_249 (activity_year, total_rows, CASE_ID_filled, LINE_filled, CPT_CODE_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CASE_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CPT_CODE_TXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_249;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_250 <- OR_CASE_DIAGNOSTIC_PROC ----
 -- This table contains the diagnostic procedures performed for a case.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_250 (
+    activity_year INT,
+    total_rows INT,
+    CASE_ID_filled INT,
+    LINE_filled INT,
+    DIAGNOSTIC_PROC_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_250 (activity_year, total_rows, CASE_ID_filled, LINE_filled, DIAGNOSTIC_PROC_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10101,25 +13891,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSTIC_PROC_C_NAME) AS DIAGNOSTIC_PROC_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_250
 FROM OR_CASE_DIAGNOSTIC_PROC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_250 (activity_year, total_rows, CASE_ID_filled, LINE_filled, DIAGNOSTIC_PROC_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS CASE_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DIAGNOSTIC_PROC_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_250;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_251 <- OR_CASE_DX_CODE ----
 -- The OR_CASE_DX_CODE table contains OR management system case diagnosis codes.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_251 (
+    activity_year INT,
+    total_rows INT,
+    OR_CASE_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_251 (activity_year, total_rows, OR_CASE_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10127,24 +13925,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_251
 FROM OR_CASE_DX_CODE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_251 (activity_year, total_rows, OR_CASE_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS OR_CASE_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_251;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_252 <- OR_IMP_DIAGNOSIS ----
 -- This table contains information about implant diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_252 (
+    activity_year INT,
+    total_rows INT,
+    IMPLANT_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    IMPLANT_DIAGNOSIS_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_252 (activity_year, total_rows, IMPLANT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, IMPLANT_DIAGNOSIS_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10154,11 +13962,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(IMPLANT_DIAGNOSIS_C_NAME) AS IMPLANT_DIAGNOSIS_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_252
 FROM OR_IMP_DIAGNOSIS
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_252 (activity_year, total_rows, IMPLANT_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, IMPLANT_DIAGNOSIS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10167,15 +13975,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS IMPLANT_DIAGNOSIS_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_252;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_253 <- OR_IMP_ICD_PACEMAKER_RATE ----
 -- This table stores the rate type for implantable cardioverter-defibrillator (ICD)/Pacemaker implants.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_253 (
+    activity_year INT,
+    total_rows INT,
+    IMPLANT_ID_filled INT,
+    LINE_filled INT,
+    ICD_PACEMAKER_RATE_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_253 (activity_year, total_rows, IMPLANT_ID_filled, LINE_filled, ICD_PACEMAKER_RATE_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10183,25 +13999,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ICD_PACEMAKER_RATE_TYPE_C_NAME) AS ICD_PACEMAKER_RATE_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_253
 FROM OR_IMP_ICD_PACEMAKER_RATE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_253 (activity_year, total_rows, IMPLANT_ID_filled, LINE_filled, ICD_PACEMAKER_RATE_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS IMPLANT_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ICD_PACEMAKER_RATE_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_253;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_254 <- OR_LNLG_ANINF_CPT ----
 -- This table contains the Anesthesia Info CPT codes for the Surgical Log (ORL).
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_254 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    ANES_INFO_CPTM_ID_PROC_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_254 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, ANES_INFO_CPTM_ID_PROC_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10209,25 +14033,40 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ANES_INFO_CPTM_ID_PROC_NAME) AS ANES_INFO_CPTM_ID_PROC_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_254
 FROM OR_LNLG_ANINF_CPT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_254 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, ANES_INFO_CPTM_ID_PROC_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RECORD_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ANES_INFO_CPTM_ID_PROC_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_254;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_255 <- OR_LNLG_DIAGNOSIS ----
 -- This table contains the Diagnosis information for the Surgical Log (ORL).
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_255 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    DX_ORP_ID_filled INT,
+    DX_ORP_ID_PROC_NAME_filled INT,
+    DX_LATERALITY_C_NAME_filled INT,
+    DX_PRIMARY_DX_ID_DX_NAME_filled INT,
+    DX_PROC_PANEL_filled INT,
+    DX_CPT_CODE_2_ID_PROC_NAME_filled INT,
+    DX_CPT_CODE_3_ID_PROC_NAME_filled INT,
+    DX_QTY_filled INT,
+    DX_PROC_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_255 (activity_year, total_rows, RECORD_ID_filled, DX_ORP_ID_filled, DX_ORP_ID_PROC_NAME_filled, DX_LATERALITY_C_NAME_filled, DX_PRIMARY_DX_ID_DX_NAME_filled, DX_PROC_PANEL_filled, DX_CPT_CODE_2_ID_PROC_NAME_filled, DX_CPT_CODE_3_ID_PROC_NAME_filled, DX_QTY_filled, DX_PROC_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10242,10 +14081,10 @@ SELECT
     COUNT(DX_QTY) AS DX_QTY_filled,
     COUNT(DX_PROC_TYPE_C_NAME) AS DX_PROC_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_255
 FROM OR_LNLG_DIAGNOSIS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_255 (activity_year, total_rows, RECORD_ID_filled, DX_ORP_ID_filled, DX_ORP_ID_PROC_NAME_filled, DX_LATERALITY_C_NAME_filled, DX_PRIMARY_DX_ID_DX_NAME_filled, DX_PROC_PANEL_filled, DX_CPT_CODE_2_ID_PROC_NAME_filled, DX_CPT_CODE_3_ID_PROC_NAME_filled, DX_QTY_filled, DX_PROC_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10259,15 +14098,23 @@ SELECT
     CAST(NULL AS INT) AS DX_CPT_CODE_3_ID_PROC_NAME_filled,
     CAST(NULL AS INT) AS DX_QTY_filled,
     CAST(NULL AS INT) AS DX_PROC_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_255;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_256 <- OR_LNLG_DIAG_CPTS ----
 -- This table contains the Diagnosis CPT codes for the Surgical Log (ORL).
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_256 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    DX_CPT_CODE_1_ID_PROC_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_256 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, DX_CPT_CODE_1_ID_PROC_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10275,25 +14122,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_CPT_CODE_1_ID_PROC_NAME) AS DX_CPT_CODE_1_ID_PROC_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_256
 FROM OR_LNLG_DIAG_CPTS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_256 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, DX_CPT_CODE_1_ID_PROC_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RECORD_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_CPT_CODE_1_ID_PROC_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_256;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_257 <- OR_LOG_DIAGNOSTIC_PROC ----
 -- This table stores additional diagnostic/therapeutic procedures performed.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_257 (
+    activity_year INT,
+    total_rows INT,
+    LOG_ID_filled INT,
+    LINE_filled INT,
+    DIAGNOSTIC_PROCEDURES_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_257 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DIAGNOSTIC_PROCEDURES_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10301,25 +14156,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSTIC_PROCEDURES_C_NAME) AS DIAGNOSTIC_PROCEDURES_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_257
 FROM OR_LOG_DIAGNOSTIC_PROC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_257 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DIAGNOSTIC_PROCEDURES_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LOG_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DIAGNOSTIC_PROCEDURES_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_257;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_258 <- OR_LOG_DIAGNOSTIC_PROC_FT ----
 -- This table stores free-text comments about additional diagnostic/therapeutic procedures performed.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_258 (
+    activity_year INT,
+    total_rows INT,
+    LOG_ID_filled INT,
+    LINE_filled INT,
+    DIAGNOSTIC_PROCEDURES_FT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_258 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DIAGNOSTIC_PROCEDURES_FT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10327,25 +14190,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DIAGNOSTIC_PROCEDURES_FT) AS DIAGNOSTIC_PROCEDURES_FT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_258
 FROM OR_LOG_DIAGNOSTIC_PROC_FT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_258 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DIAGNOSTIC_PROCEDURES_FT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LOG_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DIAGNOSTIC_PROCEDURES_FT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_258;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_259 <- OR_LOG_LN_DIAGNOS ----
 -- This table contains the line IDs (ORM) for the Diagnosis Information of the Surgical Log (ORL).
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_259 (
+    activity_year INT,
+    total_rows INT,
+    LOG_ID_filled INT,
+    LINE_filled INT,
+    DX_PROC_INFO_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_259 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DX_PROC_INFO_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10353,25 +14224,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(DX_PROC_INFO_ID) AS DX_PROC_INFO_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_259
 FROM OR_LOG_LN_DIAGNOS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_259 (activity_year, total_rows, LOG_ID_filled, LINE_filled, DX_PROC_INFO_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS LOG_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DX_PROC_INFO_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_259;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_260 <- OR_OPE_CODE_DIAGNOSIS ----
 -- This table contains the diagnoses associated with procedure codes.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_260 (
+    activity_year INT,
+    total_rows INT,
+    OPE_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PROC_CODE_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_260 (activity_year, total_rows, OPE_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PROC_CODE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10380,10 +14260,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PROC_CODE_DX_ID_DX_NAME) AS PROC_CODE_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_260
 FROM OR_OPE_CODE_DIAGNOSIS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_260 (activity_year, total_rows, OPE_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PROC_CODE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10391,15 +14271,25 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS PROC_CODE_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_260;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_261 <- OTP_DX_ASSOC ----
 -- The diagnoses associated with an order template. Note that if an order template is unreleased and it has no diagnoses then it will use the plan diagnoses stored in the ASSOCIATED_D
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_261 (
+    activity_year INT,
+    total_rows INT,
+    OTP_ID_filled INT,
+    LINE_filled INT,
+    ASSOC_DX_ID_DX_NAME_filled INT,
+    ASSOC_DX_DESC_filled INT,
+    ASSOC_DX_COMMENT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_261 (activity_year, total_rows, OTP_ID_filled, LINE_filled, ASSOC_DX_ID_DX_NAME_filled, ASSOC_DX_DESC_filled, ASSOC_DX_COMMENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10409,10 +14299,10 @@ SELECT
     COUNT(ASSOC_DX_DESC) AS ASSOC_DX_DESC_filled,
     COUNT(ASSOC_DX_COMMENT) AS ASSOC_DX_COMMENT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_261
 FROM OTP_DX_ASSOC;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_261 (activity_year, total_rows, OTP_ID_filled, LINE_filled, ASSOC_DX_ID_DX_NAME_filled, ASSOC_DX_DESC_filled, ASSOC_DX_COMMENT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10421,15 +14311,24 @@ SELECT
     CAST(NULL AS INT) AS ASSOC_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS ASSOC_DX_DESC_filled,
     CAST(NULL AS INT) AS ASSOC_DX_COMMENT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_261;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_262 <- PAS_TRIAGE_DX_HX ----
 -- This table extracts the related multiple response Triage History - Diagnoses (I RFL 971) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_262 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    PAS_TRI_HX_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_262 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAS_TRI_HX_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10438,10 +14337,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(PAS_TRI_HX_DX_ID_DX_NAME) AS PAS_TRI_HX_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_262
 FROM PAS_TRIAGE_DX_HX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_262 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, PAS_TRI_HX_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10449,14 +14348,31 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS PAS_TRI_HX_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_262;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_263 <- PAT_DIFF_DX ----
 -- This table will contain all of the differential diagnosis entries for a particular encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_263 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    DIFF_DX_ID_DX_NAME_filled INT,
+    DIFF_DX_DESC_filled INT,
+    DIFF_DX_QUALIFIER_C_NAME_filled INT,
+    DIFF_DX_STATUS_C_NAME_filled INT,
+    DIFF_DX_COMMENT_filled INT,
+    DIFF_DX_UNIQUE_filled INT,
+    DIFF_CHRONIC_YN_filled INT,
+    DDX_LINK_PROB_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_263 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DIFF_DX_ID_DX_NAME_filled, DIFF_DX_DESC_filled, DIFF_DX_QUALIFIER_C_NAME_filled, DIFF_DX_STATUS_C_NAME_filled, DIFF_DX_COMMENT_filled, DIFF_DX_UNIQUE_filled, DIFF_CHRONIC_YN_filled, DDX_LINK_PROB_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10473,11 +14389,11 @@ SELECT
     COUNT(DIFF_CHRONIC_YN) AS DIFF_CHRONIC_YN_filled,
     COUNT(DDX_LINK_PROB_ID) AS DDX_LINK_PROB_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_263
 FROM PAT_DIFF_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_263 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DIFF_DX_ID_DX_NAME_filled, DIFF_DX_DESC_filled, DIFF_DX_QUALIFIER_C_NAME_filled, DIFF_DX_STATUS_C_NAME_filled, DIFF_DX_COMMENT_filled, DIFF_DX_UNIQUE_filled, DIFF_CHRONIC_YN_filled, DDX_LINK_PROB_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10493,15 +14409,23 @@ SELECT
     CAST(NULL AS INT) AS DIFF_DX_UNIQUE_filled,
     CAST(NULL AS INT) AS DIFF_CHRONIC_YN_filled,
     CAST(NULL AS INT) AS DDX_LINK_PROB_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_263;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_264 <- PAT_ENC_ADMIT_DX_AUDIT ----
 -- This tables stores previous instances in which the admission diagnosis was populated or deleted for an encounter.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_264 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    ADMISSION_DX_EDIT_UTC_DTTM_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_264 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, ADMISSION_DX_EDIT_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10509,24 +14433,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ADMISSION_DX_EDIT_UTC_DTTM) AS ADMISSION_DX_EDIT_UTC_DTTM_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_264
 FROM PAT_ENC_ADMIT_DX_AUDIT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_264 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, ADMISSION_DX_EDIT_UTC_DTTM_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS PAT_ENC_CSN_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ADMISSION_DX_EDIT_UTC_DTTM_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_264;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_265 <- PAT_ENC_APPT_DX ----
 -- The PAT_ENC_APPT_DX table contains a list of diagnoses associated with appointments that were manually entered by a user on the "Clinical Information" form, which can appear in Adv
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_265 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ID_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_265 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10537,11 +14472,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_ID_DX_NAME) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_265
 FROM PAT_ENC_APPT_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_265 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ID_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10551,14 +14486,33 @@ SELECT
     CAST(NULL AS INT) AS PAT_ENC_DATE_REAL_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_265;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_266 <- PAT_ENC_DX ----
 -- The patient encounter diagnosis table contains one record for each diagnosis associated with each encounter level of service. This table will contain all diagnoses specified on the
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_266 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    PAT_ENC_CSN_ID_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    ANNOTATION_filled INT,
+    DX_QUALIFIER_C_NAME_filled INT,
+    PRIMARY_DX_YN_filled INT,
+    COMMENTS_filled INT,
+    DX_CHRONIC_YN_filled INT,
+    DX_STAGE_ID_filled INT,
+    DX_UNIQUE_filled INT,
+    DX_ED_YN_filled INT,
+    DX_LINK_PROB_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_266 (activity_year, total_rows, PAT_ENC_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, PAT_ENC_CSN_ID_filled, DX_ID_DX_NAME_filled, ANNOTATION_filled, DX_QUALIFIER_C_NAME_filled, PRIMARY_DX_YN_filled, COMMENTS_filled, DX_CHRONIC_YN_filled, DX_STAGE_ID_filled, DX_UNIQUE_filled, DX_ED_YN_filled, DX_LINK_PROB_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10577,11 +14531,11 @@ SELECT
     COUNT(DX_ED_YN) AS DX_ED_YN_filled,
     COUNT(DX_LINK_PROB_ID) AS DX_LINK_PROB_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_266
 FROM PAT_ENC_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_266 (activity_year, total_rows, PAT_ENC_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, PAT_ENC_CSN_ID_filled, DX_ID_DX_NAME_filled, ANNOTATION_filled, DX_QUALIFIER_C_NAME_filled, PRIMARY_DX_YN_filled, COMMENTS_filled, DX_CHRONIC_YN_filled, DX_STAGE_ID_filled, DX_UNIQUE_filled, DX_ED_YN_filled, DX_LINK_PROB_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10599,14 +14553,25 @@ SELECT
     CAST(NULL AS INT) AS DX_UNIQUE_filled,
     CAST(NULL AS INT) AS DX_ED_YN_filled,
     CAST(NULL AS INT) AS DX_LINK_PROB_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_266;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_267 <- PAT_ENC_EM_CODE_DX ----
 -- The PAT_ENC_EM_CODE_DX table enables you to report on the diagnoses associated with evaluation and management (E/M) codes entered for a patient encounter. Since one E/M code may be
 -- Bucket(s): ICD-10 / Diagnosis coding;E/M level / CPT coding
+CREATE TABLE #fc_267 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    PAT_ENC_DATE_REAL_filled INT,
+    CONTACT_DATE_filled INT,
+    EM_CODE_LINE_filled INT,
+    DX_UNIQUE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_267 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, EM_CODE_LINE_filled, DX_UNIQUE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10617,11 +14582,11 @@ SELECT
     COUNT(EM_CODE_LINE) AS EM_CODE_LINE_filled,
     COUNT(DX_UNIQUE) AS DX_UNIQUE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_267
 FROM PAT_ENC_EM_CODE_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_267 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, PAT_ENC_DATE_REAL_filled, CONTACT_DATE_filled, EM_CODE_LINE_filled, DX_UNIQUE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10631,14 +14596,23 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS EM_CODE_LINE_filled,
     CAST(NULL AS INT) AS DX_UNIQUE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_267;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_268 <- PAT_ENC_LOS_DX ----
 -- The PAT_ENC_LOS_DX table enables you to report on the diagnoses associated with the level of service (LOS) entered for a patient encounter. This table contains only information for
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_268 (
+    activity_year INT,
+    total_rows INT,
+    PAT_ENC_CSN_ID_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_UNIQUE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_268 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, CONTACT_DATE_filled, DX_UNIQUE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10647,11 +14621,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(DX_UNIQUE) AS DX_UNIQUE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_268
 FROM PAT_ENC_LOS_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_268 (activity_year, total_rows, PAT_ENC_CSN_ID_filled, LINE_filled, CONTACT_DATE_filled, DX_UNIQUE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10659,15 +14633,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DX_UNIQUE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_268;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_269 <- PAT_RSN_VISIT_DX ----
 -- All values associated with a claim are stored in the Claim External Value record. The PAT_RSN_VISIT_DX table holds the diagnoses that document the patient's reason for an outpatien
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_269 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    PAT_RSN_VISIT_QUAL_filled INT,
+    PAT_RSN_VISIT_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_269 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, PAT_RSN_VISIT_QUAL_filled, PAT_RSN_VISIT_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10676,10 +14659,10 @@ SELECT
     COUNT(PAT_RSN_VISIT_QUAL) AS PAT_RSN_VISIT_QUAL_filled,
     COUNT(PAT_RSN_VISIT_DX) AS PAT_RSN_VISIT_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_269
 FROM PAT_RSN_VISIT_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_269 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, PAT_RSN_VISIT_QUAL_filled, PAT_RSN_VISIT_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10687,15 +14670,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PAT_RSN_VISIT_QUAL_filled,
     CAST(NULL AS INT) AS PAT_RSN_VISIT_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_269;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_270 <- POC_HSPC_DX ----
 -- Contains information concerning the hospice diagnoses corresponding to the plan of care.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_270 (
+    activity_year INT,
+    total_rows INT,
+    POC_ID_filled INT,
+    LINE_filled INT,
+    POC_HSPC_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_270 (activity_year, total_rows, POC_ID_filled, LINE_filled, POC_HSPC_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10703,25 +14694,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(POC_HSPC_DX_ID_DX_NAME) AS POC_HSPC_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_270
 FROM POC_HSPC_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_270 (activity_year, total_rows, POC_ID_filled, LINE_filled, POC_HSPC_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS POC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS POC_HSPC_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_270;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_271 <- POC_HSPC_DX_RELATED ----
 -- This table indicates whether the hospice diagnoses at the time of the completed plan of care were hospice related.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_271 (
+    activity_year INT,
+    total_rows INT,
+    POC_ID_filled INT,
+    LINE_filled INT,
+    HOSPICE_RELATED_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_271 (activity_year, total_rows, POC_ID_filled, LINE_filled, HOSPICE_RELATED_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10729,25 +14728,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(HOSPICE_RELATED_C_NAME) AS HOSPICE_RELATED_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_271
 FROM POC_HSPC_DX_RELATED;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_271 (activity_year, total_rows, POC_ID_filled, LINE_filled, HOSPICE_RELATED_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS POC_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS HOSPICE_RELATED_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_271;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_272 <- PRE_AR_ORG_DX ----
 -- This table contains the original diagnosis information of the transaction. Note: temporary accounts receivable (TAR) records in Chronicles are purged periodically depending on your
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_272 (
+    activity_year INT,
+    total_rows INT,
+    TAR_ID_filled INT,
+    LINE_filled INT,
+    ORG_DX_ID_DX_NAME_filled INT,
+    ORG_DX_QUAL_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_272 (activity_year, total_rows, TAR_ID_filled, LINE_filled, ORG_DX_ID_DX_NAME_filled, ORG_DX_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10756,10 +14764,10 @@ SELECT
     COUNT(ORG_DX_ID_DX_NAME) AS ORG_DX_ID_DX_NAME_filled,
     COUNT(ORG_DX_QUAL_C_NAME) AS ORG_DX_QUAL_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_272
 FROM PRE_AR_ORG_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_272 (activity_year, total_rows, TAR_ID_filled, LINE_filled, ORG_DX_ID_DX_NAME_filled, ORG_DX_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10767,14 +14775,25 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ORG_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS ORG_DX_QUAL_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_272;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_273 <- RECONCILE_MA_RA_DX_INFO ----
 -- This table contains reconciliation information regarding statuses of diagnoses from Medicare Advantage Risk Adjustment files.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_273 (
+    activity_year INT,
+    total_rows INT,
+    CLAIM_RECON_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    MA_RA_DX_ID_DX_NAME_filled INT,
+    MA_RA_DX_FLAG_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_273 (activity_year, total_rows, CLAIM_RECON_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, MA_RA_DX_ID_DX_NAME_filled, MA_RA_DX_FLAG_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10785,11 +14804,11 @@ SELECT
     COUNT(MA_RA_DX_ID_DX_NAME) AS MA_RA_DX_ID_DX_NAME_filled,
     COUNT(MA_RA_DX_FLAG_C_NAME) AS MA_RA_DX_FLAG_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_273
 FROM RECONCILE_MA_RA_DX_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_273 (activity_year, total_rows, CLAIM_RECON_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, MA_RA_DX_ID_DX_NAME_filled, MA_RA_DX_FLAG_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10799,15 +14818,23 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS MA_RA_DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS MA_RA_DX_FLAG_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_273;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_274 <- REFERRAL_CE_DX_TXT ----
 -- This audit table stores the Care Everywhere Diagnoses Free Text.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_274 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    LINE_filled INT,
+    AUDIT_DIAGNOSIS_TXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_274 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, AUDIT_DIAGNOSIS_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10815,25 +14842,35 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(AUDIT_DIAGNOSIS_TXT) AS AUDIT_DIAGNOSIS_TXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_274
 FROM REFERRAL_CE_DX_TXT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_274 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, AUDIT_DIAGNOSIS_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REFERRAL_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS AUDIT_DIAGNOSIS_TXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_274;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_275 <- REFERRAL_DX ----
 -- The REFERRAL_DX table contains diagnosis information stored with referrals.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_275 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    LINE_filled INT,
+    DX_ID_DX_NAME_filled INT,
+    DX_TEXT_filled INT,
+    DX_CODE_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_275 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_TEXT_filled, DX_CODE_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10843,10 +14880,10 @@ SELECT
     COUNT(DX_TEXT) AS DX_TEXT_filled,
     COUNT(DX_CODE_TYPE_C_NAME) AS DX_CODE_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_275
 FROM REFERRAL_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_275 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, DX_ID_DX_NAME_filled, DX_TEXT_filled, DX_CODE_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10855,15 +14892,25 @@ SELECT
     CAST(NULL AS INT) AS DX_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DX_TEXT_filled,
     CAST(NULL AS INT) AS DX_CODE_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_275;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_276 <- REFERRAL_DX_MODIFIERS ----
 -- This table extracts the related multiple response Diagnosis Modifiers (I RFL 1001) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_276 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    DX_MODIFIER_ID_filled INT,
+    DX_MODIFIER_ID_MODIFIER_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_276 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_MODIFIER_ID_filled, DX_MODIFIER_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10873,10 +14920,10 @@ SELECT
     COUNT(DX_MODIFIER_ID) AS DX_MODIFIER_ID_filled,
     COUNT(DX_MODIFIER_ID_MODIFIER_NAME) AS DX_MODIFIER_ID_MODIFIER_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_276
 FROM REFERRAL_DX_MODIFIERS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_276 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, DX_MODIFIER_ID_filled, DX_MODIFIER_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -10885,15 +14932,23 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS DX_MODIFIER_ID_filled,
     CAST(NULL AS INT) AS DX_MODIFIER_ID_MODIFIER_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_276;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_277 <- REFERRAL_DX_NOTES ----
 -- Referral free text diagnosis notes as entered on the Procedures and Diagnoses (Px/Dx) form during referral entry.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_277 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    LINE_filled INT,
+    REFERRAL_DX_NOTES_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_277 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, REFERRAL_DX_NOTES_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10901,25 +14956,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(REFERRAL_DX_NOTES) AS REFERRAL_DX_NOTES_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_277
 FROM REFERRAL_DX_NOTES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_277 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, REFERRAL_DX_NOTES_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REFERRAL_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS REFERRAL_DX_NOTES_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_277;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_278 <- REMOVED_CLAIM_DX ----
 -- This table contains information about removed diagnoses from a claim adjustment.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_278 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    REMOVED_CLAIM_DX_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_278 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, REMOVED_CLAIM_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10927,25 +14990,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(REMOVED_CLAIM_DX) AS REMOVED_CLAIM_DX_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_278
 FROM REMOVED_CLAIM_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_278 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, REMOVED_CLAIM_DX_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RECORD_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS REMOVED_CLAIM_DX_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_278;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_279 <- REQ_DIAGNOSIS ----
 -- This table contains the associated diagnoses on requisitions.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_279 (
+    activity_year INT,
+    total_rows INT,
+    REQUISITION_ID_filled INT,
+    LINE_filled INT,
+    ASSOCIATED_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_279 (activity_year, total_rows, REQUISITION_ID_filled, LINE_filled, ASSOCIATED_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10953,25 +15024,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(ASSOCIATED_DX_ID_DX_NAME) AS ASSOCIATED_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_279
 FROM REQ_DIAGNOSIS;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_279 (activity_year, total_rows, REQUISITION_ID_filled, LINE_filled, ASSOCIATED_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REQUISITION_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS ASSOCIATED_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_279;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_280 <- RFL_DX_PRIM_MODS_TXT ----
 -- A table to hold primary diagnosis modifier text.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_280 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    LINE_filled INT,
+    PRIMARY_DX_MOD_TXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_280 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, PRIMARY_DX_MOD_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -10979,25 +15058,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(PRIMARY_DX_MOD_TXT) AS PRIMARY_DX_MOD_TXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_280
 FROM RFL_DX_PRIM_MODS_TXT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_280 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, PRIMARY_DX_MOD_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REFERRAL_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PRIMARY_DX_MOD_TXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_280;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_281 <- RFL_DX_TXT ----
 -- This table holds the primary diagnosis free text that is associated with a referral.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_281 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    LINE_filled INT,
+    RFL_DX_TEXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_281 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, RFL_DX_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11005,25 +15092,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(RFL_DX_TEXT) AS RFL_DX_TEXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_281
 FROM RFL_DX_TXT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_281 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, RFL_DX_TEXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS REFERRAL_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS RFL_DX_TEXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_281;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_282 <- RFL_PRI_DX_MOD ----
 -- RFL_PRI_DX_MOD contains information about modifiers associated with the primary referral diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_282 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    LINE_filled INT,
+    PRIMARY_DX_MOD_ID_filled INT,
+    PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_282 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, PRIMARY_DX_MOD_ID_filled, PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11032,10 +15128,10 @@ SELECT
     COUNT(PRIMARY_DX_MOD_ID) AS PRIMARY_DX_MOD_ID_filled,
     COUNT(PRIMARY_DX_MOD_ID_MODIFIER_NAME) AS PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_282
 FROM RFL_PRI_DX_MOD;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_282 (activity_year, total_rows, REFERRAL_ID_filled, LINE_filled, PRIMARY_DX_MOD_ID_filled, PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11043,38 +15139,56 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS PRIMARY_DX_MOD_ID_filled,
     CAST(NULL AS INT) AS PRIMARY_DX_MOD_ID_MODIFIER_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_282;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_283 <- RISK_ADJ_EVAL_VERS_INFO ----
 -- Stores contact specific identification information for risk adjustment data.
 -- Bucket(s): HCC / Risk adjustment
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_283 (
+    activity_year INT,
+    total_rows INT,
+    SUMMARY_DATA_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_283 (activity_year, total_rows, SUMMARY_DATA_ID_filled, CONTACT_DATE_REAL_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
     COUNT(SUMMARY_DATA_ID) AS SUMMARY_DATA_ID_filled,
     COUNT(CONTACT_DATE_REAL) AS CONTACT_DATE_REAL_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_283
 FROM RISK_ADJ_EVAL_VERS_INFO;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_283 (activity_year, total_rows, SUMMARY_DATA_ID_filled, CONTACT_DATE_REAL_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS SUMMARY_DATA_ID_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_REAL_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_283;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_284 <- RXA_DX_INFO ----
 -- This table holds the diagnosis-related National Council for Prescription Drug Programs (NCPDP) items used in prescription adjudication.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_284 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    DX_CODE_QUALIFIER_C_NAME_filled INT,
+    DX_CODE_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_284 (activity_year, total_rows, RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, DX_CODE_QUALIFIER_C_NAME_filled, DX_CODE_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11085,11 +15199,11 @@ SELECT
     COUNT(DX_CODE_QUALIFIER_C_NAME) AS DX_CODE_QUALIFIER_C_NAME_filled,
     COUNT(DX_CODE) AS DX_CODE_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_284
 FROM RXA_DX_INFO
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_284 (activity_year, total_rows, RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, DX_CODE_QUALIFIER_C_NAME_filled, DX_CODE_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11099,14 +15213,27 @@ SELECT
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS DX_CODE_QUALIFIER_C_NAME_filled,
     CAST(NULL AS INT) AS DX_CODE_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_284;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_285 <- RXA_DX_OUT ----
 -- Clarity extract of the outgoing diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_285 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    O_DX_CODE_QUAL_ID_filled INT,
+    O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME_filled INT,
+    O_DX_CODE_filled INT,
+    CM_CT_OWNER_ID_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_285 (activity_year, total_rows, RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, O_DX_CODE_QUAL_ID_filled, O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME_filled, O_DX_CODE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11119,11 +15246,11 @@ SELECT
     COUNT(O_DX_CODE) AS O_DX_CODE_filled,
     COUNT(CM_CT_OWNER_ID) AS CM_CT_OWNER_ID_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_285
 FROM RXA_DX_OUT
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_285 (activity_year, total_rows, RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, O_DX_CODE_QUAL_ID_filled, O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME_filled, O_DX_CODE_filled, CM_CT_OWNER_ID_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11135,15 +15262,24 @@ SELECT
     CAST(NULL AS INT) AS O_DX_CODE_QUAL_ID_EXT_CODE_LST_NAME_filled,
     CAST(NULL AS INT) AS O_DX_CODE_filled,
     CAST(NULL AS INT) AS CM_CT_OWNER_ID_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_285;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_286 <- RXFILL_DIAGNOSES ----
 -- Table for the RxFill diagnoses.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_286 (
+    activity_year INT,
+    total_rows INT,
+    MED_PRBLM_LIST_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    RXFILL_DIAGNOSES_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_286 (activity_year, total_rows, MED_PRBLM_LIST_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, RXFILL_DIAGNOSES_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11152,10 +15288,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(RXFILL_DIAGNOSES_ID_DX_NAME) AS RXFILL_DIAGNOSES_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_286
 FROM RXFILL_DIAGNOSES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_286 (activity_year, total_rows, MED_PRBLM_LIST_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, RXFILL_DIAGNOSES_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11163,14 +15299,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS RXFILL_DIAGNOSES_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_286;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_287 <- RX_DISPENSE_DX ----
 -- This table holds the diagnoses associated with a prescription fill.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_287 (
+    activity_year INT,
+    total_rows INT,
+    ORDER_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    RX_DISPENSE_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_287 (activity_year, total_rows, ORDER_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, RX_DISPENSE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11180,11 +15326,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(RX_DISPENSE_DX_ID_DX_NAME) AS RX_DISPENSE_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_287
 FROM RX_DISPENSE_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_287 (activity_year, total_rows, ORDER_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, RX_DISPENSE_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11193,15 +15339,23 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS RX_DISPENSE_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_287;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_288 <- RX_TRANSFER_DENIAL_REASON ----
 -- Electronic prescription transfer denial reason.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_288 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    LINE_filled INT,
+    EXFER_DENIAL_REASON_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_288 (activity_year, total_rows, DOCUMENT_ID_filled, LINE_filled, EXFER_DENIAL_REASON_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11209,25 +15363,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(EXFER_DENIAL_REASON) AS EXFER_DENIAL_REASON_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_288
 FROM RX_TRANSFER_DENIAL_REASON;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_288 (activity_year, total_rows, DOCUMENT_ID_filled, LINE_filled, EXFER_DENIAL_REASON_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS DOCUMENT_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS EXFER_DENIAL_REASON_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_288;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_289 <- RX_XFER_DENIAL_RSN_CODES ----
 -- Electronic prescription transfer denial reason codes.
 -- Bucket(s): Claims / Denials
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_289 (
+    activity_year INT,
+    total_rows INT,
+    DOCUMENT_ID_filled INT,
+    LINE_filled INT,
+    RXTRANS_DENIAL_ID_filled INT,
+    RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_289 (activity_year, total_rows, DOCUMENT_ID_filled, LINE_filled, RXTRANS_DENIAL_ID_filled, RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11236,10 +15399,10 @@ SELECT
     COUNT(RXTRANS_DENIAL_ID) AS RXTRANS_DENIAL_ID_filled,
     COUNT(RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME) AS RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_289
 FROM RX_XFER_DENIAL_RSN_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_289 (activity_year, total_rows, DOCUMENT_ID_filled, LINE_filled, RXTRANS_DENIAL_ID_filled, RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11247,14 +15410,28 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS RXTRANS_DENIAL_ID_filled,
     CAST(NULL AS INT) AS RXTRANS_DENIAL_ID_EXT_CODE_LST_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_289;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_290 <- RYAN_WHITE_DX ----
 -- This table contains diagnosis information from Ryan White abstractions.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_290 (
+    activity_year INT,
+    total_rows INT,
+    REGISTRY_DATA_ID_filled INT,
+    LINE_filled INT,
+    RYN_WHT_DX_ID_DX_NAME_filled INT,
+    RYN_WHT_DX_DATE_filled INT,
+    RYN_WHT_DX_RESOLVED_DATE_filled INT,
+    RYN_WHT_DX_ASSESSMENT_C_NAME_filled INT,
+    RYN_WHT_DX_COMMENT_filled INT,
+    RYN_WHT_DX_PROBLEM_filled INT,
+    RYN_WHT_DX_STATUS_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_290 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, RYN_WHT_DX_ID_DX_NAME_filled, RYN_WHT_DX_DATE_filled, RYN_WHT_DX_RESOLVED_DATE_filled, RYN_WHT_DX_ASSESSMENT_C_NAME_filled, RYN_WHT_DX_COMMENT_filled, RYN_WHT_DX_PROBLEM_filled, RYN_WHT_DX_STATUS_C_NAME_filled, query_error)
 SELECT
     YEAR(RYN_WHT_DX_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11268,11 +15445,11 @@ SELECT
     COUNT(RYN_WHT_DX_PROBLEM) AS RYN_WHT_DX_PROBLEM_filled,
     COUNT(RYN_WHT_DX_STATUS_C_NAME) AS RYN_WHT_DX_STATUS_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_290
 FROM RYAN_WHITE_DX
 GROUP BY YEAR(RYN_WHT_DX_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_290 (activity_year, total_rows, REGISTRY_DATA_ID_filled, LINE_filled, RYN_WHT_DX_ID_DX_NAME_filled, RYN_WHT_DX_DATE_filled, RYN_WHT_DX_RESOLVED_DATE_filled, RYN_WHT_DX_ASSESSMENT_C_NAME_filled, RYN_WHT_DX_COMMENT_filled, RYN_WHT_DX_PROBLEM_filled, RYN_WHT_DX_STATUS_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11285,15 +15462,24 @@ SELECT
     CAST(NULL AS INT) AS RYN_WHT_DX_COMMENT_filled,
     CAST(NULL AS INT) AS RYN_WHT_DX_PROBLEM_filled,
     CAST(NULL AS INT) AS RYN_WHT_DX_STATUS_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_290;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_291 <- SAR_INFO_DX ----
 -- This table extracts the diagnoses associated with the general/administrative information pertaining to a SAR (Service Authorization Request) case.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_291 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    CCS_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_291 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CCS_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11302,10 +15488,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(CCS_DX_ID_DX_NAME) AS CCS_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_291
 FROM SAR_INFO_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_291 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, CCS_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11313,15 +15499,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS CCS_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_291;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_292 <- SPEC_ARCH_DX_CMT ----
 -- This table extracts the related multiple response Archived Order Associated Diagnosis Comment (I OVS 33009) item, which contains the diagnosis comment for diagnoses associated with
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_292 (
+    activity_year INT,
+    total_rows INT,
+    SPECIMEN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    ARCH_ORD_DX_CMT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_292 (activity_year, total_rows, SPECIMEN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ARCH_ORD_DX_CMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11330,10 +15525,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ARCH_ORD_DX_CMT) AS ARCH_ORD_DX_CMT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_292
 FROM SPEC_ARCH_DX_CMT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_292 (activity_year, total_rows, SPECIMEN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ARCH_ORD_DX_CMT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11341,15 +15536,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS ARCH_ORD_DX_CMT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_292;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_293 <- SPEC_ARCH_ORD_DX ----
 -- This table extracts the related multiple response item Archived Order Associated Diagnoses (I OVS 33008), which contains the list of diagnoses associated with an archived order.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_293 (
+    activity_year INT,
+    total_rows INT,
+    SPECIMEN_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    ARCH_ORD_DX_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_293 (activity_year, total_rows, SPECIMEN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ARCH_ORD_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11358,10 +15562,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(ARCH_ORD_DX_ID_DX_NAME) AS ARCH_ORD_DX_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_293
 FROM SPEC_ARCH_ORD_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_293 (activity_year, total_rows, SPECIMEN_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, ARCH_ORD_DX_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11369,15 +15573,23 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS ARCH_ORD_DX_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_293;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_294 <- SPEC_DX_CODES ----
 -- This table contains diagnosis codes (EDG records) for a specimen documented in Specimens navigator section.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_294 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    SPEC_DX_CODE_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_294 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, SPEC_DX_CODE_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11385,25 +15597,33 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(SPEC_DX_CODE_ID_DX_NAME) AS SPEC_DX_CODE_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_294
 FROM SPEC_DX_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_294 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, SPEC_DX_CODE_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RECORD_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS SPEC_DX_CODE_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_294;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_295 <- SPEC_SECTION_DX_CODES ----
 -- This table contains diagnosis codes (EDG records) for all the specimens documented in Specimens navigator section.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_295 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    LINE_filled INT,
+    SPEC_SECTION_DX_CODE_ID_DX_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_295 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, SPEC_SECTION_DX_CODE_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11411,24 +15631,34 @@ SELECT
     COUNT(LINE) AS LINE_filled,
     COUNT(SPEC_SECTION_DX_CODE_ID_DX_NAME) AS SPEC_SECTION_DX_CODE_ID_DX_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_295
 FROM SPEC_SECTION_DX_CODES;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_295 (activity_year, total_rows, RECORD_ID_filled, LINE_filled, SPEC_SECTION_DX_CODE_ID_DX_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
     CAST(NULL AS INT) AS RECORD_ID_filled,
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS SPEC_SECTION_DX_CODE_ID_DX_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_295;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_296 <- TIMEOUT_POST_OP_DX ----
 -- This table holds whether a discussion took place regarding the post-op diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
+CREATE TABLE #fc_296 (
+    activity_year INT,
+    total_rows INT,
+    RECORD_ID_filled INT,
+    CONTACT_DATE_REAL_filled INT,
+    LINE_filled INT,
+    CONTACT_DATE_filled INT,
+    POST_OP_DX_REVIEW_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_296 (activity_year, total_rows, RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, POST_OP_DX_REVIEW_C_NAME_filled, query_error)
 SELECT
     YEAR(CONTACT_DATE) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11438,11 +15668,11 @@ SELECT
     COUNT(CONTACT_DATE) AS CONTACT_DATE_filled,
     COUNT(POST_OP_DX_REVIEW_C_NAME) AS POST_OP_DX_REVIEW_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_296
 FROM TIMEOUT_POST_OP_DX
 GROUP BY YEAR(CONTACT_DATE);
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_296 (activity_year, total_rows, RECORD_ID_filled, CONTACT_DATE_REAL_filled, LINE_filled, CONTACT_DATE_filled, POST_OP_DX_REVIEW_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11451,15 +15681,24 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS CONTACT_DATE_filled,
     CAST(NULL AS INT) AS POST_OP_DX_REVIEW_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_296;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_297 <- TRIAGE_HX_DX_CODE_TYPE ----
 -- History item to track changes made to diagnosis description code type.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_297 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    TRI_HX_DX_TYPE_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_297 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, TRI_HX_DX_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11468,10 +15707,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(TRI_HX_DX_TYPE_C_NAME) AS TRI_HX_DX_TYPE_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_297
 FROM TRIAGE_HX_DX_CODE_TYPE;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_297 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, TRI_HX_DX_TYPE_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11479,15 +15718,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS TRI_HX_DX_TYPE_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_297;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_298 <- TRIAGE_HX_DX_TXT ----
 -- History item to track changes made to free text associated with diagnosis.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_298 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    TRI_HX_DX_TXT_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_298 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, TRI_HX_DX_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11496,10 +15744,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(TRI_HX_DX_TXT) AS TRI_HX_DX_TXT_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_298
 FROM TRIAGE_HX_DX_TXT;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_298 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, TRI_HX_DX_TXT_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11507,15 +15755,25 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS TRI_HX_DX_TXT_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_298;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_299 <- TRIAGE_HX_RFL_DX_MOD ----
 -- This table extracts the related multiple response History - Primary Referral Diagnosis Modifiers (I RFL 992) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_299 (
+    activity_year INT,
+    total_rows INT,
+    REFERRAL_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    TRIAGE_HX_DX_MOD_ID_filled INT,
+    TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_299 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, TRIAGE_HX_DX_MOD_ID_filled, TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11525,10 +15783,10 @@ SELECT
     COUNT(TRIAGE_HX_DX_MOD_ID) AS TRIAGE_HX_DX_MOD_ID_filled,
     COUNT(TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME) AS TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_299
 FROM TRIAGE_HX_RFL_DX_MOD;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_299 (activity_year, total_rows, REFERRAL_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, TRIAGE_HX_DX_MOD_ID_filled, TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11537,15 +15795,26 @@ SELECT
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS TRIAGE_HX_DX_MOD_ID_filled,
     CAST(NULL AS INT) AS TRIAGE_HX_DX_MOD_ID_MODIFIER_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_299;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_300 <- TXP_RETRANSPLANT_DX ----
 -- UNOS retransplant diagnosis information.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_300 (
+    activity_year INT,
+    total_rows INT,
+    SUMMARY_BLOCK_ID_filled INT,
+    LINE_filled INT,
+    RETXP_DX_ORGAN_C_NAME_filled INT,
+    RETXP_PRIMARY_DX_C_NAME_filled INT,
+    RETXP_PRIMARY_DX_OTHR_filled INT,
+    RETXP_SEC_DX_OTHR_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_300 (activity_year, total_rows, SUMMARY_BLOCK_ID_filled, LINE_filled, RETXP_DX_ORGAN_C_NAME_filled, RETXP_PRIMARY_DX_C_NAME_filled, RETXP_PRIMARY_DX_OTHR_filled, RETXP_SEC_DX_OTHR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11556,10 +15825,10 @@ SELECT
     COUNT(RETXP_PRIMARY_DX_OTHR) AS RETXP_PRIMARY_DX_OTHR_filled,
     COUNT(RETXP_SEC_DX_OTHR) AS RETXP_SEC_DX_OTHR_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_300
 FROM TXP_RETRANSPLANT_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_300 (activity_year, total_rows, SUMMARY_BLOCK_ID_filled, LINE_filled, RETXP_DX_ORGAN_C_NAME_filled, RETXP_PRIMARY_DX_C_NAME_filled, RETXP_PRIMARY_DX_OTHR_filled, RETXP_SEC_DX_OTHR_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11569,15 +15838,24 @@ SELECT
     CAST(NULL AS INT) AS RETXP_PRIMARY_DX_C_NAME_filled,
     CAST(NULL AS INT) AS RETXP_PRIMARY_DX_OTHR_filled,
     CAST(NULL AS INT) AS RETXP_SEC_DX_OTHR_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_300;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_301 <- TXP_RETRANSPLANT_DX_RM ----
 -- This table extracts the related multiple-response Secondary Re-transplant Diagnosis (I HSB 30553) item.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_301 (
+    activity_year INT,
+    total_rows INT,
+    SUMMARY_BLOCK_ID_filled INT,
+    GROUP_LINE_filled INT,
+    VALUE_LINE_filled INT,
+    RETXP_SEC_DX_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_301 (activity_year, total_rows, SUMMARY_BLOCK_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, RETXP_SEC_DX_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11586,10 +15864,10 @@ SELECT
     COUNT(VALUE_LINE) AS VALUE_LINE_filled,
     COUNT(RETXP_SEC_DX_C_NAME) AS RETXP_SEC_DX_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_301
 FROM TXP_RETRANSPLANT_DX_RM;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_301 (activity_year, total_rows, SUMMARY_BLOCK_ID_filled, GROUP_LINE_filled, VALUE_LINE_filled, RETXP_SEC_DX_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11597,15 +15875,24 @@ SELECT
     CAST(NULL AS INT) AS GROUP_LINE_filled,
     CAST(NULL AS INT) AS VALUE_LINE_filled,
     CAST(NULL AS INT) AS RETXP_SEC_DX_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_301;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_302 <- UNIV_CHG_LN_DX ----
 -- This table contains diagnosis information for one charge in the Universal Charge Line (UCL) masterfile.
 -- Bucket(s): ICD-10 / Diagnosis coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_302 (
+    activity_year INT,
+    total_rows INT,
+    UCL_ID_filled INT,
+    LINE_filled INT,
+    DIAGNOSIS_ID_DX_NAME_filled INT,
+    DIAGNOSIS_QUAL_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_302 (activity_year, total_rows, UCL_ID_filled, LINE_filled, DIAGNOSIS_ID_DX_NAME_filled, DIAGNOSIS_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11614,10 +15901,10 @@ SELECT
     COUNT(DIAGNOSIS_ID_DX_NAME) AS DIAGNOSIS_ID_DX_NAME_filled,
     COUNT(DIAGNOSIS_QUAL_C_NAME) AS DIAGNOSIS_QUAL_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_302
 FROM UNIV_CHG_LN_DX;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_302 (activity_year, total_rows, UCL_ID_filled, LINE_filled, DIAGNOSIS_ID_DX_NAME_filled, DIAGNOSIS_QUAL_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11625,15 +15912,54 @@ SELECT
     CAST(NULL AS INT) AS LINE_filled,
     CAST(NULL AS INT) AS DIAGNOSIS_ID_DX_NAME_filled,
     CAST(NULL AS INT) AS DIAGNOSIS_QUAL_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_302;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ---- fc_303 <- URIN_BLADDER_CPTR ----
 -- Stores single response data for College of American Pathologists (CAP) form 76061-URINARY BLADDER: Cystectomy, Partial, Total, or Radical.
 -- Bucket(s): E/M level / CPT coding
 -- no date/datetime-typed column found on this table; flat total only
+CREATE TABLE #fc_303 (
+    activity_year INT,
+    total_rows INT,
+    RESULT_ID_filled INT,
+    TUMOR_SITE_SPECIFY_filled INT,
+    CAP_COMMENTS_filled INT,
+    SPEC_PROC_SPECIFY_filled INT,
+    TUMOR_SIZE_GREAT_filled INT,
+    TUMOR_SIZE_ADDL_filled INT,
+    TUMOR_SIZE_ADDL2_filled INT,
+    TUMOR_SIZE_SPECIFY_filled INT,
+    MICRO_TMR_EXT_SPFY_filled INT,
+    SPECIMEN_OTHER_SPFY_filled INT,
+    REGIONL_LYMPH_ND_C_NAME_filled INT,
+    REG_LN_NUM_EXM_filled INT,
+    REG_LN_NUM_INV_filled INT,
+    PRIMARY_TUMOR_C_NAME_filled INT,
+    DISTNT_METASTASIS_C_NAME_filled INT,
+    DSTNT_METASTATIS_ST_filled INT,
+    ADDL_PATH_FIND_SPFY_filled INT,
+    SPEC_MG_IVLV_INV_CC_filled INT,
+    OTHER_TM_CONFIG_S_filled INT,
+    HIST_TYP_NONCL_SPFY_filled INT,
+    HG_URTL_CCNM_C_NAME_filled INT,
+    HG_URTL_CCNM_S_filled INT,
+    HG_ADEN_SQUA_CC_C_NAME_filled INT,
+    ADEN_SQUA_CCS_filled INT,
+    UROT_CCM_W_VAR_HIST_filled INT,
+    SQM_C_CCNM_VAR_HIST_filled INT,
+    ADNCCNM_VAR_HIST_filled INT,
+    UNDIFF_CCNM_filled INT,
+    HIST_TP_MIX_CT_filled INT,
+    MG_IVLV_INV_CCNM_C_NAME_filled INT,
+    MG_UVLV_IC_DSTNC_IC_filled INT,
+    MG_UVLV_IC_SM_filled INT,
+    MG_IVLV_CCNM_SS_filled INT,
+    MG_IVLV_CCNM_ST_C_NAME_filled INT,
+    query_error NVARCHAR(400)
+);
 BEGIN TRY
+INSERT INTO #fc_303 (activity_year, total_rows, RESULT_ID_filled, TUMOR_SITE_SPECIFY_filled, CAP_COMMENTS_filled, SPEC_PROC_SPECIFY_filled, TUMOR_SIZE_GREAT_filled, TUMOR_SIZE_ADDL_filled, TUMOR_SIZE_ADDL2_filled, TUMOR_SIZE_SPECIFY_filled, MICRO_TMR_EXT_SPFY_filled, SPECIMEN_OTHER_SPFY_filled, REGIONL_LYMPH_ND_C_NAME_filled, REG_LN_NUM_EXM_filled, REG_LN_NUM_INV_filled, PRIMARY_TUMOR_C_NAME_filled, DISTNT_METASTASIS_C_NAME_filled, DSTNT_METASTATIS_ST_filled, ADDL_PATH_FIND_SPFY_filled, SPEC_MG_IVLV_INV_CC_filled, OTHER_TM_CONFIG_S_filled, HIST_TYP_NONCL_SPFY_filled, HG_URTL_CCNM_C_NAME_filled, HG_URTL_CCNM_S_filled, HG_ADEN_SQUA_CC_C_NAME_filled, ADEN_SQUA_CCS_filled, UROT_CCM_W_VAR_HIST_filled, SQM_C_CCNM_VAR_HIST_filled, ADNCCNM_VAR_HIST_filled, UNDIFF_CCNM_filled, HIST_TP_MIX_CT_filled, MG_IVLV_INV_CCNM_C_NAME_filled, MG_UVLV_IC_DSTNC_IC_filled, MG_UVLV_IC_SM_filled, MG_IVLV_CCNM_SS_filled, MG_IVLV_CCNM_ST_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     COUNT(*) AS total_rows,
@@ -11672,10 +15998,10 @@ SELECT
     COUNT(MG_IVLV_CCNM_SS) AS MG_IVLV_CCNM_SS_filled,
     COUNT(MG_IVLV_CCNM_ST_C_NAME) AS MG_IVLV_CCNM_ST_C_NAME_filled,
     CAST(NULL AS NVARCHAR(400)) AS query_error
-INTO #fc_303
 FROM URIN_BLADDER_CPTR;
 END TRY
 BEGIN CATCH
+INSERT INTO #fc_303 (activity_year, total_rows, RESULT_ID_filled, TUMOR_SITE_SPECIFY_filled, CAP_COMMENTS_filled, SPEC_PROC_SPECIFY_filled, TUMOR_SIZE_GREAT_filled, TUMOR_SIZE_ADDL_filled, TUMOR_SIZE_ADDL2_filled, TUMOR_SIZE_SPECIFY_filled, MICRO_TMR_EXT_SPFY_filled, SPECIMEN_OTHER_SPFY_filled, REGIONL_LYMPH_ND_C_NAME_filled, REG_LN_NUM_EXM_filled, REG_LN_NUM_INV_filled, PRIMARY_TUMOR_C_NAME_filled, DISTNT_METASTASIS_C_NAME_filled, DSTNT_METASTATIS_ST_filled, ADDL_PATH_FIND_SPFY_filled, SPEC_MG_IVLV_INV_CC_filled, OTHER_TM_CONFIG_S_filled, HIST_TYP_NONCL_SPFY_filled, HG_URTL_CCNM_C_NAME_filled, HG_URTL_CCNM_S_filled, HG_ADEN_SQUA_CC_C_NAME_filled, ADEN_SQUA_CCS_filled, UROT_CCM_W_VAR_HIST_filled, SQM_C_CCNM_VAR_HIST_filled, ADNCCNM_VAR_HIST_filled, UNDIFF_CCNM_filled, HIST_TP_MIX_CT_filled, MG_IVLV_INV_CCNM_C_NAME_filled, MG_UVLV_IC_DSTNC_IC_filled, MG_UVLV_IC_SM_filled, MG_IVLV_CCNM_SS_filled, MG_IVLV_CCNM_ST_C_NAME_filled, query_error)
 SELECT
     CAST(NULL AS INT) AS activity_year,
     CAST(NULL AS INT) AS total_rows,
@@ -11713,8 +16039,7 @@ SELECT
     CAST(NULL AS INT) AS MG_UVLV_IC_SM_filled,
     CAST(NULL AS INT) AS MG_IVLV_CCNM_SS_filled,
     CAST(NULL AS INT) AS MG_IVLV_CCNM_ST_C_NAME_filled,
-    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error
-INTO #fc_303;
+    CAST(ERROR_MESSAGE() AS NVARCHAR(400)) AS query_error;
 END CATCH;
 
 -- ============================== PHASE 2 ==============================
